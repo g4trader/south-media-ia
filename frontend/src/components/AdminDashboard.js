@@ -22,7 +22,7 @@ const AdminDashboard = () => {
     total_budget: 250000,
     total_impressions: 45000000
   });
-  const [clients] = useState([
+  const [clients, setClients] = useState([
     {
       client_id: 'client_001',
       name: 'TechCorp Brasil',
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
       status: 'active'
     }
   ]);
-  const [campaigns] = useState([
+  const [campaigns, setCampaigns] = useState([
     {
       campaign_id: 'camp_001',
       client_id: 'client_001',
@@ -62,10 +62,49 @@ const AdminDashboard = () => {
   ]);
   const [loading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Modal states
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [editingCampaign, setEditingCampaign] = useState(null);
 
   const handleLogout = () => {
     logout();
     toast.success('Logout realizado com sucesso');
+  };
+
+  // Client handlers
+  const handleNewClient = () => {
+    setEditingClient(null);
+    setShowClientModal(true);
+  };
+
+  const handleEditClient = (client) => {
+    setEditingClient(client);
+    setShowClientModal(true);
+  };
+
+  const handleViewDashboard = (client) => {
+    // Simular navegação para dashboard do cliente
+    toast.success(`Abrindo dashboard de ${client.name}`);
+    // Em uma implementação real, seria: navigate(`/client/${client.client_id}/dashboard`);
+  };
+
+  // Campaign handlers
+  const handleNewCampaign = () => {
+    setEditingCampaign(null);
+    setShowCampaignModal(true);
+  };
+
+  const handleEditCampaign = (campaign) => {
+    setEditingCampaign(campaign);
+    setShowCampaignModal(true);
+  };
+
+  const handleUploadCSV = () => {
+    setShowUploadModal(true);
   };
 
   const formatCurrency = (value) => {
@@ -249,7 +288,10 @@ const AdminDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">Clientes</h2>
-              <button className="btn btn-primary">
+              <button 
+                onClick={handleNewClient}
+                className="btn btn-primary"
+              >
                 <Plus size={16} />
                 Novo Cliente
               </button>
@@ -281,12 +323,18 @@ const AdminDashboard = () => {
                         {client.status === 'active' ? 'Ativo' : 'Inativo'}
                       </span>
                       
-                      <button className="btn btn-secondary">
+                      <button 
+                        onClick={() => handleViewDashboard(client)}
+                        className="btn btn-secondary"
+                      >
                         <ExternalLink size={16} />
                         Ver Dashboard
                       </button>
                       
-                      <button className="btn btn-secondary">
+                      <button 
+                        onClick={() => handleEditClient(client)}
+                        className="btn btn-secondary"
+                      >
                         <Settings size={16} />
                         Editar
                       </button>
@@ -303,11 +351,17 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold text-white">Campanhas</h2>
               <div className="flex gap-3">
-                <button className="btn btn-secondary">
+                <button 
+                  onClick={handleUploadCSV}
+                  className="btn btn-secondary"
+                >
                   <Upload size={16} />
                   Upload CSV
                 </button>
-                <button className="btn btn-primary">
+                <button 
+                  onClick={handleNewCampaign}
+                  className="btn btn-primary"
+                >
                   <Plus size={16} />
                   Nova Campanha
                 </button>
@@ -355,7 +409,10 @@ const AdminDashboard = () => {
                             {getStatusText(campaign.status)}
                           </span>
                           
-                          <button className="btn btn-secondary">
+                          <button 
+                            onClick={() => handleEditCampaign(campaign)}
+                            className="btn btn-secondary"
+                          >
                             <Settings size={16} />
                             Editar
                           </button>
@@ -369,6 +426,95 @@ const AdminDashboard = () => {
           </div>
         )}
       </main>
+
+      {/* Modais Simples */}
+      {showClientModal && (
+        <div className="modal-overlay" onClick={() => setShowClientModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">
+              {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
+            </h3>
+            <p className="text-gray-300 mb-4">
+              Funcionalidade em desenvolvimento. Modal funcionando!
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowClientModal(false)}
+                className="btn btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  toast.success(editingClient ? 'Cliente editado!' : 'Cliente criado!');
+                  setShowClientModal(false);
+                }}
+                className="btn btn-primary"
+              >
+                {editingClient ? 'Salvar' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCampaignModal && (
+        <div className="modal-overlay" onClick={() => setShowCampaignModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">
+              {editingCampaign ? 'Editar Campanha' : 'Nova Campanha'}
+            </h3>
+            <p className="text-gray-300 mb-4">
+              Funcionalidade em desenvolvimento. Modal funcionando!
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowCampaignModal(false)}
+                className="btn btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  toast.success(editingCampaign ? 'Campanha editada!' : 'Campanha criada!');
+                  setShowCampaignModal(false);
+                }}
+                className="btn btn-primary"
+              >
+                {editingCampaign ? 'Salvar' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUploadModal && (
+        <div className="modal-overlay" onClick={() => setShowUploadModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-white mb-4">Upload CSV</h3>
+            <p className="text-gray-300 mb-4">
+              Funcionalidade em desenvolvimento. Modal funcionando!
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowUploadModal(false)}
+                className="btn btn-secondary"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  toast.success('CSV processado com sucesso!');
+                  setShowUploadModal(false);
+                }}
+                className="btn btn-primary"
+              >
+                Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
