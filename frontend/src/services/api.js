@@ -1,6 +1,5 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
-// Função auxiliar para fazer requisições
 const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
   
@@ -25,102 +24,52 @@ const apiRequest = async (endpoint, options = {}) => {
   return { data: await response.json() };
 };
 
-// Serviços de autenticação
+// Auth Service
 export const authService = {
-  login: async (username, password) => {
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
-
-    return apiRequest('/auth/login', {
+  login: (username, password) =>
+    apiRequest('/auth/login', {
       method: 'POST',
-      headers: {},
-      body: formData,
-    });
-  },
-
-  me: async () => {
-    return apiRequest('/auth/me');
-  },
+      body: JSON.stringify({ username, password }),
+    }),
+  
+  me: () => apiRequest('/auth/me'),
 };
 
-// Serviços de clientes
+// Client Service
 export const clientService = {
-  getAll: async () => {
-    return apiRequest('/admin/clients');
-  },
-
-  create: async (clientData) => {
-    return apiRequest('/admin/clients', {
-      method: 'POST',
-      body: JSON.stringify(clientData),
-    });
-  },
-
-  update: async (clientId, clientData) => {
-    return apiRequest(`/admin/clients/${clientId}`, {
-      method: 'PUT',
-      body: JSON.stringify(clientData),
-    });
-  },
-
-  delete: async (clientId) => {
-    return apiRequest(`/admin/clients/${clientId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  getDashboard: async (clientId) => {
-    return apiRequest(`/client/${clientId}/dashboard`);
-  },
+  getAll: () => apiRequest('/clients'),
+  getById: (id) => apiRequest(`/clients/${id}`),
+  create: (data) => apiRequest('/clients', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id, data) => apiRequest(`/clients/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (id) => apiRequest(`/clients/${id}`, { method: 'DELETE' }),
 };
 
-// Serviços de campanhas
+// Campaign Service
 export const campaignService = {
-  getAll: async () => {
-    return apiRequest('/admin/campaigns');
-  },
-
-  create: async (campaignData) => {
-    return apiRequest('/admin/campaigns', {
-      method: 'POST',
-      body: JSON.stringify(campaignData),
-    });
-  },
-
-  update: async (campaignId, campaignData) => {
-    return apiRequest(`/admin/campaigns/${campaignId}`, {
-      method: 'PUT',
-      body: JSON.stringify(campaignData),
-    });
-  },
-
-  delete: async (campaignId) => {
-    return apiRequest(`/admin/campaigns/${campaignId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  getDetails: async (clientId, campaignId) => {
-    return apiRequest(`/client/${clientId}/campaign/${campaignId}`);
-  },
-
-  uploadPerformanceData: async (campaignId, file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return apiRequest(`/admin/campaigns/${campaignId}/upload-data`, {
-      method: 'POST',
-      headers: {},
-      body: formData,
-    });
-  },
+  getAll: () => apiRequest('/campaigns'),
+  getById: (id) => apiRequest(`/campaigns/${id}`),
+  getByClient: (clientId) => apiRequest(`/campaigns/client/${clientId}`),
+  create: (data) => apiRequest('/campaigns', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  update: (id, data) => apiRequest(`/campaigns/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  delete: (id) => apiRequest(`/campaigns/${id}`, { method: 'DELETE' }),
 };
 
-// Serviços administrativos
-export const adminService = {
-  getStats: async () => {
-    return apiRequest('/admin/stats');
-  },
+// Dashboard Service
+export const dashboardService = {
+  getStats: () => apiRequest('/dashboard/stats'),
+  getClientDashboard: (clientId, campaignId) => 
+    apiRequest(`/dashboard/client/${clientId}/campaign/${campaignId}`),
 };
 

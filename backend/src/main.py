@@ -8,6 +8,7 @@ from flask_cors import CORS
 from src.models.user import db
 from src.models.campaign import Campaign, Strategy, DeviceBreakdown
 from src.routes.user import user_bp
+from src.routes.auth import auth_bp
 from src.routes.dashboard import dashboard_bp
 
 app = Flask(__name__, static_folder='../static')
@@ -17,6 +18,7 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 CORS(app, origins=['*'])
 
 # Register blueprints
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
 

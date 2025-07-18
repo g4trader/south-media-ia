@@ -4,6 +4,8 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PORT=8000
+ENV FLASK_APP=src/main.py
+ENV FLASK_ENV=production
 
 # Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
@@ -19,7 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código da aplicação
 COPY src/ ./src/
-COPY service-account.json ./service-account.json
 
 # Criar usuário não-root
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
@@ -28,6 +29,6 @@ USER app
 # Expor porta
 EXPOSE $PORT
 
-# Comando para iniciar a aplicação
-CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT
+# Comando para iniciar a aplicação Flask
+CMD python -m flask run --host=0.0.0.0 --port=$PORT
 
