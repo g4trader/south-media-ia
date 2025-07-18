@@ -29,6 +29,6 @@ USER app
 # Expor porta
 EXPOSE $PORT
 
-# Comando para iniciar a aplicação Flask
-CMD python -m flask run --host=0.0.0.0 --port=$PORT
+# Comando para iniciar a aplicação com gunicorn
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 0 src.main:app
 
