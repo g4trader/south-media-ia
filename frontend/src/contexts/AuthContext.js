@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authService } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -23,8 +22,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        const response = await authService.me();
-        setUser(response.data);
+        // Simular usuário logado em modo demo
+        setUser({
+          id: 1,
+          username: 'g4trader',
+          email: 'admin@southmedia.com.br',
+          role: 'admin'
+        });
       }
     } catch (error) {
       localStorage.removeItem('token');
@@ -35,17 +39,30 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await authService.login(username, password);
-      const { access_token, user: userData } = response.data;
-      
-      localStorage.setItem('token', access_token);
-      setUser(userData);
-      
-      return { success: true };
+      // Simular autenticação em modo demo
+      if (username === 'g4trader' && password === 'g4trader@M4nu5') {
+        const mockToken = 'demo_token_' + Date.now();
+        const userData = {
+          id: 1,
+          username: 'g4trader',
+          email: 'admin@southmedia.com.br',
+          role: 'admin'
+        };
+        
+        localStorage.setItem('token', mockToken);
+        setUser(userData);
+        
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: 'Credenciais inválidas. Use: g4trader / g4trader@M4nu5' 
+        };
+      }
     } catch (error) {
       return { 
         success: false, 
-        error: error.response?.data?.detail || 'Erro ao fazer login' 
+        error: 'Erro ao fazer login' 
       };
     }
   };
