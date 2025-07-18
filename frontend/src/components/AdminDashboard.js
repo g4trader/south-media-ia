@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   Target, 
   TrendingUp, 
   DollarSign, 
-  Eye, 
   Plus, 
   Upload,
   LogOut,
   Settings,
   BarChart3,
-  Calendar,
   ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -18,13 +16,13 @@ import { useAuth } from '../contexts/AuthContext';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
-  const [stats, setStats] = useState({
+  const [stats] = useState({
     total_clients: 3,
     active_campaigns: 5,
     total_budget: 250000,
     total_impressions: 45000000
   });
-  const [clients, setClients] = useState([
+  const [clients] = useState([
     {
       client_id: 'client_001',
       name: 'TechCorp Brasil',
@@ -40,7 +38,7 @@ const AdminDashboard = () => {
       status: 'active'
     }
   ]);
-  const [campaigns, setCampaigns] = useState([
+  const [campaigns] = useState([
     {
       campaign_id: 'camp_001',
       client_id: 'client_001',
@@ -62,7 +60,7 @@ const AdminDashboard = () => {
       status: 'active'
     }
   ]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
   const handleLogout = () => {

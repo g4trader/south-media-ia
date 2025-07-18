@@ -9,12 +9,9 @@ import {
   Calendar,
   Target,
   Smartphone,
-  Monitor,
-  Tablet,
   AlertTriangle,
   Info,
-  BarChart3,
-  PieChart
+  BarChart3
 } from 'lucide-react';
 
 const ClientDashboard = () => {

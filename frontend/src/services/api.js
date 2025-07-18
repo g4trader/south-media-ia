@@ -17,7 +17,9 @@ const apiRequest = async (endpoint, options = {}) => {
   
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Erro na requisição' }));
-    throw { response: { data: error, status: response.status } };
+    const errorObj = new Error(error.detail || 'Erro na requisição');
+    errorObj.response = { data: error, status: response.status };
+    throw errorObj;
   }
 
   return { data: await response.json() };
