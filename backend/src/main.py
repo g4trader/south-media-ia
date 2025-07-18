@@ -14,8 +14,18 @@ from src.routes.dashboard import dashboard_bp
 app = Flask(__name__, static_folder='../static')
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
-# Enable CORS for all routes
-CORS(app, origins=['*'])
+# Enable CORS for all routes with specific origins
+CORS(app, 
+     origins=[
+         'https://south-media-ia.vercel.app',
+         'https://south-media-ia-git-main-south-medias-projects.vercel.app',
+         'https://south-media-ia-south-medias-projects.vercel.app',
+         'http://localhost:3000',
+         'http://localhost:8000'
+     ],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True)
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
