@@ -1,40 +1,33 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+# Configurar variáveis de ambiente
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8000
 
-# Install system dependencies and Python development headers
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libffi-dev \
-    libssl-dev \
-    python3-dev \
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip
-RUN pip install --no-cache-dir --upgrade pip
+# Criar diretório de trabalho
+WORKDIR /app
 
-# Copy requirements first for better caching
+# Copiar requirements e instalar dependências Python
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copiar código da aplicação
+COPY src/ ./src/
+COPY service-account.json ./service-account.json
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash app \
-    && chown -R app:app /app
+# Criar usuário não-root
+RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
 USER app
 
-# Expose port
-EXPOSE 8080
+# Expor porta
+EXPOSE $PORT
 
-# Set environment variables
-ENV FLASK_APP=src/main.py
-ENV FLASK_ENV=production
-ENV PORT=8080
-
-# Run the application
-CMD ["python", "src/main.py"]
+# Comando para iniciar a aplicação
+CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT
 
