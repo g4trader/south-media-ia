@@ -22,7 +22,7 @@ const AdminDashboard = () => {
     total_budget: 250000,
     total_impressions: 45000000
   });
-  const [clients, setClients] = useState([
+  const [clients] = useState([
     {
       client_id: 'client_001',
       name: 'TechCorp Brasil',
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
       status: 'active'
     }
   ]);
-  const [campaigns, setCampaigns] = useState([
+  const [campaigns] = useState([
     {
       campaign_id: 'camp_001',
       client_id: 'client_001',
