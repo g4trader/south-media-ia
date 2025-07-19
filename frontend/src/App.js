@@ -43,6 +43,7 @@ function AppContent() {
           />
           
           {/* Rotas públicas para clientes */}
+          <Route path="/dashboard" element={<ClientDashboard />} />
           <Route path="/client/:clientId" element={<ClientDashboard />} />
           <Route path="/client/:clientId/campaign/:campaignId" element={<ClientDashboard />} />
           
