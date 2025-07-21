@@ -3,7 +3,7 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, make_response
 from flask_cors import CORS
 from src.models.user import db
 from src.models.campaign import Campaign, Strategy, DeviceBreakdown
@@ -20,12 +20,46 @@ CORS(app,
          'https://south-media-ia.vercel.app',
          'https://south-media-ia-git-main-south-medias-projects.vercel.app',
          'https://south-media-ia-south-medias-projects.vercel.app',
+         'https://*.vercel.app',
          'http://localhost:3000',
          'http://localhost:8000'
      ],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allow_headers=['Content-Type', 'Authorization'],
-     supports_credentials=True)
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+     supports_credentials=True,
+     expose_headers=['Content-Type', 'Authorization'])
+
+# Add CORS headers manually for all responses
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin in [
+        'https://south-media-ia.vercel.app',
+        'https://south-media-ia-git-main-south-medias-projects.vercel.app',
+        'https://south-media-ia-south-medias-projects.vercel.app'
+    ] or (origin and origin.endswith('.vercel.app')):
+        response.headers.add('Access-Control-Allow-Origin', origin)
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
+# Handle preflight requests
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        origin = request.headers.get('Origin')
+        if origin in [
+            'https://south-media-ia.vercel.app',
+            'https://south-media-ia-git-main-south-medias-projects.vercel.app',
+            'https://south-media-ia-south-medias-projects.vercel.app'
+        ] or (origin and origin.endswith('.vercel.app')):
+            response.headers.add("Access-Control-Allow-Origin", origin)
+            response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
+            response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+            response.headers.add('Access-Control-Allow-Credentials', 'true')
+        return response
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -59,3 +93,4 @@ def serve(path):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
+
