@@ -8,6 +8,11 @@ const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
+  const [activeTab, setActiveTab] = useState('clients');
+  const [showClientModal, setShowClientModal] = useState(false);
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
   const [stats] = useState({
     total_clients: 3,
     active_campaigns: 5,
@@ -50,231 +55,318 @@ const AdminDashboard = () => {
       end_date: '2024-12-25',
       budget: 75000,
       status: 'active'
-    },
-    {
-      campaign_id: 'camp_003',
-      client_id: 'client_002',
-      name: 'Volta às Aulas 2025',
-      start_date: '2025-01-15',
-      end_date: '2025-02-28',
-      budget: 30000,
-      status: 'planning'
     }
   ]);
 
-  const [activeTab, setActiveTab] = useState('clients');
-  const [showClientModal, setShowClientModal] = useState(false);
-  const [showCampaignModal, setShowCampaignModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [editingClient, setEditingClient] = useState(null);
-  const [editingCampaign, setEditingCampaign] = useState(null);
-
   const handleLogout = () => {
     logout();
-    toast.success('Logout realizado com sucesso');
-  };
-
-  // Client handlers
-  const handleNewClient = () => {
-    setEditingClient(null);
-    setShowClientModal(true);
-  };
-
-  const handleEditClient = (client) => {
-    setEditingClient(client);
-    setShowClientModal(true);
+    toast.success('Logout realizado com sucesso!');
+    navigate('/admin/login');
   };
 
   const handleViewDashboard = (client) => {
-    // Navegar para o dashboard do cliente
-    navigate('/dashboard', { 
-      state: { 
-        clientId: client.client_id, 
-        clientName: client.name 
-      } 
-    });
     toast.success(`Abrindo dashboard de ${client.name}`);
-  };
-
-  // Campaign handlers
-  const handleNewCampaign = () => {
-    setEditingCampaign(null);
-    setShowCampaignModal(true);
-  };
-
-  const handleEditCampaign = (campaign) => {
-    setEditingCampaign(campaign);
-    setShowCampaignModal(true);
-  };
-
-  const handleUploadCSV = () => {
-    setShowUploadModal(true);
+    navigate('/dashboard', { state: { clientId: client.client_id, clientName: client.name } });
   };
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value || 0);
+    }).format(value);
   };
 
   const formatNumber = (value) => {
-    return new Intl.NumberFormat('pt-BR').format(value || 0);
+    return new Intl.NumberFormat('pt-BR').format(value);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0F0F23 0%, #16213E 100%)',
+      color: '#FFFFFF',
+      fontFamily: 'Inter, sans-serif'
+    }}>
       {/* Header */}
-      <header className="bg-slate-800/50 backdrop-blur-sm border-b border-purple-500/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">SM</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">South Media IA</h1>
-                <p className="text-gray-300 text-sm">Dashboard Administrativo</p>
-              </div>
+      <div style={{
+        background: '#1A1A2E',
+        border: '1px solid rgba(139, 92, 246, 0.2)',
+        borderRadius: '0 0 12px 12px',
+        padding: '1.5rem 2rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #F97316 100%)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '1.25rem' }}>SM</span>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-white font-medium">{user?.username}</p>
-                <p className="text-gray-300 text-sm">Administrador</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sair</span>
-              </button>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: 0 }}>
+                South Media IA
+              </h1>
+              <p style={{ color: '#A1A1AA', margin: 0, fontSize: '0.875rem' }}>Dashboard Administrativo</p>
             </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ color: 'white', fontWeight: '500', margin: 0 }}>{user?.username}</p>
+              <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>Administrador</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 1rem',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                color: '#EF4444',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(239, 68, 68, 0.2)';
+                e.target.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(239, 68, 68, 0.1)';
+                e.target.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+              }}
+            >
+              <LogOut style={{ width: '16px', height: '16px' }} />
+              Sair
+            </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div style={{ padding: '2rem' }}>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Total de Clientes</p>
-                <p className="text-3xl font-bold text-white">{stats.total_clients}</p>
-              </div>
-              <Users className="w-8 h-8 text-purple-400" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>TOTAL DE CLIENTES</span>
+              <Users style={{ width: '20px', height: '20px', color: '#8B5CF6' }} />
             </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{stats.total_clients}</div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Campanhas Ativas</p>
-                <p className="text-3xl font-bold text-white">{stats.active_campaigns}</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-green-400" />
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>CAMPANHAS ATIVAS</span>
+              <BarChart3 style={{ width: '20px', height: '20px', color: '#8B5CF6' }} />
             </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{stats.active_campaigns}</div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Orçamento Total</p>
-                <p className="text-3xl font-bold text-white">{formatCurrency(stats.total_budget)}</p>
-              </div>
-              <div className="text-2xl">💰</div>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>ORÇAMENTO TOTAL</span>
+              <span style={{ color: '#F97316', fontSize: '1.25rem' }}>💰</span>
             </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(stats.total_budget)}</div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Total Impressões</p>
-                <p className="text-3xl font-bold text-white">{formatNumber(stats.total_impressions)}</p>
-              </div>
-              <div className="text-2xl">👁️</div>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>TOTAL IMPRESSÕES</span>
+              <span style={{ color: '#3B82F6', fontSize: '1.25rem' }}>👁️</span>
             </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatNumber(stats.total_impressions)}</div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex space-x-1 bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-lg p-1">
-            <button
-              onClick={() => setActiveTab('clients')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                activeTab === 'clients'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Clientes</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('campaigns')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-colors ${
-                activeTab === 'campaigns'
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
-              }`}
-            >
-              <BarChart3 className="w-4 h-4" />
-              <span>Campanhas</span>
-            </button>
-          </div>
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
+          <button
+            onClick={() => setActiveTab('clients')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              background: activeTab === 'clients' ? '#8B5CF6' : 'transparent',
+              color: activeTab === 'clients' ? 'white' : '#A1A1AA',
+              border: activeTab === 'clients' ? 'none' : '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <Users style={{ width: '16px', height: '16px' }} />
+            Clientes
+          </button>
+          <button
+            onClick={() => setActiveTab('campaigns')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              background: activeTab === 'campaigns' ? '#8B5CF6' : 'transparent',
+              color: activeTab === 'campaigns' ? 'white' : '#A1A1AA',
+              border: activeTab === 'campaigns' ? 'none' : '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <BarChart3 style={{ width: '16px', height: '16px' }} />
+            Campanhas
+          </button>
         </div>
 
         {/* Content */}
         {activeTab === 'clients' && (
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Clientes</h2>
+          <div style={{
+            background: '#1A1A2E',
+            border: '1px solid rgba(139, 92, 246, 0.2)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0 }}>Clientes</h2>
               <button
-                onClick={handleNewClient}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                onClick={() => setShowClientModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)';
+                  e.target.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)';
+                  e.target.style.transform = 'translateY(0)';
+                }}
               >
-                <Plus className="w-4 h-4" />
-                <span>Novo Cliente</span>
+                <Plus style={{ width: '16px', height: '16px' }} />
+                Novo Cliente
               </button>
             </div>
-            
-            <div className="space-y-4">
+
+            <div style={{ display: 'grid', gap: '1rem' }}>
               {clients.map((client) => (
-                <div key={client.client_id} className="bg-slate-700/50 border border-purple-500/10 rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-lg font-semibold text-white">{client.name}</h3>
-                      <p className="text-gray-300">{client.company}</p>
-                      <p className="text-gray-400 text-sm">{client.contact_email}</p>
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-2 ${
-                        client.status === 'active' 
-                          ? 'bg-green-500/20 text-green-400' 
-                          : 'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleViewDashboard(client)}
-                        className="flex items-center space-x-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>Ver Dashboard</span>
-                      </button>
-                      <button
-                        onClick={() => handleEditClient(client)}
-                        className="flex items-center space-x-1 px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>Editar</span>
-                      </button>
-                    </div>
+                <div key={client.client_id} style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
+                      {client.name}
+                    </h3>
+                    <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>{client.company}</p>
+                    <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>{client.contact_email}</p>
+                    <span style={{
+                      display: 'inline-block',
+                      marginTop: '0.5rem',
+                      padding: '0.25rem 0.75rem',
+                      background: client.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: client.status === 'active' ? '#22C55E' : '#EF4444',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}>
+                      {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => handleViewDashboard(client)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '6px',
+                        color: '#3B82F6',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      }}
+                    >
+                      <Eye style={{ width: '16px', height: '16px' }} />
+                      Ver Dashboard
+                    </button>
+                    <button
+                      onClick={() => setShowClientModal(true)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '6px',
+                        color: '#8B5CF6',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                      }}
+                    >
+                      <Edit style={{ width: '16px', height: '16px' }} />
+                      Editar
+                    </button>
                   </div>
                 </div>
               ))}
@@ -283,207 +375,281 @@ const AdminDashboard = () => {
         )}
 
         {activeTab === 'campaigns' && (
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-white">Campanhas</h2>
-              <div className="flex space-x-2">
+          <div style={{
+            background: '#1A1A2E',
+            border: '1px solid rgba(139, 92, 246, 0.2)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0 }}>Campanhas</h2>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
-                  onClick={handleUploadCSV}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  onClick={() => setShowUploadModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    borderRadius: '8px',
+                    color: '#22C55E',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(34, 197, 94, 0.2)';
+                    e.target.style.borderColor = 'rgba(34, 197, 94, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(34, 197, 94, 0.1)';
+                    e.target.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                  }}
                 >
-                  <Upload className="w-4 h-4" />
-                  <span>Upload CSV</span>
+                  <Upload style={{ width: '16px', height: '16px' }} />
+                  Upload CSV
                 </button>
                 <button
-                  onClick={handleNewCampaign}
-                  className="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                  onClick={() => setShowCampaignModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.5rem',
+                    background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)';
+                    e.target.style.transform = 'translateY(-1px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Nova Campanha</span>
+                  <Plus style={{ width: '16px', height: '16px' }} />
+                  Nova Campanha
                 </button>
               </div>
             </div>
-            
-            <div className="space-y-4">
-              {campaigns.map((campaign) => {
-                const client = clients.find(c => c.client_id === campaign.client_id);
-                return (
-                  <div key={campaign.campaign_id} className="bg-slate-700/50 border border-purple-500/10 rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{campaign.name}</h3>
-                        <p className="text-gray-300">{client?.name}</p>
-                        <p className="text-gray-400 text-sm">
-                          {new Date(campaign.start_date).toLocaleDateString('pt-BR')} - {new Date(campaign.end_date).toLocaleDateString('pt-BR')}
-                        </p>
-                        <p className="text-gray-400 text-sm">Orçamento: {formatCurrency(campaign.budget)}</p>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-2 ${
-                          campaign.status === 'active' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : campaign.status === 'planning'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {campaign.status === 'active' ? 'Ativa' : campaign.status === 'planning' ? 'Planejamento' : 'Inativa'}
-                        </span>
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEditCampaign(campaign)}
-                          className="flex items-center space-x-1 px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                          <span>Editar</span>
-                        </button>
-                      </div>
-                    </div>
+
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {campaigns.map((campaign) => (
+                <div key={campaign.campaign_id} style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
+                      {campaign.name}
+                    </h3>
+                    <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>
+                      {campaign.start_date} a {campaign.end_date}
+                    </p>
+                    <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>
+                      Orçamento: {formatCurrency(campaign.budget)}
+                    </p>
+                    <span style={{
+                      display: 'inline-block',
+                      marginTop: '0.5rem',
+                      padding: '0.25rem 0.75rem',
+                      background: campaign.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                      color: campaign.status === 'active' ? '#22C55E' : '#EF4444',
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}>
+                      {campaign.status === 'active' ? 'Ativa' : 'Inativa'}
+                    </span>
                   </div>
-                );
-              })}
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => setShowCampaignModal(true)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '6px',
+                        color: '#8B5CF6',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                      }}
+                    >
+                      <Edit style={{ width: '16px', height: '16px' }} />
+                      Editar
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {/* Modals */}
       {showClientModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-800 border border-purple-500/20 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-white mb-4">
-              {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowClientModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem' }}>
+              Novo Cliente
             </h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nome do cliente"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white placeholder-gray-400"
-                defaultValue={editingClient?.name || ''}
-              />
-              <input
-                type="text"
-                placeholder="Empresa"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white placeholder-gray-400"
-                defaultValue={editingClient?.company || ''}
-              />
-              <input
-                type="email"
-                placeholder="Email de contato"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white placeholder-gray-400"
-                defaultValue={editingClient?.contact_email || ''}
-              />
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                onClick={() => setShowClientModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  toast.success(editingClient ? 'Cliente atualizado!' : 'Cliente criado!');
-                  setShowClientModal(false);
-                }}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              >
-                {editingClient ? 'Atualizar' : 'Criar'}
-              </button>
-            </div>
+            <p style={{ color: '#A1A1AA', marginBottom: '1rem' }}>
+              Funcionalidade em desenvolvimento. Modal de criação de cliente será implementado em breve.
+            </p>
+            <button
+              onClick={() => setShowClientModal(false)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Fechar
+            </button>
           </div>
         </div>
       )}
 
       {showCampaignModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-800 border border-purple-500/20 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-white mb-4">
-              {editingCampaign ? 'Editar Campanha' : 'Nova Campanha'}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowCampaignModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem' }}>
+              Nova Campanha
             </h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Nome da campanha"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white placeholder-gray-400"
-                defaultValue={editingCampaign?.name || ''}
-              />
-              <select className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white">
-                <option value="">Selecionar cliente</option>
-                {clients.map(client => (
-                  <option key={client.client_id} value={client.client_id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="date"
-                placeholder="Data de início"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white"
-                defaultValue={editingCampaign?.start_date || ''}
-              />
-              <input
-                type="date"
-                placeholder="Data de fim"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white"
-                defaultValue={editingCampaign?.end_date || ''}
-              />
-              <input
-                type="number"
-                placeholder="Orçamento"
-                className="w-full px-3 py-2 bg-slate-700 border border-purple-500/20 rounded-lg text-white placeholder-gray-400"
-                defaultValue={editingCampaign?.budget || ''}
-              />
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                onClick={() => setShowCampaignModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  toast.success(editingCampaign ? 'Campanha atualizada!' : 'Campanha criada!');
-                  setShowCampaignModal(false);
-                }}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              >
-                {editingCampaign ? 'Atualizar' : 'Criar'}
-              </button>
-            </div>
+            <p style={{ color: '#A1A1AA', marginBottom: '1rem' }}>
+              Funcionalidade em desenvolvimento. Modal de criação de campanha será implementado em breve.
+            </p>
+            <button
+              onClick={() => setShowCampaignModal(false)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Fechar
+            </button>
           </div>
         </div>
       )}
 
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-800 border border-purple-500/20 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-bold text-white mb-4">Upload CSV</h3>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-purple-500/20 rounded-lg p-8 text-center">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-300 mb-2">Arraste o arquivo CSV aqui</p>
-                <p className="text-gray-400 text-sm">ou clique para selecionar</p>
-                <input type="file" accept=".csv" className="hidden" />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  toast.success('Arquivo CSV processado com sucesso!');
-                  setShowUploadModal(false);
-                }}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-              >
-                Upload
-              </button>
-            </div>
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }} onClick={() => setShowUploadModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, #16213E 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '2rem',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', marginBottom: '1.5rem' }}>
+              Upload CSV
+            </h3>
+            <p style={{ color: '#A1A1AA', marginBottom: '1rem' }}>
+              Funcionalidade em desenvolvimento. Upload de dados CSV será implementado em breve.
+            </p>
+            <button
+              onClick={() => setShowUploadModal(false)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Fechar
+            </button>
           </div>
         </div>
       )}
