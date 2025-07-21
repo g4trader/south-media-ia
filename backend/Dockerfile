@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Configurar variáveis de ambiente
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
+ENV PORT=8080
 ENV FLASK_APP=src/main.py
 ENV FLASK_ENV=production
 
@@ -30,5 +30,5 @@ USER app
 EXPOSE $PORT
 
 # Comando para iniciar a aplicação com gunicorn
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 0 src.main:app
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 300 src.main:app
 

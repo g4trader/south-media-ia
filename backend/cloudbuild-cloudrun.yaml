@@ -24,11 +24,11 @@ steps:
       '--region', 'us-central1',
       '--platform', 'managed',
       '--allow-unauthenticated',
-      '--port', '8000',
-      '--memory', '1Gi',
-      '--cpu', '1',
+      '--port', '8080',
+      '--memory', '2Gi',
+      '--cpu', '2',
       '--max-instances', '10',
-      '--set-env-vars', 'PROJECT_ID=$PROJECT_ID,GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=south_media_dashboard',
       '--timeout', '300'
     ]
 
