@@ -1,75 +1,107 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://south-media-ia-backend-452311.uc.r.appspot.com/api'
+  : 'http://localhost:8080/api';
 
-const apiRequest = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
-  
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    ...options,
-  };
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-  
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Erro na requisição' }));
-    const errorObj = new Error(error.detail || 'Erro na requisição');
-    errorObj.response = { data: error, status: response.status };
-    throw errorObj;
+class ApiService {
+  constructor() {
+    this.baseURL = API_BASE_URL;
   }
 
-  return { data: await response.json() };
-};
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
 
-// Auth Service
-export const authService = {
-  login: (username, password) =>
-    apiRequest('/auth/login', {
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // Auth methods
+  async login(username, password) {
+    return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
-    }),
-  
-  me: () => apiRequest('/auth/me'),
-};
+    });
+  }
 
-// Client Service
-export const clientService = {
-  getAll: () => apiRequest('/clients'),
-  getById: (id) => apiRequest(`/clients/${id}`),
-  create: (data) => apiRequest('/clients', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  update: (id, data) => apiRequest(`/clients/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  delete: (id) => apiRequest(`/clients/${id}`, { method: 'DELETE' }),
-};
+  async logout() {
+    return this.request('/auth/logout', {
+      method: 'POST',
+    });
+  }
 
-// Campaign Service
-export const campaignService = {
-  getAll: () => apiRequest('/campaigns'),
-  getById: (id) => apiRequest(`/campaigns/${id}`),
-  getByClient: (clientId) => apiRequest(`/campaigns/client/${clientId}`),
-  create: (data) => apiRequest('/campaigns', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  }),
-  update: (id, data) => apiRequest(`/campaigns/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  }),
-  delete: (id) => apiRequest(`/campaigns/${id}`, { method: 'DELETE' }),
-};
+  // Admin Dashboard methods
+  async getAdminStats() {
+    return this.request('/dashboard/admin/stats');
+  }
 
-// Dashboard Service
-export const dashboardService = {
-  getStats: () => apiRequest('/dashboard/stats'),
-  getClientDashboard: (clientId, campaignId) => 
-    apiRequest(`/dashboard/client/${clientId}/campaign/${campaignId}`),
-};
+  async getClients() {
+    return this.request('/dashboard/admin/clients');
+  }
+
+  async getClientCampaigns(clientId) {
+    return this.request(`/dashboard/admin/clients/${clientId}/campaigns`);
+  }
+
+  // Campaign Dashboard methods
+  async getCampaignDashboard(campaignId) {
+    return this.request(`/dashboard/campaign/${campaignId}`);
+  }
+
+  async getCampaignStrategies(campaignId) {
+    return this.request(`/dashboard/campaign/${campaignId}/strategies`);
+  }
+
+  async getCampaignDeviceBreakdown(campaignId) {
+    return this.request(`/dashboard/campaign/${campaignId}/device-breakdown`);
+  }
+
+  async getCampaignPerformanceHistory(campaignId) {
+    return this.request(`/dashboard/campaign/${campaignId}/performance-history`);
+  }
+
+  // User management methods
+  async getUsers() {
+    return this.request('/users');
+  }
+
+  async createUser(userData) {
+    return this.request('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async updateUser(userId, userData) {
+    return this.request(`/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async deleteUser(userId) {
+    return this.request(`/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export default new ApiService();
 

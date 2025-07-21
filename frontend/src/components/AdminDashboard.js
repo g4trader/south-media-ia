@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Users, BarChart3, Plus, Eye, Edit, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -12,51 +13,59 @@ const AdminDashboard = () => {
   const [showClientModal, setShowClientModal] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  const [stats] = useState({
-    total_clients: 3,
-    active_campaigns: 5,
-    total_budget: 250000,
-    total_impressions: 45000000
+  const [stats, setStats] = useState({
+    total_clients: 0,
+    active_campaigns: 0,
+    total_budget: 0,
+    total_impressions: 0
   });
   
-  const [clients] = useState([
-    {
-      client_id: 'client_001',
-      name: 'TechCorp Brasil',
-      company: 'TechCorp',
-      contact_email: 'contato@techcorp.com.br',
-      status: 'active'
-    },
-    {
-      client_id: 'client_002',
-      name: 'EduSmart',
-      company: 'EduSmart Ltda',
-      contact_email: 'marketing@edusmart.com.br',
-      status: 'active'
+  const [clients, setClients] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load admin stats
+      const statsResponse = await apiService.getAdminStats();
+      if (statsResponse.success) {
+        setStats(statsResponse.data);
+      }
+      
+      // Load clients
+      const clientsResponse = await apiService.getClients();
+      if (clientsResponse.success) {
+        setClients(clientsResponse.data);
+        
+        // Load campaigns for all clients
+        const allCampaigns = [];
+        for (const client of clientsResponse.data) {
+          try {
+            const campaignsResponse = await apiService.getClientCampaigns(client.client_id);
+            if (campaignsResponse.success) {
+              allCampaigns.push(...campaignsResponse.data);
+            }
+          } catch (error) {
+            console.error(`Error loading campaigns for client ${client.client_id}:`, error);
+          }
+        }
+        setCampaigns(allCampaigns);
+      }
+      
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      toast.error('Erro ao carregar dados do dashboard');
+    } finally {
+      setLoading(false);
     }
-  ]);
-  
-  const [campaigns] = useState([
-    {
-      campaign_id: 'camp_001',
-      client_id: 'client_001',
-      name: 'Campanha Black Friday 2024',
-      start_date: '2024-11-01',
-      end_date: '2024-11-30',
-      budget: 50000,
-      status: 'active'
-    },
-    {
-      campaign_id: 'camp_002',
-      client_id: 'client_001',
-      name: 'Campanha Natal 2024',
-      start_date: '2024-12-01',
-      end_date: '2024-12-25',
-      budget: 75000,
-      status: 'active'
-    }
-  ]);
+  };
 
   const handleLogout = () => {
     logout();
@@ -65,8 +74,21 @@ const AdminDashboard = () => {
   };
 
   const handleViewDashboard = (client) => {
-    toast.success(`Abrindo dashboard de ${client.name}`);
-    navigate('/dashboard', { state: { clientId: client.client_id, clientName: client.name } });
+    // Get first campaign for this client
+    const clientCampaigns = campaigns.filter(c => c.client_id === client.client_id);
+    if (clientCampaigns.length > 0) {
+      const campaignId = clientCampaigns[0].campaign_id;
+      toast.success(`Abrindo dashboard de ${client.client_name}`);
+      navigate('/dashboard', { 
+        state: { 
+          clientId: client.client_id, 
+          clientName: client.client_name,
+          campaignId: campaignId
+        } 
+      });
+    } else {
+      toast.error('Nenhuma campanha encontrada para este cliente');
+    }
   };
 
   const formatCurrency = (value) => {
@@ -79,6 +101,41 @@ const AdminDashboard = () => {
   const formatNumber = (value) => {
     return new Intl.NumberFormat('pt-BR').format(value);
   };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #0F0F23 0%, #16213E 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontFamily: 'Inter, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid rgba(139, 92, 246, 0.3)',
+            borderTop: '4px solid #8B5CF6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem auto'
+          }}></div>
+          <p>Carregando dados do dashboard...</p>
+        </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -285,91 +342,101 @@ const AdminDashboard = () => {
             </div>
 
             <div style={{ display: 'grid', gap: '1rem' }}>
-              {clients.map((client) => (
-                <div key={client.client_id} style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
-                      {client.name}
-                    </h3>
-                    <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>{client.company}</p>
-                    <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>{client.contact_email}</p>
-                    <span style={{
-                      display: 'inline-block',
-                      marginTop: '0.5rem',
-                      padding: '0.25rem 0.75rem',
-                      background: client.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: client.status === 'active' ? '#22C55E' : '#EF4444',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
-                    }}>
-                      {client.status === 'active' ? 'Ativo' : 'Inativo'}
-                    </span>
+              {clients.map((client) => {
+                const clientCampaigns = campaigns.filter(c => c.client_id === client.client_id);
+                return (
+                  <div key={client.client_id} style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
+                        {client.client_name}
+                      </h3>
+                      <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>{client.company}</p>
+                      <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: '0 0 0.25rem 0' }}>{client.contact_email}</p>
+                      <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>
+                        {clientCampaigns.length} campanha{clientCampaigns.length !== 1 ? 's' : ''}
+                      </p>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.25rem 0.75rem',
+                        background: client.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        color: client.status === 'active' ? '#22C55E' : '#EF4444',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        {client.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => handleViewDashboard(client)}
+                        disabled={clientCampaigns.length === 0}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          background: clientCampaigns.length > 0 ? 'rgba(59, 130, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+                          border: clientCampaigns.length > 0 ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(107, 114, 128, 0.3)',
+                          borderRadius: '6px',
+                          color: clientCampaigns.length > 0 ? '#3B82F6' : '#6B7280',
+                          cursor: clientCampaigns.length > 0 ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (clientCampaigns.length > 0) {
+                            e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                            e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (clientCampaigns.length > 0) {
+                            e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                            e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                          }
+                        }}
+                      >
+                        <Eye style={{ width: '16px', height: '16px' }} />
+                        Ver Dashboard
+                      </button>
+                      <button
+                        onClick={() => setShowClientModal(true)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '6px',
+                          color: '#8B5CF6',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+                          e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                          e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                        }}
+                      >
+                        <Edit style={{ width: '16px', height: '16px' }} />
+                        Editar
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => handleViewDashboard(client)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        background: 'rgba(59, 130, 246, 0.1)',
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
-                        borderRadius: '6px',
-                        color: '#3B82F6',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
-                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(59, 130, 246, 0.1)';
-                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
-                      }}
-                    >
-                      <Eye style={{ width: '16px', height: '16px' }} />
-                      Ver Dashboard
-                    </button>
-                    <button
-                      onClick={() => setShowClientModal(true)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)',
-                        borderRadius: '6px',
-                        color: '#8B5CF6',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                      }}
-                    >
-                      <Edit style={{ width: '16px', height: '16px' }} />
-                      Editar
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -441,69 +508,109 @@ const AdminDashboard = () => {
             </div>
 
             <div style={{ display: 'grid', gap: '1rem' }}>
-              {campaigns.map((campaign) => (
-                <div key={campaign.campaign_id} style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  padding: '1.5rem',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
-                      {campaign.name}
-                    </h3>
-                    <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>
-                      {campaign.start_date} a {campaign.end_date}
-                    </p>
-                    <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>
-                      Orçamento: {formatCurrency(campaign.budget)}
-                    </p>
-                    <span style={{
-                      display: 'inline-block',
-                      marginTop: '0.5rem',
-                      padding: '0.25rem 0.75rem',
-                      background: campaign.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: campaign.status === 'active' ? '#22C55E' : '#EF4444',
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
-                    }}>
-                      {campaign.status === 'active' ? 'Ativa' : 'Inativa'}
-                    </span>
+              {campaigns.map((campaign) => {
+                const client = clients.find(c => c.client_id === campaign.client_id);
+                return (
+                  <div key={campaign.campaign_id} style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '8px',
+                    padding: '1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
+                        {campaign.campaign_name}
+                      </h3>
+                      <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>
+                        Cliente: {client?.client_name || 'N/A'}
+                      </p>
+                      <p style={{ color: '#A1A1AA', margin: '0 0 0.25rem 0' }}>
+                        {campaign.date_start} a {campaign.date_end}
+                      </p>
+                      <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0 }}>
+                        Orçamento: {formatCurrency(campaign.budget_contracted)}
+                      </p>
+                      <span style={{
+                        display: 'inline-block',
+                        marginTop: '0.5rem',
+                        padding: '0.25rem 0.75rem',
+                        background: campaign.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        color: campaign.status === 'active' ? '#22C55E' : '#EF4444',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        {campaign.status === 'active' ? 'Ativa' : 'Inativa'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => {
+                          navigate('/dashboard', { 
+                            state: { 
+                              clientId: campaign.client_id, 
+                              clientName: client?.client_name || 'Cliente',
+                              campaignId: campaign.campaign_id
+                            } 
+                          });
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          borderRadius: '6px',
+                          color: '#3B82F6',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                          e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                          e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                        }}
+                      >
+                        <Eye style={{ width: '16px', height: '16px' }} />
+                        Ver Dashboard
+                      </button>
+                      <button
+                        onClick={() => setShowCampaignModal(true)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          background: 'rgba(139, 92, 246, 0.1)',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          borderRadius: '6px',
+                          color: '#8B5CF6',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+                          e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                          e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                        }}
+                      >
+                        <Edit style={{ width: '16px', height: '16px' }} />
+                        Editar
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      onClick={() => setShowCampaignModal(true)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        background: 'rgba(139, 92, 246, 0.1)',
-                        border: '1px solid rgba(139, 92, 246, 0.3)',
-                        borderRadius: '6px',
-                        color: '#8B5CF6',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
-                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                      }}
-                    >
-                      <Edit style={{ width: '16px', height: '16px' }} />
-                      Editar
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
