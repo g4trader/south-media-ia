@@ -95,52 +95,74 @@ const ClientDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ 
+    <div style={{
+      minHeight: '100vh',
       background: 'linear-gradient(135deg, #0F0F23 0%, #16213E 100%)',
       color: '#FFFFFF',
       fontFamily: 'Inter, sans-serif'
     }}>
-      <div className="container mx-auto px-4 py-6">
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem' }}>
         {/* Header */}
-        <div className="flex justify-between items-center mb-8 p-6" style={{
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem',
+          padding: '1.5rem',
           background: '#1A1A2E',
           border: '1px solid rgba(139, 92, 246, 0.2)',
           borderRadius: '12px'
         }}>
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">SM</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #F97316 100%)',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '1.25rem' }}>SM</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">South Media</h1>
-              <p className="text-gray-400">Dashboard de Campanhas</p>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white', margin: 0 }}>South Media</h1>
+              <p style={{ color: '#A1A1AA', margin: 0 }}>Dashboard de Campanhas</p>
             </div>
           </div>
-          <div className="text-right">
-            <h2 className="text-xl font-semibold text-white">Campanha de Demonstração</h2>
-            <p className="text-gray-400">{campaignData.contracted.period}</p>
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'white', margin: 0 }}>Campanha de Demonstração</h2>
+            <p style={{ color: '#A1A1AA', margin: 0 }}>{campaignData.contracted.period}</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-2 mb-6">
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-6 py-3 rounded-lg transition-all duration-300 ${
-              activeTab === 'overview'
-                ? 'bg-purple-600 text-white'
-                : 'bg-transparent text-gray-400 border border-purple-600/30'
-            }`}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              background: activeTab === 'overview' ? '#8B5CF6' : 'transparent',
+              color: activeTab === 'overview' ? 'white' : '#A1A1AA',
+              border: activeTab === 'overview' ? 'none' : '1px solid rgba(139, 92, 246, 0.3)',
+              cursor: 'pointer'
+            }}
           >
             📊 Visão Geral
           </button>
           <button
             onClick={() => setActiveTab('insights')}
-            className={`px-6 py-3 rounded-lg transition-all duration-300 ${
-              activeTab === 'insights'
-                ? 'bg-purple-600 text-white'
-                : 'bg-transparent text-gray-400 border border-purple-600/30'
-            }`}
+            style={{
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              background: activeTab === 'insights' ? '#8B5CF6' : 'transparent',
+              color: activeTab === 'insights' ? 'white' : '#A1A1AA',
+              border: activeTab === 'insights' ? 'none' : '1px solid rgba(139, 92, 246, 0.3)',
+              cursor: 'pointer'
+            }}
           >
             🔍 Análise e Insights
           </button>
@@ -150,117 +172,132 @@ const ClientDashboard = () => {
         {activeTab === 'overview' && (
           <div>
             {/* Main Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="metric-card" style={{
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">VERBA CONTRATADA</span>
-                  <span className="text-purple-400">💰</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>VERBA CONTRATADA</span>
+                  <span style={{ color: '#8B5CF6', fontSize: '1.25rem' }}>💰</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatCurrency(campaignData.contracted.budget)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(campaignData.contracted.budget)}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">IMPRESSÕES CONTRATADAS</span>
-                  <span className="text-purple-400">👁️</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>IMPRESSÕES CONTRATADAS</span>
+                  <span style={{ color: '#8B5CF6', fontSize: '1.25rem' }}>👁️</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatNumber(campaignData.contracted.impressions)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatNumber(campaignData.contracted.impressions)}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">PERÍODO DA CAMPANHA</span>
-                  <span className="text-purple-400">📅</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>PERÍODO DA CAMPANHA</span>
+                  <span style={{ color: '#8B5CF6', fontSize: '1.25rem' }}>📅</span>
                 </div>
-                <div className="text-lg font-bold text-white">{campaignData.contracted.period}</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white' }}>{campaignData.contracted.period}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">OBJETIVO DA CAMPANHA</span>
-                  <span className="text-purple-400">🎯</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>OBJETIVO DA CAMPANHA</span>
+                  <span style={{ color: '#8B5CF6', fontSize: '1.25rem' }}>🎯</span>
                 </div>
-                <div className="text-lg font-bold text-white">{campaignData.contracted.objective}</div>
+                <div style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white' }}>{campaignData.contracted.objective}</div>
               </div>
             </div>
 
             {/* Performance Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="metric-card" style={{
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">VERBA UTILIZADA</span>
-                  <span className="text-red-400">💸</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>VERBA UTILIZADA</span>
+                  <span style={{ color: '#EF4444', fontSize: '1.25rem' }}>💸</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatCurrency(campaignData.performance.budgetUsed)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(campaignData.performance.budgetUsed)}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">IMPRESSÕES</span>
-                  <span className="text-blue-400">👁️</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>IMPRESSÕES</span>
+                  <span style={{ color: '#3B82F6', fontSize: '1.25rem' }}>👁️</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatNumber(campaignData.performance.impressions)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatNumber(campaignData.performance.impressions)}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">CLIQUES</span>
-                  <span className="text-green-400">👆</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>CLIQUES</span>
+                  <span style={{ color: '#22C55E', fontSize: '1.25rem' }}>👆</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatNumber(campaignData.performance.clicks)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatNumber(campaignData.performance.clicks)}</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">CPM</span>
-                  <span className="text-orange-400">📊</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>CPM</span>
+                  <span style={{ color: '#F97316', fontSize: '1.25rem' }}>📊</span>
                 </div>
-                <div className="text-2xl font-bold text-white">{formatCurrency(campaignData.performance.cpm)}</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(campaignData.performance.cpm)}</div>
               </div>
             </div>
 
             {/* Charts and Progress */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
+            }}>
               {/* CPC Chart */}
               <div style={{
                 background: '#1A1A2E',
@@ -268,15 +305,23 @@ const ClientDashboard = () => {
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <h3 className="text-lg font-semibold mb-4 text-white">CUSTO POR OBJETIVO</h3>
-                <div className="text-center mb-4">
-                  <span className="text-sm text-gray-400">CPC</span>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>CUSTO POR OBJETIVO</h3>
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#A1A1AA' }}>CPC</span>
                 </div>
                 <div style={{ height: '200px' }}>
                   <Line data={cpcChartData} options={cpcChartOptions} />
                 </div>
-                <div className="text-center mt-4">
-                  <div className="bg-blue-500 text-white px-4 py-2 rounded">R$ 2,47</div>
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <div style={{
+                    background: '#3B82F6',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    display: 'inline-block'
+                  }}>
+                    R$ 2,47
+                  </div>
                 </div>
               </div>
 
@@ -287,22 +332,22 @@ const ClientDashboard = () => {
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <h3 className="text-lg font-semibold mb-4 text-white">IMPRESSÕES POR DISPOSITIVO</h3>
-                <div className="flex justify-center mb-4" style={{ height: '200px' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>IMPRESSÕES POR DISPOSITIVO</h3>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem', height: '200px' }}>
                   <Doughnut data={deviceChartData} options={deviceChartOptions} />
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-blue-400">■ Mobile</span>
-                    <span className="text-white">80.62%</span>
+                <div style={{ fontSize: '0.875rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#3B82F6' }}>■ Mobile</span>
+                    <span style={{ color: 'white' }}>80.62%</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-400">■ Desktop</span>
-                    <span className="text-white">18.53%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#8B5CF6' }}>■ Desktop</span>
+                    <span style={{ color: 'white' }}>18.53%</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-orange-400">■ Tablets</span>
-                    <span className="text-white">0.84%</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#F97316' }}>■ Tablets</span>
+                    <span style={{ color: 'white' }}>0.84%</span>
                   </div>
                 </div>
               </div>
@@ -314,13 +359,13 @@ const ClientDashboard = () => {
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <h3 className="text-lg font-semibold mb-4 text-white">PROGRESSO</h3>
-                <div className="text-center mb-4">
-                  <span className="text-sm text-gray-400">CTR: 0.15%</span>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>PROGRESSO</h3>
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#A1A1AA' }}>CTR: 0.15%</span>
                 </div>
-                <div className="flex justify-around items-center">
-                  <div className="text-center">
-                    <div className="progress-circle mb-2" style={{
+                <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
                       width: '80px',
                       height: '80px',
                       borderRadius: '50%',
@@ -328,7 +373,8 @@ const ClientDashboard = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      position: 'relative'
+                      position: 'relative',
+                      marginBottom: '0.5rem'
                     }}>
                       <div style={{
                         width: '60px',
@@ -344,10 +390,10 @@ const ClientDashboard = () => {
                         color: '#8B5CF6'
                       }}>106%</span>
                     </div>
-                    <div className="text-xs text-gray-400">IMPRESSÕES</div>
+                    <div style={{ fontSize: '0.75rem', color: '#A1A1AA' }}>IMPRESSÕES</div>
                   </div>
-                  <div className="text-center">
-                    <div className="progress-circle mb-2" style={{
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
                       width: '80px',
                       height: '80px',
                       borderRadius: '50%',
@@ -355,7 +401,8 @@ const ClientDashboard = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      position: 'relative'
+                      position: 'relative',
+                      marginBottom: '0.5rem'
                     }}>
                       <div style={{
                         width: '60px',
@@ -371,7 +418,7 @@ const ClientDashboard = () => {
                         color: '#8B5CF6'
                       }}>100%</span>
                     </div>
-                    <div className="text-xs text-gray-400">VERBA UTILIZADA</div>
+                    <div style={{ fontSize: '0.75rem', color: '#A1A1AA' }}>VERBA UTILIZADA</div>
                   </div>
                 </div>
               </div>
@@ -384,40 +431,40 @@ const ClientDashboard = () => {
               borderRadius: '12px',
               padding: '1.5rem'
             }}>
-              <h3 className="text-lg font-semibold mb-4 text-white">Estratégias</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>Estratégias</h3>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: '0.875rem' }}>
                   <thead>
-                    <tr className="border-b border-gray-600">
-                      <th className="text-left py-3 text-gray-400">ESTRATÉGIA</th>
-                      <th className="text-right py-3 text-gray-400">VERBA UTILIZADA</th>
-                      <th className="text-right py-3 text-gray-400">IMPRESSÕES</th>
-                      <th className="text-right py-3 text-gray-400">CLIQUES</th>
-                      <th className="text-right py-3 text-gray-400">CTR</th>
-                      <th className="text-right py-3 text-gray-400">CPM</th>
-                      <th className="text-right py-3 text-gray-400">CPC</th>
+                    <tr style={{ borderBottom: '1px solid #374151' }}>
+                      <th style={{ textAlign: 'left', padding: '0.75rem', color: '#A1A1AA' }}>ESTRATÉGIA</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>VERBA UTILIZADA</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>IMPRESSÕES</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>CLIQUES</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>CTR</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>CPM</th>
+                      <th style={{ textAlign: 'right', padding: '0.75rem', color: '#A1A1AA' }}>CPC</th>
                     </tr>
                   </thead>
-                  <tbody className="text-white">
+                  <tbody style={{ color: 'white' }}>
                     {campaignData.strategies.map((strategy, index) => (
-                      <tr key={index} className="border-b border-gray-700">
-                        <td className="py-3">{strategy.name}</td>
-                        <td className="text-right">{formatCurrency(strategy.budget)}</td>
-                        <td className="text-right">{formatNumber(strategy.impressions)}</td>
-                        <td className="text-right">{formatNumber(strategy.clicks)}</td>
-                        <td className="text-right">{(strategy.ctr * 100).toFixed(2)}%</td>
-                        <td className="text-right">{formatCurrency(strategy.cpm)}</td>
-                        <td className="text-right">{formatCurrency(strategy.cpc)}</td>
+                      <tr key={index} style={{ borderBottom: '1px solid #374151' }}>
+                        <td style={{ padding: '0.75rem' }}>{strategy.name}</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{formatCurrency(strategy.budget)}</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{formatNumber(strategy.impressions)}</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{formatNumber(strategy.clicks)}</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{(strategy.ctr * 100).toFixed(2)}%</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{formatCurrency(strategy.cpm)}</td>
+                        <td style={{ textAlign: 'right', padding: '0.75rem' }}>{formatCurrency(strategy.cpc)}</td>
                       </tr>
                     ))}
-                    <tr className="bg-gray-800">
-                      <td className="py-3 font-bold">TOTAL</td>
-                      <td className="text-right font-bold">{formatCurrency(campaignData.performance.budgetUsed)}</td>
-                      <td className="text-right font-bold">{formatNumber(campaignData.performance.impressions)}</td>
-                      <td className="text-right font-bold">{formatNumber(campaignData.performance.clicks)}</td>
-                      <td className="text-right font-bold">0.15%</td>
-                      <td className="text-right font-bold">{formatCurrency(campaignData.performance.cpm)}</td>
-                      <td className="text-right font-bold">R$ 2,47</td>
+                    <tr style={{ background: '#374151' }}>
+                      <td style={{ padding: '0.75rem', fontWeight: 'bold' }}>TOTAL</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>{formatCurrency(campaignData.performance.budgetUsed)}</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>{formatNumber(campaignData.performance.impressions)}</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>{formatNumber(campaignData.performance.clicks)}</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>0.15%</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>{formatCurrency(campaignData.performance.cpm)}</td>
+                      <td style={{ textAlign: 'right', padding: '0.75rem', fontWeight: 'bold' }}>R$ 2,47</td>
                     </tr>
                   </tbody>
                 </table>
@@ -429,63 +476,68 @@ const ClientDashboard = () => {
         {/* Insights Tab */}
         {activeTab === 'insights' && (
           <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="metric-card" style={{
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
+            }}>
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">SCORE DE PERFORMANCE</span>
-                  <span className="text-purple-400">🎯</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>SCORE DE PERFORMANCE</span>
+                  <span style={{ color: '#8B5CF6', fontSize: '1.25rem' }}>🎯</span>
                 </div>
-                <div className="text-3xl font-bold text-white mb-2">78/100</div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div className="bg-purple-500 h-2 rounded-full" style={{ width: '78%' }}></div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white', marginBottom: '0.5rem' }}>78/100</div>
+                <div style={{ width: '100%', background: '#374151', borderRadius: '9999px', height: '8px' }}>
+                  <div style={{ background: '#8B5CF6', height: '8px', borderRadius: '9999px', width: '78%' }}></div>
                 </div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">EFICIÊNCIA DE ORÇAMENTO</span>
-                  <span className="text-orange-400">📊</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>EFICIÊNCIA DE ORÇAMENTO</span>
+                  <span style={{ color: '#F97316', fontSize: '1.25rem' }}>📊</span>
                 </div>
-                <div className="text-3xl font-bold text-white">1.06x</div>
-                <div className="text-sm text-green-400">Superentrega</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: 'white' }}>1.06x</div>
+                <div style={{ fontSize: '0.875rem', color: '#22C55E' }}>Superentrega</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">BENCHMARK GERAL</span>
-                  <span className="text-blue-400">⚡</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>BENCHMARK GERAL</span>
+                  <span style={{ color: '#3B82F6', fontSize: '1.25rem' }}>⚡</span>
                 </div>
-                <div className="text-2xl font-bold text-blue-400">Good</div>
-                <div className="text-sm text-gray-400">vs. mercado</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3B82F6' }}>Good</div>
+                <div style={{ fontSize: '0.875rem', color: '#A1A1AA' }}>vs. mercado</div>
               </div>
               
-              <div className="metric-card" style={{
+              <div style={{
                 background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-400 text-sm">DISPOSITIVO DOMINANTE</span>
-                  <span className="text-green-400">📱</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>DISPOSITIVO DOMINANTE</span>
+                  <span style={{ color: '#22C55E', fontSize: '1.25rem' }}>📱</span>
                 </div>
-                <div className="text-2xl font-bold text-white">Mobile</div>
-                <div className="text-sm text-gray-400">Dominância móvel</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>Mobile</div>
+                <div style={{ fontSize: '0.875rem', color: '#A1A1AA' }}>Dominância móvel</div>
               </div>
             </div>
 
@@ -497,60 +549,98 @@ const ClientDashboard = () => {
               padding: '1.5rem',
               marginBottom: '2rem'
             }}>
-              <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white', display: 'flex', alignItems: 'center' }}>
                 ⚠️ Alertas de Performance
               </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-red-900/30 border border-red-500/30 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-yellow-400">⚠️</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color: '#FBBF24' }}>⚠️</span>
                     <div>
-                      <div className="text-white font-medium">Orçamento quase esgotado (&gt;95%)</div>
-                      <div className="text-gray-400 text-sm">Budget</div>
+                      <div style={{ color: 'white', fontWeight: '500' }}>Orçamento quase esgotado (&gt;95%)</div>
+                      <div style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>Budget</div>
                     </div>
                   </div>
-                  <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">high</span>
+                  <span style={{
+                    background: '#EF4444',
+                    color: 'white',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem'
+                  }}>high</span>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-blue-400">ℹ️</span>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0.75rem',
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ color: '#3B82F6' }}>ℹ️</span>
                     <div>
-                      <div className="text-white font-medium">CTR estável nas últimas 48h</div>
-                      <div className="text-gray-400 text-sm">Performance</div>
+                      <div style={{ color: 'white', fontWeight: '500' }}>CTR estável nas últimas 48h</div>
+                      <div style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>Performance</div>
                     </div>
                   </div>
-                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">low</span>
+                  <span style={{
+                    background: '#3B82F6',
+                    color: 'white',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem'
+                  }}>low</span>
                 </div>
               </div>
             </div>
 
             {/* Best and Worst Strategies */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '1.5rem',
+              marginBottom: '2rem'
+            }}>
               <div style={{
                 background: '#1A1A2E',
                 border: '1px solid rgba(139, 92, 246, 0.2)',
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <h3 className="text-lg font-semibold mb-4 text-white">Melhor Estratégia</h3>
-                <div className="bg-green-900/30 border border-green-500/30 rounded-lg p-4">
-                  <h4 className="font-bold text-white mb-3">DRG - Retargeting de todo o site</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>Melhor Estratégia</h3>
+                <div style={{
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  borderRadius: '8px',
+                  padding: '1rem'
+                }}>
+                  <h4 style={{ fontWeight: 'bold', color: 'white', marginBottom: '0.75rem' }}>DRG - Retargeting de todo o site</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
                     <div>
-                      <div className="text-gray-400">Score de Eficiência</div>
-                      <div className="text-green-400 font-bold text-xl">125</div>
+                      <div style={{ color: '#A1A1AA' }}>Score de Eficiência</div>
+                      <div style={{ color: '#22C55E', fontWeight: 'bold', fontSize: '1.25rem' }}>125</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">CTR</div>
-                      <div className="text-white font-bold">25.00%</div>
+                      <div style={{ color: '#A1A1AA' }}>CTR</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>25.00%</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">CPC</div>
-                      <div className="text-white font-bold">R$ 2.00</div>
+                      <div style={{ color: '#A1A1AA' }}>CPC</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>R$ 2.00</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">Volume</div>
-                      <div className="text-white font-bold">2.0M</div>
+                      <div style={{ color: '#A1A1AA' }}>Volume</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>2.0M</div>
                     </div>
                   </div>
                 </div>
@@ -562,25 +652,30 @@ const ClientDashboard = () => {
                 borderRadius: '12px',
                 padding: '1.5rem'
               }}>
-                <h3 className="text-lg font-semibold mb-4 text-white">Estratégia para Otimizar</h3>
-                <div className="bg-red-900/30 border border-red-500/30 rounded-lg p-4">
-                  <h4 className="font-bold text-white mb-3">DWL - Sites do Segmento</h4>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white' }}>Estratégia para Otimizar</h3>
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px',
+                  padding: '1rem'
+                }}>
+                  <h4 style={{ fontWeight: 'bold', color: 'white', marginBottom: '0.75rem' }}>DWL - Sites do Segmento</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', fontSize: '0.875rem' }}>
                     <div>
-                      <div className="text-gray-400">Score de Eficiência</div>
-                      <div className="text-red-400 font-bold text-xl">8.8</div>
+                      <div style={{ color: '#A1A1AA' }}>Score de Eficiência</div>
+                      <div style={{ color: '#EF4444', fontWeight: 'bold', fontSize: '1.25rem' }}>8.8</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">CTR</div>
-                      <div className="text-white font-bold">14.00%</div>
+                      <div style={{ color: '#A1A1AA' }}>CTR</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>14.00%</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">CPC</div>
-                      <div className="text-white font-bold">R$ 3.13</div>
+                      <div style={{ color: '#A1A1AA' }}>CPC</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>R$ 3.13</div>
                     </div>
                     <div>
-                      <div className="text-gray-400">Volume</div>
-                      <div className="text-white font-bold">4.0M</div>
+                      <div style={{ color: '#A1A1AA' }}>Volume</div>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>4.0M</div>
                     </div>
                   </div>
                 </div>
@@ -595,43 +690,118 @@ const ClientDashboard = () => {
               padding: '1.5rem',
               marginBottom: '2rem'
             }}>
-              <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white', display: 'flex', alignItems: 'center' }}>
                 🔍 Recomendações de Otimização
               </h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-white">Otimização de Orçamento</h4>
-                    <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">high</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{
+                  padding: '1rem',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontWeight: 'bold', color: 'white' }}>Otimização de Orçamento</h4>
+                    <span style={{
+                      background: '#EF4444',
+                      color: 'white',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>high</span>
                   </div>
-                  <p className="text-gray-300 text-sm mb-2">Campanha está superentregando impressões. Considere renegociar orçamento ou ajustar targeting.</p>
-                  <div className="flex space-x-2">
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">budget</span>
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">cost reduction</span>
+                  <p style={{ color: '#D1D5DB', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    Campanha está superentregando impressões. Considere renegociar orçamento ou ajustar targeting.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>budget</span>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>cost reduction</span>
                   </div>
                 </div>
                 
-                <div className="p-4 bg-yellow-900/30 border border-yellow-500/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-white">Otimização de CPC</h4>
-                    <span className="bg-yellow-500 text-white px-2 py-1 rounded text-xs">medium</span>
+                <div style={{
+                  padding: '1rem',
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontWeight: 'bold', color: 'white' }}>Otimização de CPC</h4>
+                    <span style={{
+                      background: '#F59E0B',
+                      color: 'white',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>medium</span>
                   </div>
-                  <p className="text-gray-300 text-sm mb-2">3 estratégias com CPC alto. Revisar targeting e criativos.</p>
-                  <div className="flex space-x-2">
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">strategy</span>
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">performance improvement</span>
+                  <p style={{ color: '#D1D5DB', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    3 estratégias com CPC alto. Revisar targeting e criativos.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>strategy</span>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>performance improvement</span>
                   </div>
                 </div>
                 
-                <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-white">Renovação de Criativos</h4>
-                    <span className="bg-red-500 text-white px-2 py-1 rounded text-xs">high</span>
+                <div style={{
+                  padding: '1rem',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <h4 style={{ fontWeight: 'bold', color: 'white' }}>Renovação de Criativos</h4>
+                    <span style={{
+                      background: '#EF4444',
+                      color: 'white',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>high</span>
                   </div>
-                  <p className="text-gray-300 text-sm mb-2">CTR geral abaixo da média. Implementar testes A/B com novos formatos.</p>
-                  <div className="flex space-x-2">
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">creative</span>
-                    <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">engagement improvement</span>
+                  <p style={{ color: '#D1D5DB', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                    CTR geral abaixo da média. Implementar testes A/B com novos formatos.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>creative</span>
+                    <span style={{
+                      background: '#374151',
+                      color: '#D1D5DB',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem'
+                    }}>engagement improvement</span>
                   </div>
                 </div>
               </div>
@@ -644,46 +814,52 @@ const ClientDashboard = () => {
               borderRadius: '12px',
               padding: '1.5rem'
             }}>
-              <h3 className="text-lg font-semibold mb-4 text-white flex items-center">
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem', color: 'white', display: 'flex', alignItems: 'center' }}>
                 📈 Análise de Tendências
               </h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 <div>
-                  <h4 className="font-semibold text-white mb-3">Tendências Atuais</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">CPC Trend</span>
-                      <span className="text-green-400 flex items-center">📉 Decreasing</span>
+                  <h4 style={{ fontWeight: '600', color: 'white', marginBottom: '0.75rem' }}>Tendências Atuais</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>CPC Trend</span>
+                      <span style={{ color: '#22C55E', display: 'flex', alignItems: 'center' }}>📉 Decreasing</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">CTR Trend</span>
-                      <span className="text-blue-400 flex items-center">📊 Stable</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>CTR Trend</span>
+                      <span style={{ color: '#3B82F6', display: 'flex', alignItems: 'center' }}>📊 Stable</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Volume Trend</span>
-                      <span className="text-green-400 flex items-center">📈 Increasing</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>Volume Trend</span>
+                      <span style={{ color: '#22C55E', display: 'flex', alignItems: 'center' }}>📈 Increasing</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Efficiency Trend</span>
-                      <span className="text-green-400 flex items-center">📈 Improving</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>Efficiency Trend</span>
+                      <span style={{ color: '#22C55E', display: 'flex', alignItems: 'center' }}>📈 Improving</span>
                     </div>
                   </div>
                 </div>
                 
                 <div>
-                  <h4 className="font-semibold text-white mb-3">Previsões</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Gasto Projetado</span>
-                      <span className="text-white font-bold">R$ 105.000</span>
+                  <h4 style={{ fontWeight: '600', color: 'white', marginBottom: '0.75rem' }}>Previsões</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>Gasto Projetado</span>
+                      <span style={{ color: 'white', fontWeight: 'bold' }}>R$ 105.000</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Impressões Projetadas</span>
-                      <span className="text-white font-bold">27.500.000</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>Impressões Projetadas</span>
+                      <span style={{ color: 'white', fontWeight: 'bold' }}>27.500.000</span>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Ritmo do Orçamento</span>
-                      <span className="bg-purple-500 text-white px-2 py-1 rounded text-xs">on track</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#A1A1AA' }}>Ritmo do Orçamento</span>
+                      <span style={{
+                        background: '#8B5CF6',
+                        color: 'white',
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem'
+                      }}>on track</span>
                     </div>
                   </div>
                 </div>
