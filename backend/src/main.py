@@ -42,6 +42,7 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
      expose_headers=['Content-Type', 'Authorization'])
 
 # Add CORS headers manually for all responses
+@app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
     if origin in [
@@ -110,7 +111,6 @@ if __name__ == '__main__':
 @app.route('/api/<path:dummy>', methods=['OPTIONS'])
 def handle_options(dummy):
     response = make_response()
-    response.status_code = 200
     origin = request.headers.get('Origin')
     if origin in ALLOWED_ORIGINS:
         response.headers['Access-Control-Allow-Origin'] = origin
@@ -118,4 +118,4 @@ def handle_options(dummy):
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
     response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-    return response
+    return response, 204
