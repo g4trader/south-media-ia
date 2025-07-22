@@ -12,18 +12,30 @@ from src.routes.auth import auth_bp
 from src.routes.dashboard import dashboard_bp
 
 app = Flask(__name__, static_folder='../static')
+
+
+ALLOWED_ORIGINS = {
+    'https://south-media-ia.vercel.app',
+    'https://south-media-ia-git-main-south-medias-projects.vercel.app',
+    'https://south-media-ia-south-medias-projects.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:8000'
+}
+
+@app.after_request
+def apply_cors(response):
+    origin = request.headers.get('Origin')
+    if origin in ALLOWED_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Vary'] = 'Origin'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    return response
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Enable CORS for all routes with specific origins
-CORS(app, 
-     origins=[
-         'https://south-media-ia.vercel.app',
-         'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-         'https://south-media-ia-south-medias-projects.vercel.app',
-         'https://*.vercel.app',
-         'http://localhost:3000',
-         'http://localhost:8000'
-     ],
+,
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
      supports_credentials=True,
