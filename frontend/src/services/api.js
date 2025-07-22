@@ -1,5 +1,5 @@
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://south-media-ia-backend-452311.uc.r.appspot.com/api'
+  ? 'https://south-media-ia-backend-609095880025.us-central1.run.app/api'
   : 'http://localhost:8080/api';
 
 class ApiService {
@@ -9,7 +9,7 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -20,11 +20,11 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -104,4 +104,3 @@ class ApiService {
 }
 
 export default new ApiService();
-
