@@ -7,9 +7,7 @@ import apiService from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
-const ClientDashboard = () => {
-  const location = useLocation();
-  const { clientId, clientName, campaignId } = location.state || {};
+const ClientDashboard = () => { campaignId } = location.state || {};
   
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -22,9 +20,9 @@ const ClientDashboard = () => {
       toast.error('ID da campanha não fornecido');
       setLoading(false);
     }
-  }, [campaignId]);
+  }, [campaignId, loadDashboardData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getCampaignDashboard(campaignId);
