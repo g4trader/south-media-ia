@@ -40,7 +40,7 @@ const ClientDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [campaignId]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
