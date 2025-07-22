@@ -42,7 +42,6 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
      expose_headers=['Content-Type', 'Authorization'])
 
 # Add CORS headers manually for all responses
-@app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
     if origin in [
