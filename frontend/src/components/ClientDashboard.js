@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
@@ -9,7 +9,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const ClientDashboard = () => {
   const location = useLocation();
-  const { campaignId } = location.state || {};
+  const { campaignId, clientName } = location.state || {};
   
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
