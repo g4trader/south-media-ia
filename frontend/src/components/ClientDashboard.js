@@ -15,15 +15,6 @@ const ClientDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    if (campaignId) {
-      loadDashboardData();
-    } else {
-      toast.error('ID da campanha não fornecido');
-      setLoading(false);
-    }
-  }, [campaignId, loadDashboardData]);
-
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,6 +32,15 @@ const ClientDashboard = () => {
       setLoading(false);
     }
   }, [campaignId]);
+  useEffect(() => {
+    if (campaignId) {
+      loadDashboardData();
+    } else {
+      toast.error('ID da campanha não fornecido');
+      setLoading(false);
+    }
+  }, [campaignId, loadDashboardData]);
+
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
