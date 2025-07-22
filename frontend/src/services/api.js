@@ -103,4 +103,6 @@ class ApiService {
   }
 }
 
-export default new ApiService();
+const authService = new ApiService();
+export default authService;
+export { authService };
