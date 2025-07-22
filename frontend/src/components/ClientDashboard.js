@@ -7,7 +7,9 @@ import apiService from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement);
 
-const ClientDashboard = () => { campaignId } = location.state || {};
+const ClientDashboard = () => {
+  const location = useLocation();
+  const { campaignId } = location.state || {};
   
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -754,4 +756,3 @@ const ClientDashboard = () => { campaignId } = location.state || {};
 };
 
 export default ClientDashboard;
-
