@@ -23,19 +23,25 @@ const AdminLogin = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      await login(formData.username, formData.password);
+  try {
+    const result = await login(formData.username, formData.password);
+
+    if (result.success) {
       toast.success('Login realizado com sucesso!');
       navigate('/admin/dashboard');
-    } catch (error) {
-      toast.error(error.message || 'Erro ao fazer login');
-    } finally {
-      setIsLoading(false);
+    } else {
+      toast.error(result.error || 'Erro ao fazer login');
     }
-  };
+
+  } catch (error) {
+    toast.error(error.message || 'Erro ao fazer login');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div style={{
