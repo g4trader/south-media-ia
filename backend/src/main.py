@@ -17,6 +17,8 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 # Enable CORS for all routes with specific origins
 CORS(app, 
      origins=[
+         'https://dash.iasouth.tech',
+         'https://api.iasouth.tech',
          'https://south-media-ia.vercel.app',
          'https://south-media-ia-git-main-south-medias-projects.vercel.app',
          'https://south-media-ia-south-medias-projects.vercel.app',
@@ -34,6 +36,8 @@ CORS(app,
 def after_request(response):
     origin = request.headers.get('Origin')
     if origin in [
+        'https://dash.iasouth.tech',
+        'https://api.iasouth.tech',
         'https://south-media-ia.vercel.app',
         'https://south-media-ia-git-main-south-medias-projects.vercel.app',
         'https://south-media-ia-south-medias-projects.vercel.app'
@@ -51,6 +55,8 @@ def handle_preflight():
         response = make_response()
         origin = request.headers.get('Origin')
         if origin in [
+            'https://dash.iasouth.tech',
+            'https://api.iasouth.tech',
             'https://south-media-ia.vercel.app',
             'https://south-media-ia-git-main-south-medias-projects.vercel.app',
             'https://south-media-ia-south-medias-projects.vercel.app'

@@ -1,5 +1,5 @@
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://south-media-ia-backend-452311.uc.r.appspot.com/api'
+  ? 'https://api.iasouth.tech/api'
   : 'http://localhost:8080/api';
 
 class ApiService {
