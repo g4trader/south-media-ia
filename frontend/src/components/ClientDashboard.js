@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
@@ -9,22 +9,13 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 const ClientDashboard = () => {
   const location = useLocation();
-  const { clientId, clientName, campaignId } = location.state || {};
+  const { campaignId, clientName } = location.state || {};
   
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    if (campaignId) {
-      loadDashboardData();
-    } else {
-      toast.error('ID da campanha não fornecido');
-      setLoading(false);
-    }
-  }, [campaignId]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getCampaignDashboard(campaignId);
@@ -40,7 +31,16 @@ const ClientDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [campaignId]);
+  useEffect(() => {
+    if (campaignId) {
+      loadDashboardData();
+    } else {
+      toast.error('ID da campanha não fornecido');
+      setLoading(false);
+    }
+  }, [campaignId, loadDashboardData]);
+
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -756,4 +756,3 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
-

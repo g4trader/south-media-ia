@@ -11,21 +11,20 @@ from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.dashboard import dashboard_bp
 
+# Allowed origins for CORS
+ALLOWED_ORIGINS = {
+    'https://dash.iasouth.tech',
+    'https://api.iasouth.tech',
+    'http://localhost:3000',
+    'http://localhost:8000'
+}
+
 app = Flask(__name__, static_folder='../static')
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Enable CORS for all routes with specific origins
 CORS(app, 
-     origins=[
-         'https://dash.iasouth.tech',
-         'https://api.iasouth.tech',
-         'https://south-media-ia.vercel.app',
-         'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-         'https://south-media-ia-south-medias-projects.vercel.app',
-         'https://*.vercel.app',
-         'http://localhost:3000',
-         'http://localhost:8000'
-     ],
+     origins=list(ALLOWED_ORIGINS),
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
      supports_credentials=True,
@@ -35,13 +34,7 @@ CORS(app,
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin in [
-        'https://dash.iasouth.tech',
-        'https://api.iasouth.tech',
-        'https://south-media-ia.vercel.app',
-        'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-        'https://south-media-ia-south-medias-projects.vercel.app'
-    ] or (origin and origin.endswith('.vercel.app')):
+    if origin in ALLOWED_ORIGINS:
         response.headers.add('Access-Control-Allow-Origin', origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
@@ -50,17 +43,11 @@ def after_request(response):
 
 # Handle preflight requests
 @app.before_request
-def handle_preflight():
+def before_request():
     if request.method == "OPTIONS":
         response = make_response()
         origin = request.headers.get('Origin')
-        if origin in [
-            'https://dash.iasouth.tech',
-            'https://api.iasouth.tech',
-            'https://south-media-ia.vercel.app',
-            'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-            'https://south-media-ia-south-medias-projects.vercel.app'
-        ] or (origin and origin.endswith('.vercel.app')):
+        if origin in ALLOWED_ORIGINS:
             response.headers.add("Access-Control-Allow-Origin", origin)
             response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
             response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
