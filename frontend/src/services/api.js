@@ -1,3 +1,4 @@
+
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://api.iasouth.tech/api'
   : 'http://localhost:8080/api';
@@ -9,7 +10,7 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -20,11 +21,11 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
@@ -32,7 +33,6 @@ class ApiService {
     }
   }
 
-  // Auth methods
   async login(credentials) {
     return this.request('/auth/login', {
       method: 'POST',
@@ -46,7 +46,6 @@ class ApiService {
     });
   }
 
-  // Dashboard methods
   async getAdminStats() {
     return this.request('/dashboard/admin/stats');
   }
@@ -63,7 +62,6 @@ class ApiService {
     return this.request(`/dashboard/campaign/${campaignId}`);
   }
 
-  // User methods
   async getUsers() {
     return this.request('/users');
   }
@@ -89,5 +87,12 @@ class ApiService {
   }
 }
 
-export default new ApiService();
+const apiService = new ApiService();
 
+const authService = {
+  login: (username, password) => apiService.login({ username, password }),
+  logout: () => apiService.logout(),
+};
+
+export { authService };
+export default apiService;
