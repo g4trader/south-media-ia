@@ -25,8 +25,7 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      return data;
+      return await response.json();
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
@@ -34,10 +33,10 @@ class ApiService {
   }
 
   // Auth methods
-  async login(username, password) {
+  async login(credentials) {
     return this.request('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify(credentials),
     });
   }
 
@@ -47,12 +46,12 @@ class ApiService {
     });
   }
 
-  // Admin Dashboard methods
+  // Dashboard methods
   async getAdminStats() {
     return this.request('/dashboard/admin/stats');
   }
 
-  async getClients() {
+  async getAdminClients() {
     return this.request('/dashboard/admin/clients');
   }
 
@@ -60,24 +59,11 @@ class ApiService {
     return this.request(`/dashboard/admin/clients/${clientId}/campaigns`);
   }
 
-  // Campaign Dashboard methods
   async getCampaignDashboard(campaignId) {
     return this.request(`/dashboard/campaign/${campaignId}`);
   }
 
-  async getCampaignStrategies(campaignId) {
-    return this.request(`/dashboard/campaign/${campaignId}/strategies`);
-  }
-
-  async getCampaignDeviceBreakdown(campaignId) {
-    return this.request(`/dashboard/campaign/${campaignId}/device-breakdown`);
-  }
-
-  async getCampaignPerformanceHistory(campaignId) {
-    return this.request(`/dashboard/campaign/${campaignId}/performance-history`);
-  }
-
-  // User management methods
+  // User methods
   async getUsers() {
     return this.request('/users');
   }
