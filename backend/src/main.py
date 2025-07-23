@@ -15,23 +15,13 @@ app = Flask(__name__, static_folder='../static')
 
 
 ALLOWED_ORIGINS = {
-    'https://south-media-ia.vercel.app',
-    'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-    'https://south-media-ia-south-medias-projects.vercel.app',
+    'https://dash.iasouth.tech',
+    'https://api.iasouth.tech',
     'http://localhost:3000',
     'http://localhost:8000'
 }
 
-@app.after_request
-def apply_cors(response):
-    origin = request.headers.get('Origin')
-    if origin in ALLOWED_ORIGINS:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Vary'] = 'Origin'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-    return response
+
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
 # Enable CORS for all routes with specific origins
@@ -46,9 +36,8 @@ app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 def after_request(response):
     origin = request.headers.get('Origin')
     if origin in [
-        'https://south-media-ia.vercel.app',
-        'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-        'https://south-media-ia-south-medias-projects.vercel.app'
+        'https://dash.iasouth.tech',
+        'https://api.iasouth.tech'
     ] or (origin and origin.endswith('.vercel.app')):
         response.headers.add('Access-Control-Allow-Origin', origin)
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
@@ -58,20 +47,20 @@ def after_request(response):
 
 # Handle preflight requests
 @app.before_request
-def handle_preflight():
+def before_request():
     if request.method == "OPTIONS":
         response = make_response()
         origin = request.headers.get('Origin')
         if origin in [
-            'https://south-media-ia.vercel.app',
-            'https://south-media-ia-git-main-south-medias-projects.vercel.app',
-            'https://south-media-ia-south-medias-projects.vercel.app'
+            'https://dash.iasouth.tech',
+            'https://api.iasouth.tech'
         ] or (origin and origin.endswith('.vercel.app')):
             response.headers.add("Access-Control-Allow-Origin", origin)
-            response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
-            response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
-        return response
+            response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With")
+            response.headers.add("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS")
+            response.headers.add("Access-Control-Allow-Credentials", "true")
+            return response, 204
+    return None
 
 # Register blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
