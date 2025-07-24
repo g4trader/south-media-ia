@@ -1,6 +1,7 @@
+
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://api.iasouth.tech/api'
-  : 'https://8080-ibb8c5dgcr7sbiz6k13da-be6dae4d.manusvm.computer/api';
+  : 'http://localhost:8080/api';
 
 class ApiService {
   constructor() {
@@ -93,19 +94,6 @@ class ApiService {
   async me() {
     return this.request('/auth/me');
   }
-
-  // Novos métodos para vídeo
-  async getVideoCampaigns() {
-    return this.request('/dashboard/video/campaigns');
-  }
-
-  async getVideoCampaignDashboard(campaignId) {
-    return this.request(`/dashboard/video/campaign/${campaignId}`);
-  }
-
-  async getVideoFormatsComparison() {
-    return this.request('/dashboard/video/formats/comparison');
-  }
 }
 
 const apiService = new ApiService();
@@ -118,4 +106,5 @@ const authService = {
 
 export { authService };
 export default apiService;
+
 
