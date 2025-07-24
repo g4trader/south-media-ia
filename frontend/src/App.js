@@ -5,8 +5,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ClientDashboard from './components/ClientDashboard';
-import VideoDashboard from './components/VideoDashboard';
-import VideoList from './components/VideoList';
 
 // Componente para proteger rotas administrativas
 const ProtectedRoute = ({ children }) => {
@@ -54,24 +52,6 @@ function AppContent() {
           <Route path="/client/:clientId" element={<ClientDashboard />} />
           <Route path="/client/:clientId/campaign/:campaignId" element={<ClientDashboard />} />
           
-          {/* Novas rotas para vídeo */}
-          <Route 
-            path="/video" 
-            element={
-              <ProtectedRoute>
-                <VideoList />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/video/dashboard" 
-            element={
-              <ProtectedRoute>
-                <VideoDashboard />
-              </ProtectedRoute>
-            } 
-          />
-
           {/* Rota 404 */}
           <Route 
             path="*" 
