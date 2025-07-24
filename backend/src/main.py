@@ -35,10 +35,10 @@ CORS(app,
 def after_request(response):
     origin = request.headers.get('Origin')
     if origin in ALLOWED_ORIGINS:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
-        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-        response.headers.add('Access-Control-Allow-Credentials', 'true')
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
 # Handle preflight requests
@@ -51,7 +51,7 @@ def before_request():
             response.headers.add("Access-Control-Allow-Origin", origin)
             response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
             response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-            response.headers.add('Access-Control-Allow-Credentials', 'true')
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
         return response
 
 # Register blueprints
@@ -87,3 +87,16 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
 
+
+
+@app.route('/api/<path:dummy>', methods=['OPTIONS'])
+def cors_preflight(dummy):
+    response = make_response()
+    origin = request.headers.get('Origin')
+    if origin in ALLOWED_ORIGINS or (origin and origin.endswith('.vercel.app')):
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Vary'] = 'Origin'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    return response, 204
