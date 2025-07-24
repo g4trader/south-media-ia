@@ -24,12 +24,17 @@ const ProtectedRoute = ({ children }) => {
 
 // Componente principal da aplicação
 function AppContent() {
+  const { user } = useAuth();
+
   return (
     <Router>
       <div className="App">
         <Routes>
-          {/* Rota raiz redireciona para login administrativo */}
-          <Route path="/" element={<Navigate to="/admin/login" replace />} />
+          {/* Rota raiz redireciona para login administrativo ou dashboard se já logado */}
+          <Route 
+            path="/" 
+            element={user ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/admin/login" replace />} 
+          />
           
           {/* Rotas administrativas */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -105,4 +110,5 @@ function App() {
 }
 
 export default App;
+
 
