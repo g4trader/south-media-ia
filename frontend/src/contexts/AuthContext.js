@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         const response = await authService.me();
-        setUser(response.data);
+        setUser(response);
       }
     } catch (error) {
       localStorage.removeItem('token');
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await authService.login(username, password);
-      const { access_token, user: userData } = response.data;
+      const { access_token, user: userData } = response;
       
       localStorage.setItem('token', access_token);
       setUser(userData);
@@ -68,4 +68,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
 
