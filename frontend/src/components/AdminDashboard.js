@@ -35,29 +35,23 @@ const AdminDashboard = () => {
       
       // Load admin stats
       const statsResponse = await apiService.getAdminStats();
-      if (statsResponse.success) {
-        setStats(statsResponse.data);
-      }
+      setStats(statsResponse);
       
       // Load clients
-      const clientsResponse = await apiService.getClients();
-      if (clientsResponse.success) {
-        setClients(clientsResponse.data);
+      const clientsResponse = await apiService.getAdminClients();
+      setClients(clientsResponse);
         
-        // Load campaigns for all clients
-        const allCampaigns = [];
-        for (const client of clientsResponse.data) {
-          try {
-            const campaignsResponse = await apiService.getClientCampaigns(client.client_id);
-            if (campaignsResponse.success) {
-              allCampaigns.push(...campaignsResponse.data);
-            }
-          } catch (error) {
-            console.error(`Error loading campaigns for client ${client.client_id}:`, error);
-          }
+      // Load campaigns for all clients
+      const allCampaigns = [];
+      for (const client of clientsResponse) {
+        try {
+          const campaignsResponse = await apiService.getClientCampaigns(client.client_id);
+          allCampaigns.push(...campaignsResponse);
+        } catch (error) {
+          console.error(`Error loading campaigns for client ${client.client_id}:`, error);
         }
-        setCampaigns(allCampaigns);
       }
+      setCampaigns(allCampaigns);
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -765,4 +759,6 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+
 
