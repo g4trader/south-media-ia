@@ -10,6 +10,7 @@ class ApiService {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const token = localStorage.getItem('token');
 
     const config = {
       headers: {
@@ -18,6 +19,10 @@ class ApiService {
       },
       ...options,
     };
+
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
 
     try {
       const response = await fetch(url, config);
@@ -96,3 +101,5 @@ const authService = {
 
 export { authService };
 export default apiService;
+
+
