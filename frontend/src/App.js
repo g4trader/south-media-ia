@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import AdminLogin from './pages/AdminLogin';
-import ClientDashboard from './pages/ClientDashboard';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminLogin from './components/AdminLogin';
+import ClientDashboard from './components/ClientDashboard';
+import AdminDashboard from './components/AdminDashboard';
 
 function ProtectedRoute({ children, role }) {
   const { user } = useAuth();
