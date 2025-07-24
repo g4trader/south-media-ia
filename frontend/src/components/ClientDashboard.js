@@ -20,11 +20,9 @@ const ClientDashboard = () => {
       setLoading(true);
       const response = await apiService.getCampaignDashboard(campaignId);
       
-      if (response.success) {
-        setDashboardData(response.data);
-      } else {
-        toast.error('Erro ao carregar dados da campanha');
-      }
+      // A resposta da API agora retorna os dados diretamente, sem a chave 'data'
+      setDashboardData(response);
+      
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error('Erro ao carregar dados da campanha');
@@ -32,6 +30,7 @@ const ClientDashboard = () => {
       setLoading(false);
     }
   }, [campaignId]);
+
   useEffect(() => {
     if (campaignId) {
       loadDashboardData();
@@ -756,3 +755,5 @@ const ClientDashboard = () => {
 };
 
 export default ClientDashboard;
+
+
