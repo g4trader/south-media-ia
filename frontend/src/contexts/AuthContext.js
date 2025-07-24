@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         const response = await authService.me();
-        setUser(response.user);
+        setUser(response.data);
       }
     } catch (error) {
       localStorage.removeItem('token');
@@ -36,14 +36,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       const response = await authService.login(username, password);
-      const { access_token, user: userData } = response;
+      const { access_token, user: userData } = response.data;
       
       localStorage.setItem('token', access_token);
       setUser(userData);
       
       return { success: true };
     } catch (error) {
-      throw new Error(error.message || 'Erro ao fazer login');
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || 'Erro ao fazer login' 
+      };
     }
   };
 
