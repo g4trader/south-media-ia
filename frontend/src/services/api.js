@@ -1,98 +1,58 @@
+const API_BASE_URL = 'https://api.iasouth.tech/api';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.iasouth.tech/api'
-  : 'http://localhost:8080/api';
+const getToken = () => {
+  return localStorage.getItem('token');
+};
 
-class ApiService {
-  constructor() {
-    this.baseURL = API_BASE_URL;
-  }
+const request = async (endpoint, method = 'GET', data = null, isPrivate = false) => {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
 
-  async request(endpoint, options = {}) {
-    const url = `${this.baseURL}${endpoint}`;
-
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+  if (isPrivate) {
+    const token = getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
   }
 
-  async login(credentials) {
-    return this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
+  const options = {
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : null,
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.detail || 'Erro na requisição.');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('API request failed:', error);
+    throw error;
   }
-
-  async logout() {
-    return this.request('/auth/logout', {
-      method: 'POST',
-    });
-  }
-
-  async getAdminStats() {
-    return this.request('/dashboard/admin/stats');
-  }
-
-  async getAdminClients() {
-    return this.request('/dashboard/admin/clients');
-  }
-
-  async getClientCampaigns(clientId) {
-    return this.request(`/dashboard/admin/clients/${clientId}/campaigns`);
-  }
-
-  async getCampaignDashboard(campaignId) {
-    return this.request(`/dashboard/campaign/${campaignId}`);
-  }
-
-  async getUsers() {
-    return this.request('/users');
-  }
-
-  async createUser(userData) {
-    return this.request('/users', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-  }
-
-  async updateUser(userId, userData) {
-    return this.request(`/users/${userId}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
-  }
-
-  async deleteUser(userId) {
-    return this.request(`/users/${userId}`, {
-      method: 'DELETE',
-    });
-  }
-}
-
-const apiService = new ApiService();
-
-const authService = {
-  login: (username, password) => apiService.login({ username, password }),
-  logout: () => apiService.logout(),
 };
 
-export { authService };
-export default apiService;
+const authService = {
+  login: async (username, password) => {
+    return request('/auth/login', 'POST', { username, password });
+  },
+};
+
+const dashboardService = {
+  getSummary: async () => {
+    return request('/dashboard/resumo', 'GET', null, true);
+  },
+  getCampaign: async () => {
+    return request('/dashboard/campanha', 'GET', null, true);
+  },
+};
+
+export default {
+  authService,
+  dashboardService,
+};
