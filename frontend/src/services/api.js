@@ -90,6 +90,10 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  async me() {
+    return this.request('/auth/me');
+  }
 }
 
 const apiService = new ApiService();
@@ -97,6 +101,7 @@ const apiService = new ApiService();
 const authService = {
   login: (username, password) => apiService.login({ username, password }),
   logout: () => apiService.logout(),
+  me: () => apiService.me(),
 };
 
 export { authService };
