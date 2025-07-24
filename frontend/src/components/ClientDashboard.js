@@ -646,7 +646,7 @@ const ClientDashboard = () => {
                   <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>BENCHMARK GERAL</span>
                   <span style={{ color: '#3B82F6', fontSize: '1.25rem' }}>⚡</span>
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3B82F6' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'white' }}>
                   {campaign.ctr > 0.002 ? 'Excelente' : campaign.ctr > 0.001 ? 'Bom' : 'Regular'}
                 </div>
                 <div style={{ fontSize: '0.875rem', color: '#A1A1AA' }}>vs. mercado</div>
