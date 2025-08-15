@@ -1,0 +1,1204 @@
+
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>South Media - Dashboard de Campanhas de Vídeo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 2rem;
+            }
+        }
+        
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .logo {
+                margin-bottom: 0;
+                justify-content: flex-start;
+                width: auto;
+            }
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-info {
+                text-align: right;
+                width: auto;
+            }
+        }
+        
+        .campaign-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-date {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .tabs {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.6);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 1rem;
+                font-size: 0.875rem;
+                min-height: 70px;
+            }
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .metric-card {
+            padding: 1.25rem;
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        @media (min-width: 768px) {
+            .metric-card {
+                padding: 1.5rem;
+            }
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.3;
+        }
+        
+        @media (min-width: 768px) {
+            .metric-label {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        /* Correção específica para gráficos no mobile */
+        @media (max-width: 767px) {
+            .chart-container {
+                height: 180px;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+        
+        .quartis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .quartis-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+        }
+        
+        .quartil-item {
+            text-align: center;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .circle-progress {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.75rem;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .circle-progress {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-responsive table {
+            min-width: 100%;
+            font-size: 0.75rem;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        @media (min-width: 768px) {
+            .table-responsive table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.75rem 0.5rem;
+            white-space: nowrap;
+            text-align: left;
+        }
+        
+        .planning-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .planning-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .audience-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .audience-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .audience-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .audience-item {
+            padding: 0.875rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            box-sizing: border-box;
+            width: 100%;
+            word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .audience-item {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .text-green-400 {
+            color: #34D399;
+        }
+        
+        .text-orange-400 {
+            color: #FB923C;
+        }
+        
+        .bg-blue-600 {
+            background-color: #2563EB;
+        }
+        
+        .bg-yellow-600 {
+            background-color: #D97706;
+        }
+        
+        .bg-pink-600 {
+            background-color: #DB2777;
+        }
+        
+        .bg-cyan-600 {
+            background-color: #0891B2;
+        }
+        
+        .bg-purple-600 {
+            background-color: #9333EA;
+        }
+        
+        .bg-green-600 {
+            background-color: #059669;
+        }
+        
+        .bg-red-600 {
+            background-color: #DC2626;
+        }
+        
+        .bg-gray-600 {
+            background-color: #4B5563;
+        }
+        
+        /* Ajustes específicos para mobile mantendo legibilidade */
+        @media (max-width: 767px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+            
+            /* Padding específico para cards com gráficos */
+            .charts-grid .card {
+                padding: 0.5rem;
+            }
+            
+            h3 {
+                font-size: 1rem !important;
+                margin-bottom: 0.75rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Mantém fontes legíveis no mobile */
+            .metric-value {
+                font-size: 1.25rem !important;
+            }
+            
+            .metric-label {
+                font-size: 0.7rem !important;
+            }
+            
+            .tab-button {
+                font-size: 0.7rem;
+                min-height: 55px;
+            }
+            
+            .circle-progress {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .table-responsive table {
+                font-size: 0.7rem;
+            }
+            
+            .table-responsive th,
+            .table-responsive td {
+                padding: 0.5rem 0.375rem;
+            }
+            
+            .audience-item {
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+            
+            .logo-text p {
+                font-size: 0.8rem;
+            }
+            
+            .campaign-title {
+                font-size: 1rem;
+            }
+            
+            .campaign-date {
+                font-size: 0.8rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            /* Ajustes específicos para gráficos em telas muito pequenas */
+            .charts-grid .card {
+                padding: 0.375rem;
+            }
+            
+            .chart-container {
+                height: 160px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+<!-- Header -->
+<div class="header card">
+<div class="logo">
+<div class="logo-icon">SM</div>
+<div class="logo-text">
+<h1>South Media</h1>
+<p>Dashboard de Campanhas de Vídeo</p>
+</div>
+</div>
+<div class="campaign-info">
+<div class="campaign-title">Campanha Inverno Julho Copacol</div>
+<div class="campaign-date">07/07/2025 até 05/08/2025</div>
+<span class="status-badge">CONCLUÍDA</span>
+</div>
+</div>
+<!-- Tabs -->
+<div class="tabs">
+<button class="tab-button active" onclick="showTab('overview')">
+                🎬<br/>Visão<br/>Geral
+            </button>
+<button class="tab-button" onclick="showTab('insights')">
+                📊<br/>Análise e<br/>Insights
+            </button>
+<button class="tab-button" onclick="showTab('daily')">
+                📈<br/>Entrega<br/>Diária
+            </button>
+<button class="tab-button" onclick="showTab('planning')">
+                📋<br/>Planejamento
+            </button>
+</div>
+<!-- Tab Overview -->
+<div class="tab-content" id="content-overview">
+<!-- Métricas Principais -->
+<div class="metrics-grid">
+<div class="card metric-card">
+<div class="metric-label">💰 ORÇAMENTO CONTRATADO</div>
+<div class="metric-value">R$ 79.300,00</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">🎬 VIDEO COMPLETION CONTRATADO</div>
+<div class="metric-value">344.782</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">📅 PERÍODO DA CAMPANHA</div>
+<div class="metric-value">07/07 até 05/08</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">🎯 OBJETIVO DA CAMPANHA</div>
+<div class="metric-value">Awareness de Marca</div>
+</div>
+</div>
+<!-- Métricas de Performance -->
+<div class="metrics-grid">
+<div class="card metric-card">
+<div class="metric-label">💸 ORÇAMENTO UTILIZADO</div>
+<div class="metric-value">R$ 97.683,21</div>
+<div class="text-green-400" style="font-size: 0.875rem;">123% do contratado</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">🎬 VIDEO COMPLETION</div>
+<div class="metric-value">405.549</div>
+<div class="text-green-400" style="font-size: 0.875rem;">118% do contratado</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">👆 CLIQUES</div>
+<div class="metric-value">6.038</div>
+</div>
+<div class="card metric-card">
+<div class="metric-label">💰 CPV</div>
+<div class="metric-value" style="display:flex;flex-direction:column;gap:6px;line-height:1.2;"><div><strong>R$ 0,24</strong></div></div>
+</div>
+</div>
+<!-- Gráficos -->
+<div class="charts-grid">
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">TAXA DE CONCLUSÃO POR ESTRATÉGIA</h3>
+<div style="margin-bottom: 1rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+<span style="font-size: 0.875rem; color: white;">Netflix</span>
+<span style="font-size: 0.875rem; color: white; font-weight: bold;">99,7%</span>
+</div>
+<div style="width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px;">
+<div style="width: 96.5%; background: linear-gradient(90deg, #FB923C, #F97316); height: 100%; border-radius: 10px;"></div>
+</div>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+<span style="font-size: 0.875rem; color: white;">Vídeo Programático</span>
+<span style="font-size: 0.875rem; color: white; font-weight: bold;">68,5%</span>
+</div>
+<div style="width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px;">
+<div style="width: 65.9%; background: linear-gradient(90deg, #8B5CF6, #A855F7); height: 100%; border-radius: 10px;"></div>
+</div>
+</div>
+</div>
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">DISTRIBUIÇÃO DE VIDEO COMPLETION</h3>
+<div class="chart-container">
+<canvas height="200" id="investmentChart" width="400"></canvas>
+</div>
+</div>
+</div>
+<!-- Quartis Netflix -->
+<div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">MÉTRICAS DE QUARTIS DE VÍDEO</h3>
+<div class="quartis-grid">
+<div class="quartil-item">
+<div class="circle-progress">
+<svg height="100%" viewbox="0 0 100 100" width="100%">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8"></circle>
+<circle cx="50" cy="50" fill="none" r="45" stroke="#8B5CF6" stroke-dasharray="283" stroke-dashoffset="28" stroke-width="8" transform="rotate(-90 50 50)"></circle>
+<text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="50" y="55">91.59%</text>
+</svg>
+</div>
+<div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">25% ASSISTIDOS</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">480.892</div>
+</div>
+<div class="quartil-item">
+<div class="circle-progress">
+<svg height="100%" viewbox="0 0 100 100" width="100%">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8"></circle>
+<circle cx="50" cy="50" fill="none" r="45" stroke="#8B5CF6" stroke-dasharray="283" stroke-dashoffset="42" stroke-width="8" transform="rotate(-90 50 50)"></circle>
+<text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="50" y="55">86.15%</text>
+</svg>
+</div>
+<div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">50% ASSISTIDOS</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">452.331</div>
+</div>
+<div class="quartil-item">
+<div class="circle-progress">
+<svg height="100%" viewbox="0 0 100 100" width="100%">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8"></circle>
+<circle cx="50" cy="50" fill="none" r="45" stroke="#8B5CF6" stroke-dasharray="283" stroke-dashoffset="71" stroke-width="8" transform="rotate(-90 50 50)"></circle>
+<text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="50" y="55">80.66%</text>
+</svg>
+</div>
+<div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">75% ASSISTIDOS</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">423.536</div>
+</div>
+<div class="quartil-item">
+<div class="circle-progress">
+<svg height="100%" viewbox="0 0 100 100" width="100%">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8"></circle>
+<circle cx="50" cy="50" fill="none" r="45" stroke="#8B5CF6" stroke-dasharray="283" stroke-dashoffset="28" stroke-width="8" transform="rotate(-90 50 50)"></circle>
+<text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="50" y="55">77.24%</text>
+</svg>
+</div>
+<div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">100% ASSISTIDOS</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">405.549</div>
+</div>
+</div>
+</div>
+<!-- Tabela de Estratégias -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">ESTRATÉGIAS</h3>
+<div class="table-responsive">
+<table style="width: 100%; border-collapse: collapse;">
+<thead>
+<tr style="border-bottom: 1px solid #374151;">
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">ESTRATÉGIA</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">ORÇAMENTO</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">VIDEO COMPLETION</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CLIQUES</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CTR</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CPV</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CONCLUSÃO</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom: 1px solid #374151;">
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">
+<div style="display: flex; align-items: center;">
+<div style="width: 8px; height: 8px; background: #8B5CF6; border-radius: 50%; margin-right: 0.5rem;"></div>
+                                        Vídeo Programático
+                                    </div>
+</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 59.489,73</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">258.651</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">6.038</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">1,78%</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 0,23</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">68,5%</td>
+</tr>
+<tr style="border-bottom: 1px solid #374151;">
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">
+<div style="display: flex; align-items: center;">
+<div style="width: 8px; height: 8px; background: #FB923C; border-radius: 50%; margin-right: 0.5rem;"></div>
+                                        Netflix
+                                    </div>
+</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 38.193,48</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">146.898</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">0</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">0,00%</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 0,26</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">99,7%</td>
+</tr>
+<tr style="border-top: 1px solid #4B5563;">
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">TOTAL</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">R$ 97.683,21</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">405.549</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">6.038</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">1,23%</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">R$ 0,24</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-weight: bold; font-size: 0.75rem;">117,6%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Tab Insights -->
+<div class="tab-content hidden" id="content-insights">
+<div class="card" style="padding: 1.25rem; margin-bottom: 1rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">🎯 INSIGHTS DE PERFORMANCE</h3>
+<div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10B981; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #10B981; font-size: 1rem; margin-right: 0.5rem;">✅</span>
+<span style="color: #10B981; font-weight: bold; font-size: 0.875rem;">Netflix: Excelente Retenção</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">99,7%</p>
+</div>
+<div style="background: rgba(59, 130, 246, 0.1); border: 1px solid #3B82F6; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #3B82F6; font-size: 1rem; margin-right: 0.5rem;">📊</span>
+<span style="color: #3B82F6; font-weight: bold; font-size: 0.875rem;">Programático: Alto Engajamento</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                        158.065 video completion com CTR de 1,93% demonstram excelente engajamento do público. Performance acima da média do mercado.
+                    </p>
+</div>
+<div style="background: rgba(139, 92, 246, 0.1); border: 1px solid #8B5CF6; border-radius: 8px; padding: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #8B5CF6; font-size: 1rem; margin-right: 0.5rem;">🎯</span>
+<span style="color: #8B5CF6; font-weight: bold; font-size: 0.875rem;">Superação de Meta</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                        161% de video completion vs contratado indica excelente performance da campanha e alta relevância do conteúdo para o público-alvo da Copacol.
+                    </p>
+</div>
+</div>
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">📈 RECOMENDAÇÕES ESTRATÉGICAS</h3>
+<div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #F59E0B; font-size: 1rem; margin-right: 0.5rem;">⚡</span>
+<span style="color: #F59E0B; font-weight: bold; font-size: 0.875rem;">Otimização de Budget</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                        Excelente eficiência de budget com apenas 7% utilizado. Considerar aumentar investimento para maximizar alcance mantendo a qualidade.
+                    </p>
+</div>
+<div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22C55E; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #22C55E; font-size: 1rem; margin-right: 0.5rem;">🎯</span>
+<span style="color: #22C55E; font-weight: bold; font-size: 0.875rem;">Estratégia Vencedora</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                        Programático mostra excelente engajamento com 4.641 cliques. Expandir audiências similares para campanhas futuras.
+                    </p>
+</div>
+<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid #A855F7; border-radius: 8px; padding: 1rem;">
+<div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+<span style="color: #A855F7; font-size: 1rem; margin-right: 0.5rem;">📱</span>
+<span style="color: #A855F7; font-weight: bold; font-size: 0.875rem;">Formato Ideal</span>
+</div>
+<p style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                        Combinação Netflix + Programático mostrou-se ideal para awareness de marca da Copacol, com alta retenção e engajamento.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Tab Daily -->
+<div class="tab-content hidden" id="content-daily">
+<!-- Métricas Resumo -->
+<div class="metrics-grid">
+<div class="card metric-card">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 0.75rem;">📊 MÉDIA DIÁRIA - PROGRAMÁTICO</h3>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Video Completion: 8.280/dia</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">8.319/dia</span>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Investimento:</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">R$ 0/dia</span>
+</div>
+<div style="display: flex; justify-content: space-between;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Cliques:</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">244/dia</span>
+</div>
+</div>
+<div class="card metric-card">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 0.75rem;">🎬 MÉDIA DIÁRIA - NETFLIX</h3>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Video Completion: 4.492/dia</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">7.072/dia</span>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Investimento:</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">R$ 161/dia</span>
+</div>
+<div style="display: flex; justify-content: space-between;">
+<span style="color: #9CA3AF; font-size: 0.75rem;">Cliques:</span>
+<span style="color: white; font-weight: bold; font-size: 0.75rem;">0/dia</span>
+</div>
+</div>
+</div>
+<!-- Gráficos -->
+<div class="charts-grid">
+<div class="card">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 0.75rem; padding: 0.75rem 0.75rem 0 0.75rem;">📈 ENTREGA DIÁRIA POR ESTRATÉGIA</h3>
+<div class="chart-container">
+<canvas id="dailyChart"></canvas>
+</div>
+</div>
+<div class="card">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 0.75rem; padding: 0.75rem 0.75rem 0 0.75rem;">💰 INVESTIMENTO DIÁRIO</h3>
+<div class="chart-container">
+<canvas id="investmentDailyChart"></canvas>
+</div>
+</div>
+</div>
+<!-- Tabela Detalhada -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">📊 DADOS DIÁRIOS DETALHADOS</h3>
+<div class="table-responsive">
+<table style="width: 100%; border-collapse: collapse;">
+<thead>
+<tr style="border-bottom: 1px solid #374151;">
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">DATA</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">ESTRATÉGIA</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">VIDEO COMPLETION</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CLIQUES</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">CTR</th>
+<th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">INVESTIMENTO</th>
+</tr>
+</thead>
+<tbody style="font-size: 0.75rem;"><tr><td>07/07</td><td>Programático</td><td>7.025</td><td>61</td><td>0,79%</td><td>R$ 1.615,75</td></tr><tr><td>08/07</td><td>Programático</td><td>4.534</td><td>112</td><td>2,03%</td><td>R$ 1.042,82</td></tr><tr><td>09/07</td><td>Programático</td><td>22.992</td><td>158</td><td>0,48%</td><td>R$ 5.288,16</td></tr><tr><td>10/07</td><td>Programático</td><td>4.733</td><td>164</td><td>2,18%</td><td>R$ 1.088,59</td></tr><tr><td>11/07</td><td>Programático</td><td>5.389</td><td>130</td><td>1,73%</td><td>R$ 1.239,47</td></tr><tr><td>12/07</td><td>Programático</td><td>3.590</td><td>115</td><td>1,53%</td><td>R$ 825,70</td></tr><tr><td>13/07</td><td>Netflix</td><td>14.653</td><td>0</td><td>0,00%</td><td>R$ 3.809,78</td></tr><tr><td>13/07</td><td>Programático</td><td>3.935</td><td>97</td><td>1,31%</td><td>R$ 905,05</td></tr><tr><td>14/07</td><td>Netflix</td><td>9.726</td><td>0</td><td>0,00%</td><td>R$ 2.528,76</td></tr><tr><td>14/07</td><td>Programático</td><td>4.210</td><td>162</td><td>2,15%</td><td>R$ 968,30</td></tr><tr><td>15/07</td><td>Netflix</td><td>6.638</td><td>0</td><td>0,00%</td><td>R$ 1.725,88</td></tr><tr><td>15/07</td><td>Programático</td><td>10.543</td><td>115</td><td>0,85%</td><td>R$ 2.424,89</td></tr><tr><td>16/07</td><td>Netflix</td><td>4.276</td><td>0</td><td>0,00%</td><td>R$ 1.111,76</td></tr><tr><td>16/07</td><td>Programático</td><td>3.590</td><td>124</td><td>1,65%</td><td>R$ 825,70</td></tr><tr><td>17/07</td><td>Netflix</td><td>5.472</td><td>0</td><td>0,00%</td><td>R$ 1.422,72</td></tr><tr><td>17/07</td><td>Programático</td><td>4.444</td><td>59</td><td>0,86%</td><td>R$ 1.022,12</td></tr><tr><td>18/07</td><td>Netflix</td><td>7.736</td><td>0</td><td>0,00%</td><td>R$ 2.011,36</td></tr><tr><td>18/07</td><td>Programático</td><td>25.872</td><td>178</td><td>0,45%</td><td>R$ 5.950,56</td></tr><tr><td>19/07</td><td>Netflix</td><td>3.275</td><td>0</td><td>0,00%</td><td>R$ 851,50</td></tr><tr><td>19/07</td><td>Programático</td><td>4.132</td><td>132</td><td>1,74%</td><td>R$ 950,36</td></tr><tr><td>20/07</td><td>Netflix</td><td>5.031</td><td>0</td><td>0,00%</td><td>R$ 1.308,06</td></tr><tr><td>20/07</td><td>Programático</td><td>6.866</td><td>86</td><td>0,82%</td><td>R$ 1.579,18</td></tr><tr><td>21/07</td><td>Netflix</td><td>5.902</td><td>0</td><td>0,00%</td><td>R$ 1.534,52</td></tr><tr><td>21/07</td><td>Programático</td><td>6.866</td><td>86</td><td>0,81%</td><td>R$ 1.579,18</td></tr><tr><td>22/07</td><td>Netflix</td><td>6.626</td><td>0</td><td>0,00%</td><td>R$ 1.722,76</td></tr><tr><td>22/07</td><td>Programático</td><td>4.811</td><td>280</td><td>3,74%</td><td>R$ 1.106,53</td></tr><tr><td>23/07</td><td>Netflix</td><td>6.517</td><td>0</td><td>0,00%</td><td>R$ 1.694,42</td></tr><tr><td>23/07</td><td>Programático</td><td>4.824</td><td>306</td><td>3,98%</td><td>R$ 1.109,52</td></tr><tr><td>24/07</td><td>Netflix</td><td>8.169</td><td>0</td><td>0,00%</td><td>R$ 2.123,94</td></tr><tr><td>24/07</td><td>Programático</td><td>4.603</td><td>302</td><td>4,01%</td><td>R$ 1.058,69</td></tr><tr><td>25/07</td><td>Netflix</td><td>10.946</td><td>0</td><td>0,00%</td><td>R$ 2.845,96</td></tr><tr><td>25/07</td><td>Programático</td><td>4.953</td><td>286</td><td>3,85%</td><td>R$ 1.139,19</td></tr><tr><td>26/07</td><td>Netflix</td><td>6.540</td><td>0</td><td>0,00%</td><td>R$ 1.700,40</td></tr><tr><td>26/07</td><td>Programático</td><td>5.099</td><td>402</td><td>5,42%</td><td>R$ 1.172,77</td></tr><tr><td>27/07</td><td>Netflix</td><td>6.404</td><td>0</td><td>0,00%</td><td>R$ 1.665,04</td></tr><tr><td>27/07</td><td>Programático</td><td>5.002</td><td>453</td><td>5,90%</td><td>R$ 1.150,46</td></tr><tr><td>28/07</td><td>Netflix</td><td>6.300</td><td>0</td><td>0,00%</td><td>R$ 1.638,00</td></tr><tr><td>28/07</td><td>Programático</td><td>4.953</td><td>376</td><td>5,06%</td><td>R$ 1.139,19</td></tr><tr><td>29/07</td><td>Netflix</td><td>3.933</td><td>0</td><td>0,00%</td><td>R$ 1.022,58</td></tr><tr><td>29/07</td><td>Programático</td><td>5.099</td><td>457</td><td>6,16%</td><td>R$ 1.172,77</td></tr><tr><td>30/07</td><td>Netflix</td><td>3.934</td><td>0</td><td>0,00%</td><td>R$ 1.022,84</td></tr><tr><td>30/07</td><td>Programático</td><td>4.198</td><td>171</td><td>2,27%</td><td>R$ 965,54</td></tr><tr><td>31/07</td><td>Programático</td><td>24.446</td><td>190</td><td>0,58%</td><td>R$ 5.622,58</td></tr><tr><td>01/08</td><td>Netflix</td><td>3.934</td><td>0</td><td>0,00%</td><td>R$ 1.022,84</td></tr><tr><td>01/08</td><td>Programático</td><td>9.855</td><td>156</td><td>1,13%</td><td>R$ 2.266,65</td></tr><tr><td>02/08</td><td>Netflix</td><td>3.934</td><td>0</td><td>0,00%</td><td>R$ 1.022,84</td></tr><tr><td>02/08</td><td>Programático</td><td>27.156</td><td>158</td><td>0,42%</td><td>R$ 6.245,88</td></tr><tr><td>03/08</td><td>Netflix</td><td>6.038</td><td>0</td><td>0,00%</td><td>R$ 1.569,88</td></tr><tr><td>03/08</td><td>Programático</td><td>11.104</td><td>245</td><td>1,52%</td><td>R$ 2.553,92</td></tr><tr><td>04/08</td><td>Netflix</td><td>4.276</td><td>0</td><td>0,00%</td><td>R$ 1.111,76</td></tr><tr><td>04/08</td><td>Programático</td><td>18.975</td><td>244</td><td>1,08%</td><td>R$ 4.364,25</td></tr><tr><td>05/08</td><td>Netflix</td><td>6.638</td><td>0</td><td>0,00%</td><td>R$ 1.725,88</td></tr><tr><td>05/08</td><td>Programático</td><td>4.852</td><td>233</td><td>3,08%</td><td>R$ 1.115,96</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Tab Planning -->
+<div class="tab-content hidden" id="content-planning">
+<div class="planning-grid">
+<!-- Canais -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">📺 CANAIS DE MÍDIA</h3>
+<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+<div style="background: rgba(139, 92, 246, 0.2); padding: 1rem; border-radius: 8px; border: 1px solid #8B5CF6;">
+<div style="font-weight: bold; color: #8B5CF6; font-size: 0.875rem; margin-bottom: 0.25rem;">Programática com Whitelist</div>
+<div style="color: white; font-size: 0.75rem;">Sites verificados e aprovados para garantir brand safety</div>
+</div>
+<div style="background: rgba(251, 146, 60, 0.2); padding: 1rem; border-radius: 8px; border: 1px solid #FB923C;">
+<div style="font-weight: bold; color: #FB923C; font-size: 0.875rem; margin-bottom: 0.25rem;">Netflix</div>
+<div style="color: white; font-size: 0.75rem;">Plataforma premium com audiência qualificada</div>
+</div>
+</div>
+</div>
+<!-- Segmentação -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">🎯 SEGMENTAÇÃO DE AUDIÊNCIA</h3>
+<div class="audience-grid">
+<div class="audience-item bg-blue-600">🍽️ Food &amp; Dining Enthusiasts</div>
+<div class="audience-item bg-yellow-600">🍔 Fast Food Consumers</div>
+<div class="audience-item bg-pink-600">🍿 Snack Food Buyers</div>
+<div class="audience-item bg-cyan-600">🧊 Frozen Food Shoppers</div>
+<div class="audience-item bg-purple-600">📦 Packaged Food Buyers</div>
+<div class="audience-item bg-green-600">🛒 Grocery Shoppers</div>
+</div>
+</div>
+<!-- Double Verify -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">🛡️ DOUBLE VERIFY</h3>
+<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+<div style="background: rgba(220, 38, 38, 0.2); padding: 1rem; border-radius: 8px; border: 1px solid #DC2626;">
+<div style="font-weight: bold; color: #DC2626; font-size: 0.875rem; margin-bottom: 0.25rem;">🚫 Fraud &amp; Invalid Traffic</div>
+<div style="color: white; font-size: 0.75rem;">100% proteção contra sites fraudulentos e tráfego inválido</div>
+</div>
+<div style="background: rgba(34, 197, 94, 0.2); padding: 1rem; border-radius: 8px; border: 1px solid #22C55E;">
+<div style="font-weight: bold; color: #22C55E; font-size: 0.875rem; margin-bottom: 0.25rem;">✅ Brand Safety &amp; Suitability</div>
+<div style="color: white; font-size: 0.75rem;">Conteúdo moderado, seguro contra hate speech e cyberbullying</div>
+</div>
+</div>
+</div>
+<!-- Audiência Negativada -->
+<div class="card" style="padding: 1.25rem;">
+<h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">🚫 AUDIÊNCIA NEGATIVADA</h3>
+<div style="background: rgba(75, 85, 99, 0.2); padding: 1rem; border-radius: 8px; border: 1px solid #6B7280;">
+<div style="font-weight: bold; color: #9CA3AF; font-size: 0.875rem; margin-bottom: 0.5rem;">🌱 Vegan and Vegetarian</div>
+<div style="color: white; font-size: 0.75rem; line-height: 1.4;">
+                            Audiência excluída por não ser compatível com produtos de origem animal da Copacol, 
+                            garantindo melhor direcionamento e evitando desperdício de budget.
+                        </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.add('hidden'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Initialize charts if daily tab is selected
+            if (tabName === 'daily') {
+                setTimeout(() => {
+                    initDailyCharts();
+                }, 100);
+            }
+            
+            // Initialize investment chart if overview tab is selected
+            if (tabName === 'overview') {
+                setTimeout(() => {
+                    initInvestmentChart();
+                }, 100);
+            }
+        }
+
+        function initInvestmentChart() {
+            const ctx = document.getElementById('investmentChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['07/07','08/07','09/07','10/07','11/07','12/07','13/07','14/07','15/07','16/07','17/07','18/07','19/07','20/07','21/07','22/07','23/07','24/07','25/07','26/07','27/07','28/07','29/07','30/07','31/07','01/08','02/08','03/08','04/08','05/08'],
+                    datasets: [{
+                        data: [258651, 146898],
+                        backgroundColor: ['#8B5CF6', '#FB923C'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initDailyCharts() {
+            // Dados reais da campanha
+            const labels = ['07/07','08/07','09/07','10/07','11/07','12/07','13/07','14/07','15/07','16/07','17/07','18/07','19/07','20/07','21/07','22/07','23/07','24/07','25/07','26/07','27/07','28/07','29/07','30/07','31/07','01/08','02/08','03/08','04/08','05/08'];
+            
+            const programaticoData = [7025, 4534, 22992, 4733, 5389, 3590, 3935, 4210, 10543, 3590, 4444, 25872, 4132, 6866, 6866, 4811, 4824, 4603, 4953, 5099, 5002, 4953, 5099];
+            const netflixData = [0, 0, 0, 0, 0, 0, 14653, 9726, 6638, 4276, 5472, 7736, 3275, 5031, 5902, 6626, 6517, 8169, 10946, 6540, 6404, 6300, 5933];
+            
+            const programaticoInvestment = [1615.75,1042.82,5288.16,1088.59,1239.47,825.70,905.05,968.30,2424.89,825.70,1022.12,5950.56,950.36,1579.18,1579.18,1106.53,1109.52,1058.69,1139.19,1172.77,1150.46,1139.19,1172.77,965.54,5622.58,2266.65,6245.88,2553.92,4364.25,1115.96];
+            const netflixInvestment = [0.00,0.00,0.00,0.00,0.00,0.00,3809.78,2528.76,1725.88,1111.76,1422.72,2011.36,851.50,1308.06,1534.52,1722.76,1694.42,2123.94,2845.96,1700.40,1665.04,1638.00,1022.58,1022.84,0.00,1022.84,1022.84,1569.88,1111.76,1725.88];
+
+            // Daily delivery chart
+            const dailyCtx = document.getElementById('dailyChart');
+            if (dailyCtx) {
+                new Chart(dailyCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Programático',
+                            data: programaticoData,
+                            borderColor: '#8B5CF6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Netflix',
+                            data: netflixData,
+                            borderColor: '#FB923C',
+                            backgroundColor: 'rgba(251, 146, 60, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 10,
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: 'white',
+                                    font: {
+                                        size: 9
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white',
+                                    font: {
+                                        size: 9
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Investment daily chart
+            const investmentCtx = document.getElementById('investmentDailyChart');
+            if (investmentCtx) {
+                new Chart(investmentCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Programático',
+                            data: programaticoInvestment,
+                            backgroundColor: '#8B5CF6'
+                        }, {
+                            label: 'Netflix',
+                            data: netflixInvestment,
+                            backgroundColor: '#FB923C'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                left: 10,
+                                right: 10,
+                                top: 10,
+                                bottom: 10
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white',
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    color: 'white',
+                                    font: {
+                                        size: 9
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: 'white',
+                                    font: {
+                                        size: 9
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(255, 255, 255, 0.1)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize overview chart on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initInvestmentChart();
+        });
+    </script>
+</body>
+</html>
