@@ -912,7 +912,7 @@
 <div class="card" style="padding: 1.25rem;">
 <h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">📊 DADOS DIÁRIOS DETALHADOS</h3>
 <div class="table-responsive">
-<table style="width: 100%; border-collapse: collapse;">
+<table id="dailyDataTable" style="width: 100%; border-collapse: collapse;">
 <thead>
 <tr style="border-bottom: 1px solid #374151;">
 <th style="text-align: left; padding: 0.75rem 0.5rem; color: #9CA3AF; font-size: 0.75rem;">DATA</th>
@@ -1049,14 +1049,42 @@
         }
 
         function initDailyCharts() {
-            // Dados reais da campanha
-            const labels = ['07/07','08/07','09/07','10/07','11/07','12/07','13/07','14/07','15/07','16/07','17/07','18/07','19/07','20/07','21/07','22/07','23/07','24/07','25/07','26/07','27/07','28/07','29/07','30/07','31/07','01/08','02/08','03/08','04/08','05/08'];
-            
-            const programaticoData = [7025, 4534, 22992, 4733, 5389, 3590, 3935, 4210, 10543, 3590, 4444, 25872, 4132, 6866, 6866, 4811, 4824, 4603, 4953, 5099, 5002, 4953, 5099];
-            const netflixData = [0, 0, 0, 0, 0, 0, 14653, 9726, 6638, 4276, 5472, 7736, 3275, 5031, 5902, 6626, 6517, 8169, 10946, 6540, 6404, 6300, 5933];
-            
-            const programaticoInvestment = [1615.75,1042.82,5288.16,1088.59,1239.47,825.70,905.05,968.30,2424.89,825.70,1022.12,5950.56,950.36,1579.18,1579.18,1106.53,1109.52,1058.69,1139.19,1172.77,1150.46,1139.19,1172.77,965.54,5622.58,2266.65,6245.88,2553.92,4364.25,1115.96];
-            const netflixInvestment = [0.00,0.00,0.00,0.00,0.00,0.00,3809.78,2528.76,1725.88,1111.76,1422.72,2011.36,851.50,1308.06,1534.52,1722.76,1694.42,2123.94,2845.96,1700.40,1665.04,1638.00,1022.58,1022.84,0.00,1022.84,1022.84,1569.88,1111.76,1725.88];
+            // Build datasets from detailed daily table
+            const table = document.getElementById('dailyDataTable');
+            const rows = table ? table.querySelectorAll('tbody tr') : [];
+            const dateMap = new Map();
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 6) {
+                    const date = cells[0].textContent.trim();
+                    const strategy = cells[1].textContent.trim().toLowerCase();
+                    const completion = parseFloat(
+                        cells[2].textContent.trim().split('.').join('').replace(',', '.')
+                    ) || 0;
+                    const invest = parseFloat(
+                        cells[5].textContent.replace('R$', '').trim().split('.').join('').replace(',', '.')
+                    ) || 0;
+
+                    if (!dateMap.has(date)) {
+                        dateMap.set(date, { programatico: 0, netflix: 0, programaticoInv: 0, netflixInv: 0 });
+                    }
+                    const entry = dateMap.get(date);
+                    if (strategy.includes('program')) {
+                        entry.programatico += completion;
+                        entry.programaticoInv += invest;
+                    } else if (strategy.includes('netflix')) {
+                        entry.netflix += completion;
+                        entry.netflixInv += invest;
+                    }
+                }
+            });
+
+            const labels = Array.from(dateMap.keys());
+            const programaticoData = labels.map(d => dateMap.get(d).programatico);
+            const netflixData = labels.map(d => dateMap.get(d).netflix);
+            const programaticoInvestment = labels.map(d => dateMap.get(d).programaticoInv);
+            const netflixInvestment = labels.map(d => dateMap.get(d).netflixInv);
 
             // Daily delivery chart
             const dailyCtx = document.getElementById('dailyChart');
