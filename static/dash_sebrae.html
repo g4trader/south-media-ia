@@ -598,22 +598,22 @@
 </div>
 <div class="campaign-info">
 <div class="campaign-title">Campanha Sebrae Netflix</div>
-<div class="campaign-date">29/05/2025 até 30/11/2025</div>
+<div class="campaign-date">29/05/2025 até 10/11/2025</div>
 <span class="status-badge">EM ANDAMENTO</span>
 </div>
 </div>
 <!-- Tabs -->
 <div class="tabs">
-<button class="tab-button active" onclick="showTab('overview')">
+<button class="tab-button active" onclick="showTab('overview', this)">
                 🎬<br/>Visão<br/>Geral
             </button>
-<button class="tab-button" onclick="showTab('insights')">
+<button class="tab-button" onclick="showTab('insights', this)">
                 📊<br/>Análise e<br/>Insights
             </button>
-<button class="tab-button" onclick="showTab('daily')">
+<button class="tab-button" onclick="showTab('daily', this)">
                 📈<br/>Entrega<br/>Diária
             </button>
-<button class="tab-button" onclick="showTab('planning')">
+<button class="tab-button" onclick="showTab('planning', this)">
                 📋<br/>Planejamento
             </button>
 </div>
@@ -631,7 +631,7 @@
 </div>
 <div class="card metric-card">
 <div class="metric-label">📅 PERÍODO DA CAMPANHA</div>
-<div class="metric-value">29/05 até 30/11</div>
+<div class="metric-value">29/05 até 10/11</div>
 </div>
 <div class="card metric-card">
 <div class="metric-label">🎯 OBJETIVO DA CAMPANHA</div>
@@ -642,13 +642,13 @@
 <div class="metrics-grid">
 <div class="card metric-card">
 <div class="metric-label">💸 ORÇAMENTO UTILIZADO</div>
-<div class="metric-value">R$ 115.777,8</div>
-<div class="text-green-400" style="font-size: 0.875rem;">79% do contratado</div>
+<div class="metric-value">R$ 99.537,00</div>
+<div class="text-green-400" style="font-size: 0.875rem;">68% do contratado</div>
 </div>
 <div class="card metric-card">
 <div class="metric-label">🎬 VIDEO COMPLETION</div>
-<div class="metric-value">385.926</div>
-<div class="text-green-400" style="font-size: 0.875rem;">79% do contratado</div>
+<div class="metric-value">331.790</div>
+<div class="text-green-400" style="font-size: 0.875rem;">68% do contratado</div>
 </div>
 <div class="card metric-card">
 <div class="metric-label">👆 CLIQUES</div>
@@ -673,7 +673,7 @@
 </svg>
 </div>
 <div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">25% ASSISTIDOS</div>
-<div style="font-size: 0.875rem; color: white; font-weight: bold;">412.300</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">349.181</div>
 </div>
 <div class="quartil-item">
 <div class="circle-progress">
@@ -684,7 +684,7 @@
 </svg>
 </div>
 <div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">50% ASSISTIDOS</div>
-<div style="font-size: 0.875rem; color: white; font-weight: bold;">402.690</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">342.166</div>
 </div>
 <div class="quartil-item">
 <div class="circle-progress">
@@ -695,7 +695,7 @@
 </svg>
 </div>
 <div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">75% ASSISTIDOS</div>
-<div style="font-size: 0.875rem; color: white; font-weight: bold;">390.930</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">336.523</div>
 </div>
 <div class="quartil-item">
 <div class="circle-progress">
@@ -706,7 +706,7 @@
 </svg>
 </div>
 <div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">100% ASSISTIDOS</div>
-<div style="font-size: 0.875rem; color: white; font-weight: bold;">385.926</div>
+<div style="font-size: 0.875rem; color: white; font-weight: bold;">331.790</div>
 </div>
 </div>
 </div>
@@ -735,8 +735,8 @@
                                         Netflix
                                     </div>
 </td>
-<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 115.777,80</td>
-<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">385.926</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 99.537,80</td>
+<td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">331.790</td>
 <td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">n/a</td>
 <td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">n/a</td>
 <td style="padding: 0.75rem 0.5rem; color: white; font-size: 0.75rem;">R$ 0,30</td>
@@ -788,7 +788,7 @@
         <span style="color: #8B5CF6; font-weight: bold; font-size: 0.875rem;">Eficiência de investimento</span>
       </div>
       <p style="color: white; font-size: 0.75rem; line-height: 1.4;">
-        Com <strong>R$ 115.777,80</strong> investidos (<strong>79%</strong> do orçamento contratado), o <strong>CPV</strong> está em <strong>R$ 0,30</strong>, dentro do esperado para awareness.
+        Com <strong>R$ 99.537,00</strong> investidos (<strong>68%</strong> do orçamento contratado), o <strong>CPV</strong> está em <strong>R$ 0,30</strong>, dentro do esperado para awareness.
       </p>
     </div>
   </div>
@@ -828,7 +828,7 @@
   </div>
 </div>
 <!-- Tab Daily -->
-<div class="tab-content" id="content-daily">
+<div class="tab-content hidden" id="content-daily">
   <div class="card" style="padding:1.25rem;">
     <h3 style="font-size:1rem; font-weight:bold; color:white; margin-bottom:1rem;">📊 DADOS DIÁRIOS POR MÊS</h3>
     <p style="color:#9CA3AF; font-size:0.8rem; margin-bottom:0.75rem;">Visão organizada por mês. Em <strong>Agosto</strong> incluímos a coluna <em>Criativo</em>.</p>
@@ -923,20 +923,19 @@
 </div>
 </div>
 <script>
-        function showTab(tabName) {
+        function showTab(tabName, btn) {
             // Hide all tab contents
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => content.classList.add('hidden'));
             
-            // Remove active class from all buttons
-            const buttons = document.querySelectorAll('.tab-button');
-            buttons.forEach(button => button.classList.remove('active'));
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
             
             // Show selected tab content
             document.getElementById('content-' + tabName).classList.remove('hidden');
             
             // Add active class to clicked button
-            event.target.classList.add('active');
+            if (btn) { btn.classList.add('active'); }
             
             // Initialize charts if daily tab is selected
             if (tabName === 'daily') {
