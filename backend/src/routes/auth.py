@@ -124,7 +124,7 @@ async def register_user(user_data: UserCreate, current_user: Dict[str, Any] = De
         )
         
         return new_user
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
