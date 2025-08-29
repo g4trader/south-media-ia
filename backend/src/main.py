@@ -3,100 +3,92 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, send_from_directory, request, make_response
-from flask_cors import CORS
-from src.models.user import db
-from src.models.campaign import Campaign, Strategy, DeviceBreakdown
-from src.routes.user import user_bp
-from src.routes.auth import auth_bp
-from src.routes.dashboard import dashboard_bp
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from src.config import settings
+from src.routes import auth, campaigns, dashboards
+import logging
 
-# Allowed origins for CORS
-ALLOWED_ORIGINS = {
-    'https://dash.iasouth.tech',
-    'https://api.iasouth.tech',
-    'http://localhost:3000',
-    'http://localhost:8000'
-}
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-app = Flask(__name__, static_folder='../static')
-app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+# Create FastAPI app
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    description="South Media IA - Sistema de Dashboard de Campanhas de Mídia Digital",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
-# Enable CORS for all routes with specific origins
-CORS(app, 
-     origins=list(ALLOWED_ORIGINS),
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
-     supports_credentials=True,
-     expose_headers=['Content-Type', 'Authorization'])
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Add CORS headers manually for all responses
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    if origin in ALLOWED_ORIGINS:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-    return response
+# Include routers
+app.include_router(auth.router, prefix="/api")
+app.include_router(campaigns.router, prefix="/api")
+app.include_router(dashboards.router, prefix="/api")
 
-# Handle preflight requests
-@app.before_request
-def before_request():
-    if request.method == "OPTIONS":
-        response = make_response()
-        origin = request.headers.get('Origin')
-        if origin in ALLOWED_ORIGINS:
-            response.headers.add("Access-Control-Allow-Origin", origin)
-            response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization,X-Requested-With")
-            response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
-            response.headers['Access-Control-Allow-Credentials'] = 'true'
-        return response
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"Global exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
 
-# Register blueprints
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(user_bp, url_prefix='/api')
-app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {
+        "status": "healthy",
+        "app": settings.app_name,
+        "version": settings.app_version,
+        "timestamp": "2024-01-01T00:00:00Z"
+    }
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
-with app.app_context():
-    db.create_all()
+# Root endpoint
+@app.get("/")
+async def root():
+    """Root endpoint with API information"""
+    return {
+        "message": "South Media IA API",
+        "version": settings.app_version,
+        "docs": "/docs",
+        "health": "/health"
+    }
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    static_folder_path = app.static_folder
-    if static_folder_path is None:
-            return "Static folder not configured", 404
+# API info endpoint
+@app.get("/api/info")
+async def api_info():
+    """API information endpoint"""
+    return {
+        "name": settings.app_name,
+        "version": settings.app_version,
+        "description": "Sistema de Dashboard de Campanhas de Mídia Digital",
+        "endpoints": {
+            "auth": "/api/auth",
+            "campaigns": "/api/campaigns",
+            "dashboards": "/api/dashboards",
+            "docs": "/docs"
+        }
+    }
 
-    if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
-        return send_from_directory(static_folder_path, path)
-    else:
-        index_path = os.path.join(static_folder_path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
-        else:
-            return "index.html not found", 404
-
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port, debug=False)
-
-
-
-@app.route('/api/<path:dummy>', methods=['OPTIONS'])
-def cors_preflight(dummy):
-    response = make_response()
-    origin = request.headers.get('Origin')
-    if origin in ALLOWED_ORIGINS or (origin and origin.endswith('.vercel.app')):
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Vary'] = 'Origin'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-    return response, 204
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "src.main:app",
+        host="0.0.0.0",
+        port=8080,
+        reload=settings.debug
+    )

@@ -39,13 +39,21 @@ Sistema completo para gestão e visualização de campanhas de mídia digital pa
 
 ## 🔧 Configuração
 
+### Configuração Rápida
+Para uma configuração completa e automatizada, consulte o [Guia de Setup](SETUP.md).
+
 ### Pré-requisitos
 - Node.js 18+
 - Python 3.9+
 - Conta Google Cloud com BigQuery habilitado
 - Conta Vercel para deploy do frontend
 
-### Instalação
+### Instalação Automática
+```bash
+./setup-project.sh
+```
+
+### Instalação Manual
 
 #### Backend
 ```bash

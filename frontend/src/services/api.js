@@ -1,11 +1,9 @@
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://api.iasouth.tech/api'
-  : 'http://localhost:8080/api';
+import config from '../../config';
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = config.api.baseURL;
   }
 
   async request(endpoint, options = {}) {
