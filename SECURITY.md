@@ -6,7 +6,7 @@
 
 As credenciais fornecidas são sensíveis e devem ser tratadas com cuidado:
 
-- **GitHub Token**: `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`
+- **GitHub Token**: `REPLACED_TOKEN`
 - **Vercel Token**: `5w8zipRxMJnLEET9OMESteB7`
 
 ### 🛡️ Boas Práticas de Segurança

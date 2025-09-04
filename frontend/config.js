@@ -14,7 +14,7 @@ const config = {
   
   // GitHub Configuration
   github: {
-    token: process.env.REACT_APP_GITHUB_TOKEN || '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',
+    token: process.env.REACT_APP_GITHUB_TOKEN || 'REPLACED_TOKEN',
     repo: 'south-media-ia',
     owner: 'your-github-username', // Update this with your actual GitHub username
   },
