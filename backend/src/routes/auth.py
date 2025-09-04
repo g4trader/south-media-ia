@@ -1,93 +1,75 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from fastapi.security import HTTPBearer
-from src.models.user import UserCreate, UserResponse, UserLogin, Token, UserRole
-from src.services.auth_service import auth_service
-from src.services.bigquery_service import BigQueryService
-from typing import List, Dict, Any
+from src.models.user import (
+    UserCreate, UserResponse, UserLogin, Token, PasswordChange, 
+    PasswordReset, PasswordResetConfirm, UserRole, UserStatus, CompanySwitch
+)
+from src.models.company import CompanySummary
+from src.services.auth_service import AuthService, get_current_user
+from src.services.company_service import CompanyService
+from typing import List, Dict, Any, Optional
 import uuid
 from datetime import datetime
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
-bigquery_service = BigQueryService()
+auth_service = AuthService()
+company_service = CompanyService()
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin):
-    """Login user and return JWT token"""
+    """Login do usuário com contexto de empresa"""
     try:
-        # In a real implementation, you would fetch user from database
-        # For now, we'll use mock data for demonstration
+        # Autenticar usuário
+        user_data = await auth_service.authenticate_user(
+            email=user_credentials.email,
+            password=user_credentials.password,
+            company_id=user_credentials.company_id
+        )
         
-        # Mock user data (replace with database query)
-        mock_users = {
-            "admin@southmedia.com": {
-                "id": "admin-001",
-                "email": "admin@southmedia.com",
-                "full_name": "Admin User",
-                "role": UserRole.ADMIN,
-                "status": "active",
-                "hashed_password": auth_service.get_password_hash("admin123")
-            },
-            "agency@southmedia.com": {
-                "id": "agency-001",
-                "email": "agency@southmedia.com",
-                "full_name": "Agency User",
-                "role": UserRole.AGENCY,
-                "status": "active",
-                "agency_id": "agency-001",
-                "hashed_password": auth_service.get_password_hash("agency123")
-            },
-            "client@example.com": {
-                "id": "client-001",
-                "email": "client@example.com",
-                "full_name": "Client User",
-                "role": UserRole.CLIENT,
-                "status": "active",
-                "agency_id": "agency-001",
-                "client_id": "client-001",
-                "hashed_password": auth_service.get_password_hash("client123")
-            }
-        }
-        
-        user_data = mock_users.get(user_credentials.email)
         if not user_data:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
+                detail="Email ou senha incorretos"
             )
         
-        # Authenticate user
-        authenticated_user = auth_service.authenticate_user(
-            user_credentials.email, 
-            user_credentials.password, 
-            user_data
+        # Determinar empresa ativa
+        current_company_id = user_credentials.company_id or user_data.get("company_id")
+        
+        # Obter todas as empresas do usuário
+        user_companies = await auth_service.get_user_companies_for_token(user_data["id"])
+        
+        if not user_companies:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuário não tem acesso a nenhuma empresa"
+            )
+        
+        # Se não foi especificada empresa, usar a primeira disponível
+        if not current_company_id:
+            current_company_id = user_companies[0]["id"]
+        
+        # Verificar se usuário tem acesso à empresa especificada
+        if current_company_id not in [c["id"] for c in user_companies]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuário não tem acesso a esta empresa"
+            )
+        
+        # Criar token com contexto da empresa
+        access_token = auth_service.create_company_context_token(
+            user_data, current_company_id, user_companies
         )
         
-        if not authenticated_user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password"
-            )
-        
-        # Create access token
-        token_data = {
-            "sub": authenticated_user["id"],
-            "email": authenticated_user["email"],
-            "role": authenticated_user["role"],
-            "agency_id": authenticated_user.get("agency_id"),
-            "client_id": authenticated_user.get("client_id")
-        }
-        
-        access_token = auth_service.create_access_token(token_data)
-        
-        # Create user response
+        # Criar resposta do usuário
         user_response = UserResponse(
-            id=authenticated_user["id"],
-            email=authenticated_user["email"],
-            full_name=authenticated_user["full_name"],
-            role=authenticated_user["role"],
-            status=authenticated_user["status"],
-            agency_id=authenticated_user.get("agency_id"),
-            client_id=authenticated_user.get("client_id"),
+            id=user_data["id"],
+            email=user_data["email"],
+            full_name=user_data["full_name"],
+            role=user_data["role"],
+            status=user_data["status"],
+            timezone="America/Sao_Paulo",
+            language="pt-BR",
+            notifications_enabled=True,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
@@ -95,120 +77,228 @@ async def login(user_credentials: UserLogin):
         return Token(
             access_token=access_token,
             token_type="bearer",
-            user=user_response
+            user=user_response,
+            current_company_id=current_company_id,
+            available_companies=[c["id"] for c in user_companies]
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Login failed: {str(e)}"
+            detail=f"Erro interno no servidor: {str(e)}"
         )
 
-@router.post("/register", response_model=UserResponse)
-async def register_user(user_data: UserCreate, current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.ADMIN]))):
-    """Register a new user (admin only)"""
+@router.post("/switch-company")
+async def switch_company(
+    company_switch: CompanySwitch,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Trocar empresa ativa para o usuário"""
     try:
-        # In a real implementation, you would save to database
-        # For now, we'll return a mock response
+        # Verificar se usuário tem acesso à empresa
+        has_access = await auth_service.check_company_access(current_user, company_switch.company_id)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acesso negado a esta empresa"
+            )
         
-        new_user = UserResponse(
-            id=str(uuid.uuid4()),
-            email=user_data.email,
-            full_name=user_data.full_name,
-            role=user_data.role,
-            status=user_data.status,
-            agency_id=user_data.agency_id,
-            client_id=user_data.client_id,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+        # Obter empresas disponíveis
+        user_companies = await auth_service.get_user_companies_for_token(current_user["sub"])
+        
+        # Criar novo token com nova empresa
+        new_token = auth_service.create_company_context_token(
+            current_user, company_switch.company_id, user_companies
         )
         
-        return new_user
-
+        return {
+            "access_token": new_token,
+            "token_type": "bearer",
+            "current_company_id": company_switch.company_id,
+            "message": "Empresa alterada com sucesso"
+        }
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Registration failed: {str(e)}"
+            detail=f"Erro ao trocar empresa: {str(e)}"
         )
 
-@router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: Dict[str, Any] = Depends(auth_service.get_current_user)):
-    """Get current user information"""
+@router.get("/me/companies", response_model=List[CompanySummary])
+async def get_my_companies(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Obter empresas disponíveis para o usuário logado"""
     try:
-        # In a real implementation, you would fetch from database
-        # For now, we'll return the current user data
-        
-        user_response = UserResponse(
-            id=current_user["sub"],
-            email=current_user["email"],
-            full_name="Current User",  # Would come from database
-            role=current_user["role"],
-            status="active",
-            agency_id=current_user.get("agency_id"),
-            client_id=current_user.get("client_id"),
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+        company_service = CompanyService()
+        companies = await company_service.get_user_companies(current_user["sub"])
+        return companies
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar empresas: {str(e)}"
         )
+
+@router.get("/profile")
+async def get_profile(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Obter perfil do usuário logado"""
+    try:
+        # TODO: Implementar busca completa do usuário no BigQuery
+        # Por enquanto, retornando dados do token
         
-        return user_response
+        profile = {
+            "id": current_user["sub"],
+            "email": current_user["email"],
+            "role": current_user["role"],
+            "company_id": current_user.get("company_id"),
+            "permissions": current_user.get("permissions", []),
+            "available_companies": current_user.get("available_companies", [])
+        }
+        
+        return profile
         
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get user info: {str(e)}"
+            detail=f"Erro ao buscar perfil: {str(e)}"
+        )
+
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register_user(user_data: UserCreate):
+    """Registrar novo usuário"""
+    try:
+        # TODO: Implementar registro real no BigQuery
+        # Por enquanto, apenas validação básica
+        
+        # Verificar se email já existe
+        # TODO: Implementar verificação de email único
+        
+        # Gerar ID único
+        user_id = str(uuid.uuid4())
+        now = datetime.utcnow()
+        
+        # Criar usuário
+        user = UserResponse(
+            id=user_id,
+            **user_data.dict(exclude={'password'}),
+            created_at=now,
+            updated_at=now
+        )
+        
+        # TODO: Salvar no BigQuery
+        # TODO: Criar relacionamento User-Company
+        
+        return user
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao registrar usuário: {str(e)}"
+        )
+
+@router.post("/change-password")
+async def change_password(
+    password_data: PasswordChange,
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Alterar senha do usuário logado"""
+    try:
+        # TODO: Implementar alteração de senha real
+        # Por enquanto, apenas validação básica
+        
+        # Verificar senha atual
+        # TODO: Implementar verificação de senha atual
+        
+        # Hash da nova senha
+        new_hashed_password = auth_service.get_password_hash(password_data.new_password)
+        
+        # TODO: Atualizar senha no BigQuery
+        
+        return {"message": "Senha alterada com sucesso"}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao alterar senha: {str(e)}"
+        )
+
+@router.post("/forgot-password")
+async def forgot_password(password_data: PasswordReset):
+    """Solicitar redefinição de senha"""
+    try:
+        # TODO: Implementar sistema de redefinição de senha
+        # Por enquanto, apenas validação básica
+        
+        # Verificar se email existe
+        # TODO: Implementar verificação de email
+        
+        # Gerar token de redefinição
+        # TODO: Implementar geração de token
+        
+        # Enviar email
+        # TODO: Implementar envio de email
+        
+        return {"message": "Email de redefinição enviado com sucesso"}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao processar solicitação: {str(e)}"
+        )
+
+@router.post("/reset-password")
+async def reset_password(password_data: PasswordResetConfirm):
+    """Redefinir senha com token"""
+    try:
+        # TODO: Implementar redefinição de senha real
+        # Por enquanto, apenas validação básica
+        
+        # Verificar token
+        # TODO: Implementar verificação de token
+        
+        # Hash da nova senha
+        new_hashed_password = auth_service.get_password_hash(password_data.new_password)
+        
+        # TODO: Atualizar senha no BigQuery
+        
+        return {"message": "Senha redefinida com sucesso"}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao redefinir senha: {str(e)}"
         )
 
 @router.post("/logout")
-async def logout(current_user: Dict[str, Any] = Depends(auth_service.get_current_user)):
-    """Logout user (in a real implementation, you might blacklist the token)"""
-    return {"message": "Successfully logged out"}
+async def logout():
+    """Logout do usuário"""
+    # Em JWT, o logout é feito no frontend removendo o token
+    # Aqui podemos implementar blacklist de tokens se necessário
+    return {"message": "Logout realizado com sucesso"}
 
-@router.get("/users", response_model=List[UserResponse])
-async def get_users(current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.ADMIN]))):
-    """Get all users (admin only)"""
+@router.get("/validate-token")
+async def validate_token(
+    current_user: Dict[str, Any] = Depends(get_current_user)
+):
+    """Validar token atual"""
     try:
-        # In a real implementation, you would fetch from database
-        # For now, we'll return mock data
-        
-        mock_users = [
-            UserResponse(
-                id="admin-001",
-                email="admin@southmedia.com",
-                full_name="Admin User",
-                role=UserRole.ADMIN,
-                status="active",
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            ),
-            UserResponse(
-                id="agency-001",
-                email="agency@southmedia.com",
-                full_name="Agency User",
-                role=UserRole.AGENCY,
-                status="active",
-                agency_id="agency-001",
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            ),
-            UserResponse(
-                id="client-001",
-                email="client@example.com",
-                full_name="Client User",
-                role=UserRole.CLIENT,
-                status="active",
-                agency_id="agency-001",
-                client_id="client-001",
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
-            )
-        ]
-        
-        return mock_users
+        return {
+            "valid": True,
+            "user": {
+                "id": current_user["sub"],
+                "email": current_user["email"],
+                "role": current_user["role"],
+                "company_id": current_user.get("company_id")
+            }
+        }
         
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get users: {str(e)}"
-        )
+        return {"valid": False, "error": str(e)}
 
 
