@@ -17,6 +17,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     username = Column(String, unique=True, index=True)
+    hashed_password = Column(String, nullable=False)  # Senha criptografada
     role = Column(SQLEnum(UserRole), default=UserRole.VIEWER)
     status = Column(SQLEnum(UserStatus), default=UserStatus.PENDING)
     
