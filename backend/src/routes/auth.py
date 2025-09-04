@@ -32,9 +32,6 @@ async def login(user_credentials: UserLogin):
                 detail="Email ou senha incorretos"
             )
         
-        # Determinar empresa ativa
-        current_company_id = user_credentials.company_id or user_data.get("company_id")
-        
         # Obter todas as empresas do usuário
         user_companies = await auth_service.get_user_companies_for_token(user_data["id"])
         
@@ -44,16 +41,18 @@ async def login(user_credentials: UserLogin):
                 detail="Usuário não tem acesso a nenhuma empresa"
             )
         
-        # Se não foi especificada empresa, usar a primeira disponível
-        if not current_company_id:
+        # Determinar empresa ativa
+        if user_credentials.company_id:
+            # Verificar se usuário tem acesso à empresa especificada
+            if user_credentials.company_id not in [c["id"] for c in user_companies]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Usuário não tem acesso a esta empresa"
+                )
+            current_company_id = user_credentials.company_id
+        else:
+            # Usar a primeira empresa disponível
             current_company_id = user_companies[0]["id"]
-        
-        # Verificar se usuário tem acesso à empresa especificada
-        if current_company_id not in [c["id"] for c in user_companies]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Usuário não tem acesso a esta empresa"
-            )
         
         # Criar token com contexto da empresa
         access_token = auth_service.create_company_context_token(
