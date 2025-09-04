@@ -28,7 +28,7 @@ steps:
       '--memory', '2Gi',
       '--cpu', '2',
       '--max-instances', '5',
-      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=south_media_dashboard',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENVIRONMENT=production',
       '--timeout', '300'
     ]
 
