@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
-from src.models.campaign import DashboardData, CampaignSummary
+from src.models.campaign import CampaignSummary
 from src.models.user import UserRole
-from src.services.auth_service import auth_service, can_read_dashboards
+from src.services.auth_service import auth_service, require_permissions
 from src.services.bigquery_service import BigQueryService
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
@@ -12,7 +12,7 @@ bigquery_service = BigQueryService()
 @router.get("/campaign/{campaign_id}")
 async def get_campaign_dashboard(
     campaign_id: str,
-    current_user: Dict[str, Any] = Depends(can_read_dashboards)
+    current_user: Dict[str, Any] = Depends(require_permissions(["dashboard:read"]))
 ):
     """Get dashboard data for a specific campaign"""
     try:
@@ -52,15 +52,15 @@ async def get_campaign_dashboard(
         summary = calculate_campaign_summary(metrics, campaign)
         
         # Prepare dashboard data
-        dashboard_data = DashboardData(
-            campaign_id=campaign_id,
-            campaign_name=campaign.get("name", ""),
-            client_name=client.get("name", "") if client else "",
-            campaign_type=campaign.get("campaign_type", ""),
-            summary=summary,
-            daily_metrics=metrics,
-            creatives=get_unique_creatives(metrics)
-        )
+        dashboard_data = {
+            "campaign_id": campaign_id,
+            "campaign_name": campaign.get("name", ""),
+            "client_name": client.get("name", "") if client else "",
+            "campaign_type": campaign.get("campaign_type", ""),
+            "summary": summary,
+            "daily_metrics": metrics,
+            "creatives": get_unique_creatives(metrics)
+        }
         
         return dashboard_data
         
@@ -75,7 +75,7 @@ async def get_campaign_dashboard(
 @router.get("/client/{client_id}")
 async def get_client_dashboards(
     client_id: str,
-    current_user: Dict[str, Any] = Depends(can_read_dashboards)
+    current_user: Dict[str, Any] = Depends(require_permissions(["dashboard:read"]))
 ):
     """Get all dashboards for a specific client"""
     try:
@@ -134,7 +134,7 @@ async def get_client_dashboards(
 @router.get("/agency/{agency_id}")
 async def get_agency_dashboards(
     agency_id: str,
-    current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.ADMIN, UserRole.AGENCY]))
+    current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN]))
 ):
     """Get all dashboards for an agency (admin and agency users only)"""
     try:
@@ -181,7 +181,7 @@ async def get_agency_dashboards(
 
 @router.get("/admin/overview")
 async def get_admin_overview(
-    current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.ADMIN]))
+    current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.SUPER_ADMIN]))
 ):
     """Get admin overview dashboard"""
     try:

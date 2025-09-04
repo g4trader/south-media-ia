@@ -1,0 +1,764 @@
+from typing import List, Optional, Dict, Any
+from datetime import datetime, date
+import uuid
+import logging
+import pandas as pd
+from fastapi import UploadFile
+
+from src.models.campaign import (
+    CampaignCreate, CampaignUpdate, CampaignResponse, CampaignSummary,
+    CampaignType, CampaignStatus, CampaignMetrics, CampaignMetricsCreate,
+    CampaignPerformance, DashboardTemplate, DashboardTemplateCreate,
+    DashboardTemplateUpdate, DashboardTemplateResponse
+)
+from src.services.bigquery_service import BigQueryService
+from src.services.sheets_service import GoogleSheetsService
+from src.services.auth_service import check_permissions
+
+logger = logging.getLogger(__name__)
+
+class CampaignService:
+    def __init__(self):
+        self.bigquery_service = BigQueryService()
+        self.sheets_service = GoogleSheetsService()
+    
+    async def create_campaign(self, campaign_data: CampaignCreate, creator_user: Dict[str, Any]) -> CampaignResponse:
+        """Criar uma nova campanha"""
+        try:
+            # Gerar ID único para a campanha
+            campaign_id = str(uuid.uuid4())
+            now = datetime.utcnow()
+            
+            # Criar campanha
+            campaign = CampaignResponse(
+                id=campaign_id,
+                **campaign_data.dict(),
+                created_at=now,
+                updated_at=now
+            )
+            
+            # Salvar no BigQuery
+            await self._save_campaign_to_bigquery(campaign)
+            
+            # Criar integração com Google Sheets
+            await self._create_sheets_integration(campaign)
+            
+            logger.info(f"Campanha criada com sucesso: {campaign_id}")
+            return campaign
+            
+        except Exception as e:
+            logger.error(f"Erro ao criar campanha: {e}")
+            raise Exception(f"Falha ao criar campanha: {str(e)}")
+    
+    async def get_campaign(self, campaign_id: str, current_user: Dict[str, Any]) -> Optional[CampaignResponse]:
+        """Obter campanha por ID com verificação de permissão"""
+        try:
+            # TODO: Implementar busca real no BigQuery
+            # Por enquanto, usando dados mock para demonstração
+            
+            mock_campaigns = {
+                "campaign-001": {
+                    "id": "campaign-001",
+                    "name": "Campanha de Vídeo Q1 2024",
+                    "company_id": "company-001",
+                    "campaign_type": CampaignType.VIDEO,
+                    "status": CampaignStatus.ACTIVE,
+                    "start_date": datetime(2024, 1, 1),
+                    "end_date": datetime(2024, 3, 31),
+                    "google_sheets_url": "https://docs.google.com/spreadsheets/d/1234567890",
+                    "spreadsheet_id": "1234567890",
+                    "sheet_name": "Dados Campanha",
+                    "dashboard_template": "video_template",
+                    "strategies": "Estratégia de remarketing com segmentação por interesse e comportamento",
+                    "contract_scope": "completions",
+                    "unit_cost": "CPV",
+                    "total_budget": 50000.0,
+                    "spent_budget": 25000.0,
+                    "channels": ["YouTube", "Google Display"],
+                    "platforms": ["Google"],
+                    "description": "Campanha de vídeo para aumentar awareness da marca",
+                    "objectives": ["Awareness", "Consideration"],
+                    "target_audience": "Profissionais 25-45 anos",
+                    "kpis": ["Completion Rate", "CPV"],
+                    "refresh_frequency": "daily",
+                    "auto_import": True,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            }
+            
+            campaign_data = mock_campaigns.get(campaign_id)
+            if not campaign_data:
+                return None
+            
+            # Verificar se usuário tem acesso à empresa da campanha
+            if not await self.can_access_company(current_user, campaign_data["company_id"]):
+                return None
+            
+            return CampaignResponse(**campaign_data)
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar campanha {campaign_id}: {e}")
+            return None
+    
+    async def list_campaigns(
+        self,
+        company_id: str,
+        current_user: Dict[str, Any],
+        skip: int = 0,
+        limit: int = 100,
+        campaign_type: Optional[CampaignType] = None,
+        status_filter: Optional[CampaignStatus] = None,
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        dashboard_template: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> List[CampaignSummary]:
+        """Listar campanhas de uma empresa com filtros"""
+        try:
+            # Verificar se usuário tem acesso à empresa
+            if not await self.can_access_company(current_user, company_id):
+                return []
+            
+            # TODO: Implementar busca real no BigQuery
+            # Por enquanto, usando dados mock para demonstração
+            
+            mock_campaigns = [
+                {
+                    "id": "campaign-001",
+                    "name": "Campanha de Vídeo Q1 2024",
+                    "company_id": "company-001",
+                    "campaign_type": CampaignType.VIDEO,
+                    "status": CampaignStatus.ACTIVE,
+                    "start_date": datetime(2024, 1, 1),
+                    "end_date": datetime(2024, 3, 31),
+                    "dashboard_template": "video_template",
+                    "total_budget": 50000.0,
+                    "spent_budget": 25000.0,
+                    "channels": ["YouTube", "Google Display"],
+                    "platforms": ["Google"],
+                    "last_data_update": datetime.utcnow()
+                },
+                {
+                    "id": "campaign-002",
+                    "name": "Campanha Social Q1 2024",
+                    "company_id": "company-001",
+                    "campaign_type": CampaignType.SOCIAL,
+                    "status": CampaignStatus.ACTIVE,
+                    "start_date": datetime(2024, 1, 1),
+                    "end_date": datetime(2024, 3, 31),
+                    "dashboard_template": "social_template",
+                    "total_budget": 30000.0,
+                    "spent_budget": 15000.0,
+                    "channels": ["Facebook", "Instagram"],
+                    "platforms": ["Meta"],
+                    "last_data_update": datetime.utcnow()
+                }
+            ]
+            
+            # Filtrar por empresa
+            company_campaigns = [c for c in mock_campaigns if c["company_id"] == company_id]
+            
+            # Aplicar filtros
+            if campaign_type:
+                company_campaigns = [c for c in company_campaigns if c["campaign_type"] == campaign_type]
+            
+            if status_filter:
+                company_campaigns = [c for c in company_campaigns if c["status"] == status_filter]
+            
+            if start_date:
+                company_campaigns = [c for c in company_campaigns if c["start_date"].date() >= start_date]
+            
+            if end_date:
+                company_campaigns = [c for c in company_campaigns if c["end_date"].date() <= end_date]
+            
+            if dashboard_template:
+                company_campaigns = [c for c in company_campaigns if c["dashboard_template"] == dashboard_template]
+            
+            if search:
+                search_lower = search.lower()
+                company_campaigns = [
+                    c for c in company_campaigns 
+                    if search_lower in c["name"].lower()
+                ]
+            
+            # Aplicar paginação
+            paginated_campaigns = company_campaigns[skip:skip + limit]
+            
+            # Converter para CampaignSummary
+            summaries = []
+            for campaign in paginated_campaigns:
+                summary = CampaignSummary(
+                    id=campaign["id"],
+                    name=campaign["name"],
+                    company_id=campaign["company_id"],
+                    campaign_type=campaign["campaign_type"],
+                    status=campaign["status"],
+                    start_date=campaign["start_date"],
+                    end_date=campaign["end_date"],
+                    dashboard_template=campaign["dashboard_template"],
+                    total_budget=campaign["total_budget"],
+                    spent_budget=campaign["spent_budget"],
+                    channels=campaign["channels"],
+                    platforms=campaign["platforms"],
+                    last_data_update=campaign["last_data_update"]
+                )
+                summaries.append(summary)
+            
+            return summaries
+            
+        except Exception as e:
+            logger.error(f"Erro ao listar campanhas: {e}")
+            return []
+    
+    async def update_campaign(
+        self, 
+        campaign_id: str, 
+        campaign_data: CampaignUpdate, 
+        current_user: Dict[str, Any]
+    ) -> Optional[CampaignResponse]:
+        """Atualizar campanha"""
+        try:
+            # Verificar se campanha existe
+            existing_campaign = await self.get_campaign(campaign_id, current_user)
+            if not existing_campaign:
+                return None
+            
+            # Atualizar campos
+            update_data = campaign_data.dict(exclude_unset=True)
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # Criar campanha atualizada
+            updated_campaign = CampaignResponse(
+                **existing_campaign.dict(),
+                **update_data
+            )
+            
+            # Salvar no BigQuery
+            await self._update_campaign_in_bigquery(campaign_id, updated_campaign)
+            
+            logger.info(f"Campanha {campaign_id} atualizada com sucesso")
+            return updated_campaign
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar campanha {campaign_id}: {e}")
+            return None
+    
+    async def delete_campaign(self, campaign_id: str, current_user: Dict[str, Any]) -> bool:
+        """Deletar campanha (soft delete)"""
+        try:
+            # Verificar se campanha existe
+            existing_campaign = await self.get_campaign(campaign_id, current_user)
+            if not existing_campaign:
+                return False
+            
+            # Soft delete - apenas marcar como inativa
+            updated_campaign = CampaignResponse(
+                **existing_campaign.dict(),
+                status=CampaignStatus.INACTIVE,
+                updated_at=datetime.utcnow()
+            )
+            
+            # Salvar no BigQuery
+            await self._update_campaign_in_bigquery(campaign_id, updated_campaign)
+            
+            logger.info(f"Campanha {campaign_id} marcada como inativa")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao deletar campanha {campaign_id}: {e}")
+            return False
+    
+    async def update_campaign_status(
+        self, 
+        campaign_id: str, 
+        new_status: CampaignStatus, 
+        current_user: Dict[str, Any]
+    ) -> Optional[CampaignResponse]:
+        """Atualizar status de uma campanha"""
+        try:
+            # Verificar se campanha existe
+            existing_campaign = await self.get_campaign(campaign_id, current_user)
+            if not existing_campaign:
+                return None
+            
+            # Atualizar status
+            updated_campaign = CampaignResponse(
+                **existing_campaign.dict(),
+                status=new_status,
+                updated_at=datetime.utcnow()
+            )
+            
+            # Salvar no BigQuery
+            await self._update_campaign_in_bigquery(campaign_id, updated_campaign)
+            
+            logger.info(f"Status da campanha {campaign_id} alterado para {new_status}")
+            return updated_campaign
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar status da campanha {campaign_id}: {e}")
+            return None
+    
+    async def get_campaign_performance(
+        self, 
+        campaign_id: str, 
+        current_user: Dict[str, Any]
+    ) -> Optional[CampaignPerformance]:
+        """Obter performance de uma campanha"""
+        try:
+            # Verificar se campanha existe
+            campaign = await self.get_campaign(campaign_id, current_user)
+            if not campaign:
+                return None
+            
+            # TODO: Implementar cálculo real de performance baseado nas métricas
+            # Por enquanto, usando dados mock
+            
+            performance = CampaignPerformance(
+                campaign_id=campaign_id,
+                campaign_name=campaign.name,
+                company_id=campaign.company_id,
+                total_impressions=1000000,
+                total_clicks=50000,
+                total_investment=campaign.spent_budget,
+                avg_ctr=5.0,
+                avg_cpm=25.0,
+                avg_cpc=0.50,
+                video_completion_rate=75.0 if campaign.campaign_type == CampaignType.VIDEO else None,
+                social_engagement_rate=8.5 if campaign.campaign_type == CampaignType.SOCIAL else None,
+                search_quality_score=85.0 if campaign.campaign_type == CampaignType.SEARCH else None,
+                days_active=45,
+                budget_utilization=(campaign.spent_budget / campaign.total_budget) * 100,
+                performance_score=78.5,
+                last_metrics_update=datetime.utcnow()
+            )
+            
+            return performance
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar performance da campanha {campaign_id}: {e}")
+            return None
+    
+    async def get_campaign_metrics(
+        self, 
+        campaign_id: str, 
+        current_user: Dict[str, Any],
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """Obter métricas de uma campanha com filtros de data"""
+        try:
+            # Verificar se campanha existe
+            campaign = await self.get_campaign(campaign_id, current_user)
+            if not campaign:
+                return []
+            
+            # TODO: Implementar busca real de métricas no BigQuery
+            # Por enquanto, usando dados mock
+            
+            mock_metrics = [
+                {
+                    "date": datetime(2024, 1, 15),
+                    "impressions": 25000,
+                    "clicks": 1250,
+                    "ctr": 5.0,
+                    "cpm": 25.0,
+                    "cpc": 0.50,
+                    "investment": 625.0
+                },
+                {
+                    "date": datetime(2024, 1, 16),
+                    "impressions": 28000,
+                    "clicks": 1400,
+                    "ctr": 5.0,
+                    "cpm": 25.0,
+                    "cpc": 0.50,
+                    "investment": 700.0
+                }
+            ]
+            
+            # Aplicar filtros de data
+            if start_date:
+                mock_metrics = [m for m in mock_metrics if m["date"].date() >= start_date]
+            
+            if end_date:
+                mock_metrics = [m for m in mock_metrics if m["date"].date() <= end_date]
+            
+            # Aplicar paginação
+            paginated_metrics = mock_metrics[skip:skip + limit]
+            
+            return paginated_metrics
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar métricas da campanha {campaign_id}: {e}")
+            return []
+    
+    async def import_data_from_sheets(
+        self, 
+        campaign_id: str, 
+        current_user: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Importar dados da campanha do Google Sheets"""
+        try:
+            # Verificar se campanha existe
+            campaign = await self.get_campaign(campaign_id, current_user)
+            if not campaign:
+                raise Exception("Campanha não encontrada")
+            
+            # Ler dados do Google Sheets
+            df = await self.sheets_service.read_sheet_data(
+                campaign.spreadsheet_id,
+                campaign.sheet_name
+            )
+            
+            if df is None:
+                raise Exception("Não foi possível ler dados da planilha")
+            
+            # Processar dados baseado no tipo de campanha
+            metrics = []
+            if campaign.campaign_type == CampaignType.VIDEO:
+                metrics = await self._process_video_metrics(df, campaign_id)
+            elif campaign.campaign_type == CampaignType.DISPLAY:
+                metrics = await self._process_display_metrics(df, campaign_id)
+            elif campaign.campaign_type == CampaignType.SOCIAL:
+                metrics = await self._process_social_metrics(df, campaign_id)
+            else:
+                metrics = await self._process_generic_metrics(df, campaign_id)
+            
+            # Salvar métricas no BigQuery
+            await self._save_metrics_to_bigquery(metrics)
+            
+            # Atualizar última atualização da campanha
+            await self._update_campaign_last_update(campaign_id)
+            
+            return {
+                "records_imported": len(metrics),
+                "campaign_id": campaign_id,
+                "import_date": datetime.utcnow()
+            }
+            
+        except Exception as e:
+            logger.error(f"Erro ao importar dados da campanha {campaign_id}: {e}")
+            raise Exception(f"Falha na importação: {str(e)}")
+    
+    async def upload_metrics_file(
+        self, 
+        campaign_id: str, 
+        file: UploadFile, 
+        current_user: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Upload de métricas de campanha via arquivo CSV"""
+        try:
+            # Verificar se campanha existe
+            campaign = await self.get_campaign(campaign_id, current_user)
+            if not campaign:
+                raise Exception("Campanha não encontrada")
+            
+            # Ler arquivo CSV
+            content = await file.read()
+            df = pd.read_csv(pd.io.common.BytesIO(content))
+            
+            # Processar dados baseado no tipo de campanha
+            metrics = []
+            if campaign.campaign_type == CampaignType.VIDEO:
+                metrics = await self._process_video_metrics(df, campaign_id)
+            elif campaign.campaign_type == CampaignType.DISPLAY:
+                metrics = await self._process_display_metrics(df, campaign_id)
+            elif campaign.campaign_type == CampaignType.SOCIAL:
+                metrics = await self._process_social_metrics(df, campaign_id)
+            else:
+                metrics = await self._process_generic_metrics(df, campaign_id)
+            
+            # Salvar métricas no BigQuery
+            await self._save_metrics_to_bigquery(metrics)
+            
+            # Atualizar última atualização da campanha
+            await self._update_campaign_last_update(campaign_id)
+            
+            return {
+                "records_processed": len(metrics),
+                "errors": [],
+                "campaign_id": campaign_id,
+                "upload_date": datetime.utcnow()
+            }
+            
+        except Exception as e:
+            logger.error(f"Erro ao processar arquivo da campanha {campaign_id}: {e}")
+            return {
+                "records_processed": 0,
+                "errors": [str(e)],
+                "campaign_id": campaign_id
+            }
+    
+    # Métodos para templates de dashboard
+    
+    async def create_dashboard_template(
+        self, 
+        template_data: DashboardTemplateCreate, 
+        current_user: Dict[str, Any]
+    ) -> DashboardTemplateResponse:
+        """Criar um novo template de dashboard"""
+        try:
+            # Gerar ID único para o template
+            template_id = str(uuid.uuid4())
+            now = datetime.utcnow()
+            
+            # Criar template
+            template = DashboardTemplateResponse(
+                id=template_id,
+                **template_data.dict(),
+                created_at=now,
+                updated_at=now
+            )
+            
+            # Salvar no BigQuery
+            await self._save_template_to_bigquery(template)
+            
+            logger.info(f"Template de dashboard criado com sucesso: {template_id}")
+            return template
+            
+        except Exception as e:
+            logger.error(f"Erro ao criar template: {e}")
+            raise Exception(f"Falha ao criar template: {str(e)}")
+    
+    async def list_dashboard_templates(
+        self,
+        company_id: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        current_user: Dict[str, Any] = None
+    ) -> List[DashboardTemplateResponse]:
+        """Listar templates de dashboard disponíveis"""
+        try:
+            # TODO: Implementar busca real no BigQuery
+            # Por enquanto, usando dados mock
+            
+            mock_templates = [
+                {
+                    "id": "template-001",
+                    "name": "Template de Vídeo",
+                    "description": "Template otimizado para campanhas de vídeo",
+                    "company_id": None,  # Template global
+                    "layout_type": "grid",
+                    "columns": 12,
+                    "rows": 8,
+                    "available_widgets": ["video_player", "completion_rate", "engagement_metrics"],
+                    "default_charts": [],
+                    "default_filters": [],
+                    "is_active": True,
+                    "is_default": False,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                },
+                {
+                    "id": "template-002",
+                    "name": "Template Social",
+                    "description": "Template para campanhas sociais",
+                    "company_id": "company-001",
+                    "layout_type": "grid",
+                    "columns": 12,
+                    "rows": 6,
+                    "available_widgets": ["social_feed", "engagement_rate", "reach_metrics"],
+                    "default_charts": [],
+                    "default_filters": [],
+                    "is_active": True,
+                    "is_default": False,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            ]
+            
+            # Aplicar filtros
+            if company_id:
+                mock_templates = [t for t in mock_templates if t["company_id"] == company_id or t["company_id"] is None]
+            
+            if is_active is not None:
+                mock_templates = [t for t in mock_templates if t["is_active"] == is_active]
+            
+            # Converter para DashboardTemplateResponse
+            templates = []
+            for template_data in mock_templates:
+                template = DashboardTemplateResponse(**template_data)
+                templates.append(template)
+            
+            return templates
+            
+        except Exception as e:
+            logger.error(f"Erro ao listar templates: {e}")
+            return []
+    
+    async def get_dashboard_template(
+        self, 
+        template_id: str, 
+        current_user: Dict[str, Any]
+    ) -> Optional[DashboardTemplateResponse]:
+        """Obter template de dashboard por ID"""
+        try:
+            # TODO: Implementar busca real no BigQuery
+            # Por enquanto, usando dados mock
+            
+            mock_templates = {
+                "template-001": {
+                    "id": "template-001",
+                    "name": "Template de Vídeo",
+                    "description": "Template otimizado para campanhas de vídeo",
+                    "company_id": None,
+                    "layout_type": "grid",
+                    "columns": 12,
+                    "rows": 8,
+                    "available_widgets": ["video_player", "completion_rate", "engagement_metrics"],
+                    "default_charts": [],
+                    "default_filters": [],
+                    "is_active": True,
+                    "is_default": False,
+                    "created_at": datetime.utcnow(),
+                    "updated_at": datetime.utcnow()
+                }
+            }
+            
+            template_data = mock_templates.get(template_id)
+            if not template_data:
+                return None
+            
+            return DashboardTemplateResponse(**template_data)
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar template {template_id}: {e}")
+            return None
+    
+    async def update_dashboard_template(
+        self, 
+        template_id: str, 
+        template_data: DashboardTemplateUpdate, 
+        current_user: Dict[str, Any]
+    ) -> Optional[DashboardTemplateResponse]:
+        """Atualizar template de dashboard"""
+        try:
+            # Verificar se template existe
+            existing_template = await self.get_dashboard_template(template_id, current_user)
+            if not existing_template:
+                return None
+            
+            # Atualizar campos
+            update_data = template_data.dict(exclude_unset=True)
+            update_data['updated_at'] = datetime.utcnow()
+            
+            # Criar template atualizado
+            updated_template = DashboardTemplateResponse(
+                **existing_template.dict(),
+                **update_data
+            )
+            
+            # Salvar no BigQuery
+            await self._update_template_in_bigquery(template_id, updated_template)
+            
+            logger.info(f"Template {template_id} atualizado com sucesso")
+            return updated_template
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar template {template_id}: {e}")
+            return None
+    
+    async def delete_dashboard_template(self, template_id: str, current_user: Dict[str, Any]) -> bool:
+        """Deletar template de dashboard"""
+        try:
+            # Verificar se template existe
+            existing_template = await self.get_dashboard_template(template_id, current_user)
+            if not existing_template:
+                return False
+            
+            # Soft delete - apenas marcar como inativo
+            updated_template = DashboardTemplateResponse(
+                **existing_template.dict(),
+                is_active=False,
+                updated_at=datetime.utcnow()
+            )
+            
+            # Salvar no BigQuery
+            await self._update_template_in_bigquery(template_id, updated_template)
+            
+            logger.info(f"Template {template_id} marcado como inativo")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao deletar template {template_id}: {e}")
+            return False
+    
+    # Métodos de verificação de permissões
+    
+    async def can_access_company(self, current_user: Dict[str, Any], company_id: str) -> bool:
+        """Verificar se usuário tem acesso à empresa"""
+        try:
+            # Super admin tem acesso a todas as empresas
+            if current_user.get("role") == "super_admin":
+                return True
+            
+            # Verificar se usuário tem acesso à empresa
+            from src.services.auth_service import AuthService
+            auth_service = AuthService()
+            return await auth_service.check_company_access(current_user, company_id)
+            
+        except Exception as e:
+            logger.error(f"Erro ao verificar acesso à empresa: {e}")
+            return False
+    
+    # Métodos privados para processamento de métricas
+    
+    async def _process_video_metrics(self, df: pd.DataFrame, campaign_id: str) -> List[CampaignMetrics]:
+        """Processar métricas de campanha de vídeo"""
+        # TODO: Implementar processamento real
+        return []
+    
+    async def _process_display_metrics(self, df: pd.DataFrame, campaign_id: str) -> List[CampaignMetrics]:
+        """Processar métricas de campanha de display"""
+        # TODO: Implementar processamento real
+        return []
+    
+    async def _process_social_metrics(self, df: pd.DataFrame, campaign_id: str) -> List[CampaignMetrics]:
+        """Processar métricas de campanha social"""
+        # TODO: Implementar processamento real
+        return []
+    
+    async def _process_generic_metrics(self, df: pd.DataFrame, campaign_id: str) -> List[CampaignMetrics]:
+        """Processar métricas genéricas de campanha"""
+        # TODO: Implementar processamento real
+        return []
+    
+    # Métodos privados para BigQuery
+    
+    async def _save_campaign_to_bigquery(self, campaign: CampaignResponse):
+        """Salvar campanha no BigQuery"""
+        # TODO: Implementar integração com BigQuery
+        logger.info(f"Campanha {campaign.id} salva no BigQuery")
+    
+    async def _update_campaign_in_bigquery(self, campaign_id: str, campaign: CampaignResponse):
+        """Atualizar campanha no BigQuery"""
+        # TODO: Implementar atualização no BigQuery
+        logger.info(f"Campanha {campaign_id} atualizada no BigQuery")
+    
+    async def _create_sheets_integration(self, campaign: CampaignResponse):
+        """Criar integração com Google Sheets"""
+        # TODO: Implementar criação no BigQuery
+        logger.info(f"Integração com Google Sheets criada para campanha {campaign.id}")
+    
+    async def _save_metrics_to_bigquery(self, metrics: List[CampaignMetrics]):
+        """Salvar métricas no BigQuery"""
+        # TODO: Implementar integração com BigQuery
+        logger.info(f"{len(metrics)} métricas salvas no BigQuery")
+    
+    async def _update_campaign_last_update(self, campaign_id: str):
+        """Atualizar última atualização da campanha"""
+        # TODO: Implementar atualização no BigQuery
+        logger.info(f"Última atualização da campanha {campaign_id} atualizada")
+    
+    async def _save_template_to_bigquery(self, template: DashboardTemplateResponse):
+        """Salvar template no BigQuery"""
+        # TODO: Implementar integração com BigQuery
+        logger.info(f"Template {template.id} salvo no BigQuery")
+    
+    async def _update_template_in_bigquery(self, template_id: str, template: DashboardTemplateResponse):
+        """Atualizar template no BigQuery"""
+        # TODO: Implementar atualização no BigQuery
+        logger.info(f"Template {template_id} atualizado no BigQuery")
+

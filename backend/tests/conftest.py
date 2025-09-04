@@ -20,7 +20,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.main import app
-from src.config import settings
+from src.core.config import settings
 from src.models.user import UserRole, UserStatus, Permission
 from src.models.company import CompanyStatus, CompanyType
 from src.models.campaign import CampaignType, CampaignStatus
@@ -40,14 +40,18 @@ def setup_test_environment():
     os.environ["ENVIRONMENT"] = "test"
     os.environ["DATABASE_URL"] = "sqlite:///./test.db"
     
+    # Importar modelos para registrar tabelas
+    from src.models.database_models import User, Company, UserCompany, Campaign
+    
     # Importar e criar tabelas
-    from src.core.database import Base, engine
-    Base.metadata.create_all(bind=engine)
+    from src.core.database import Base, engine, create_tables
+    create_tables()
     
     yield
     
     # Limpar
-    Base.metadata.drop_all(bind=engine)
+    from src.core.database import drop_tables
+    drop_tables()
 
 @pytest.fixture(scope="session")
 def event_loop():

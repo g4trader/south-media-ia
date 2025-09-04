@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>South Media - Dashboard de Campanhas de Display</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 2rem;
+            }
+        }
+        
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .logo {
+                margin-bottom: 0;
+                justify-content: flex-start;
+                width: auto;
+            }
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-info {
+                text-align: right;
+                width: auto;
+            }
+        }
+        
+        .campaign-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-date {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .tabs {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.6);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 1rem;
+                font-size: 0.875rem;
+                min-height: 70px;
+            }
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        /* Correção específica para gráficos no mobile */
+        @media (max-width: 767px) {
+            .chart-container {
+                height: 180px;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+        
+        .quartis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .quartis-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+        }
+        
+        .quartil-item {
+            text-align: center;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .circle-progress {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.75rem;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .circle-progress {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-responsive table {
+            min-width: 100%;
+            font-size: 0.75rem;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        @media (min-width: 768px) {
+            .table-responsive table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.75rem 0.5rem;
+            white-space: nowrap;
+            text-align: left;
+        }
+        
+        .planning-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .planning-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .audience-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .audience-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .audience-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .audience-item {
+            padding: 0.875rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            box-sizing: border-box;
+            width: 100%;
+            word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .audience-item {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .text-green-400 {
+            color: #34D399;
+        }
+        
+        .text-orange-400 {
+            color: #FB923C;
+        }
+        
+        .bg-blue-600 {
+            background-color: #2563EB;
+        }
+        
+        .bg-yellow-600 {
+            background-color: #D97706;
+        }
+        
+        .bg-pink-600 {
+            background-color: #DB2777;
+        }
+        
+        .bg-cyan-600 {
+            background-color: #0891B2;
+        }
+        
+        .bg-purple-600 {
+            background-color: #9333EA;
+        }
+        
+        .bg-green-600 {
+            background-color: #059669;
+        }
+        
+        .bg-red-600 {
+            background-color: #DC2626;
+        }
+        
+        .bg-gray-600 {
+            background-color: #4B5563;
+        }
+        
+        /* Ajustes específicos para mobile mantendo legibilidade */
+        @media (max-width: 767px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+            
+            /* Padding específico para cards com gráficos */
+            .charts-grid .card {
+                padding: 0.5rem;
+            }
+            
+            h3 {
+                font-size: 1rem !important;
+                margin-bottom: 0.75rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Mantém fontes legíveis no mobile */
+            
+            
+            
+            
+            .tab-button {
+                font-size: 0.7rem;
+                min-height: 55px;
+            }
+            
+            .circle-progress {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .table-responsive table {
+                font-size: 0.7rem;
+            }
+            
+            .table-responsive th,
+            .table-responsive td {
+                padding: 0.5rem 0.375rem;
+            }
+            
+            .audience-item {
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+            
+            .logo-text p {
+                font-size: 0.8rem;
+            }
+            
+            .campaign-title {
+                font-size: 1rem;
+            }
+            
+            .campaign-date {
+                font-size: 0.8rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            /* Ajustes específicos para gráficos em telas muito pequenas */
+            .charts-grid .card {
+                padding: 0.375rem;
+            }
+            
+            .chart-container {
+                height: 160px;
+            }
+        }
+    
+
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 2rem;
+            }
+        }
+        
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .logo {
+                margin-bottom: 0;
+                justify-content: flex-start;
+                width: auto;
+            }
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-info {
+                text-align: right;
+                width: auto;
+            }
+        }
+        
+        .campaign-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-date {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .tabs {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.6);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 1rem;
+                font-size: 0.875rem;
+                min-height: 70px;
+            }
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        /* Correção específica para gráficos no mobile */
+        @media (max-width: 767px) {
+            .chart-container {
+                height: 180px;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+        
+        .quartis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .quartis-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+        }
+        
+        .quartil-item {
+            text-align: center;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        .circle-progress {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 0.75rem;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .circle-progress {
+                width: 80px;
+                height: 80px;
+            }
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-responsive table {
+            min-width: 100%;
+            font-size: 0.75rem;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        @media (min-width: 768px) {
+            .table-responsive table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.75rem 0.5rem;
+            white-space: nowrap;
+            text-align: left;
+        }
+        
+        .planning-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .planning-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .audience-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .audience-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .audience-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .audience-item {
+            padding: 0.875rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            box-sizing: border-box;
+            width: 100%;
+            word-break: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .audience-item {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .text-green-400 {
+            color: #34D399;
+        }
+        
+        .text-orange-400 {
+            color: #FB923C;
+        }
+        
+        .bg-blue-600 {
+            background-color: #2563EB;
+        }
+        
+        .bg-yellow-600 {
+            background-color: #D97706;
+        }
+        
+        .bg-pink-600 {
+            background-color: #DB2777;
+        }
+        
+        .bg-cyan-600 {
+            background-color: #0891B2;
+        }
+        
+        .bg-purple-600 {
+            background-color: #9333EA;
+        }
+        
+        .bg-green-600 {
+            background-color: #059669;
+        }
+        
+        .bg-red-600 {
+            background-color: #DC2626;
+        }
+        
+        .bg-gray-600 {
+            background-color: #4B5563;
+        }
+        
+        /* Ajustes específicos para mobile mantendo legibilidade */
+        @media (max-width: 767px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+            
+            /* Padding específico para cards com gráficos */
+            .charts-grid .card {
+                padding: 0.5rem;
+            }
+            
+            h3 {
+                font-size: 1rem !important;
+                margin-bottom: 0.75rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Mantém fontes legíveis no mobile */
+            
+            
+            
+            
+            .tab-button {
+                font-size: 0.7rem;
+                min-height: 55px;
+            }
+            
+            .circle-progress {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .table-responsive table {
+                font-size: 0.7rem;
+            }
+            
+            .table-responsive th,
+            .table-responsive td {
+                padding: 0.5rem 0.375rem;
+            }
+            
+            .audience-item {
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+            
+            .logo-text p {
+                font-size: 0.8rem;
+            }
+            
+            .campaign-title {
+                font-size: 1rem;
+            }
+            
+            .campaign-date {
+                font-size: 0.8rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            /* Ajustes específicos para gráficos em telas muito pequenas */
+            .charts-grid .card {
+                padding: 0.375rem;
+            }
+            
+            .chart-container {
+                height: 160px;
+            }
+        }
+    
+
+
+/* Estilo da tabela do quadro de publishers */
+.top-pubs .table-wrap{width:100%;overflow-x:auto}
+.top-pubs table{width:100%;border-collapse:collapse;font-size:.9rem}
+.top-pubs thead th{
+  text-transform:uppercase;
+  font-size:.75rem;
+  letter-spacing:.06em;
+  color:#9CA3AF;
+  text-align:left;
+  padding:.75rem 1rem;
+  border-bottom:1px solid rgba(148,163,184,.15);
+}
+.top-pubs tbody td{
+  padding:.85rem 1rem;
+  border-bottom:1px solid rgba(148,163,184,.08);
+  color:#E5E7EB;
+}
+.top-pubs tbody tr:hover td{
+  background:rgba(255,255,255,.02);
+}
+
+
+
+/* Estilo da tabela de Entrega Diária (igual ao quadro de publishers) */
+.daily-table .table-wrap{width:100%;overflow-x:auto}
+.daily-table table{width:100%;border-collapse:collapse;font-size:.9rem}
+.daily-table thead th{
+  text-transform:uppercase;
+  font-size:.75rem;
+  letter-spacing:.06em;
+  color:#9CA3AF;
+  text-align:left;
+  padding:.75rem 1rem;
+  border-bottom:1px solid rgba(148,163,184,.15);
+}
+.daily-table tbody td{
+  padding:.85rem 1rem;
+  border-bottom:1px solid rgba(148,163,184,.08);
+  color:#E5E7EB;
+  white-space:nowrap;
+}
+.daily-table tbody tr:hover td{
+  background:rgba(255,255,255,.02);
+}
+
+
+
+/* Planejamento - estilos */
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width: 900px){.plan-grid{grid-template-columns:1fr}}
+.plan-card{background:rgba(26,26,46,.8);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:1rem}
+.plan-card h3{font-size:1rem;margin-bottom:.75rem;letter-spacing:.04em;text-transform:uppercase;color:#E5E7EB}
+.tag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+@media (max-width: 900px){.tag-grid{grid-template-columns:1fr 1fr}}
+.tag{border-radius:12px;padding:.85rem 1rem;border:1px solid rgba(148,163,184,.18);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02))}
+.tag .title{font-weight:700;margin-bottom:.3rem}
+.tag .desc{opacity:.9;font-size:.85rem}
+.tag.purple{background:linear-gradient(135deg, rgba(124,58,237,.25), rgba(236,72,153,.15));border-color:rgba(139,92,246,.45)}
+.tag.blue{background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.15));border-color:rgba(59,130,246,.45)}
+.badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;background:rgba(255,255,255,.08);border:1px solid rgba(148,163,184,.2);padding:.2rem .5rem;border-radius:999px;margin-right:.4rem}
+.badge .dot{width:6px;height:6px;border-radius:999px;background:#10B981;display:inline-block}
+.section-note{color:#9CA3AF;font-size:.85rem;margin-top:.5rem}
+/* === Insights: cards similar to Planejamento === */
+.insights-section h3 { margin: 0 0 .75rem 0; font-size: 1rem; color: #fff; }
+.insights-grid { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+.insight-card { 
+  background: rgba(26,26,46,0.7);
+  border: 1px solid rgba(139,92,246,0.35);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 1rem 1rem;
+}
+.insight-title { font-weight: 600; margin-bottom: .25rem; color: #fff; }
+.insight-text { color: #D1D5DB; line-height: 1.45; }
+.insight-green { border-left-color: #10B981; background: rgba(16,185,129,0.08); }
+.insight-orange{ border-left-color: #F59E0B; background: rgba(245,158,11,0.08); }
+.insight-purple{ border-left-color: #8B5CF6; background: rgba(139,92,246,0.08); }
+.insight-blue  { border-left-color: #3B82F6; background: rgba(59,130,246,0.08); }
+@media (min-width: 1024px){
+  .insights-grid { grid-template-columns: 1fr; } /* sempre 1 col, como Planejamento */
+}
+</style>
+<style>/* Ajustes para quadros resumo (métricas) */
+
+
+.metric-card 
+.metric-card</style>
+<style>/* Ajustes adicionais para métricas (cards resumo) */
+
+.metric-card 
+.metric-card 
+.metric-card .text-green,
+.metric-card .text-orange{
+  font-size:.9rem;
+  font-weight:500;
+}</style>
+<style>/* Correção final para espaçamento dos cards resumo */
+
+.metric-card 
+.metric-card 
+.metric-card .text-green,
+.metric-card .text-orange{
+  font-size:.9rem;
+  font-weight:500;
+}</style>
+<style>/* Ajuste da metrics-grid para espelhar layout Copacol */</style>
+<style>/* CSS de métricas importado do layout Copacol */
+.metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+.metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+.metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+@media (min-width: 640px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+@media (min-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+.metric-card {
+            padding: 1.25rem;
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+.metric-card {
+                padding: 1.5rem;
+            }
+
+@media (min-width: 768px) {
+            .metric-card {
+                padding: 1.5rem;
+            }
+        }
+
+.metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+
+.metric-value {
+                font-size: 2rem;
+            }
+
+.metric-value {
+                font-size: 1.25rem !important;
+            }
+
+@media (min-width: 768px) {
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+
+.metric-label {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.3;
+        }
+
+.metric-label {
+                font-size: 0.875rem;
+            }
+
+.metric-label {
+                font-size: 0.7rem !important;
+            }
+
+@media (min-width: 768px) {
+            .metric-label {
+                font-size: 0.875rem;
+            }
+        }</style>
+<style>
+/* === Global fix: responsive metric cards across all tabs === */
+.metric-card {
+  padding: 1rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: .35rem;
+  min-height: 86px;
+}
+@media (max-width: 639px) {
+  .metric-card { padding: .875rem; min-height: 80px; }
+}
+@media (min-width: 1024px) {
+  .metric-card { padding: 1.25rem; min-height: 94px; }
+}
+.metric-card .metric-label {
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: #9CA3AF;
+  margin: 0;
+  line-height: 1.25;
+}
+@media (min-width: 768px) {
+  .metric-card .metric-label { font-size: .78rem; }
+}
+.metric-card .metric-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+  word-break: break-word;
+}
+@media (min-width: 768px) {
+  .metric-card .metric-value { font-size: 1.6rem; }
+}
+.metric-card .text-green,
+.metric-card .text-orange {
+  font-size: .9rem;
+  font-weight: 600;
+  margin-top: .15rem;
+}
+.metric-card * { max-width: 100%; }
+.metric-card .metric-value.long {
+  white-space: normal;
+  word-break: break-word;
+}
+</style>
+<style>
+/* === Global fix: harmonize chart/table cards === */
+.data-card {
+  padding: 1rem;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+@media (max-width: 639px) {
+  .data-card { padding: .75rem; }
+}
+@media (min-width: 1024px) {
+  .data-card { padding: 1.5rem; }
+}
+.data-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+  color: #E5E7EB;
+}
+</style>
+<style>
+/* === Fix: Planning tab layout === */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem; /* more vertical spacing */
+}
+.plan-grid .plan-card {
+  width: 80%; /* make cards wider */
+  max-width: 1000px;
+}
+</style>
+<style>
+/* === Fix: Planning tab harmonization === */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+.plan-grid .plan-card {
+  width: 100%; /* full width aligned with other elements */
+  max-width: 100%;
+}
+.plan-card .tag-grid {
+  display: flex;
+  flex-direction: column; /* stack tags vertically */
+  gap: 1rem; /* spacing between tags */
+}
+.plan-card .tag {
+  width: 100%; /* each tag takes full width */
+  box-sizing: border-box;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header card">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div class="logo-text">
+        <h1>South Media</h1>
+        <p>Dashboard de Campanhas de Display</p>
+      </div>
+    </div>
+    <div class="campaign-info" style="text-align:right">
+      <div class="campaign-title">Campanha Unicesusc – TikTok (Florianópolis)</div>
+      <div class="campaign-date">11/06/2025 até 11/09/2025</div>
+      <div class="campaign-date">Atualizado em: 02/09</div>
+      <span class="status-badge">EM ANDAMENTO</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-button active" onclick="showTab(event,'overview')">🎬<br/>Visão Geral</button>
+    <button class="tab-button" onclick="showTab(event,'insights')">📊<br/>Análise e Insights</button>
+    <button class="tab-button" onclick="showTab(event,'daily')">📈<br/>Entrega Diária</button>
+    <button class="tab-button" onclick="showTab(event,'planning')">📋<br/>Planejamento</button>
+  </div>
+
+  <!-- Overview -->
+  <div class="tab-content" id="content-overview">
+    <div class="metrics-grid">
+      <div class="card metric-card"><div class="metric-label">💰 ORÇAMENTO CONTRATADO</div><div class="metric-value">R$ 7.500,00</div></div>
+      <div class="card metric-card"><div class="metric-label">👁️ IMPRESSÕES CONTRATADAS</div><div class="metric-value">500.001</div></div>
+      <div class="card metric-card"><div class="metric-label">📅 PERÍODO DA CAMPANHA</div><div class="metric-value">11/06 até 11/09</div></div>
+      <div class="card metric-card"><div class="metric-label">🎯 OBJETIVO</div><div class="metric-value">Alcance / Video Views (TikTok)</div></div>
+    </div>
+    <div class="metrics-grid" style="margin-top:.5rem">
+      <div class="card metric-card"><div class="metric-label">💸 ORÇAMENTO UTILIZADO</div><div class="metric-value">R$ 7.969,13</div><div class="text-green">106,26%</div></div>
+      <div class="card metric-card"><div class="metric-label">👁️ IMPRESSÕES ENTREGUES</div><div class="metric-value">531.263</div><div class="text-green">106,25%</div></div>
+      <div class="card metric-card"><div class="metric-label">👆 CLIQUES (destination)</div><div class="metric-value">5.866</div></div>
+      <div class="card metric-card"><div class="metric-label">📉 KPIs MÉDIOS</div><div class="metric-value" style="font-size:1rem">CTR 1,10% • CPM R$ 15,00 • CPC R$ 1,36</div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card" style="padding: 1.25rem;"><div>
+        <h3 style="margin-bottom:.5rem">Distribuição por Fase (A/B/C)</h3>
+        <div class="chart-container"><canvas id="creativePie"></canvas></div>
+      </div></div>
+      <div class="card" style="padding: 1.25rem;"><div>
+        <h3 style="margin-bottom:.5rem">Impressões vs. Cliques (acumulado)</h3>
+        <div class="chart-container"><canvas id="summaryBars"></canvas></div>
+      </div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card" style="padding: 1.25rem;"><div>
+        <h3 style="margin-bottom:.5rem">KPIs ao longo do tempo (CTR • CPM • CPC)</h3>
+        <div class="chart-container"><canvas id="kpiLine"></canvas></div>
+      </div></div>
+      <div class="card" style="padding: 1.25rem;"><div>
+        <h3 style="margin-bottom:.5rem">Impressões e Investimento por dia</h3>
+        <div class="chart-container"><canvas id="impsInvest"></canvas></div>
+      </div></div>
+    </div>
+    <!-- Publishers block intentionally omitted -->
+  </div>
+
+  <!-- Insights -->
+  <div class="tab-content hidden" id="content-insights">
+    <div class="card insights-section" style="padding:1.25rem;margin-top:.75rem;">
+      <h3>🎯 INSIGHTS DE PERFORMANCE</h3>
+      <div class="insights-grid">
+        <div class="insight-card insight-green"><div class="insight-title">Entrega acumulada</div><div class="insight-text">Entregues <strong>531.263</strong> impressões — <strong>106,25%</strong> da meta de 500.001.</div></div>
+        <div class="insight-card insight-orange"><div class="insight-title">Eficiência de investimento</div><div class="insight-text">Orçamento usado: <strong>R$ 7.969,13</strong> (<strong>106,26%</strong>). CPM <strong>R$ 15,00</strong>, CPC <strong>R$ 1,36</strong>, CTR <strong>1,10%</strong>.</div></div>
+        <div class="insight-card insight-blue"><div class="insight-title">Pacing</div><div class="insight-text">Período total 11/06–11/09. Ajustes finos podem considerar controle de frequência e reforço em janelas de melhor CTR.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily -->
+  <div class="tab-content hidden" id="content-daily">
+    <div class="card data-card daily-table">
+      <h3>📊 Tabela diária</h3>
+      <div class="table-responsive">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Investimento</th><th>CPM</th><th>CPC</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>12/06</td><td>5.673</td><td>64</td><td>1,13%</td><td>R$ 85,10</td><td>R$ 15,00</td><td>R$ 1,33</td></tr>
+<tr><td>13/06</td><td>6.532</td><td>54</td><td>0,83%</td><td>R$ 97,98</td><td>R$ 15,00</td><td>R$ 1,81</td></tr>
+<tr><td>14/06</td><td>5.661</td><td>67</td><td>1,18%</td><td>R$ 84,92</td><td>R$ 15,00</td><td>R$ 1,27</td></tr>
+<tr><td>15/06</td><td>5.553</td><td>89</td><td>1,60%</td><td>R$ 83,30</td><td>R$ 15,00</td><td>R$ 0,94</td></tr>
+<tr><td>16/06</td><td>5.551</td><td>91</td><td>1,64%</td><td>R$ 83,27</td><td>R$ 15,00</td><td>R$ 0,92</td></tr>
+<tr><td>17/06</td><td>5.561</td><td>78</td><td>1,40%</td><td>R$ 83,42</td><td>R$ 15,00</td><td>R$ 1,07</td></tr>
+<tr><td>18/06</td><td>5.883</td><td>64</td><td>1,09%</td><td>R$ 88,25</td><td>R$ 15,00</td><td>R$ 1,38</td></tr>
+<tr><td>19/06</td><td>5.764</td><td>54</td><td>0,94%</td><td>R$ 86,46</td><td>R$ 15,00</td><td>R$ 1,60</td></tr>
+<tr><td>20/06</td><td>5.674</td><td>67</td><td>1,18%</td><td>R$ 85,11</td><td>R$ 15,00</td><td>R$ 1,27</td></tr>
+<tr><td>21/06</td><td>5.648</td><td>89</td><td>1,58%</td><td>R$ 84,72</td><td>R$ 15,00</td><td>R$ 0,95</td></tr>
+<tr><td>22/06</td><td>5.531</td><td>91</td><td>1,65%</td><td>R$ 82,97</td><td>R$ 15,00</td><td>R$ 0,91</td></tr>
+<tr><td>23/06</td><td>5.673</td><td>78</td><td>1,37%</td><td>R$ 85,10</td><td>R$ 15,00</td><td>R$ 1,09</td></tr>
+<tr><td>24/06</td><td>5.511</td><td>64</td><td>1,16%</td><td>R$ 82,67</td><td>R$ 15,00</td><td>R$ 1,29</td></tr>
+<tr><td>25/06</td><td>5.581</td><td>54</td><td>0,97%</td><td>R$ 83,72</td><td>R$ 15,00</td><td>R$ 1,55</td></tr>
+<tr><td>26/06</td><td>5.573</td><td>67</td><td>1,20%</td><td>R$ 83,60</td><td>R$ 15,00</td><td>R$ 1,25</td></tr>
+<tr><td>27/06</td><td>5.484</td><td>89</td><td>1,62%</td><td>R$ 82,26</td><td>R$ 15,00</td><td>R$ 0,92</td></tr>
+<tr><td>28/06</td><td>5.741</td><td>91</td><td>1,59%</td><td>R$ 86,12</td><td>R$ 15,00</td><td>R$ 0,95</td></tr>
+<tr><td>29/06</td><td>5.551</td><td>78</td><td>1,41%</td><td>R$ 83,27</td><td>R$ 15,00</td><td>R$ 1,07</td></tr>
+<tr><td>30/06</td><td>5.631</td><td>64</td><td>1,14%</td><td>R$ 84,47</td><td>R$ 15,00</td><td>R$ 1,32</td></tr>
+<tr><td>01/07</td><td>5.562</td><td>54</td><td>0,97%</td><td>R$ 83,43</td><td>R$ 15,00</td><td>R$ 1,55</td></tr>
+<tr><td>02/07</td><td>5.673</td><td>67</td><td>1,18%</td><td>R$ 85,10</td><td>R$ 15,00</td><td>R$ 1,27</td></tr>
+<tr><td>03/07</td><td>5.599</td><td>58</td><td>1,04%</td><td>R$ 83,99</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>04/07</td><td>5.610</td><td>59</td><td>1,05%</td><td>R$ 84,15</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>05/07</td><td>5.623</td><td>59</td><td>1,05%</td><td>R$ 84,35</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>06/07</td><td>5.639</td><td>59</td><td>1,05%</td><td>R$ 84,59</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>07/07</td><td>5.659</td><td>59</td><td>1,04%</td><td>R$ 84,89</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>08/07</td><td>5.682</td><td>59</td><td>1,04%</td><td>R$ 85,23</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>09/07</td><td>5.708</td><td>60</td><td>1,05%</td><td>R$ 85,62</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>10/07</td><td>5.740</td><td>60</td><td>1,05%</td><td>R$ 86,10</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>11/07</td><td>5.776</td><td>60</td><td>1,04%</td><td>R$ 86,64</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>12/07</td><td>5.818</td><td>61</td><td>1,05%</td><td>R$ 87,27</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>13/07</td><td>5.866</td><td>61</td><td>1,04%</td><td>R$ 87,99</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>14/07</td><td>5.920</td><td>62</td><td>1,05%</td><td>R$ 88,80</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>15/07</td><td>5.980</td><td>62</td><td>1,04%</td><td>R$ 89,70</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>16/07</td><td>6.047</td><td>63</td><td>1,04%</td><td>R$ 90,71</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>17/07</td><td>6.122</td><td>64</td><td>1,05%</td><td>R$ 91,83</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>18/07</td><td>6.203</td><td>65</td><td>1,05%</td><td>R$ 93,05</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>19/07</td><td>6.291</td><td>66</td><td>1,05%</td><td>R$ 94,37</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>20/07</td><td>6.385</td><td>67</td><td>1,05%</td><td>R$ 95,78</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>21/07</td><td>6.486</td><td>68</td><td>1,05%</td><td>R$ 97,29</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>22/07</td><td>6.592</td><td>69</td><td>1,05%</td><td>R$ 98,88</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>23/07</td><td>6.702</td><td>70</td><td>1,04%</td><td>R$ 100,53</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>24/07</td><td>6.816</td><td>71</td><td>1,04%</td><td>R$ 102,24</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>25/07</td><td>6.932</td><td>72</td><td>1,04%</td><td>R$ 103,98</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>26/07</td><td>7.050</td><td>74</td><td>1,05%</td><td>R$ 105,75</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>27/07</td><td>7.166</td><td>75</td><td>1,05%</td><td>R$ 107,49</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>28/07</td><td>7.280</td><td>76</td><td>1,04%</td><td>R$ 109,20</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>29/07</td><td>7.391</td><td>77</td><td>1,04%</td><td>R$ 110,87</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>30/07</td><td>7.496</td><td>78</td><td>1,04%</td><td>R$ 112,44</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>31/07</td><td>7.593</td><td>79</td><td>1,04%</td><td>R$ 113,90</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>01/08</td><td>7.682</td><td>80</td><td>1,04%</td><td>R$ 115,23</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>02/08</td><td>7.759</td><td>81</td><td>1,04%</td><td>R$ 116,39</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>03/08</td><td>7.825</td><td>82</td><td>1,05%</td><td>R$ 117,38</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>04/08</td><td>7.878</td><td>82</td><td>1,04%</td><td>R$ 118,17</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>05/08</td><td>7.916</td><td>82</td><td>1,04%</td><td>R$ 118,74</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>06/08</td><td>7.939</td><td>82</td><td>1,03%</td><td>R$ 119,09</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>07/08</td><td>7.946</td><td>82</td><td>1,03%</td><td>R$ 119,19</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>08/08</td><td>7.939</td><td>82</td><td>1,03%</td><td>R$ 119,09</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>09/08</td><td>7.916</td><td>82</td><td>1,04%</td><td>R$ 118,74</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>10/08</td><td>7.878</td><td>81</td><td>1,03%</td><td>R$ 118,17</td><td>R$ 15,00</td><td>R$ 1,46</td></tr>
+<tr><td>11/08</td><td>7.825</td><td>82</td><td>1,05%</td><td>R$ 117,38</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>12/08</td><td>7.759</td><td>81</td><td>1,04%</td><td>R$ 116,39</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>13/08</td><td>5.682</td><td>80</td><td>1,41%</td><td>R$ 85,23</td><td>R$ 15,00</td><td>R$ 1,07</td></tr>
+<tr><td>14/08</td><td>7.593</td><td>79</td><td>1,04%</td><td>R$ 113,90</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>15/08</td><td>5.496</td><td>78</td><td>1,42%</td><td>R$ 82,44</td><td>R$ 15,00</td><td>R$ 1,06</td></tr>
+<tr><td>16/08</td><td>7.391</td><td>77</td><td>1,04%</td><td>R$ 110,87</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>17/08</td><td>7.280</td><td>76</td><td>1,04%</td><td>R$ 109,20</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>18/08</td><td>7.166</td><td>75</td><td>1,05%</td><td>R$ 107,49</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>19/08</td><td>7.050</td><td>74</td><td>1,05%</td><td>R$ 105,75</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>20/08</td><td>6.932</td><td>72</td><td>1,04%</td><td>R$ 103,98</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>21/08</td><td>6.816</td><td>71</td><td>1,04%</td><td>R$ 102,24</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>22/08</td><td>6.702</td><td>70</td><td>1,04%</td><td>R$ 100,53</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>23/08</td><td>6.592</td><td>69</td><td>1,05%</td><td>R$ 98,88</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>24/08</td><td>6.486</td><td>68</td><td>1,05%</td><td>R$ 97,29</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>25/08</td><td>6.385</td><td>67</td><td>1,05%</td><td>R$ 95,78</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>26/08</td><td>6.291</td><td>66</td><td>1,05%</td><td>R$ 94,37</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>27/08</td><td>6.203</td><td>65</td><td>1,05%</td><td>R$ 93,05</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>28/08</td><td>6.122</td><td>64</td><td>1,05%</td><td>R$ 91,83</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>29/08</td><td>5.047</td><td>63</td><td>1,25%</td><td>R$ 75,71</td><td>R$ 15,00</td><td>R$ 1,20</td></tr>
+<tr><td>30/08</td><td>5.980</td><td>62</td><td>1,04%</td><td>R$ 89,70</td><td>R$ 15,00</td><td>R$ 1,45</td></tr>
+<tr><td>31/08</td><td>5.920</td><td>62</td><td>1,05%</td><td>R$ 88,80</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+<tr><td>01/09</td><td>5.866</td><td>61</td><td>1,04%</td><td>R$ 87,99</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+<tr><td>02/09</td><td>5.818</td><td>61</td><td>1,05%</td><td>R$ 87,27</td><td>R$ 15,00</td><td>R$ 1,43</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card data-card daily-table">
+      <h3>📊 Resumo por Fase (A/B/C)</h3>
+      <div class="table-responsive">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Fase</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Investimento</th><th>CPM</th><th>CPC</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Grade A (11/06–10/07)</td><td>164.271</td><td>1.987</td><td>1,21%</td><td>R$ 2.464,16</td><td>R$ 15,00</td><td>R$ 1,24</td></tr>
+              <tr><td>Grade B (11/07–10/08)</td><td>216.590</td><td>2.256</td><td>1,04%</td><td>R$ 3.248,90</td><td>R$ 15,00</td><td>R$ 1,44</td></tr>
+              <tr><td>Grade C (11/08–11/09)</td><td>150.402</td><td>1.623</td><td>1,08%</td><td>R$ 2.256,07</td><td>R$ 15,00</td><td>R$ 1,39</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Planning -->
+  <div class="tab-content hidden" id="content-planning">
+    <div class="plan-grid">
+      <div class="plan-card">
+        <h3>Informações da campanha</h3>
+        <div class="tag-grid">
+          <div class="tag purple"><div class="title">Praça</div><div class="desc">Florianópolis</div></div>
+          <div class="tag blue"><div class="title">Formato / Tipo</div><div class="desc">Vídeo • Anúncio Digital (TikTok)</div></div>
+          <div class="tag"><div class="title">Preço de venda</div><div class="desc">CPM R$ 15,00</div></div>
+          <div class="tag"><div class="title">Grade A</div><div class="desc">11/06/2025–11/07/2025 • 166.667 imps • R$ 2.500,00</div></div>
+          <div class="tag"><div class="title">Grade B</div><div class="desc">11/07/2025–11/08/2025 • 166.667 imps • R$ 2.500,00</div></div>
+          <div class="tag"><div class="title">Grade C</div><div class="desc">11/08/2025–11/09/2025 • 166.667 imps • R$ 2.500,00</div></div>
+        </div>
+        <div class="section-note">Valores e metas conforme contrato; dados operacionais conforme TSV diário atualizado.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(evt, tabName) {
+  const tabs = document.querySelectorAll('.tab-content');
+  tabs.forEach(t => t.classList.add('hidden'));
+  const btns = document.querySelectorAll('.tab-button');
+  btns.forEach(b => b.classList.remove('active'));
+  document.getElementById('content-' + tabName).classList.remove('hidden');
+  evt.currentTarget.classList.add('active');
+}
+
+const phaseLabels = ["Grade A (11/06–10/07)", "Grade B (11/07–10/08)", "Grade C (11/08–11/09)"];
+const phaseImps = [164271, 216590, 150402];
+
+const summaryLabels = ["Impressões", "Cliques"];
+const summaryData = [531263, 5866];
+
+const lineLabels = ["12/06", "13/06", "14/06", "15/06", "16/06", "17/06", "18/06", "19/06", "20/06", "21/06", "22/06", "23/06", "24/06", "25/06", "26/06", "27/06", "28/06", "29/06", "30/06", "01/07", "02/07", "03/07", "04/07", "05/07", "06/07", "07/07", "08/07", "09/07", "10/07", "11/07", "12/07", "13/07", "14/07", "15/07", "16/07", "17/07", "18/07", "19/07", "20/07", "21/07", "22/07", "23/07", "24/07", "25/07", "26/07", "27/07", "28/07", "29/07", "30/07", "31/07", "01/08", "02/08", "03/08", "04/08", "05/08", "06/08", "07/08", "08/08", "09/08", "10/08", "11/08", "12/08", "13/08", "14/08", "15/08", "16/08", "17/08", "18/08", "19/08", "20/08", "21/08", "22/08", "23/08", "24/08", "25/08", "26/08", "27/08", "28/08", "29/08", "30/08", "31/08", "01/09", "02/09"];
+const lineCTR = [1.1282, 0.8267, 1.1835, 1.6027, 1.6393, 1.4026, 1.0879, 0.9368, 1.1808, 1.5758, 1.6453, 1.3749, 1.1613, 0.9676, 1.2022, 1.6229, 1.5851, 1.4052, 1.1366, 0.9709, 1.181, 1.0359, 1.0517, 1.0493, 1.0463, 1.0426, 1.0384, 1.0512, 1.0453, 1.0388, 1.0485, 1.0399, 1.0473, 1.0368, 1.0418, 1.0454, 1.0479, 1.0491, 1.0493, 1.0484, 1.0467, 1.0445, 1.0417, 1.0387, 1.0496, 1.0466, 1.044, 1.0418, 1.0406, 1.0404, 1.0414, 1.0439, 1.0479, 1.0409, 1.0359, 1.0329, 1.032, 1.0329, 1.0359, 1.0282, 1.0479, 1.0439, 1.408, 1.0404, 1.4192, 1.0418, 1.044, 1.0466, 1.0496, 1.0387, 1.0417, 1.0445, 1.0467, 1.0484, 1.0493, 1.0491, 1.0479, 1.0454, 1.2483, 1.0368, 1.0473, 1.0399, 1.0485]; // (%) from TSV or computed
+const lineCPM = [15.0009, 15.0, 15.0009, 15.0009, 15.0009, 15.0009, 15.0008, 15.0, 15.0, 15.0, 15.0009, 15.0009, 15.0009, 15.0009, 15.0009, 15.0, 15.0009, 15.0009, 15.0009, 15.0, 15.0009, 15.0009, 15.0, 15.0009, 15.0009, 15.0009, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0008, 15.0, 15.0008, 15.0008, 15.0008, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0007, 15.0, 15.0007, 15.0, 15.0006, 15.0006, 15.0, 15.0, 15.0006, 15.0, 15.0006, 15.0, 15.0, 15.0006, 15.0006, 15.0, 15.0007, 15.0, 15.0007, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0008, 15.0008, 15.0008, 15.0, 15.001, 15.0, 15.0, 15.0, 15.0];
+const lineCPC = [1.3297, 1.8144, 1.2675, 0.936, 0.9151, 1.0695, 1.3789, 1.6011, 1.2703, 0.9519, 0.9118, 1.091, 1.2917, 1.5504, 1.2478, 0.9243, 0.9464, 1.0676, 1.3198, 1.545, 1.2701, 1.4481, 1.4263, 1.4297, 1.4337, 1.4388, 1.4446, 1.427, 1.435, 1.444, 1.4307, 1.4425, 1.4323, 1.4468, 1.4398, 1.4348, 1.4315, 1.4298, 1.4296, 1.4307, 1.433, 1.4361, 1.44, 1.4442, 1.4291, 1.4332, 1.4368, 1.4399, 1.4415, 1.4418, 1.4404, 1.4369, 1.4315, 1.4411, 1.448, 1.4523, 1.4535, 1.4523, 1.448, 1.4589, 1.4315, 1.4369, 1.0654, 1.4418, 1.0569, 1.4399, 1.4368, 1.4332, 1.4291, 1.4442, 1.44, 1.4361, 1.433, 1.4307, 1.4296, 1.4298, 1.4315, 1.4348, 1.2017, 1.4468, 1.4323, 1.4425, 1.4307];
+
+const dailyImps = [5673, 6532, 5661, 5553, 5551, 5561, 5883, 5764, 5674, 5648, 5531, 5673, 5511, 5581, 5573, 5484, 5741, 5551, 5631, 5562, 5673, 5599, 5610, 5623, 5639, 5659, 5682, 5708, 5740, 5776, 5818, 5866, 5920, 5980, 6047, 6122, 6203, 6291, 6385, 6486, 6592, 6702, 6816, 6932, 7050, 7166, 7280, 7391, 7496, 7593, 7682, 7759, 7825, 7878, 7916, 7939, 7946, 7939, 7916, 7878, 7825, 7759, 5682, 7593, 5496, 7391, 7280, 7166, 7050, 6932, 6816, 6702, 6592, 6486, 6385, 6291, 6203, 6122, 5047, 5980, 5920, 5866, 5818];
+const dailySpend = [85.1, 97.98, 84.92, 83.3, 83.27, 83.42, 88.25, 86.46, 85.11, 84.72, 82.97, 85.1, 82.67, 83.72, 83.6, 82.26, 86.12, 83.27, 84.47, 83.43, 85.1, 83.99, 84.15, 84.35, 84.59, 84.89, 85.23, 85.62, 86.1, 86.64, 87.27, 87.99, 88.8, 89.7, 90.71, 91.83, 93.05, 94.37, 95.78, 97.29, 98.88, 100.53, 102.24, 103.98, 105.75, 107.49, 109.2, 110.87, 112.44, 113.9, 115.23, 116.39, 117.38, 118.17, 118.74, 119.09, 119.19, 119.09, 118.74, 118.17, 117.38, 116.39, 85.23, 113.9, 82.44, 110.87, 109.2, 107.49, 105.75, 103.98, 102.24, 100.53, 98.88, 97.29, 95.78, 94.37, 93.05, 91.83, 75.71, 89.7, 88.8, 87.99, 87.27];
+
+function renderCharts(){
+  new Chart(document.getElementById('creativePie'), {
+    type: 'pie',
+    data: {
+      labels: phaseLabels,
+      datasets: [{ data: phaseImps }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  new Chart(document.getElementById('summaryBars'), {
+    type: 'bar',
+    data: {
+      labels: summaryLabels,
+      datasets: [{ data: summaryData }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  new Chart(document.getElementById('kpiLine'), {
+    type: 'line',
+    data: {
+      labels: lineLabels,
+      datasets: [
+        { label: 'CTR (%)', data: lineCTR, yAxisID: 'y1' },
+        { label: 'CPM (R$)', data: lineCPM, yAxisID: 'y2' },
+        { label: 'CPC (R$)', data: lineCPC, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      stacked: false,
+      scales: {
+        y1: { type: 'linear', position: 'left', beginAtZero: true },
+        y2: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  new Chart(document.getElementById('impsInvest'), {
+    data: {
+      labels: lineLabels,
+      datasets: [
+        { type: 'bar', label: 'Impressões', data: dailyImps, yAxisID: 'y' },
+        { type: 'line', label: 'Investimento (R$)', data: dailySpend, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true },
+        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } }
+      },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', renderCharts);
+</script>
+</body>
+</html>

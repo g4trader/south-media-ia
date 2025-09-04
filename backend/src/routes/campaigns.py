@@ -1,316 +1,448 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Query
-from src.models.campaign import (
-    CampaignCreate, CampaignResponse, CampaignUpdate,
-    VideoMetrics, DisplayMetrics, CampaignSummary, DashboardData
-)
-from src.models.user import UserRole
-from src.services.auth_service import auth_service, can_read_campaigns, can_write_campaigns
-from src.services.bigquery_service import BigQueryService
-from src.services.sheets_service import sheets_service
-from typing import List, Dict, Any, Optional
-from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, status, Depends, Query, UploadFile, File
+from typing import List, Optional, Dict, Any
+from datetime import datetime, date
 import uuid
 
+from src.models.campaign import (
+    CampaignCreate, CampaignUpdate, CampaignResponse, CampaignSummary,
+    CampaignType, CampaignStatus, CampaignMetrics, CampaignMetricsCreate,
+    CampaignPerformance, DashboardTemplate, DashboardTemplateCreate,
+    DashboardTemplateUpdate, DashboardTemplateResponse
+)
+from src.models.user import Permission
+from src.services.auth_service import get_current_user, require_permissions
+from src.services.campaign_service import CampaignService
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
-bigquery_service = BigQueryService()
+campaign_service = CampaignService()
 
-@router.get("/", response_model=List[CampaignResponse])
-async def get_campaigns(
-    current_user: Dict[str, Any] = Depends(can_read_campaigns),
-    client_id: Optional[str] = Query(None),
-    status: Optional[str] = Query(None)
-):
-    """Get campaigns with permission-based filtering"""
-    try:
-        # Filter campaigns based on user role and permissions
-        user_role = current_user.get("role")
-        user_agency_id = current_user.get("agency_id")
-        user_client_id = current_user.get("client_id")
-        
-        # Get campaigns from BigQuery
-        campaigns = bigquery_service.get_campaigns()
-        
-        # Filter based on user permissions
-        filtered_campaigns = []
-        for campaign in campaigns:
-            # Admin can see all campaigns
-            if user_role == UserRole.ADMIN:
-                filtered_campaigns.append(campaign)
-            # Agency users can see their clients' campaigns
-            elif user_role == UserRole.AGENCY:
-                if campaign.get("agency_id") == user_agency_id:
-                    filtered_campaigns.append(campaign)
-            # Client users can only see their own campaigns
-            elif user_role == UserRole.CLIENT:
-                if campaign.get("client_id") == user_client_id:
-                    filtered_campaigns.append(campaign)
-        
-        # Apply additional filters
-        if client_id:
-            filtered_campaigns = [c for c in filtered_campaigns if c.get("client_id") == client_id]
-        
-        if status:
-            filtered_campaigns = [c for c in filtered_campaigns if c.get("status") == status]
-        
-        return filtered_campaigns
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get campaigns: {str(e)}"
-        )
+# Dependências de autenticação e permissões
+def require_campaign_permission(permission: str):
+    """Decorator para verificar permissão específica de campanha"""
+    return require_permissions([permission])
 
-@router.get("/{campaign_id}", response_model=CampaignResponse)
-async def get_campaign(
-    campaign_id: str,
-    current_user: Dict[str, Any] = Depends(can_read_campaigns)
+@router.post("/", response_model=CampaignResponse, status_code=status.HTTP_201_CREATED)
+async def create_campaign(
+    campaign_data: CampaignCreate,
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_WRITE))
 ):
-    """Get a specific campaign"""
+    """Criar uma nova campanha"""
     try:
-        # Check if user has access to this campaign
-        campaign = bigquery_service.get_campaign(campaign_id)
-        
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Campaign not found"
-            )
-        
-        # Check permissions
-        user_role = current_user.get("role")
-        user_agency_id = current_user.get("agency_id")
-        user_client_id = current_user.get("client_id")
-        
-        if user_role == UserRole.AGENCY and campaign.get("agency_id") != user_agency_id:
+        # Verificar se usuário tem acesso à empresa da campanha
+        if not await campaign_service.can_access_company(
+            current_user, campaign_data.company_id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
+                detail="Sem permissão para criar campanhas nesta empresa"
             )
         
-        if user_role == UserRole.CLIENT and campaign.get("client_id") != user_client_id:
+        # Validar datas da campanha
+        if campaign_data.start_date >= campaign_data.end_date:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Data de início deve ser anterior à data de término"
             )
         
+        # TODO: Implementar validação de planilha quando sheets_service estiver disponível
+        # Por enquanto, aceitar qualquer spreadsheet_id e sheet_name
+        
+        campaign = await campaign_service.create_campaign(campaign_data, current_user)
         return campaign
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get campaign: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao criar campanha: {str(e)}"
         )
 
-@router.post("/", response_model=CampaignResponse)
-async def create_campaign(
-    campaign_data: CampaignCreate,
-    current_user: Dict[str, Any] = Depends(can_write_campaigns)
+@router.get("/", response_model=List[CampaignSummary])
+async def list_campaigns(
+    company_id: Optional[str] = Query(None),
+    campaign_type: Optional[CampaignType] = Query(None),
+    status_filter: Optional[CampaignStatus] = Query(None),
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    dashboard_template: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_READ))
 ):
-    """Create a new campaign"""
+    """Listar campanhas com filtros e paginação"""
     try:
-        # Only admin and agency users can create campaigns
-        user_role = current_user.get("role")
-        if user_role not in [UserRole.ADMIN, UserRole.AGENCY]:
+        # Se company_id não foi especificado, usar empresa atual do usuário
+        if not company_id:
+            company_id = current_user.get("company_id")
+        
+        # Verificar se usuário tem acesso à empresa
+        if not await campaign_service.can_access_company(current_user, company_id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only admin and agency users can create campaigns"
+                detail="Sem permissão para acessar esta empresa"
             )
         
-        # Create campaign in BigQuery
-        campaign_id = str(uuid.uuid4())
-        campaign = {
-            "id": campaign_id,
-            **campaign_data.dict(),
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
-        }
+        campaigns = await campaign_service.list_campaigns(
+            company_id=company_id,
+            current_user=current_user,
+            skip=skip,
+            limit=limit,
+            campaign_type=campaign_type,
+            status_filter=status_filter,
+            start_date=start_date,
+            end_date=end_date,
+            dashboard_template=dashboard_template,
+            search=search
+        )
         
-        # In a real implementation, you would save to BigQuery
-        # For now, we'll return the campaign data
-        
-        return CampaignResponse(**campaign)
+        return campaigns
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create campaign: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao listar campanhas: {str(e)}"
+        )
+
+@router.get("/{campaign_id}", response_model=CampaignResponse)
+async def get_campaign(
+    campaign_id: str,
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_READ))
+):
+    """Obter detalhes de uma campanha específica"""
+    try:
+        campaign = await campaign_service.get_campaign(campaign_id, current_user)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Campanha não encontrada"
+            )
+        return campaign
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao buscar campanha: {str(e)}"
         )
 
 @router.put("/{campaign_id}", response_model=CampaignResponse)
 async def update_campaign(
     campaign_id: str,
     campaign_data: CampaignUpdate,
-    current_user: Dict[str, Any] = Depends(can_write_campaigns)
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_WRITE))
 ):
-    """Update a campaign"""
+    """Atualizar uma campanha"""
     try:
-        # Check if campaign exists and user has access
-        campaign = bigquery_service.get_campaign(campaign_id)
-        
-        if not campaign:
+        # Verificar se campanha existe e usuário tem permissão
+        existing_campaign = await campaign_service.get_campaign(campaign_id, current_user)
+        if not existing_campaign:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Campaign not found"
+                detail="Campanha não encontrada"
             )
         
-        # Check permissions
-        user_role = current_user.get("role")
-        user_agency_id = current_user.get("agency_id")
+        # Se estiver alterando datas, validar
+        if campaign_data.start_date or campaign_data.end_date:
+            start_date = campaign_data.start_date or existing_campaign.start_date
+            end_date = campaign_data.end_date or existing_campaign.end_date
+            if start_date >= end_date:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Data de início deve ser anterior à data de término"
+                )
         
-        if user_role == UserRole.AGENCY and campaign.get("agency_id") != user_agency_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
+        # TODO: Implementar validação de planilha quando sheets_service estiver disponível
+        # Por enquanto, aceitar qualquer spreadsheet_id e sheet_name
         
-        # Update campaign
-        updated_campaign = {**campaign, **campaign_data.dict(exclude_unset=True)}
-        updated_campaign["updated_at"] = datetime.utcnow()
-        
-        # In a real implementation, you would update in BigQuery
-        
-        return CampaignResponse(**updated_campaign)
+        campaign = await campaign_service.update_campaign(campaign_id, campaign_data, current_user)
+        return campaign
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update campaign: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao atualizar campanha: {str(e)}"
         )
 
-@router.delete("/{campaign_id}")
+@router.delete("/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_campaign(
     campaign_id: str,
-    current_user: Dict[str, Any] = Depends(auth_service.require_role([UserRole.ADMIN]))
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_DELETE))
 ):
-    """Delete a campaign (admin only)"""
+    """Deletar uma campanha (soft delete)"""
     try:
-        # Check if campaign exists
-        campaign = bigquery_service.get_campaign(campaign_id)
-        
-        if not campaign:
+        success = await campaign_service.delete_campaign(campaign_id, current_user)
+        if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Campaign not found"
+                detail="Campanha não encontrada"
             )
-        
-        # In a real implementation, you would delete from BigQuery
-        
-        return {"message": "Campaign deleted successfully"}
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete campaign: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao deletar campanha: {str(e)}"
+        )
+
+@router.patch("/{campaign_id}/status", response_model=CampaignResponse)
+async def update_campaign_status(
+    campaign_id: str,
+    status: CampaignStatus,
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_WRITE))
+):
+    """Atualizar status de uma campanha"""
+    try:
+        campaign = await campaign_service.update_campaign_status(campaign_id, status, current_user)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Campanha não encontrada"
+            )
+        return campaign
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao atualizar status da campanha: {str(e)}"
+        )
+
+@router.get("/{campaign_id}/performance", response_model=CampaignPerformance)
+async def get_campaign_performance(
+    campaign_id: str,
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_READ))
+):
+    """Obter performance de uma campanha"""
+    try:
+        performance = await campaign_service.get_campaign_performance(campaign_id, current_user)
+        if not performance:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Campanha não encontrada"
+            )
+        return performance
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao buscar performance da campanha: {str(e)}"
         )
 
 @router.get("/{campaign_id}/metrics")
 async def get_campaign_metrics(
     campaign_id: str,
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    current_user: Dict[str, Any] = Depends(can_read_campaigns)
+    start_date: Optional[date] = Query(None),
+    end_date: Optional[date] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_READ))
 ):
-    """Get campaign metrics"""
+    """Obter métricas de uma campanha com filtros de data"""
     try:
-        # Check if user has access to this campaign
-        campaign = bigquery_service.get_campaign(campaign_id)
-        
-        if not campaign:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Campaign not found"
-            )
-        
-        # Check permissions
-        user_role = current_user.get("role")
-        user_agency_id = current_user.get("agency_id")
-        user_client_id = current_user.get("client_id")
-        
-        if user_role == UserRole.AGENCY and campaign.get("agency_id") != user_agency_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
-        
-        if user_role == UserRole.CLIENT and campaign.get("client_id") != user_client_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied"
-            )
-        
-        # Get metrics from BigQuery
-        metrics = bigquery_service.get_campaign_metrics(campaign_id, start_date, end_date)
-        
+        metrics = await campaign_service.get_campaign_metrics(
+            campaign_id, 
+            current_user, 
+            start_date=start_date,
+            end_date=end_date,
+            skip=skip,
+            limit=limit
+        )
         return metrics
         
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get campaign metrics: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao buscar métricas da campanha: {str(e)}"
         )
 
-@router.post("/{campaign_id}/sync-sheets")
-async def sync_campaign_from_sheets(
+@router.post("/{campaign_id}/import-data")
+async def import_campaign_data(
     campaign_id: str,
-    spreadsheet_id: str,
-    sheet_name: str,
-    current_user: Dict[str, Any] = Depends(can_write_campaigns)
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_WRITE))
 ):
-    """Sync campaign data from Google Sheets"""
+    """Importar dados da campanha do Google Sheets"""
     try:
-        # Check if user has access to this campaign
-        campaign = bigquery_service.get_campaign(campaign_id)
-        
+        # Verificar se campanha existe
+        campaign = await campaign_service.get_campaign(campaign_id, current_user)
         if not campaign:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Campaign not found"
+                detail="Campanha não encontrada"
             )
         
-        # Read data from Google Sheets
-        df = sheets_service.read_sheet_data(spreadsheet_id, sheet_name)
-        
-        if df is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to read data from Google Sheets"
-            )
-        
-        # Process data based on campaign type
-        campaign_type = campaign.get("campaign_type")
-        
-        if campaign_type == "video":
-            metrics = sheets_service.process_video_campaign_data(df, campaign_id)
-        elif campaign_type == "display":
-            metrics = sheets_service.process_display_campaign_data(df, campaign_id)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported campaign type"
-            )
-        
-        # Save metrics to BigQuery
-        # In a real implementation, you would save to BigQuery
+        # Importar dados do Google Sheets
+        imported_data = await campaign_service.import_data_from_sheets(campaign_id, current_user)
         
         return {
-            "message": "Campaign data synced successfully",
-            "metrics_count": len(metrics)
+            "message": "Dados importados com sucesso",
+            "records_imported": imported_data.get("records_imported", 0),
+            "last_update": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao importar dados: {str(e)}"
+        )
+
+@router.post("/{campaign_id}/upload-metrics")
+async def upload_campaign_metrics(
+    campaign_id: str,
+    file: UploadFile = File(...),
+    current_user = Depends(require_campaign_permission(Permission.CAMPAIGN_WRITE))
+):
+    """Upload de métricas de campanha via arquivo CSV"""
+    try:
+        # Verificar se campanha existe
+        campaign = await campaign_service.get_campaign(campaign_id, current_user)
+        if not campaign:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Campanha não encontrada"
+            )
+        
+        # Validar tipo de arquivo
+        if not file.filename.endswith('.csv'):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Apenas arquivos CSV são aceitos"
+            )
+        
+        # Processar upload
+        result = await campaign_service.upload_metrics_file(
+            campaign_id, file, current_user
+        )
+        
+        return {
+            "message": "Arquivo processado com sucesso",
+            "records_processed": result.get("records_processed", 0),
+            "errors": result.get("errors", [])
         }
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to sync campaign data: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao processar arquivo: {str(e)}"
+        )
+
+# Rotas para templates de dashboard
+
+@router.post("/templates", response_model=DashboardTemplateResponse, status_code=status.HTTP_201_CREATED)
+async def create_dashboard_template(
+    template_data: DashboardTemplateCreate,
+    current_user = Depends(require_campaign_permission(Permission.DASHBOARD_WRITE))
+):
+    """Criar um novo template de dashboard"""
+    try:
+        template = await campaign_service.create_dashboard_template(template_data, current_user)
+        return template
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao criar template: {str(e)}"
+        )
+
+@router.get("/templates", response_model=List[DashboardTemplateResponse])
+async def list_dashboard_templates(
+    company_id: Optional[str] = Query(None),
+    is_active: Optional[bool] = Query(None),
+    current_user = Depends(require_campaign_permission(Permission.DASHBOARD_READ))
+):
+    """Listar templates de dashboard disponíveis"""
+    try:
+        templates = await campaign_service.list_dashboard_templates(
+            company_id=company_id,
+            is_active=is_active,
+            current_user=current_user
+        )
+        return templates
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao listar templates: {str(e)}"
+        )
+
+@router.get("/templates/{template_id}", response_model=DashboardTemplateResponse)
+async def get_dashboard_template(
+    template_id: str,
+    current_user = Depends(require_campaign_permission(Permission.DASHBOARD_READ))
+):
+    """Obter detalhes de um template de dashboard"""
+    try:
+        template = await campaign_service.get_dashboard_template(template_id, current_user)
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Template não encontrado"
+            )
+        return template
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao buscar template: {str(e)}"
+        )
+
+@router.put("/templates/{template_id}", response_model=DashboardTemplateResponse)
+async def update_dashboard_template(
+    template_id: str,
+    template_data: DashboardTemplateUpdate,
+    current_user = Depends(require_campaign_permission(Permission.DASHBOARD_WRITE))
+):
+    """Atualizar um template de dashboard"""
+    try:
+        template = await campaign_service.update_dashboard_template(
+            template_id, template_data, current_user
+        )
+        if not template:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Template não encontrado"
+            )
+        return template
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao atualizar template: {str(e)}"
+        )
+
+@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_dashboard_template(
+    template_id: str,
+    current_user = Depends(require_campaign_permission(Permission.DASHBOARD_DELETE))
+):
+    """Deletar um template de dashboard"""
+    try:
+        success = await campaign_service.delete_dashboard_template(template_id, current_user)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Template não encontrado"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro ao deletar template: {str(e)}"
         )

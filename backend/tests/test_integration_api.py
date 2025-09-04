@@ -26,8 +26,10 @@ class TestAuthEndpoints:
             mock_auth.return_value = {
                 "id": mock_user_data["id"],
                 "email": mock_user_data["email"],
-                "role": mock_user_data["role"].value,  # Usar .value para o enum
-                "status": mock_user_data["status"].value,  # Usar .value para o enum
+                "full_name": mock_user_data["full_name"],
+                "role": "super_admin",  # Usar valor correto do enum
+                "status": "active",      # Usar valor correto do enum
+                "username": mock_user_data.get("username", "testuser"),
                 "company_id": mock_user_data["company_id"],
                 "permissions": mock_user_data["permissions"]
             }
@@ -62,7 +64,7 @@ class TestAuthEndpoints:
             mock_auth.return_value = None
             
             response = test_client.post("/api/auth/login", json={
-                "username": "invaliduser",
+                "email": "invaliduser@test.com",
                 "password": "wrongpassword",
                 "company_id": "test-company-001"
             })
@@ -70,12 +72,12 @@ class TestAuthEndpoints:
             assert response.status_code == 401
             data = response.json()
             assert "detail" in data
-            assert "Invalid credentials" in data["detail"]
+            assert "Email ou senha incorretos" in data["detail"]
     
     def test_login_missing_fields(self, test_client: TestClient):
         """Testar login com campos faltando"""
         response = test_client.post("/api/auth/login", json={
-            "username": "testuser"
+            "email": "testuser@test.com"
             # password e company_id faltando
         })
         
@@ -83,25 +85,40 @@ class TestAuthEndpoints:
     
     def test_switch_company_success(self, test_client: TestClient, mock_auth_headers):
         """Testar troca de empresa bem-sucedida"""
-        with patch('src.services.auth_service.AuthService.get_current_user') as mock_get_user:
+        with patch('src.services.auth_service.AuthService.get_current_user') as mock_get_user, \
+             patch('src.services.auth_service.AuthService.check_company_access') as mock_check_access, \
+             patch('src.services.auth_service.AuthService.get_user_companies_for_token') as mock_get_companies, \
+             patch('src.services.auth_service.AuthService.create_company_context_token') as mock_create_token:
+            
+            # Mock do get_current_user
             mock_get_user.return_value = {
+                "sub": "test-user-001",
                 "id": "test-user-001",
                 "username": "testuser",
                 "company_id": "test-company-001",
                 "permissions": [Permission.COMPANY_READ]
             }
             
-            with patch('src.services.auth_service.AuthService.create_company_context_token') as mock_create_token:
-                mock_create_token.return_value = "new-jwt-token"
-                
-                response = test_client.post("/api/auth/switch-company", json={
-                    "company_id": "test-company-002"
-                }, headers=mock_auth_headers)
-                
-                assert response.status_code == 200
-                data = response.json()
-                assert "access_token" in data
-                assert data["access_token"] == "new-jwt-token"
+            # Mock do check_company_access
+            mock_check_access.return_value = True
+            
+            # Mock do get_user_companies_for_token
+            mock_get_companies.return_value = [
+                {"id": "test-company-001", "name": "Empresa 1"},
+                {"id": "test-company-002", "name": "Empresa 2"}
+            ]
+            
+            # Mock do create_company_context_token
+            mock_create_token.return_value = "new-jwt-token"
+            
+            response = test_client.post("/api/auth/switch-company", json={
+                "company_id": "test-company-002"
+            }, headers=mock_auth_headers)
+            
+            assert response.status_code == 200
+            data = response.json()
+            assert "access_token" in data
+            assert data["access_token"] == "new-jwt-token"
     
     def test_switch_company_unauthorized(self, test_client: TestClient):
         """Testar troca de empresa sem autenticação"""

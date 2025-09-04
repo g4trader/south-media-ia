@@ -1,0 +1,375 @@
+from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+import logging
+from celery import Celery
+from celery.schedules import crontab
+import asyncio
+
+from src.models.campaign import CampaignResponse, CampaignType
+from src.services.campaign_service import CampaignService
+from src.services.sheets_service import GoogleSheetsService
+from src.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Configuração do Celery
+celery_app = Celery(
+    'south_media_scheduler',
+    broker=settings.redis_url,
+    backend=settings.redis_url,
+    include=['src.services.scheduler_service']
+)
+
+# Configurações do Celery
+celery_app.conf.update(
+    task_serializer='json',
+    accept_content=['json'],
+    result_serializer='json',
+    timezone='America/Sao_Paulo',
+    enable_utc=True,
+    task_track_started=True,
+    task_time_limit=30 * 60,  # 30 minutos
+    task_soft_time_limit=25 * 60,  # 25 minutos
+    worker_prefetch_multiplier=1,
+    worker_max_tasks_per_child=1000,
+)
+
+class SchedulerService:
+    def __init__(self):
+        self.campaign_service = CampaignService()
+        self.sheets_service = GoogleSheetsService()
+    
+    async def schedule_campaign_imports(self):
+        """Agendar importações automáticas para todas as campanhas ativas"""
+        try:
+            # Buscar todas as campanhas ativas
+            campaigns = await self._get_active_campaigns()
+            
+            for campaign in campaigns:
+                await self._schedule_campaign_import(campaign)
+            
+            logger.info(f"Importações agendadas para {len(campaigns)} campanhas")
+            
+        except Exception as e:
+            logger.error(f"Erro ao agendar importações: {e}")
+    
+    async def _get_active_campaigns(self) -> List[CampaignResponse]:
+        """Obter todas as campanhas ativas que precisam de importação automática"""
+        try:
+            # TODO: Implementar busca real no BigQuery
+            # Por enquanto, usando dados mock
+            
+            mock_campaigns = [
+                {
+                    "id": "campaign-001",
+                    "name": "Campanha de Vídeo Q1 2024",
+                    "company_id": "company-001",
+                    "campaign_type": CampaignType.VIDEO,
+                    "status": "active",
+                    "refresh_frequency": "daily",
+                    "auto_import": True,
+                    "spreadsheet_id": "1234567890",
+                    "sheet_name": "Dados Campanha",
+                    "last_data_update": datetime.utcnow() - timedelta(days=1)
+                },
+                {
+                    "id": "campaign-002",
+                    "name": "Campanha Social Q1 2024",
+                    "company_id": "company-001",
+                    "campaign_type": CampaignType.SOCIAL,
+                    "status": "active",
+                    "refresh_frequency": "daily",
+                    "auto_import": True,
+                    "spreadsheet_id": "0987654321",
+                    "sheet_name": "Métricas Social",
+                    "last_data_update": datetime.utcnow() - timedelta(hours=6)
+                }
+            ]
+            
+            # Filtrar apenas campanhas ativas com importação automática
+            active_campaigns = [
+                c for c in mock_campaigns 
+                if c["status"] == "active" and c["auto_import"]
+            ]
+            
+            return [CampaignResponse(**c) for c in active_campaigns]
+            
+        except Exception as e:
+            logger.error(f"Erro ao buscar campanhas ativas: {e}")
+            return []
+    
+    async def _schedule_campaign_import(self, campaign: CampaignResponse):
+        """Agendar importação para uma campanha específica"""
+        try:
+            # Determinar quando executar baseado na frequência
+            schedule_time = self._calculate_next_import_time(campaign)
+            
+            if schedule_time:
+                # Agendar tarefa no Celery
+                import_campaign_data.delay(
+                    campaign_id=campaign.id,
+                    company_id=campaign.company_id,
+                    spreadsheet_id=campaign.spreadsheet_id,
+                    sheet_name=campaign.sheet_name,
+                    campaign_type=campaign.campaign_type.value
+                )
+                
+                logger.info(f"Importação agendada para campanha {campaign.id} em {schedule_time}")
+            
+        except Exception as e:
+            logger.error(f"Erro ao agendar importação para campanha {campaign.id}: {e}")
+    
+    def _calculate_next_import_time(self, campaign: CampaignResponse) -> Optional[datetime]:
+        """Calcular próxima execução baseado na frequência"""
+        try:
+            frequency = campaign.refresh_frequency
+            last_update = campaign.last_data_update or datetime.utcnow()
+            
+            if frequency == "daily":
+                return last_update + timedelta(days=1)
+            elif frequency == "weekly":
+                return last_update + timedelta(weeks=1)
+            elif frequency == "monthly":
+                # Aproximação simples para meses
+                return last_update + timedelta(days=30)
+            else:
+                # Padrão: diário
+                return last_update + timedelta(days=1)
+                
+        except Exception as e:
+            logger.error(f"Erro ao calcular próxima execução: {e}")
+            return None
+    
+    async def get_import_schedule(self, company_id: str) -> List[Dict[str, Any]]:
+        """Obter cronograma de importações para uma empresa"""
+        try:
+            campaigns = await self._get_active_campaigns()
+            company_campaigns = [c for c in campaigns if c.company_id == company_id]
+            
+            schedule = []
+            for campaign in company_campaigns:
+                next_run = self._calculate_next_import_time(campaign)
+                if next_run:
+                    schedule.append({
+                        "campaign_id": campaign.id,
+                        "campaign_name": campaign.name,
+                        "frequency": campaign.refresh_frequency,
+                        "next_import": next_run,
+                        "last_import": campaign.last_data_update,
+                        "status": "scheduled"
+                    })
+            
+            return schedule
+            
+        except Exception as e:
+            logger.error(f"Erro ao obter cronograma de importações: {e}")
+            return []
+    
+    async def manual_import_campaign(self, campaign_id: str, company_id: str) -> Dict[str, Any]:
+        """Executar importação manual de uma campanha"""
+        try:
+            # Buscar campanha
+            campaign = await self.campaign_service.get_campaign(campaign_id, {"company_id": company_id})
+            if not campaign:
+                raise Exception("Campanha não encontrada")
+            
+            # Executar importação
+            result = await self.campaign_service.import_data_from_sheets(
+                campaign_id, 
+                {"company_id": company_id}
+            )
+            
+            return {
+                "success": True,
+                "campaign_id": campaign_id,
+                "records_imported": result.get("records_imported", 0),
+                "import_date": datetime.utcnow(),
+                "message": "Importação manual executada com sucesso"
+            }
+            
+        except Exception as e:
+            logger.error(f"Erro na importação manual da campanha {campaign_id}: {e}")
+            return {
+                "success": False,
+                "campaign_id": campaign_id,
+                "error": str(e),
+                "import_date": datetime.utcnow()
+            }
+    
+    async def update_import_schedule(self, campaign_id: str, frequency: str) -> bool:
+        """Atualizar frequência de importação de uma campanha"""
+        try:
+            # TODO: Implementar atualização real no BigQuery
+            logger.info(f"Frequência de importação da campanha {campaign_id} alterada para {frequency}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erro ao atualizar frequência de importação: {e}")
+            return False
+
+# Tarefas do Celery
+
+@celery_app.task(bind=True, name='import_campaign_data')
+def import_campaign_data(self, campaign_id: str, company_id: str, spreadsheet_id: str, 
+                        sheet_name: str, campaign_type: str):
+    """Tarefa Celery para importar dados de uma campanha"""
+    try:
+        logger.info(f"Iniciando importação da campanha {campaign_id}")
+        
+        # Criar loop de eventos para operações assíncronas
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            # Executar importação
+            result = loop.run_until_complete(_execute_campaign_import(
+                campaign_id, company_id, spreadsheet_id, sheet_name, campaign_type
+            ))
+            
+            logger.info(f"Importação da campanha {campaign_id} concluída: {result}")
+            return result
+            
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Erro na importação da campanha {campaign_id}: {e}")
+        # Re-tentar em caso de falha
+        raise self.retry(countdown=300, max_retries=3)  # Re-tentar em 5 minutos
+
+async def _execute_campaign_import(campaign_id: str, company_id: str, spreadsheet_id: str, 
+                                 sheet_name: str, campaign_type: str) -> Dict[str, Any]:
+    """Executar importação de dados da campanha"""
+    try:
+        from src.services.campaign_service import CampaignService
+        from src.services.sheets_service import GoogleSheetsService
+        
+        campaign_service = CampaignService()
+        sheets_service = GoogleSheetsService()
+        
+        # Simular usuário para a operação
+        mock_user = {"company_id": company_id, "role": "system"}
+        
+        # Verificar se campanha existe
+        campaign = await campaign_service.get_campaign(campaign_id, mock_user)
+        if not campaign:
+            raise Exception("Campanha não encontrada")
+        
+        # Ler dados do Google Sheets
+        df = await sheets_service.read_sheet_data(spreadsheet_id, sheet_name)
+        if df is None:
+            raise Exception("Não foi possível ler dados da planilha")
+        
+        # Processar dados baseado no tipo de campanha
+        metrics = []
+        if campaign_type == "video":
+            metrics = await campaign_service._process_video_metrics(df, campaign_id)
+        elif campaign_type == "display":
+            metrics = await campaign_service._process_display_metrics(df, campaign_id)
+        elif campaign_type == "social":
+            metrics = await campaign_service._process_social_metrics(df, campaign_id)
+        else:
+            metrics = await campaign_service._process_generic_metrics(df, campaign_id)
+        
+        # Salvar métricas
+        await campaign_service._save_metrics_to_bigquery(metrics)
+        
+        # Atualizar última atualização da campanha
+        await campaign_service._update_campaign_last_update(campaign_id)
+        
+        return {
+            "success": True,
+            "campaign_id": campaign_id,
+            "records_imported": len(metrics),
+            "import_date": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(f"Erro na execução da importação: {e}")
+        raise
+
+# Configuração de tarefas periódicas
+
+@celery_app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    """Configurar tarefas periódicas"""
+    
+    # Importação diária às 6h da manhã
+    sender.add_periodic_task(
+        crontab(hour=6, minute=0),
+        schedule_daily_imports.s(),
+        name='schedule-daily-imports'
+    )
+    
+    # Importação semanal aos domingos às 2h da manhã
+    sender.add_periodic_task(
+        crontab(day_of_week=0, hour=2, minute=0),
+        schedule_weekly_imports.s(),
+        name='schedule-weekly-imports'
+    )
+    
+    # Importação mensal no primeiro dia do mês às 3h da manhã
+    sender.add_periodic_task(
+        crontab(day_of_month=1, hour=3, minute=0),
+        schedule_monthly_imports.s(),
+        name='schedule-monthly-imports'
+    )
+
+@celery_app.task(name='schedule_daily_imports')
+def schedule_daily_imports():
+    """Agendar importações diárias"""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            scheduler = SchedulerService()
+            loop.run_until_complete(scheduler.schedule_campaign_imports())
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Erro ao agendar importações diárias: {e}")
+
+@celery_app.task(name='schedule_weekly_imports')
+def schedule_weekly_imports():
+    """Agendar importações semanais"""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            scheduler = SchedulerService()
+            loop.run_until_complete(scheduler.schedule_campaign_imports())
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Erro ao agendar importações semanais: {e}")
+
+@celery_app.task(name='schedule_monthly_imports')
+def schedule_monthly_imports():
+    """Agendar importações mensais"""
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            scheduler = SchedulerService()
+            loop.run_until_complete(scheduler.schedule_campaign_imports())
+        finally:
+            loop.close()
+            
+    except Exception as e:
+        logger.error(f"Erro ao agendar importações mensais: {e}")
+
+# Função para iniciar o worker do Celery
+def start_celery_worker():
+    """Iniciar worker do Celery"""
+    celery_app.start()
+
+# Função para parar o worker do Celery
+def stop_celery_worker():
+    """Parar worker do Celery"""
+    celery_app.control.shutdown()
+
