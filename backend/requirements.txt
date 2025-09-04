@@ -27,7 +27,7 @@ celery==5.3.4
 redis==5.0.1
 
 # Google Services
-google-cloud-bigquery==3.13.0
+# google-cloud-bigquery==3.13.0  # Removido - migrado para PostgreSQL
 google-auth==2.23.4
 google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.1.1

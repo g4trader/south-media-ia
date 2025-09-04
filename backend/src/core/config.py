@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     google_cloud_project: Optional[str] = None
     google_cloud_credentials: Optional[str] = None
     
-    # Configurações do BigQuery (mantido para compatibilidade)
-    bigquery_dataset: str = "south_media_dashboard"
+    # Configurações do BigQuery (removido - migrado para PostgreSQL)
+# bigquery_dataset: str = "south_media_dashboard"
     
     # Configurações de autenticação
     secret_key: str = "your-secret-key-here"
