@@ -133,7 +133,7 @@ if [ ! -f ".env.local" ]; then
 # Frontend Environment Variables
 REACT_APP_API_URL=http://localhost:8080/api
 REACT_APP_VERCEL_TOKEN=5w8zipRxMJnLEET9OMESteB7
-REACT_APP_GITHUB_TOKEN=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
+REACT_APP_GITHUB_TOKEN=REPLACED_TOKEN
 
 # Development settings
 REACT_APP_ENV=development

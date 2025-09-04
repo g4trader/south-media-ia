@@ -6,7 +6,7 @@ Este guia contém todas as informações necessárias para configurar e executar
 
 ### GitHub Token
 ```
-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
+REPLACED_TOKEN
 ```
 
 ### Vercel Token
