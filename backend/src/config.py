@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
 from typing import Optional, List
 import os
 
@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     
     # Database
+    database_url: Optional[str] = None
     google_cloud_project: str = "automatizar-452311"
-    bigquery_dataset: str = "south_media_dashboard"
     google_application_credentials: Optional[str] = None
     
     # Google Sheets
