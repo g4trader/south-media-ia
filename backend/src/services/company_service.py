@@ -58,7 +58,7 @@ class CompanyService:
         try:
             company = await self.database_service.get_company_by_id(company_id)
             if not company:
-                return None
+                    return None
             
             return CompanyResponse(
                 id=company.id,
@@ -160,7 +160,7 @@ class CompanyService:
             try:
                 db.delete(company)
                 db.commit()
-                return True
+            return True
             finally:
                 db.close()
         except Exception as e:
