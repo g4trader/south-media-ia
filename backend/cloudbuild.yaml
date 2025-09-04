@@ -28,7 +28,7 @@ steps:
       '--memory', '2Gi',
       '--cpu', '2',
       '--max-instances', '5',
-      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENVIRONMENT=production',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENVIRONMENT=production,DATABASE_URL=postgresql://postgres:password@localhost:5432/south_media_db',
       '--timeout', '300'
     ]
 
