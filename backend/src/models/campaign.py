@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, HttpUrl, validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
@@ -60,10 +60,10 @@ class CampaignBase(BaseModel):
     auto_import: bool = Field(default=True, description="Se deve importar dados automaticamente")
     last_data_update: Optional[datetime] = Field(None, description="Última atualização dos dados")
     
-    @field_validator('end_date')
+    @validator('end_date')
     @classmethod
-    def validate_end_date(cls, v, info):
-        if 'start_date' in info.data and v <= info.data['start_date']:
+    def validate_end_date(cls, v, values):
+        if 'start_date' in values and v <= values['start_date']:
             raise ValueError('end_date must be after start_date')
         return v
 

@@ -982,3 +982,4 @@ class TestE2EDataValidation:
         
         assert "Campanha Persistência E2E" in campaign_names, "Campanha não foi persistida entre sessões"
 
+
