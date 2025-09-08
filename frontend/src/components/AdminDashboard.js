@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Users, BarChart3, Plus, Eye, Edit, Upload } from 'lucide-react';
+import { LogOut, Users, BarChart3, Plus, Eye, Edit, Upload, FileText, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
@@ -9,7 +9,7 @@ const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   
-  const [activeTab, setActiveTab] = useState('clients');
+  const [activeTab, setActiveTab] = useState('dashboards');
   const [showClientModal, setShowClientModal] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   
   const [clients, setClients] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
+  const [staticDashboards, setStaticDashboards] = useState([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -32,6 +33,9 @@ const AdminDashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      
+      // Load static dashboards
+      loadStaticDashboards();
       
       // Load admin stats
       const statsResponse = await apiService.getAdminStats();
@@ -59,6 +63,84 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadStaticDashboards = () => {
+    // Lista de dashboards estáticos da pasta static
+    const dashboards = [
+      {
+        id: 'dash_sonho',
+        name: 'Dashboard Sonho',
+        filename: 'dash_sonho.html',
+        description: 'Dashboard principal com dados multicanal (CTV, Disney, Netflix, TikTok, YouTube, Footfall)',
+        url: '/static/dash_sonho.html',
+        type: 'multicanal',
+        status: 'active',
+        lastModified: '2024-01-15'
+      },
+      {
+        id: 'dash_copacol',
+        name: 'Dashboard Copacol',
+        filename: 'dash_copacol.html',
+        description: 'Dashboard específico para cliente Copacol',
+        url: '/static/dash_copacol.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-10'
+      },
+      {
+        id: 'dash_copacol_mestre',
+        name: 'Dashboard Copacol - Mestre das Grelhas',
+        filename: 'dash_copacol_mestre_das_grelhas.html',
+        description: 'Dashboard avançado Copacol com funcionalidades de grelhas',
+        url: '/static/dash_copacol_mestre_das_grelhas.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-12'
+      },
+      {
+        id: 'dash_dauher',
+        name: 'Dashboard Dauher Hidrabene',
+        filename: 'dash_dauher_hidrabene.html',
+        description: 'Dashboard para campanha Dauher Hidrabene',
+        url: '/static/dash_dauher_hidrabene.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-08'
+      },
+      {
+        id: 'dash_sebrae',
+        name: 'Dashboard Sebrae',
+        filename: 'dash_sebrae.html',
+        description: 'Dashboard para campanhas Sebrae',
+        url: '/static/dash_sebrae.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-05'
+      },
+      {
+        id: 'dash_unicesusc',
+        name: 'Dashboard Unicesusc',
+        filename: 'dash_unicesusc.html',
+        description: 'Dashboard para cliente Unicesusc',
+        url: '/static/dash_unicesusc.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-03'
+      },
+      {
+        id: 'dash_unimed',
+        name: 'Dashboard Unimed',
+        filename: 'dash_unimed.html',
+        description: 'Dashboard para cliente Unimed',
+        url: '/static/dash_unimed.html',
+        type: 'cliente',
+        status: 'active',
+        lastModified: '2024-01-01'
+      }
+    ];
+    
+    setStaticDashboards(dashboards);
   };
 
   const handleLogout = () => {
@@ -210,6 +292,19 @@ const AdminDashboard = () => {
             padding: '1.5rem'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>DASHBOARDS DISPONÍVEIS</span>
+              <FileText style={{ width: '20px', height: '20px', color: '#8B5CF6' }} />
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{staticDashboards.length}</div>
+          </div>
+          
+          <div style={{
+            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>TOTAL DE CLIENTES</span>
               <Users style={{ width: '20px', height: '20px', color: '#8B5CF6' }} />
             </div>
@@ -241,23 +336,28 @@ const AdminDashboard = () => {
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatCurrency(stats.total_budget)}</div>
           </div>
-          
-          <div style={{
-            background: 'linear-gradient(135deg, #1A1A2E 0%, rgba(139, 92, 246, 0.1) 100%)',
-            border: '1px solid rgba(139, 92, 246, 0.3)',
-            borderRadius: '12px',
-            padding: '1.5rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <span style={{ color: '#A1A1AA', fontSize: '0.875rem' }}>TOTAL IMPRESSÕES</span>
-              <span style={{ color: '#3B82F6', fontSize: '1.25rem' }}>👁️</span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white' }}>{formatNumber(stats.total_impressions)}</div>
-          </div>
         </div>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
+          <button
+            onClick={() => setActiveTab('dashboards')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              background: activeTab === 'dashboards' ? '#8B5CF6' : 'transparent',
+              color: activeTab === 'dashboards' ? 'white' : '#A1A1AA',
+              border: activeTab === 'dashboards' ? 'none' : '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <FileText style={{ width: '16px', height: '16px' }} />
+            Dashboards
+          </button>
           <button
             onClick={() => setActiveTab('clients')}
             style={{
@@ -297,6 +397,181 @@ const AdminDashboard = () => {
         </div>
 
         {/* Content */}
+        {activeTab === 'dashboards' && (
+          <div style={{
+            background: '#1A1A2E',
+            border: '1px solid rgba(139, 92, 246, 0.2)',
+            borderRadius: '12px',
+            padding: '1.5rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'white', margin: 0 }}>Dashboards Estáticos</h2>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <span style={{
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(34, 197, 94, 0.1)',
+                  border: '1px solid rgba(34, 197, 94, 0.3)',
+                  borderRadius: '6px',
+                  color: '#22C55E',
+                  fontSize: '0.875rem',
+                  fontWeight: '500'
+                }}>
+                  {staticDashboards.length} Dashboard{staticDashboards.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: '1rem' }}>
+              {staticDashboards.map((dashboard) => (
+                <div key={dashboard.id} style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  padding: '1.5rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        background: dashboard.type === 'multicanal' ? 'linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%)' : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <FileText style={{ width: '20px', height: '20px', color: 'white' }} />
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'white', margin: '0 0 0.25rem 0' }}>
+                          {dashboard.name}
+                        </h3>
+                        <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: '0 0 0.25rem 0' }}>
+                          {dashboard.filename}
+                        </p>
+                      </div>
+                    </div>
+                    <p style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: '0 0 0.5rem 0' }}>
+                      {dashboard.description}
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.25rem 0.75rem',
+                        background: dashboard.status === 'active' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                        color: dashboard.status === 'active' ? '#22C55E' : '#EF4444',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        {dashboard.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </span>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '0.25rem 0.75rem',
+                        background: dashboard.type === 'multicanal' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                        color: dashboard.type === 'multicanal' ? '#8B5CF6' : '#3B82F6',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        {dashboard.type === 'multicanal' ? 'Multicanal' : 'Cliente'}
+                      </span>
+                      <span style={{ color: '#A1A1AA', fontSize: '0.75rem' }}>
+                        Atualizado: {dashboard.lastModified}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => {
+                        // Abrir dashboard em nova aba
+                        window.open(dashboard.url, '_blank');
+                        toast.success(`Abrindo ${dashboard.name}`);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(59, 130, 246, 0.1)',
+                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        borderRadius: '6px',
+                        color: '#3B82F6',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.2)';
+                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(59, 130, 246, 0.1)';
+                        e.target.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                      }}
+                    >
+                      <ExternalLink style={{ width: '16px', height: '16px' }} />
+                      Abrir
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Copiar URL para clipboard
+                        navigator.clipboard.writeText(window.location.origin + dashboard.url);
+                        toast.success('URL copiada para a área de transferência!');
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '6px',
+                        color: '#8B5CF6',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.2)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.5)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'rgba(139, 92, 246, 0.1)';
+                        e.target.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                      }}
+                    >
+                      <Edit style={{ width: '16px', height: '16px' }} />
+                      Copiar URL
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info Box */}
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '8px'
+            }}>
+              <h4 style={{ color: '#3B82F6', fontSize: '0.875rem', fontWeight: '600', margin: '0 0 0.5rem 0' }}>
+                📊 Informações sobre os Dashboards
+              </h4>
+              <ul style={{ color: '#A1A1AA', fontSize: '0.875rem', margin: 0, paddingLeft: '1.25rem', lineHeight: '1.5' }}>
+                <li><strong>Multicanal:</strong> Dashboard principal com dados de todos os canais (CTV, Disney, Netflix, TikTok, YouTube, Footfall)</li>
+                <li><strong>Cliente:</strong> Dashboards específicos para cada cliente com dados personalizados</li>
+                <li><strong>Atualização:</strong> Dados atualizados automaticamente via Google Sheets</li>
+                <li><strong>Acesso:</strong> Clique em "Abrir" para visualizar ou "Copiar URL" para compartilhar</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'clients' && (
           <div style={{
             background: '#1A1A2E',
