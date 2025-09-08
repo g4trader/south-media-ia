@@ -29,6 +29,6 @@
     }
   ],
         "env": {
-          "REACT_APP_API_URL": "https://south-media-ia-backend-6f3ckz7c7q-uc.a.run.app"
+          "REACT_APP_API_URL": "https://south-media-ia-backend-609095880025.us-central1.run.app"
         }
 }
