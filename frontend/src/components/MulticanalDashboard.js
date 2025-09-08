@@ -567,16 +567,21 @@ const MulticanalDashboard = () => {
               <div>
                 <div className="text-xl font-bold text-white">South Media</div>
                 <div className="text-slate-400">Dashboard Multicanal — Vídeo + Display (Footfall)</div>
-                {error && (
-                  <div className="text-yellow-400 text-sm mt-1">
-                    ⚠️ Usando dados simulados (API indisponível)
-                  </div>
-                )}
-                {!error && dashboardData && (
-                  <div className="text-green-400 text-sm mt-1">
-                    ✅ Dados atualizados do Google Sheets
-                  </div>
-                )}
+                       {error && (
+                         <div className="text-yellow-400 text-sm mt-1">
+                           ⚠️ Usando dados simulados (API indisponível)
+                         </div>
+                       )}
+                       {!error && dashboardData && dashboardData.source === 'mock_data_dynamic' && (
+                         <div className="text-blue-400 text-sm mt-1">
+                           🔄 Dados dinâmicos simulados (API funcionando)
+                         </div>
+                       )}
+                       {!error && dashboardData && dashboardData.source !== 'mock_data_dynamic' && (
+                         <div className="text-green-400 text-sm mt-1">
+                           ✅ Dados reais do Google Sheets
+                         </div>
+                       )}
                 <div className="text-slate-500 text-xs mt-1">
                   📊 Dados integrados com planilhas: CTV, YouTube, TikTok, Disney, Netflix, Footfall Display
                 </div>
