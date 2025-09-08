@@ -28,7 +28,7 @@
       "dest": "/index.html"
     }
   ],
-  "env": {
-    "REACT_APP_API_URL": "https://south-media-ia-backend.vercel.app"
-  }
+        "env": {
+          "REACT_APP_API_URL": "https://south-media-ia-backend-6f3ckz7c7q-uc.a.run.app"
+        }
 }

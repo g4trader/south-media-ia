@@ -5,7 +5,7 @@ steps:
       'build',
       '-t', 'gcr.io/$PROJECT_ID/south-media-ia-backend:$BUILD_ID',
       '-t', 'gcr.io/$PROJECT_ID/south-media-ia-backend:latest',
-      '-f', 'backend/Dockerfile',
+      '-f', 'backend/Dockerfile.simple',
       '.'
     ]
 
@@ -25,10 +25,9 @@ steps:
       '--platform', 'managed',
       '--allow-unauthenticated',
       '--port', '8080',
-      '--memory', '2Gi',
-      '--cpu', '2',
-      '--max-instances', '5',
-      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,ENVIRONMENT=production,DATABASE_URL=postgresql://postgres:password@localhost:5432/south_media_db,CTV_SPREADSHEET_ID=1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U,DISNEY_SPREADSHEET_ID=1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o,FOOTFALL_DISPLAY_SPREADSHEET_ID=10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA,NETFLIX_SPREADSHEET_ID=1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo,TIKTOK_SPREADSHEET_ID=1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM,YOUTUBE_SPREADSHEET_ID=1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo',
+      '--memory', '1Gi',
+      '--cpu', '1',
+      '--max-instances', '3',
       '--timeout', '300'
     ]
 
@@ -39,4 +38,3 @@ options:
 
 # Timeout
 timeout: '1200s'
-
