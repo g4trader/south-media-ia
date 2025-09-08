@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
 import { Bar, Scatter } from 'react-chartjs-2';
+import { getDynamicMockData } from '../data/mockSheetsData';
 
 // Register Chart.js components
 ChartJS.register(
@@ -19,84 +20,43 @@ const MulticanalDashboard = () => {
   const [selectedChannel, setSelectedChannel] = useState('');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - será substituído por dados reais da API
-  const mockData = {
-    CONS: {
-      "Budget Contratado (R$)": 500000,
-      "Budget Utilizado (R$)": 125000,
-      "Impressões": 25000000,
-      "Cliques": 125000,
-      "Visitas (Footfall)": 8500
-    },
-    PER: [
-      {
-        "Canal": "YouTube",
-        "Budget Contratado (R$)": 100000,
-        "Budget Utilizado (R$)": 25000,
-        "Impressões": 5000000,
-        "Cliques": 25000,
-        "CTR": 0.5,
-        "VC (100%)": 0.75,
-        "VTR (100%)": 0.65,
-        "CPV (R$)": 1.0
-      },
-      {
-        "Canal": "TikTok",
-        "Budget Contratado (R$)": 80000,
-        "Budget Utilizado (R$)": 20000,
-        "Impressões": 4000000,
-        "Cliques": 20000,
-        "CTR": 0.5,
-        "VC (100%)": 0.8,
-        "VTR (100%)": 0.7,
-        "CPV (R$)": 1.0,
-        "CPM (R$)": 5.0
-      },
-      {
-        "Canal": "CTV",
-        "Budget Contratado (R$)": 120000,
-        "Budget Utilizado (R$)": 30000,
-        "Impressões": 6000000,
-        "Cliques": 30000,
-        "CTR": 0.5,
-        "VC (100%)": 0.85,
-        "VTR (100%)": 0.83,
-        "CPV (R$)": 1.0
-      },
-      {
-        "Canal": "Footfall Display",
-        "Budget Contratado (R$)": 100000,
-        "Budget Utilizado (R$)": 25000,
-        "Impressões": 5000000,
-        "Cliques": 25000,
-        "CTR": 0.5,
-        "CPM (R$)": 5.0
+  // Usar dados mock realistas baseados nas planilhas
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Tentar buscar dados reais da API
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://south-media-ia-backend.vercel.app';
+      const response = await fetch(`${apiUrl}/api/dashboard/data`);
+      
+      if (response.ok) {
+        const realData = await response.json();
+        setDashboardData(realData);
+        console.log('✅ Dados reais carregados do Google Sheets:', realData);
+      } else {
+        throw new Error(`API retornou status ${response.status}`);
       }
-    ],
-    DAILY: [
-      {
-        "Canal": "YouTube",
-        "Data": "2024-01-15",
-        "Criativo": "Video_001",
-        "Investimento (R$)": 1000,
-        "Starts": 5000,
-        "25%": 4000,
-        "50%": 3000,
-        "75%": 2000,
-        "100%": 1000,
-        "Impressões": 100000,
-        "Cliques": 500
-      }
-    ]
+    } catch (error) {
+      console.warn('⚠️ Erro ao carregar dados reais, usando dados mock:', error.message);
+      setError(error.message);
+      // Usar dados mock dinâmicos para simular dados das planilhas
+      setDashboardData(getDynamicMockData());
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setDashboardData(mockData);
-      setLoading(false);
-    }, 1000);
+    fetchDashboardData();
+    
+    // Auto-refresh a cada 5 minutos
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatNumber = (num) => {
@@ -607,6 +567,19 @@ const MulticanalDashboard = () => {
               <div>
                 <div className="text-xl font-bold text-white">South Media</div>
                 <div className="text-slate-400">Dashboard Multicanal — Vídeo + Display (Footfall)</div>
+                {error && (
+                  <div className="text-yellow-400 text-sm mt-1">
+                    ⚠️ Usando dados simulados (API indisponível)
+                  </div>
+                )}
+                {!error && dashboardData && (
+                  <div className="text-green-400 text-sm mt-1">
+                    ✅ Dados atualizados do Google Sheets
+                  </div>
+                )}
+                <div className="text-slate-500 text-xs mt-1">
+                  📊 Dados integrados com planilhas: CTV, YouTube, TikTok, Disney, Netflix, Footfall Display
+                </div>
               </div>
             </div>
             <div className="text-right">
@@ -616,6 +589,13 @@ const MulticanalDashboard = () => {
                   EM ANDAMENTO
                 </span>
               </div>
+              <button
+                onClick={fetchDashboardData}
+                disabled={loading}
+                className="mt-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {loading ? '🔄 Atualizando...' : '🔄 Atualizar Dados'}
+              </button>
             </div>
           </div>
         </div>
