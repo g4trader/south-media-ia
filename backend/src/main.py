@@ -10,7 +10,7 @@ import logging
 
 from src.config import settings
 from src.startup import lifespan, get_system_status
-from src.routes import auth, users, companies, campaigns, dashboards
+from src.routes import auth, users, companies, campaigns, dashboards, dashboard
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -75,6 +75,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(companies.router, prefix="/api")
 app.include_router(campaigns.router, prefix="/api")
 app.include_router(dashboards.router, prefix="/api")
+app.include_router(dashboard.router)
 
 # Servir arquivos estáticos
 if os.path.exists("static"):
