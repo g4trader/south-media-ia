@@ -17,11 +17,36 @@
       "dest": "/static/dash_sonho.html"
     },
     {
-      "src": "/",
-      "dest": "/static/dash_sonho.html"
+      "src": "/dash_copacol.html",
+      "dest": "/static/dash_copacol.html"
+    },
+    {
+      "src": "/dash_copacol_mestre_das_grelhas.html",
+      "dest": "/static/dash_copacol_mestre_das_grelhas.html"
+    },
+    {
+      "src": "/dash_dauher_hidrabene.html",
+      "dest": "/static/dash_dauher_hidrabene.html"
+    },
+    {
+      "src": "/dash_sebrae.html",
+      "dest": "/static/dash_sebrae.html"
+    },
+    {
+      "src": "/dash_unicesusc.html",
+      "dest": "/static/dash_unicesusc.html"
+    },
+    {
+      "src": "/dash_unimed.html",
+      "dest": "/static/dash_unimed.html"
+    },
+    {
+      "src": "/admin/(.*)",
+      "dest": "https://south-media-ia-frontend.vercel.app/admin/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "https://south-media-ia-frontend.vercel.app/$1"
     }
-  ],
-  "env": {
-    "REACT_APP_API_URL": "https://south-media-ia-backend.vercel.app"
-  }
+  ]
 }
