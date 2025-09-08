@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import ClientDashboard from './components/ClientDashboard';
+import MulticanalDashboard from './components/MulticanalDashboard';
 
 // Componente para proteger rotas administrativas
 const ProtectedRoute = ({ children }) => {
@@ -51,6 +52,10 @@ function AppContent() {
           <Route path="/dashboard" element={<ClientDashboard />} />
           <Route path="/client/:clientId" element={<ClientDashboard />} />
           <Route path="/client/:clientId/campaign/:campaignId" element={<ClientDashboard />} />
+          
+          {/* Dashboard Multicanal */}
+          <Route path="/multicanal" element={<MulticanalDashboard />} />
+          <Route path="/dash-sonho" element={<MulticanalDashboard />} />
           
           {/* Rota 404 */}
           <Route 

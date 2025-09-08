@@ -69,8 +69,18 @@ const AdminDashboard = () => {
     // Lista de dashboards estáticos da pasta static
     const dashboards = [
       {
+        id: 'multicanal_react',
+        name: 'Dashboard Multicanal (React)',
+        filename: 'MulticanalDashboard.js',
+        description: 'Dashboard multicanal moderno em React com dados dinâmicos (CTV, Disney, Netflix, TikTok, YouTube, Footfall)',
+        url: '/multicanal',
+        type: 'react',
+        status: 'active',
+        lastModified: '2024-01-15'
+      },
+      {
         id: 'dash_sonho',
-        name: 'Dashboard Sonho',
+        name: 'Dashboard Sonho (HTML)',
         filename: 'dash_sonho.html',
         description: 'Dashboard principal com dados multicanal (CTV, Disney, Netflix, TikTok, YouTube, Footfall)',
         url: 'https://south-media-static-dashboards.vercel.app/dash_sonho.html',
