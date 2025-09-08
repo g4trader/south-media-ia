@@ -1,126 +1,104 @@
-# 📊 Configuração das Planilhas Google Sheets
+# 🔧 Configuração do Google Sheets - Passo a Passo
 
-## 🎯 Planilhas Configuradas
+## ✅ **Status Atual:**
+- ✅ Service Account criado: `southmedia@automatizar-452311.iam.gserviceaccount.com`
+- ✅ Chave JSON baixada
+- ✅ Backend preparado para integração
 
-### **📺 CTV**
-- **ID**: `1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U`
-- **URL**: https://docs.google.com/spreadsheets/d/1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U/edit
-- **Aba**: Entrega Diária
-- **Estrutura**: Data, Creative, Starts, Skips, Q25, Q50, Q75, Q100, Active Views, Valor investido
+## 📋 **Próximos Passos:**
 
-### **🎬 Disney**
-- **ID**: `1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o`
-- **URL**: https://docs.google.com/spreadsheets/d/1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o/edit
-- **Aba**: Entrega Diária
-- **Estrutura**: Day, Completion Rate, Q25, Q50, Q75, Q100, Starts, Valor investido, Criativo
+### 1. **Adicionar o arquivo `credentials.json` ao repositório**
 
-### **🖼️ Footfall Display**
-- **ID**: `10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA`
-- **URL**: https://docs.google.com/spreadsheets/d/10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA/edit?gid=1743413064#gid=1743413064
-- **Aba**: Entrega Diária
-- **GID**: 1743413064
-- **Estrutura**: Date, Creative, Impressions, Clicks, CTR, VALOR DO INVESTIMENTO, CPM
+Você precisa colocar o arquivo `credentials.json` na raiz do projeto:
 
-### **🎬 Netflix**
-- **ID**: `1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo`
-- **URL**: https://docs.google.com/spreadsheets/d/1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo/edit
-- **Aba**: Entrega Diária
-- **Estrutura**: Day, Completion Rate, Q25, Q50, Q75, Q100, Starts, Valor investido, Criativo
+```bash
+# Copie o arquivo credentials.json para a raiz do projeto
+cp /caminho/para/seu/credentials.json /Users/lucianoterres/Documents/GitHub/south-media-ia/
+```
 
-### **📱 TikTok**
-- **ID**: `1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM`
-- **URL**: https://docs.google.com/spreadsheets/d/1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM/edit?rtpof=true
-- **Aba**: Entrega Diária
-- **Estrutura**: Ad name, By Day, Valor Investido, CPC, CPM, Impressions, Clicks, CTR
+### 2. **Compartilhar as planilhas com a Service Account**
 
-### **📺 YouTube**
-- **ID**: `1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo`
-- **URL**: https://docs.google.com/spreadsheets/d/1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo/edit?gid=1863167182#gid=1863167182
-- **Aba**: Entrega Diária
-- **GID**: 1863167182
-- **Estrutura**: Date, Starts, Q25, Q50, Q75, Q100, Active Views, criativo, Valor investido
+Para cada planilha, você precisa compartilhar com o email da service account:
+
+**Email da Service Account:** `southmedia@automatizar-452311.iam.gserviceaccount.com`
+
+**Planilhas para compartilhar:**
+- **CTV**: https://docs.google.com/spreadsheets/d/1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U/edit
+- **YouTube**: https://docs.google.com/spreadsheets/d/1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo/edit?gid=1863167182#gid=1863167182
+- **TikTok**: https://docs.google.com/spreadsheets/d/1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM/edit?rtpof=true
+- **Disney**: https://docs.google.com/spreadsheets/d/1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o/edit
+- **Netflix**: https://docs.google.com/spreadsheets/d/1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo/edit
+- **Footfall Display**: https://docs.google.com/spreadsheets/d/10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA/edit?gid=1743413064#gid=1743413064
+
+**Como compartilhar:**
+1. Abra cada planilha
+2. Clique em "Compartilhar" (botão azul no canto superior direito)
+3. Adicione o email: `southmedia@automatizar-452311.iam.gserviceaccount.com`
+4. Defina a permissão como **"Visualizador"**
+5. Clique em "Enviar"
+
+### 3. **Fazer commit do arquivo credentials.json**
+
+```bash
+git add credentials.json
+git commit -m "feat: Adicionar credenciais do Google Sheets"
+git push origin main
+```
+
+### 4. **Deploy do backend com integração Google Sheets**
+
+```bash
+gcloud builds submit --config=backend/cloudbuild-google-sheets.yaml --project=automatizar-452311
+```
+
+## 🧪 **Teste da Integração:**
+
+Após o deploy, teste o endpoint:
+
+```bash
+curl -s https://south-media-ia-backend-609095880025.us-central1.run.app/api/dashboard/data
+```
+
+**Resposta esperada:**
+```json
+{
+  "message": "Dashboard data - Google Sheets integration active",
+  "source": "google_sheets_real",
+  "data": {
+    "CONS": { ... },
+    "PER": [ ... ],
+    "DAILY": [ ... ]
+  }
+}
+```
+
+## 🔍 **Verificação no Frontend:**
+
+No dashboard, você deve ver:
+- **Antes**: "🔄 Dados dinâmicos simulados (API funcionando)"
+- **Depois**: "✅ Dados reais do Google Sheets"
+
+## 🚨 **Troubleshooting:**
+
+### Se aparecer erro de permissão:
+- Verifique se todas as planilhas foram compartilhadas com a service account
+- Confirme que a permissão é "Visualizador"
+
+### Se aparecer erro de credenciais:
+- Verifique se o arquivo `credentials.json` está na raiz do projeto
+- Confirme que o arquivo não está corrompido
+
+### Se os dados não aparecerem:
+- Verifique se as planilhas têm dados nas abas corretas
+- Confirme se os nomes das colunas estão corretos
+
+## 📞 **Suporte:**
+
+Se encontrar problemas:
+1. Verifique os logs do Cloud Run
+2. Teste o endpoint manualmente
+3. Confirme as permissões das planilhas
 
 ---
 
-## 🔧 Configuração do Sistema
-
-### **1. Variáveis de Ambiente**
-```bash
-# Copiar configuração
-cp backend/sheets_config_real.env backend/.env
-
-# IDs já configurados:
-FOOTFALL_DISPLAY_SPREADSHEET_ID=10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA
-DISNEY_SPREADSHEET_ID=1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o
-CTV_SPREADSHEET_ID=1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U
-NETFLIX_SPREADSHEET_ID=1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo
-TIKTOK_SPREADSHEET_ID=1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM
-YOUTUBE_SPREADSHEET_ID=1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo
-```
-
-### **2. Credenciais Google**
-```bash
-# Arquivo necessário: backend/credentials.json
-# Obter em: https://console.cloud.google.com/
-# Service Account com acesso às planilhas
-```
-
-### **3. Permissões**
-- Compartilhar todas as planilhas com o email da Service Account
-- Dar permissão de "Editor" ou "Visualizador"
-- Verificar se a aba "Entrega Diária" existe em cada planilha
-
----
-
-## 🧪 Testes
-
-### **Testar Conexão**
-```bash
-python3 test_real_sheets.py
-```
-
-### **Ver Instruções**
-```bash
-python3 test_real_sheets.py setup
-```
-
-### **Ver Resumo**
-```bash
-python3 test_real_sheets.py summary
-```
-
----
-
-## 📊 Estrutura de Dados por Canal
-
-### **Canais de Vídeo** (CTV, Disney, Netflix, YouTube)
-- **Métricas**: starts, q25, q50, q75, q100
-- **Dados**: Data, Creative, Spend, Video Metrics
-
-### **Canais de Display** (Footfall Display)
-- **Métricas**: impressions, clicks
-- **Dados**: Data, Creative, Spend, Display Metrics
-
-### **Canais Sociais** (TikTok)
-- **Métricas**: impressions, clicks
-- **Dados**: Data, Creative, Spend, Social Metrics
-
----
-
-## 🚀 Próximos Passos
-
-1. **Configurar credenciais** Google Sheets
-2. **Compartilhar planilhas** com Service Account
-3. **Testar conexões** com `test_real_sheets.py`
-4. **Iniciar sistema** com dados reais
-5. **Monitorar atualizações** automáticas
-
----
-
-## 📞 Suporte
-
-Para problemas:
-1. Verificar credenciais em `backend/credentials.json`
-2. Confirmar permissões das planilhas
-3. Testar conexões individuais
-4. Verificar logs do sistema
+**🎯 Objetivo:** Ter dados reais das planilhas Google Sheets no dashboard em vez de dados mock!
