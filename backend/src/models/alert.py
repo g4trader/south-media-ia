@@ -351,3 +351,4 @@ class AlertStatisticsResponse(AlertStatistics):
     class Config:
         from_attributes = True
 
+

@@ -279,3 +279,4 @@ if __name__ == "__main__":
         # Garantir que o sistema seja parado
         system_manager.stop_system()
 
+

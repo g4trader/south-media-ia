@@ -629,3 +629,4 @@ class AlertService:
         """Salvar instância do alerta"""
         logger.info(f"Instância de alerta {alert_instance.id} salva")
 
+

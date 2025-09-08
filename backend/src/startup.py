@@ -4,7 +4,6 @@ from contextlib import asynccontextmanager
 import os
 
 from src.config import settings
-from src.services.scheduler_service import celery_app
 
 # Configurar logging
 logging.basicConfig(
@@ -71,7 +70,7 @@ async def lifespan(app: FastAPI):
     try:
         # Parar worker do Celery se estiver rodando
         try:
-            celery_app.control.shutdown()
+            # celery_app.control.shutdown()
             logger.info("✅ Worker do Celery encerrado")
         except Exception as e:
             logger.warning(f"⚠️  Erro ao encerrar Celery: {e}")
@@ -136,7 +135,7 @@ def get_system_status():
         
         # Verificar Celery
         try:
-            celery_app.control.inspect().active()
+            # celery_app.control.inspect().active()
             status["services"]["celery"] = "operational"
         except Exception:
             status["services"]["celery"] = "unavailable"

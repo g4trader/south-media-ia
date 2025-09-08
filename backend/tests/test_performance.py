@@ -678,3 +678,4 @@ class TestPerformanceConfig:
         assert cpu_usage <= performance_config["max_cpu_usage"], \
             f"Uso de CPU excedeu threshold: {cpu_usage:.1f}% > {performance_config['max_cpu_usage']}%"
 
+

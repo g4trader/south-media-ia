@@ -108,3 +108,4 @@ else:
     task_soft_time_limit = 25 * 60  # 25 minutos
     worker_prefetch_multiplier = 1
 
+
