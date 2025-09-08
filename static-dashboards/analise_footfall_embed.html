@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Footfall - South Media</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a0a1a 50%, #000000 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Cores South Media Oficiais */
+        :root {
+            --sm-black: #000000;
+            --sm-white: #ffffff;
+            --sm-orange: #ff6b35;
+            --sm-green: #00ff88;
+            --sm-purple: #8b5cf6;
+            --sm-pink: #ec4899;
+            --sm-cyan: #06b6d4;
+            --sm-gradient-start: #ff6b35;
+            --sm-gradient-end: #8b5cf6;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            height: 40px;
+            filter: brightness(1.1);
+        }
+
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: linear-gradient(to bottom, var(--sm-orange), var(--sm-purple));
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--sm-orange), var(--sm-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-orange {
+            background: linear-gradient(45deg, var(--sm-orange), #ff8c5a);
+            color: white;
+        }
+
+        .btn-purple {
+            background: linear-gradient(45deg, var(--sm-purple), var(--sm-pink));
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--sm-white);
+            margin-bottom: 1rem;
+            letter-spacing: 1px;
+        }
+
+        .hero .highlight {
+            color: var(--sm-orange);
+            text-transform: uppercase;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .hero p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--sm-orange), var(--sm-purple));
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 107, 53, 0.3);
+        }
+
+        .metric-card:nth-child(1)::before { background: linear-gradient(90deg, var(--sm-green), var(--sm-cyan)); }
+        .metric-card:nth-child(2)::before { background: linear-gradient(90deg, var(--sm-orange), var(--sm-pink)); }
+        .metric-card:nth-child(3)::before { background: linear-gradient(90deg, var(--sm-purple), var(--sm-green)); }
+        .metric-card:nth-child(4)::before { background: linear-gradient(90deg, var(--sm-pink), var(--sm-orange)); }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .metric-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.6;
+            filter: drop-shadow(0 0 5px rgba(255, 107, 53, 0.3));
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(45deg, var(--sm-orange), var(--sm-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-subtitle {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 107, 53, 0.3);
+            box-shadow: 0 10px 40px rgba(255, 107, 53, 0.1);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--sm-white);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            filter: hue-rotate(15deg) saturate(1.2);
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .top-stores {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .store-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+
+        .store-item:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .store-item:last-child {
+            border-bottom: none;
+        }
+
+        .store-name {
+            font-weight: 500;
+            flex: 1;
+            color: var(--sm-white);
+        }
+
+        .store-metrics {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .store-users {
+            color: var(--sm-cyan);
+            font-weight: 500;
+        }
+
+        .store-rate {
+            color: var(--sm-orange);
+            font-weight: 500;
+        }
+
+        .footer {
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            height: 24px;
+        }
+
+        .footer-text {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .footer-date {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .store-metrics {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--sm-orange);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Efeito de partículas no fundo */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: var(--sm-orange);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 6s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(-10px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Efeito de partículas -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="south_media_logo_official.png" alt="South Media" class="logo" id="logo">
+                <div class="divider"></div>
+                <h1 class="title">Dashboard Footfall</h1>
+            </div>
+            <div class="header-buttons">
+                <button class="btn btn-orange">Relatório</button>
+                <button class="btn btn-purple">Exportar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <span class="highlight">Buscamos te entregar resultados reais</span>
+            <h1>ANÁLISE DE FOOTFALL - LOJAS RECIBOM</h1>
+            <p>Monitoramento em tempo real do tráfego de clientes nas lojas físicas da região metropolitana do Recife</p>
+        </section>
+
+        <!-- Metrics -->
+        <section class="metrics-grid" id="metrics">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Carregando dados...</p>
+            </div>
+        </section>
+
+        <!-- Content Grid -->
+        <section class="content-grid">
+            <!-- Map -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Distribuição Geográfica</h3>
+                    <p class="card-subtitle">Mapa interativo com localização das lojas e intensidade de footfall</p>
+                </div>
+                <div class="card-content">
+                    <div id="map"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ff6b35;"></div>
+                            <span>Alta (≥10%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6;"></div>
+                            <span>Média (5-10%)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #00ff88;"></div>
+                            <span>Baixa (&lt;5%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Performance por Loja</h3>
+                    <p class="card-subtitle">Distribuição de usuários footfall por taxa de conversão</p>
+                </div>
+                <div class="card-content">
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Stores -->
+        <section class="card top-stores">
+            <div class="card-header">
+                <h3 class="card-title">Top 5 Lojas por Footfall</h3>
+                <p class="card-subtitle">Ranking das lojas com maior número de usuários detectados</p>
+            </div>
+            <div id="topStores">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando ranking...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <img src="south_media_logo_official.png" alt="South Media" class="footer-logo" id="footerLogo">
+                <span class="footer-text">Dashboard desenvolvido por South Media</span>
+            </div>
+            <div class="footer-date">
+                Última atualização: <span id="lastUpdate"></span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Dados de footfall
+        const footfallData = [
+            {lat: -8.092339308671471, lng: -34.888475077, name: "Recibom - Av. Eng. Domingos Ferreira, 306 - Pina", users: 1740, rate: 3},
+            {lat: -8.131969149507211, lng: -34.890696877, name: "Recibom boa viagem - R. Barão de Souza Leão, 767 - Boa Viagem, Recife - PE, 51030-300", users: 1892, rate: 7},
+            {lat: -8.045915684673571, lng: -34.890921522, name: "Recibom - Torre - Rua Conde de Irajá, 632 - Torre, Recife - PE, 50710-310", users: 211, rate: 9},
+            {lat: -8.047434924792, lng: -34.900162111, name: "Recibom - Graças - Av. Rui Barbosa, 551 - Graças, Recife - PE, 52011-040", users: 548, rate: 8},
+            {lat: -8.029882473548621, lng: -34.906651677, name: "Recibom - Parnamirim - Estr. do Arraial, 2668 - Tamarineira, Recife - PE, 52051-380", users: 555, rate: 11},
+            {lat: -8.119932249004491, lng: -34.890091268, name: "Recibom - Boa Viagem - R. Prof. João Medeiros, 261 - Boa Viagem, Recife - PE, 51021-050", users: 1020, rate: 6},
+            {lat: -8.142543914194251, lng: -34.908109111, name: "Recibom - Setúbal - R. João Cardoso Aires, 407 - Boa Viagem, Recife - PE, 51130-300", users: 1089, rate: 15},
+            {lat: -8.028130780221501, lng: -34.890250688, name: "Recibom - Encruzilhada - Av. Norte Miguel Arraes de Alencar, S/N - Encruzilhada, Recife - PE, 52041-005", users: 4328, rate: 11},
+            {lat: -7.995667724325511, lng: -34.884649217, name: "Recibom - Olinda - Av. Carlos de Lima Cavalcante, 515 - Bultrins, Olinda - PE, 53030-260", users: 5121, rate: 12},
+            {lat: -8.183601155218951, lng: -34.891945002, name: "Recibom - Piedade - Av. Bernardo Vieira de Melo, 3454 - Piedade, Jaboatão dos Guararapes - PE, 54410-010", users: 1212, rate: 11},
+            {lat: -8.182334054796811, lng: -34.920023851, name: "Recibom - Piedade -Av. Ayrton Senna da Silva, 2851 - Piedade, Jaboatão dos Guararapes - PE, 54410-400", users: 1573, rate: 14},
+            {lat: -8.018367819706791, lng: -34.996213511, name: "Recibom - Timbí, Camaragibe - PE, 54765-290", users: 0, rate: 0}
+        ];
+
+        // Inicializar dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            initializeMetrics();
+            initializeMap();
+            initializeChart();
+            initializeTopStores();
+            updateLastUpdate();
+        });
+
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        function initializeMetrics() {
+            const totalLojas = footfallData.length;
+            const totalUsuarios = footfallData.reduce((sum, item) => sum + item.users, 0);
+            const taxaMedia = footfallData.reduce((sum, item) => sum + item.rate, 0) / totalLojas;
+            const melhorLoja = footfallData.reduce((max, item) => item.rate > max.rate ? item : max);
+
+            const metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Total de Lojas</span>
+                        <svg class="metric-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2L3 7v11h4v-6h6v6h4V7l-7-5z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-value">${totalLojas}</div>
+                    <div class="metric-subtitle">Região metropolitana</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Total de Usuários</span>
+                        <svg class="metric-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-value">${totalUsuarios.toLocaleString()}</div>
+                    <div class="metric-subtitle">Footfall detectado</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Taxa Média</span>
+                        <svg class="metric-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-value">${taxaMedia.toFixed(1)}%</div>
+                    <div class="metric-subtitle">Conversão média</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Melhor Performance</span>
+                        <svg class="metric-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-value">${melhorLoja.rate}%</div>
+                    <div class="metric-subtitle">${melhorLoja.name.split(' - ')[1] || 'Setúbal'}</div>
+                </div>
+            `;
+
+            document.getElementById('metrics').innerHTML = metricsHTML;
+        }
+
+        function initializeMap() {
+            const map = L.map('map').setView([-8.05, -34.9], 11);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            footfallData.forEach(store => {
+                const color = store.rate >= 10 ? '#ff6b35' : 
+                             store.rate >= 5 ? '#8b5cf6' : '#00ff88';
+                const radius = Math.max(5, Math.min(20, store.users / 200));
+
+                L.circleMarker([store.lat, store.lng], {
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.7,
+                    radius: radius,
+                    weight: 2
+                }).bindPopup(`
+                    <div style="min-width: 200px; color: #333;">
+                        <h4 style="margin-bottom: 8px; color: #333;">${store.name}</h4>
+                        <p style="margin: 4px 0;"><strong>Usuários:</strong> ${store.users.toLocaleString()}</p>
+                        <p style="margin: 4px 0;"><strong>Taxa:</strong> ${store.rate}%</p>
+                        <p style="margin: 4px 0; color: #666; font-size: 0.9em;">${store.lat.toFixed(6)}, ${store.lng.toFixed(6)}</p>
+                    </div>
+                `).addTo(map);
+            });
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            const chartData = footfallData
+                .filter(store => store.users > 0)
+                .sort((a, b) => b.users - a.users)
+                .slice(0, 8);
+
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Lojas',
+                        data: chartData.map(store => ({
+                            x: store.users,
+                            y: store.rate,
+                            label: store.name.split(' - ')[1] || store.name
+                        })),
+                        backgroundColor: 'rgba(255, 107, 53, 0.6)',
+                        borderColor: '#ff6b35',
+                        pointRadius: function(context) {
+                            return Math.max(5, Math.min(15, context.parsed.x / 500));
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ff6b35',
+                            bodyColor: '#ffffff',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw.label}: ${context.parsed.x.toLocaleString()} usuários, ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Usuários Footfall',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Taxa de Conversão (%)',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeTopStores() {
+            const topStores = footfallData
+                .filter(store => store.users > 0)
+                .sort((a, b) => b.users - a.users)
+                .slice(0, 5);
+
+            const topStoresHTML = topStores.map(store => `
+                <div class="store-item">
+                    <div class="store-name">${store.name.split(' - ')[1] || store.name}</div>
+                    <div class="store-metrics">
+                        <div class="store-users">${store.users.toLocaleString()} usuários</div>
+                        <div class="store-rate">${store.rate}%</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('topStores').innerHTML = topStoresHTML;
+        }
+
+        function updateLastUpdate() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR');
+            document.getElementById('lastUpdate').textContent = dateStr;
+        }
+    </script>
+</body>
+</html>
+

@@ -8,48 +8,12 @@
       "config": {
         "distDir": "build"
       }
-    },
-    {
-      "src": "static/**/*",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
       "dest": "/static/$1"
-    },
-    {
-      "src": "/dash_sonho.html",
-      "dest": "/static/dash_sonho.html"
-    },
-    {
-      "src": "/dash_copacol.html",
-      "dest": "/static/dash_copacol.html"
-    },
-    {
-      "src": "/dash_copacol_mestre_das_grelhas.html",
-      "dest": "/static/dash_copacol_mestre_das_grelhas.html"
-    },
-    {
-      "src": "/dash_dauher_hidrabene.html",
-      "dest": "/static/dash_dauher_hidrabene.html"
-    },
-    {
-      "src": "/dash_sebrae.html",
-      "dest": "/static/dash_sebrae.html"
-    },
-    {
-      "src": "/dash_unicesusc.html",
-      "dest": "/static/dash_unicesusc.html"
-    },
-    {
-      "src": "/dash_unimed.html",
-      "dest": "/static/dash_unimed.html"
-    },
-    {
-      "src": "/admin/(.*)",
-      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
