@@ -3,6 +3,13 @@
   "name": "south-media-dashboard",
   "builds": [
     {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    },
+    {
       "src": "static/**/*",
       "use": "@vercel/static"
     }
@@ -42,11 +49,14 @@
     },
     {
       "src": "/admin/(.*)",
-      "dest": "https://south-media-ia-frontend.vercel.app/admin/$1"
+      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "https://south-media-ia-frontend.vercel.app/$1"
+      "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://south-media-ia-backend.vercel.app"
+  }
 }
