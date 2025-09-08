@@ -73,7 +73,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Sonho',
         filename: 'dash_sonho.html',
         description: 'Dashboard principal com dados multicanal (CTV, Disney, Netflix, TikTok, YouTube, Footfall)',
-        url: '/static/dash_sonho.html',
+        url: '/dash_sonho.html',
         type: 'multicanal',
         status: 'active',
         lastModified: '2024-01-15'
@@ -83,7 +83,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Copacol',
         filename: 'dash_copacol.html',
         description: 'Dashboard específico para cliente Copacol',
-        url: '/static/dash_copacol.html',
+        url: '/dash_copacol.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-10'
@@ -93,7 +93,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Copacol - Mestre das Grelhas',
         filename: 'dash_copacol_mestre_das_grelhas.html',
         description: 'Dashboard avançado Copacol com funcionalidades de grelhas',
-        url: '/static/dash_copacol_mestre_das_grelhas.html',
+        url: '/dash_copacol_mestre_das_grelhas.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-12'
@@ -103,7 +103,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Dauher Hidrabene',
         filename: 'dash_dauher_hidrabene.html',
         description: 'Dashboard para campanha Dauher Hidrabene',
-        url: '/static/dash_dauher_hidrabene.html',
+        url: '/dash_dauher_hidrabene.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-08'
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Sebrae',
         filename: 'dash_sebrae.html',
         description: 'Dashboard para campanhas Sebrae',
-        url: '/static/dash_sebrae.html',
+        url: '/dash_sebrae.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-05'
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Unicesusc',
         filename: 'dash_unicesusc.html',
         description: 'Dashboard para cliente Unicesusc',
-        url: '/static/dash_unicesusc.html',
+        url: '/dash_unicesusc.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-03'
@@ -133,7 +133,7 @@ const AdminDashboard = () => {
         name: 'Dashboard Unimed',
         filename: 'dash_unimed.html',
         description: 'Dashboard para cliente Unimed',
-        url: '/static/dash_unimed.html',
+        url: '/dash_unimed.html',
         type: 'cliente',
         status: 'active',
         lastModified: '2024-01-01'
