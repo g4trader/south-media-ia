@@ -30,7 +30,7 @@ const MulticanalDashboard = () => {
       setError(null);
       
       // Tentar buscar dados reais da API
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://south-media-ia-backend-609095880025.us-central1.run.app';
+        const apiUrl = process.env.REACT_APP_API_URL || 'https://south-media-ia-backend-google-sheets-6f3ckz7c7q-uc.a.run.app';
       const response = await fetch(`${apiUrl}/api/dashboard/data`);
       
       if (response.ok) {
@@ -567,21 +567,26 @@ const MulticanalDashboard = () => {
               <div>
                 <div className="text-xl font-bold text-white">South Media</div>
                 <div className="text-slate-400">Dashboard Multicanal — Vídeo + Display (Footfall)</div>
-                       {error && (
-                         <div className="text-yellow-400 text-sm mt-1">
-                           ⚠️ Usando dados simulados (API indisponível)
-                         </div>
-                       )}
-                       {!error && dashboardData && dashboardData.source === 'mock_data_dynamic' && (
-                         <div className="text-blue-400 text-sm mt-1">
-                           🔄 Dados dinâmicos simulados (API funcionando)
-                         </div>
-                       )}
-                       {!error && dashboardData && dashboardData.source !== 'mock_data_dynamic' && (
-                         <div className="text-green-400 text-sm mt-1">
-                           ✅ Dados reais do Google Sheets
-                         </div>
-                       )}
+        {error && (
+          <div className="text-yellow-400 text-sm mt-1">
+            ⚠️ Usando dados simulados (API indisponível)
+          </div>
+        )}
+        {!error && dashboardData && dashboardData.source === 'mock_data_dynamic' && (
+          <div className="text-blue-400 text-sm mt-1">
+            🔄 Dados dinâmicos simulados (API funcionando)
+          </div>
+        )}
+        {!error && dashboardData && dashboardData.source === 'mock_data_fallback' && (
+          <div className="text-orange-400 text-sm mt-1">
+            🔄 Dados simulados (Google Sheets não configurado)
+          </div>
+        )}
+        {!error && dashboardData && dashboardData.source === 'google_sheets' && (
+          <div className="text-green-400 text-sm mt-1">
+            ✅ Dados reais do Google Sheets
+          </div>
+        )}
                 <div className="text-slate-500 text-xs mt-1">
                   📊 Dados integrados com planilhas: CTV, YouTube, TikTok, Disney, Netflix, Footfall Display
                 </div>
