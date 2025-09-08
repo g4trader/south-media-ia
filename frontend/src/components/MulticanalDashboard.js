@@ -30,7 +30,7 @@ const MulticanalDashboard = () => {
       setError(null);
       
       // Tentar buscar dados reais da API
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://south-media-ia-backend.vercel.app';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://south-media-ia-backend-6f3ckz7c7q-uc.a.run.app';
       const response = await fetch(`${apiUrl}/api/dashboard/data`);
       
       if (response.ok) {

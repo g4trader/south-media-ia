@@ -21,13 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código da aplicação
 COPY backend/src/ ./src/
 
-# Criar usuário não-root
-RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
-USER app
+# Criar um arquivo de teste simples
+RUN echo 'from fastapi import FastAPI\napp = FastAPI()\n@app.get("/")\ndef read_root():\n    return {"message": "South Media IA Backend is running!"}\n@app.get("/health")\ndef health_check():\n    return {"status": "healthy"}' > test_app.py
 
 # Expor porta
 EXPOSE $PORT
 
-# Comando para iniciar a aplicação FastAPI
-CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT
-
+# Comando para iniciar a aplicação de teste
+CMD python -c "import uvicorn; uvicorn.run('test_app:app', host='0.0.0.0', port=8080)"
