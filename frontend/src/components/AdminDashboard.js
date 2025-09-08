@@ -28,7 +28,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDashboardData = async () => {
     try {
@@ -174,9 +174,9 @@ const AdminDashboard = () => {
     }).format(value);
   };
 
-  const formatNumber = (value) => {
-    return new Intl.NumberFormat('pt-BR').format(value);
-  };
+  // const formatNumber = (value) => {
+  //   return new Intl.NumberFormat('pt-BR').format(value);
+  // };
 
   if (loading) {
     return (
