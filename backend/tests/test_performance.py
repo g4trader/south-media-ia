@@ -679,3 +679,4 @@ class TestPerformanceConfig:
             f"Uso de CPU excedeu threshold: {cpu_usage:.1f}% > {performance_config['max_cpu_usage']}%"
 
 
+
