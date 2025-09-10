@@ -445,3 +445,4 @@ def test_user_performance_under_load(): # Teste de performance
 **📞 Suporte**: Para dúvidas sobre testes, consulte a documentação ou entre em contato com a equipe de desenvolvimento.
 
 
+

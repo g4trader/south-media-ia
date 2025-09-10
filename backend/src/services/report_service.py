@@ -569,3 +569,4 @@ class ReportService:
             logger.error(f"Erro ao atualizar execução do agendamento: {e}")
 
 
+
