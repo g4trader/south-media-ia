@@ -1,0 +1,13 @@
+{
+  "name": "south-media-dashboard-static",
+  "version": "1.0.0",
+  "description": "Static HTML Dashboard for South Media",
+  "main": "dashboard/index.html",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'",
+    "start": "echo 'Static site'"
+  },
+  "keywords": ["dashboard", "static", "html"],
+  "author": "South Media",
+  "license": "MIT"
+}

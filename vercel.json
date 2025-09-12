@@ -1,20 +1,23 @@
 {
   "version": 2,
-  "buildCommand": "echo 'Static site'",
-  "outputDirectory": "dashboard",
-  "framework": null,
+  "builds": [
+    {
+      "src": "dashboard/**",
+      "use": "@vercel/static"
+    }
+  ],
   "routes": [
     {
       "src": "/",
-      "dest": "/index.html"
+      "dest": "/dashboard/index.html"
     },
     {
       "src": "/dashboard",
-      "dest": "/index.html"
+      "dest": "/dashboard/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/dashboard/$1"
     }
   ]
 }
