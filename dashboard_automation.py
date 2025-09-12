@@ -274,6 +274,9 @@ class DashboardAutomation:
                 logger.warning("⚠️ GITHUB_TOKEN não configurado, pulando push para GitHub")
                 return False
             
+            # Limpar quebras de linha do token
+            github_token = github_token.strip()
+            
             # Obter SHA do arquivo atual
             url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}"
             headers = {
