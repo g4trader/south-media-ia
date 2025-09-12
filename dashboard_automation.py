@@ -277,6 +277,10 @@ class DashboardAutomation:
             # Limpar quebras de linha do token
             github_token = github_token.strip()
             
+            # Log para debug
+            logger.info(f"🔍 Token GitHub configurado: {github_token[:10]}...")
+            logger.info(f"🔍 URL da requisição: {url}")
+            
             # Obter SHA do arquivo atual
             url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}"
             headers = {
