@@ -265,7 +265,7 @@ class DashboardAutomation:
             import base64
             
             # Configurações do GitHub
-            repo_owner = "lucianoterres"  # Seu username do GitHub
+            repo_owner = "g4trader"  # Seu username do GitHub
             repo_name = "south-media-ia"  # Nome do repositório
             file_path = "static/dash_sonho.html"
             github_token = os.environ.get('GITHUB_TOKEN')  # Token do GitHub
