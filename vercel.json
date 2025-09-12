@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "buildCommand": "echo 'Static site'",
+  "outputDirectory": ".",
+  "framework": null,
   "routes": [
     {
       "src": "/",
@@ -12,6 +15,10 @@
     {
       "src": "/static/(.*)",
       "dest": "/static/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
     }
   ]
 }
