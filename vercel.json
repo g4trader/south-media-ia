@@ -1,20 +1,16 @@
 {
   "version": 2,
   "buildCommand": "echo 'Static site'",
-  "outputDirectory": ".",
+  "outputDirectory": "dashboard",
   "framework": null,
   "routes": [
     {
       "src": "/",
-      "dest": "/dash_sonho.html"
+      "dest": "/index.html"
     },
     {
       "src": "/dashboard",
-      "dest": "/dash_sonho.html"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
