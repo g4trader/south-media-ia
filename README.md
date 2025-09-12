@@ -1,90 +1,38 @@
-# South Media IA - Sistema de Dashboard de Mídia
+# South Media Dashboard - Static
 
-Sistema completo para gestão e visualização de campanhas de mídia digital para clientes.
+Dashboard estático para South Media hospedado no Vercel.
 
-## 🚀 Funcionalidades
+## 📊 Dashboard
 
-### Área Administrativa
-- Login seguro para administradores
-- Gestão de clientes e campanhas
-- Upload e importação de dados de performance via CSV
-- Dashboard administrativo completo
-
-### Dashboard do Cliente
-- Acesso via URL personalizada por cliente
-- Visualização de métricas de campanhas em tempo real
-- Interface moderna e responsiva
-- Análises e insights automáticos
-
-## 🏗️ Arquitetura
-
-### Backend
-- **Framework**: FastAPI (Python)
-- **Banco de Dados**: Google BigQuery
-- **Autenticação**: JWT
-- **Deploy**: Google Cloud Run
-
-### Frontend
-- **Framework**: React
-- **Estilização**: CSS Modules
-- **Deploy**: Vercel
-- **Integração**: API REST
-
-## 📊 Estrutura de Dados
-
-### Tabelas BigQuery
-- `clients`: Informações dos clientes
-- `campaigns`: Dados das campanhas
-- `campaign_performance_data`: Métricas de performance
+- **URL**: https://south-media-dashboard-static.vercel.app/
+- **Framework**: HTML/CSS/JavaScript puro
+- **Gráficos**: Chart.js
+- **Dados**: Google Sheets (atualização automática)
 
 ## 🔧 Configuração
 
-### Configuração Rápida
-Para uma configuração completa e automatizada, consulte o [Guia de Setup](SETUP.md).
+- **Build**: Arquivos estáticos (sem build necessário)
+- **Deploy**: Automático via Vercel
+- **Atualização**: Automática via Cloud Run (a cada 3h)
 
-### Pré-requisitos
-- Node.js 18+
-- Python 3.9+
-- Conta Google Cloud com BigQuery habilitado
-- Conta Vercel para deploy do frontend
+## 📁 Estrutura
 
-### Instalação Automática
-```bash
-./setup-project.sh
+```
+vercel-static/
+├── index.html          # Dashboard principal
+├── static/             # Arquivos estáticos
+│   ├── dash_sonho.html # Dashboard original
+│   └── tsv/           # Dados TSV
+├── package.json        # Configuração do projeto
+├── vercel.json         # Configuração do Vercel
+└── .vercelignore      # Arquivos ignorados
 ```
 
-### Instalação Manual
+## 🚀 Deploy
 
-#### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn src.main:app --reload
-```
-
-#### Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
-
-## 🌐 Deploy
-
-- **Frontend**: Vercel (automático via GitHub)
-- **Backend**: Google Cloud Run (automático via GitHub Actions)
-
-## 📝 Credenciais Administrativas
-
-- **Usuário**: g4trader
-- **Senha**: g4trader@M4nu5
-
-## 🎯 URLs de Acesso
-
-- **Admin**: `https://south-media-ia.vercel.app/admin`
-- **Cliente**: `https://south-media-ia.vercel.app/client/{client_id}`
-
----
-
-Desenvolvido pela equipe South Media IA
-
+1. Conecte o repositório ao Vercel
+2. Configure:
+   - Framework Preset: `Other`
+   - Build Command: `echo "Static site"`
+   - Output Directory: `.`
+3. Deploy automático
