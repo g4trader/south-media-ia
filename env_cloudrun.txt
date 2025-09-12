@@ -1,0 +1,28 @@
+# Variáveis de ambiente para Google Cloud Run
+# Copie este arquivo e configure com seus valores reais
+
+# Configurações da aplicação
+AUTOMATION_MODE=scheduler
+LOG_LEVEL=INFO
+BACKUP_ENABLED=true
+
+# Configurações do Google Sheets (opcional - pode usar credentials.json)
+# GOOGLE_CREDENTIALS_FILE=/app/credentials/credentials.json
+
+# Configurações de notificação (opcional)
+NOTIFICATION_ENABLED=false
+# WEBHOOK_URL=https://hooks.slack.com/services/...
+# SMTP_SERVER=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USERNAME=seu-email@gmail.com
+# SMTP_PASSWORD=sua-senha-app
+# NOTIFICATION_EMAIL=destinatario@email.com
+
+# Configurações de timeout e recursos
+TIMEOUT_SECONDS=3600
+MEMORY_LIMIT=2Gi
+CPU_LIMIT=2
+MAX_INSTANCES=10
+
+# Configurações de segurança
+ALLOW_UNAUTHENTICATED=true

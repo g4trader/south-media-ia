@@ -1,0 +1,20 @@
+name: dashboard-automation-scheduler
+schedule: "0 */3 * * *"  # A cada 3 horas
+timeZone: "America/Sao_Paulo"
+description: "Executa automação do dashboard a cada 3 horas"
+httpTarget:
+  uri: "https://dashboard-automation-xxxxx-uc.a.run.app/trigger"  # Substitua pela URL real
+  httpMethod: POST
+  headers:
+    Content-Type: "application/json"
+  body: |
+    {
+      "triggered_by": "cloud_scheduler",
+      "timestamp": "{{.timestamp}}"
+    }
+retryConfig:
+  retryCount: 3
+  maxRetryDuration: "600s"
+  minBackoffDuration: "5s"
+  maxBackoffDuration: "600s"
+  maxDoublings: 5

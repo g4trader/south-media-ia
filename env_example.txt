@@ -1,0 +1,17 @@
+# Arquivo de exemplo para variáveis de ambiente
+# Copie para .env e preencha com suas credenciais
+
+# Google Sheets API
+GOOGLE_CREDENTIALS_FILE=credentials.json
+
+# IDs das planilhas (substitua pelos seus IDs reais)
+YOUTUBE_SHEET_ID=your_youtube_sheet_id_here
+TIKTOK_SHEET_ID=your_tiktok_sheet_id_here
+NETFLIX_SHEET_ID=your_netflix_sheet_id_here
+DISNEY_SHEET_ID=your_disney_sheet_id_here
+CTV_SHEET_ID=your_ctv_sheet_id_here
+FOOTFALL_SHEET_ID=your_footfall_sheet_id_here
+
+# Configurações opcionais
+LOG_LEVEL=INFO
+BACKUP_ENABLED=true
