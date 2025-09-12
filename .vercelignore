@@ -1,5 +1,6 @@
 frontend/
 static-dashboards/
+backend/
 node_modules/
 *.log
 .env
@@ -7,9 +8,15 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
-package.json
 package-lock.json
 yarn.lock
 src/
 public/
 build/
+*.py
+*.pyc
+__pycache__/
+logs/
+backups/
+credentials/
+secrets/

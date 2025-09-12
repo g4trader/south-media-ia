@@ -252,32 +252,64 @@ class DashboardAutomation:
             return False
     
     def commit_and_push_to_github(self):
-        """Faz commit e push das alterações para o GitHub"""
+        """Faz commit e push das alterações para o GitHub usando API"""
         try:
             logger.info("📤 Fazendo commit e push para o GitHub...")
             
-            # Configurar Git (se necessário)
-            subprocess.run(['git', 'config', '--global', 'user.name', 'Dashboard Automation'], check=False)
-            subprocess.run(['git', 'config', '--global', 'user.email', 'automation@southmedia.com'], check=False)
+            # Ler o arquivo atualizado
+            with open(self.dashboard_file, 'r', encoding='utf-8') as f:
+                content = f.read()
             
-            # Adicionar arquivos modificados
-            subprocess.run(['git', 'add', 'static/dash_sonho.html'], check=True)
+            # Usar GitHub API para atualizar o arquivo
+            import requests
+            import base64
             
-            # Fazer commit
+            # Configurações do GitHub
+            repo_owner = "lucianoterres"  # Seu username do GitHub
+            repo_name = "south-media-ia"  # Nome do repositório
+            file_path = "static/dash_sonho.html"
+            github_token = os.environ.get('GITHUB_TOKEN')  # Token do GitHub
+            
+            if not github_token:
+                logger.warning("⚠️ GITHUB_TOKEN não configurado, pulando push para GitHub")
+                return False
+            
+            # Obter SHA do arquivo atual
+            url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}"
+            headers = {
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            
+            # Fazer requisição para obter SHA atual
+            response = requests.get(url, headers=headers)
+            if response.status_code != 200:
+                logger.error(f"❌ Erro ao obter SHA do arquivo: {response.status_code}")
+                return False
+            
+            current_sha = response.json()["sha"]
+            
+            # Preparar dados para atualização
+            content_b64 = base64.b64encode(content.encode('utf-8')).decode('utf-8')
             commit_message = f"🤖 Atualização automática do dashboard - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-            subprocess.run(['git', 'commit', '-m', commit_message], check=True)
             
-            # Push para o repositório
-            subprocess.run(['git', 'push', 'origin', 'main'], check=True)
+            data = {
+                "message": commit_message,
+                "content": content_b64,
+                "sha": current_sha
+            }
             
-            logger.info("✅ Commit e push realizados com sucesso")
-            return True
+            # Fazer commit via API
+            response = requests.put(url, headers=headers, json=data)
+            if response.status_code == 200:
+                logger.info("✅ Commit e push realizados com sucesso via GitHub API")
+                return True
+            else:
+                logger.error(f"❌ Erro ao fazer commit via GitHub API: {response.status_code}")
+                return False
             
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Erro no Git: {e}")
-            return False
         except Exception as e:
-            logger.error(f"❌ Erro ao fazer commit/push: {e}")
+            logger.error(f"❌ Erro ao fazer commit/push via GitHub API: {e}")
             return False
     
     def run_update(self):
