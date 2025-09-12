@@ -1,19 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "static/dash_sonho.html",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     {
       "src": "/",
-      "dest": "/static/dash_sonho.html"
+      "dest": "/dash_sonho.html"
     },
     {
       "src": "/dashboard",
-      "dest": "/static/dash_sonho.html"
+      "dest": "/dash_sonho.html"
     },
     {
       "src": "/static/(.*)",
