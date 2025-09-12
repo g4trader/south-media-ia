@@ -1,42 +1,35 @@
 steps:
-  # Build da imagem Docker
+  # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build',
-      '-t', 'gcr.io/$PROJECT_ID/south-media-ia-backend:$BUILD_ID',
-      '-t', 'gcr.io/$PROJECT_ID/south-media-ia-backend:latest',
-      '.'
-    ]
-    dir: 'backend'
-
-  # Push da imagem para Container Registry
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA', '.']
+  
+  # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/south-media-ia-backend:$BUILD_ID']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/south-media-ia-backend:latest']
-
-  # Deploy no Cloud Run
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA']
+  
+  # Deploy container image to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: [
-      'run', 'deploy', 'south-media-ia-backend',
-      '--image', 'gcr.io/$PROJECT_ID/south-media-ia-backend:$BUILD_ID',
-      '--region', 'us-central1',
-      '--platform', 'managed',
-      '--allow-unauthenticated',
-      '--port', '8080',
-      '--memory', '2Gi',
-      '--cpu', '2',
-      '--max-instances', '5',
-      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID,BIGQUERY_DATASET=south_media_dashboard',
-      '--timeout', '300'
-    ]
+    args:
+    - 'run'
+    - 'deploy'
+    - 'dashboard-automation'
+    - '--image'
+    - 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA'
+    - '--region'
+    - 'us-central1'
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+    - '--memory'
+    - '2Gi'
+    - '--cpu'
+    - '2'
+    - '--timeout'
+    - '3600'
+    - '--max-instances'
+    - '10'
+    - '--set-env-vars'
+    - 'AUTOMATION_MODE=scheduler'
 
-# Configurações
-options:
-  logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
-
-# Timeout
-timeout: '1200s'
-
+images:
+  - 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA'

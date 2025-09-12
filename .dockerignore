@@ -1,0 +1,62 @@
+# Arquivos não necessários para o container
+.git
+.gitignore
+README*.md
+CLOUD_RUN_DEPLOYMENT.md
+QUICK_SETUP_GUIDE.md
+
+# Logs locais
+logs/
+*.log
+
+# Backups locais
+backups/
+*.backup
+
+# Arquivos temporários
+*.tmp
+*.temp
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Arquivos de teste
+test_*.py
+*_test.py
+
+# Scripts de desenvolvimento
+setup_automation.py
+run_automation.py
+start_automation.*
+
+# Arquivos de configuração local
+.env
+.env.local
+*.local
+
+# Node.js (se houver)
+node_modules/
+npm-debug.log*
+
+# Arquivos de deploy
+deploy.sh
+deploy.bat
+setup_cloud_credentials.sh
