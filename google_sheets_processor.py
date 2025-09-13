@@ -215,6 +215,37 @@ class GoogleSheetsProcessor:
             columns = channel_config['columns']
             daily_data = []
             
+            # Tratamento especial para Footfall Data (dados geográficos estáticos)
+            if channel_name == "Footfall Data":
+                for _, row in df.iterrows():
+                    try:
+                        # Processa dados geográficos
+                        lat = self.parse_number(row.get(columns['lat'], 0))
+                        lon = self.parse_number(row.get(columns['lon'], 0))
+                        proximity = self.parse_number(row.get(columns['proximity'], 0))
+                        name = str(row.get(columns['name'], ''))
+                        users = self.parse_number(row.get(columns['users'], 0))
+                        rate = self.parse_number(row.get(columns['rate'], 0))
+                        
+                        if not name or users == 0:
+                            logger.warning(f"⚠️ Pulando linha Footfall: name='{name}', users={users}")
+                            continue
+                        
+                        daily_data.append({
+                            'lat': lat,
+                            'lon': lon,
+                            'proximity': proximity,
+                            'name': name,
+                            'users': users,
+                            'rate': rate
+                        })
+                    except Exception as e:
+                        logger.error(f"⚠️ Erro ao processar linha do Footfall Data: {e}")
+                        continue
+                
+                logger.info(f"✅ {len(daily_data)} registros processados para {channel_name}")
+                return daily_data
+            
             for _, row in df.iterrows():
                 try:
                     # Processa data
