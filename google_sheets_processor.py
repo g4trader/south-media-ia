@@ -156,17 +156,19 @@ class GoogleSheetsProcessor:
             data_start_row = None
             
             for i, row in enumerate(values):
-                if row and len(row) > 0 and row[0]:
-                    # Verifica se a primeira coluna parece ser um cabeçalho (não é data)
-                    first_cell = str(row[0]).strip()
-                    if (first_cell and 
-                        not first_cell.replace('/', '').replace('-', '').replace(' ', '').isdigit() and  # Não é data
-                        len(row) > 3 and  # Tem várias colunas
-                        any('Video' in str(cell) or 'Creative' in str(cell) or 'Valor' in str(cell) for cell in row[:5])):  # Contém palavras-chave de cabeçalho
-                        header_row = i
-                        data_start_row = i + 1
-                        logger.info(f"🔧 Cabeçalho encontrado na linha {i + 1}: {row[:5]}")
-                        break
+                if row and len(row) > 0:
+                    # Verifica se a linha contém palavras-chave de cabeçalho (independente da primeira coluna)
+                    if (len(row) > 3 and  # Tem várias colunas
+                        any('Video' in str(cell) or 'Creative' in str(cell) or 'Valor' in str(cell) or 
+                            'Impressions' in str(cell) or 'Clicks' in str(cell) or 'Day' in str(cell) 
+                            for cell in row[:8])):  # Contém palavras-chave de cabeçalho
+                        # Verifica se não é uma linha de dados (não começa com data)
+                        first_cell = str(row[0]).strip() if row[0] else ''
+                        if not (first_cell and first_cell.replace('/', '').replace('-', '').replace(' ', '').isdigit()):
+                            header_row = i
+                            data_start_row = i + 1
+                            logger.info(f"🔧 Cabeçalho encontrado na linha {i + 1}: {row[:5]}")
+                            break
             
             if header_row is not None:
                 # Usa o cabeçalho encontrado
