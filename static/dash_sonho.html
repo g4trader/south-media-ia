@@ -1094,17 +1094,11 @@ function updateFootfallTopStores() {
 function initializeFootfallContent() {
     console.log('Inicializando conteúdo footfall...');
     
-    // Verificar se FOOTFALL_POINTS está disponível
-    if (typeof FOOTFALL_POINTS === 'undefined' || !FOOTFALL_POINTS || FOOTFALL_POINTS.length === 0) {
-        console.log('FOOTFALL_POINTS não disponível na inicialização');
-        return;
-    }
-    
-    console.log('FOOTFALL_POINTS disponível, inicializando componentes...');
-    
-    try {
-        // Inicializar apenas componentes essenciais
+    // Aguardar um pouco para garantir que os elementos estejam prontos
+    setTimeout(() => {
         updateFootfallMetrics();
+        initializeFootfallMap();
+        initializeFootfallChart();
         updateFootfallTopStores();
         
          // Inicializar mapa com delay para evitar timeout
@@ -1395,8 +1389,6 @@ function initializeFootfallTopStores() {
 
   document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
 }
-
-// Inicialização simples do Footfall apenas quando a aba for clicada
 
 </script>
 </body>
