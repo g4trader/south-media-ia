@@ -71,7 +71,7 @@ GOOGLE_SHEETS_CONFIG = {
         "sheet_id": "1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U",
         "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
         "columns": {
-            "date": "Day",  # Primeira coluna é a data
+            "date": "",  # Primeira coluna está vazia, mas contém as datas
             "creative": "Creative",
             "spend": "Valor investido",
             "starts": "Starts (Video)",
