@@ -30,8 +30,8 @@ def run_footfall_update():
     """Executa uma atualização de footfall"""
     global last_run_status, is_running
     
+    is_running = True
     try:
-        is_running = True
         logger.info("🗺️ Iniciando atualização de footfall...")
         
         # Importar e executar processador de footfall
