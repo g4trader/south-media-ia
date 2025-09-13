@@ -282,12 +282,12 @@ class DashboardAutomation:
                     "Budget Utilizado (R$)": data['spend'],
                     "Impressões": data['impressions'],
                     "Cliques": data['clicks'],
-                    "CTR (%)": ctr,
+                    "CTR (%)": ctr / 100,  # Converter para decimal para o dashboard
                     "VC (100%)": data['q100'] if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] else data['starts'] if channel_name == "TikTok" else 0,
                     "VTR (100%)": vtr / 100,  # Converter para decimal para o dashboard
                     "CPV (R$)": cpv,
                     "CPM (R$)": cpm,
-                    "Pacing (%)": pacing,
+                    "Pacing (%)": pacing / 100,  # Converter para decimal para o dashboard
                     "Criativos Únicos": len(data['creatives'])
                 }
                 
