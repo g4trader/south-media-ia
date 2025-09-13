@@ -1096,21 +1096,38 @@ function initializeFootfallContent() {
     
     // Verificar se FOOTFALL_POINTS está disponível
     if (typeof FOOTFALL_POINTS === 'undefined' || !FOOTFALL_POINTS || FOOTFALL_POINTS.length === 0) {
-        console.log('FOOTFALL_POINTS não disponível, aguardando...');
-        // Tentar novamente após um delay maior
-        setTimeout(initializeFootfallContent, 1000);
+        console.log('FOOTFALL_POINTS não disponível na inicialização');
         return;
     }
     
     console.log('FOOTFALL_POINTS disponível, inicializando componentes...');
     
-    // Aguardar um pouco para garantir que os elementos estejam prontos
-    setTimeout(() => {
+    try {
+        // Inicializar apenas componentes essenciais
         updateFootfallMetrics();
-        initializeFootfallMap();
-        initializeFootfallChart();
         updateFootfallTopStores();
-    }, 500);
+        
+        // Inicializar mapa e gráfico com delay para evitar travamento
+        setTimeout(() => {
+            try {
+                initializeFootfallMap();
+            } catch (e) {
+                console.error('Erro ao inicializar mapa:', e);
+            }
+        }, 1000);
+        
+        setTimeout(() => {
+            try {
+                initializeFootfallChart();
+            } catch (e) {
+                console.error('Erro ao inicializar gráfico:', e);
+            }
+        }, 1500);
+        
+        console.log('Componentes do Footfall inicializados com sucesso');
+    } catch (error) {
+        console.error('Erro ao inicializar componentes do Footfall:', error);
+    }
 }
 
 
@@ -1170,127 +1187,66 @@ function updateFootfallMetrics() {
 
 
 function initializeFootfallMap() {
-    const mapElement = document.getElementById('footfall-map');
-    if (!mapElement) {
-        console.error('Elemento footfall-map não encontrado');
-        return;
-    }
-    
-    // Destruir mapa existente se houver
-    if (window.footfallMap) {
-        window.footfallMap.remove();
-    }
-    
-    const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
-    window.footfallMap = map;
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    
-    if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
-        const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
+    try {
+        const mapElement = document.getElementById('footfall-map');
+        if (!mapElement) {
+            console.error('Elemento footfall-map não encontrado');
+            return;
+        }
         
-        // Criar cluster de markers
-        const markers = L.markerClusterGroup({
-            chunkedLoading: true,
-            maxClusterRadius: 50,
-            iconCreateFunction: function(cluster) {
-                const childCount = cluster.getChildCount();
-                let c = ' marker-cluster-';
-                if (childCount < 10) {
-                    c += 'small';
-                } else if (childCount < 100) {
-                    c += 'medium';
-                } else {
-                    c += 'large';
+        // Verificar se Leaflet está disponível
+        if (typeof L === 'undefined') {
+            console.error('Leaflet não está carregado');
+            mapElement.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Mapa não disponível - Leaflet não carregado</div>';
+            return;
+        }
+        
+        // Destruir mapa existente se houver
+        if (window.footfallMap) {
+            try {
+                window.footfallMap.remove();
+            } catch (e) {
+                console.log('Erro ao remover mapa existente:', e);
+            }
+        }
+        
+        // Criar mapa simples
+        const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
+        window.footfallMap = map;
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Adicionar apenas alguns markers para evitar problemas
+        if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+            const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0).slice(0, 5); // Limitar a 5 markers
+            
+            footfallData.forEach(point => {
+                if (point.lat && point.lon && point.users > 0) {
+                    try {
+                        const lat = point.lat > 100 ? point.lat / 1e13 : point.lat;
+                        const lon = point.lon > 100 ? point.lon / 1e13 : point.lon;
+                        
+                        const marker = L.marker([lat, lon]);
+                        marker.bindPopup(`${point.name}<br>Usuários: ${point.users.toLocaleString()}<br>Taxa: ${point.rate}%`);
+                        marker.addTo(map);
+                    } catch (e) {
+                        console.error('Erro ao criar marker:', e);
+                    }
                 }
-                return new L.DivIcon({
-                    html: '<div><span>' + childCount + '</span></div>',
-                    className: 'marker-cluster' + c,
-                    iconSize: new L.Point(40, 40)
-                });
-            }
-        });
+            });
+        }
         
-        // Adicionar markers
-        footfallData.forEach(point => {
-            const marker = L.marker([point.lat, point.lon]);
-            marker.bindPopup(`
-                <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
-                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
-                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
-                </div>
-            `);
-            markers.addLayer(marker);
-        });
+        console.log('Mapa Footfall inicializado com sucesso');
         
-        // Dados para heatmap
-        const heatmapData = [];
-        footfallData.forEach(store => {
-            // Intensidade baseada na taxa de conversão
-            const baseIntensity = Math.max(0.1, store.rate / 20); // Normalizar para 0-1
-            
-            // Adicionar pontos espalhados para simular densidade
-            const spreadRadius = 0.005; // Raio de espalhamento
-            const numPoints = Math.max(3, Math.floor(store.users / 1000)); // Mais pontos para mais usuários
-            
-            for (let i = 0; i < numPoints; i++) {
-                const offsetLat = (Math.random() - 0.5) * spreadRadius;
-                const offsetLng = (Math.random() - 0.5) * spreadRadius;
-                const pointIntensity = baseIntensity * (0.7 + Math.random() * 0.6);
-                
-                heatmapData.push([
-                    store.lat + offsetLat, 
-                    store.lon + offsetLng, 
-                    pointIntensity
-                ]);
-            }
-            
-            // Ponto central com intensidade máxima
-            heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
-        });
-        
-        // Adicionar layers ao mapa
-        map.addLayer(markers);
-        
-        // Heatmap layer
-        const heatmapLayer = L.heatLayer(heatmapData, {
-            radius: 50,
-            blur: 20,
-            maxZoom: 18,
-            minOpacity: 0.3,
-            gradient: {
-                0.0: 'rgba(0, 255, 136, 0.1)',
-                0.2: 'rgba(6, 182, 212, 0.4)',
-                0.4: 'rgba(139, 92, 246, 0.6)',
-                0.6: 'rgba(236, 72, 153, 0.8)',
-                0.8: 'rgba(255, 107, 53, 0.9)',
-                1.0: 'rgba(255, 107, 53, 1.0)'
-            }
-        }).addTo(map);
-        
-        // Controle de layers
-        const overlayMaps = {
-            "🔥 Mapa de Calor": heatmapLayer,
-            "📍 Marcadores": markers
-        };
-        
-        L.control.layers(null, overlayMaps, {
-            position: 'topright',
-            collapsed: false
-        }).addTo(map);
-        
-        console.log(`Mapa footfall inicializado: ${footfallData.length} lojas, ${heatmapData.length} pontos de calor`);
+    } catch (error) {
+        console.error('Erro ao inicializar mapa Footfall:', error);
+        const mapElement = document.getElementById('footfall-map');
+        if (mapElement) {
+            mapElement.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Erro ao carregar mapa</div>';
+        }
     }
-    
-    // Invalidar tamanho do mapa
-    setTimeout(() => {
-        map.invalidateSize();
-    }, 100);
-    
-    return map;
 }
 
 function initializeFootfallChart() {
@@ -1387,26 +1343,7 @@ function initializeFootfallTopStores() {
   document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
 }
 
-// Inicialização automática quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Página carregada, inicializando Footfall...');
-  
-  // Aguardar um pouco para garantir que todos os dados estejam carregados
-  setTimeout(() => {
-    if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
-      console.log('Inicializando Footfall automaticamente...');
-      initializeFootfallContent();
-    } else {
-      console.log('FOOTFALL_POINTS não disponível ainda, tentando novamente...');
-      // Tentar novamente após mais tempo
-      setTimeout(() => {
-        if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
-          initializeFootfallContent();
-        }
-      }, 2000);
-    }
-  }, 1000);
-});
+// Inicialização simples do Footfall apenas quando a aba for clicada
 
 </script>
 </body>
