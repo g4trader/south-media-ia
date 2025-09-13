@@ -22,8 +22,8 @@ GOOGLE_SHEETS_CONFIG = {
         }
     },
     "TikTok": {
-        "sheet_id": "1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM",
-        "sheet_name": "Report",  # Usar nome da aba em vez de GID
+        "sheet_id": "1ZWA8SOvS_vYT_tIk8Wt4ZgxtMmzk9B8MAsLQ1fBMWsk",
+        "gid": "1727929489",  # GID da aba específica do TikTok
         "columns": {
             "date": "By Day",
             "creative": "Ad name",
