@@ -813,7 +813,7 @@ function renderChannel(name){
     items.push(
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR'])],
+      ['📈 CTR', pct(r['CTR (%)'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   } else if (isMixedChannel) {
@@ -824,7 +824,7 @@ function renderChannel(name){
       ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR'])],
+      ['📈 CTR', pct(r['CTR (%)'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   }
