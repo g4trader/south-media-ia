@@ -1107,14 +1107,12 @@ function initializeFootfallContent() {
         updateFootfallMetrics();
         updateFootfallTopStores();
         
-        // Inicializar mapa e gráfico com delay para evitar travamento
-        setTimeout(() => {
-            try {
-                initializeFootfallMap();
-            } catch (e) {
-                console.error('Erro ao inicializar mapa:', e);
-            }
-        }, 1000);
+         // Inicializar mapa imediatamente mas com tratamento de erro
+         try {
+             initializeFootfallMap();
+         } catch (e) {
+             console.error('Erro ao inicializar mapa:', e);
+         }
         
         setTimeout(() => {
             try {
