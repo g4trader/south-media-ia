@@ -147,8 +147,19 @@ class GoogleSheetsProcessor:
                 logger.info(f"🔍 Cabeçalho: {values[0]}")
                 logger.info(f"🔍 Primeira linha de dados: {values[1] if len(values) > 1 else 'Nenhuma'}")
             
-            # Converte para DataFrame
-            df = pd.DataFrame(values[1:], columns=values[0])
+            # Verifica se o cabeçalho está vazio (primeira linha não é cabeçalho)
+            if len(values) > 0 and (not values[0] or len(values[0]) == 0 or values[0][0] == ''):
+                logger.info("🔧 Cabeçalho vazio detectado - tentando usar segunda linha como cabeçalho")
+                if len(values) > 1:
+                    # Usa a segunda linha como cabeçalho e a terceira em diante como dados
+                    df = pd.DataFrame(values[2:], columns=values[1])
+                    logger.info(f"✅ Usando linha 2 como cabeçalho: {values[1]}")
+                else:
+                    logger.warning("⚠️ Não há dados suficientes para processar")
+                    return pd.DataFrame()
+            else:
+                # Converte para DataFrame normalmente
+                df = pd.DataFrame(values[1:], columns=values[0])
             logger.info(f"✅ {len(df)} registros lidos da planilha {sheet_name or gid}")
             
             return df
