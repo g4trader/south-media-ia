@@ -1107,12 +1107,14 @@ function initializeFootfallContent() {
         updateFootfallMetrics();
         updateFootfallTopStores();
         
-         // Inicializar mapa imediatamente mas com tratamento de erro
-         try {
-             initializeFootfallMap();
-         } catch (e) {
-             console.error('Erro ao inicializar mapa:', e);
-         }
+         // Inicializar mapa com delay para evitar timeout
+         setTimeout(() => {
+             try {
+                 initializeFootfallMap();
+             } catch (e) {
+                 console.error('Erro ao inicializar mapa:', e);
+             }
+         }, 1000);
         
         setTimeout(() => {
             try {
@@ -1206,39 +1208,23 @@ function initializeFootfallMap() {
     if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
         const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
         
-        // Criar cluster de markers
-        const markers = L.markerClusterGroup({
-            chunkedLoading: true,
-            maxClusterRadius: 50,
-            iconCreateFunction: function(cluster) {
-                const childCount = cluster.getChildCount();
-                let c = ' marker-cluster-';
-                if (childCount < 10) {
-                    c += 'small';
-                } else if (childCount < 100) {
-                    c += 'medium';
-                } else {
-                    c += 'large';
-                }
-                return new L.DivIcon({
-                    html: '<div><span>' + childCount + '</span></div>',
-                    className: 'marker-cluster' + c,
-                    iconSize: new L.Point(40, 40)
-                });
-            }
-        });
-        
-        // Adicionar markers
+        // Criar markers simples (sem clustering para evitar timeout)
+        const markers = [];
         footfallData.forEach(point => {
-            const marker = L.marker([point.lat, point.lon]);
-            marker.bindPopup(`
-                <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
-                    <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
-                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
-                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
-                </div>
-            `);
-            markers.addLayer(marker);
+            try {
+                const marker = L.marker([point.lat, point.lon]);
+                marker.bindPopup(`
+                    <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
+                        <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
+                    </div>
+                `);
+                marker.addTo(map);
+                markers.push(marker);
+            } catch (e) {
+                console.error('Erro ao criar marker:', e);
+            }
         });
         
         // Dados para heatmap
@@ -1267,35 +1253,43 @@ function initializeFootfallMap() {
             heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
         });
         
-        // Adicionar layers ao mapa
-        map.addLayer(markers);
-        
-        // Heatmap layer
-        const heatmapLayer = L.heatLayer(heatmapData, {
-            radius: 50,
-            blur: 20,
-            maxZoom: 18,
-            minOpacity: 0.3,
-            gradient: {
-                0.0: 'rgba(0, 255, 136, 0.1)',
-                0.2: 'rgba(6, 182, 212, 0.4)',
-                0.4: 'rgba(139, 92, 246, 0.6)',
-                0.6: 'rgba(236, 72, 153, 0.8)',
-                0.8: 'rgba(255, 107, 53, 0.9)',
-                1.0: 'rgba(255, 107, 53, 1.0)'
-            }
-        }).addTo(map);
-        
-        // Controle de layers
-        const overlayMaps = {
-            "🔥 Mapa de Calor": heatmapLayer,
-            "📍 Marcadores": markers
-        };
-        
-        L.control.layers(null, overlayMaps, {
-            position: 'topright',
-            collapsed: false
-        }).addTo(map);
+        // Criar heatmap layer
+        try {
+            const heatmapLayer = L.heatLayer(heatmapData, {
+                radius: 50,
+                blur: 20,
+                maxZoom: 18,
+                minOpacity: 0.3,
+                gradient: {
+                    0.0: 'rgba(0, 255, 136, 0.1)',
+                    0.2: 'rgba(6, 182, 212, 0.4)',
+                    0.4: 'rgba(139, 92, 246, 0.6)',
+                    0.6: 'rgba(236, 72, 153, 0.8)',
+                    0.8: 'rgba(255, 107, 53, 0.9)',
+                    1.0: 'rgba(255, 107, 53, 1.0)'
+                }
+            });
+            
+            // Adicionar heatmap ao mapa
+            heatmapLayer.addTo(map);
+            
+            // Controle de layers
+            const markersGroup = L.layerGroup(markers);
+            const overlayMaps = {
+                "🔥 Mapa de Calor": heatmapLayer,
+                "📍 Marcadores": markersGroup
+            };
+            
+            L.control.layers(null, overlayMaps, {
+                position: 'topright',
+                collapsed: false
+            }).addTo(map);
+            
+            console.log(`Heatmap criado: ${heatmapData.length} pontos de calor, ${markers.length} marcadores`);
+            
+        } catch (e) {
+            console.error('Erro ao criar heatmap:', e);
+        }
         
         console.log(`Mapa footfall inicializado: ${footfallData.length} lojas, ${heatmapData.length} pontos de calor`);
     }
