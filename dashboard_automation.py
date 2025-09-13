@@ -127,6 +127,9 @@ class DashboardAutomation:
             # Agrupar por canal
             channels = {}
             for item in daily_data:
+                if 'channel' not in item:
+                    logger.warning(f"⚠️ Item sem chave 'channel': {item}")
+                    continue
                 channel = item['channel']
                 if channel not in channels:
                     channels[channel] = {
@@ -220,6 +223,9 @@ class DashboardAutomation:
             # Agrupar por canal
             channels = {}
             for item in daily_data:
+                if 'channel' not in item:
+                    logger.warning(f"⚠️ Item sem chave 'channel': {item}")
+                    continue
                 channel = item['channel']
                 if channel not in channels:
                     channels[channel] = {
