@@ -86,7 +86,7 @@ GOOGLE_SHEETS_CONFIG = {
     },
     "Footfall Display": {
         "sheet_id": "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA", 
-        "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
+        "gid": "1743413064",  # GID correto da aba Footfall Display
         "columns": {
             "date": "Date",
             "creative": "Creative",
