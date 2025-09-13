@@ -141,6 +141,12 @@ class GoogleSheetsProcessor:
                 logger.warning(f"⚠️ Nenhum dado encontrado na planilha {sheet_name or gid}")
                 return pd.DataFrame()
             
+            # Log dos dados brutos para debug
+            logger.info(f"🔍 Dados brutos - {len(values)} linhas encontradas")
+            if len(values) > 0:
+                logger.info(f"🔍 Cabeçalho: {values[0]}")
+                logger.info(f"🔍 Primeira linha de dados: {values[1] if len(values) > 1 else 'Nenhuma'}")
+            
             # Converte para DataFrame
             df = pd.DataFrame(values[1:], columns=values[0])
             logger.info(f"✅ {len(df)} registros lidos da planilha {sheet_name or gid}")
