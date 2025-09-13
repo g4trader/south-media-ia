@@ -172,7 +172,7 @@ class FootfallProcessor:
                 logger.error("❌ Falha ao atualizar dashboard footfall")
                 return False
             
-            # Fazer commit e push (opcional)
+            # Fazer commit e push (opcional) - comentado para evitar travamentos
             # self.commit_and_push()
             
             logger.info("🎉 Atualização de footfall concluída com sucesso!")
