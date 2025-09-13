@@ -1094,21 +1094,27 @@ function updateFootfallTopStores() {
 function initializeFootfallContent() {
     console.log('Inicializando conteúdo footfall...');
     
-    // Aguardar um pouco para garantir que os elementos estejam prontos
-    setTimeout(() => {
+    // Verificar se FOOTFALL_POINTS está disponível
+    if (typeof FOOTFALL_POINTS === 'undefined' || !FOOTFALL_POINTS || FOOTFALL_POINTS.length === 0) {
+        console.log('FOOTFALL_POINTS não disponível na inicialização');
+        return;
+    }
+    
+    console.log('FOOTFALL_POINTS disponível, inicializando componentes...');
+    
+    try {
+        // Inicializar apenas componentes essenciais
         updateFootfallMetrics();
-        initializeFootfallMap();
-        initializeFootfallChart();
         updateFootfallTopStores();
         
-         // Inicializar mapa com delay para evitar timeout
-         setTimeout(() => {
-             try {
-                 initializeFootfallMap();
-             } catch (e) {
-                 console.error('Erro ao inicializar mapa:', e);
-             }
-         }, 1000);
+        // Inicializar mapa com delay para evitar timeout
+        setTimeout(() => {
+            try {
+                initializeFootfallMap();
+            } catch (e) {
+                console.error('Erro ao inicializar mapa:', e);
+            }
+        }, 1000);
         
         setTimeout(() => {
             try {
