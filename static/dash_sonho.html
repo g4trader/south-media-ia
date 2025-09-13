@@ -1094,6 +1094,16 @@ function updateFootfallTopStores() {
 function initializeFootfallContent() {
     console.log('Inicializando conteúdo footfall...');
     
+    // Verificar se FOOTFALL_POINTS está disponível
+    if (typeof FOOTFALL_POINTS === 'undefined' || !FOOTFALL_POINTS || FOOTFALL_POINTS.length === 0) {
+        console.log('FOOTFALL_POINTS não disponível, aguardando...');
+        // Tentar novamente após um delay maior
+        setTimeout(initializeFootfallContent, 1000);
+        return;
+    }
+    
+    console.log('FOOTFALL_POINTS disponível, inicializando componentes...');
+    
     // Aguardar um pouco para garantir que os elementos estejam prontos
     setTimeout(() => {
         updateFootfallMetrics();
@@ -1376,6 +1386,27 @@ function initializeFootfallTopStores() {
 
   document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
 }
+
+// Inicialização automática quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Página carregada, inicializando Footfall...');
+  
+  // Aguardar um pouco para garantir que todos os dados estejam carregados
+  setTimeout(() => {
+    if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+      console.log('Inicializando Footfall automaticamente...');
+      initializeFootfallContent();
+    } else {
+      console.log('FOOTFALL_POINTS não disponível ainda, tentando novamente...');
+      // Tentar novamente após mais tempo
+      setTimeout(() => {
+        if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+          initializeFootfallContent();
+        }
+      }, 2000);
+    }
+  }, 1000);
+});
 
 </script>
 </body>
