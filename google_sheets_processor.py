@@ -190,17 +190,24 @@ class GoogleSheetsProcessor:
                     clicks = self.parse_number(row.get(columns['clicks'], 0))
                     visits = str(row.get(columns['visits'], ''))
                     
+                    # Processa campos específicos do YouTube e Netflix
+                    starts = self.parse_number(row.get(columns.get('starts', ''), 0))
+                    q25 = self.parse_number(row.get(columns.get('q25', ''), 0))
+                    q50 = self.parse_number(row.get(columns.get('q50', ''), 0))
+                    q75 = self.parse_number(row.get(columns.get('q75', ''), 0))
+                    q100 = self.parse_number(row.get(columns.get('q100', ''), 0))
+                    
                     # Cria registro
                     record = {
                         'date': formatted_date,
                         'channel': channel_name,
                         'creative': creative,
                         'spend': spend,
-                        'starts': '',
-                        'q25': '',
-                        'q50': '',
-                        'q75': '',
-                        'q100': '',
+                        'starts': starts if starts > 0 else '',
+                        'q25': q25 if q25 > 0 else '',
+                        'q50': q50 if q50 > 0 else '',
+                        'q75': q75 if q75 > 0 else '',
+                        'q100': q100 if q100 > 0 else '',
                         'impressions': impressions,
                         'clicks': clicks,
                         'visits': visits

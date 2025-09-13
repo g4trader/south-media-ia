@@ -9,8 +9,13 @@ GOOGLE_SHEETS_CONFIG = {
         "gid": "1863167182",
         "columns": {
             "date": "Date",
-            "creative": "Creative", 
+            "creative": "criativo", 
             "spend": "Valor investido",
+            "starts": "Starts (Video)",
+            "q25": "First-Quartile Views (Video)",
+            "q50": "Midpoint Views (Video)",
+            "q75": "Third-Quartile Views (Video)",
+            "q100": "Complete Views (Video)",
             "impressions": "Impressions",
             "clicks": "Clicks",
             "visits": "Visits"
@@ -20,9 +25,9 @@ GOOGLE_SHEETS_CONFIG = {
         "sheet_id": "1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM",
         "gid": "1727929489",
         "columns": {
-            "date": "Date",
-            "creative": "Creative",
-            "spend": "Valor investido", 
+            "date": "By Day",
+            "creative": "Ad name",
+            "spend": "Valor Investido", 
             "impressions": "Impressions",
             "clicks": "Clicks",
             "visits": "Visits"
@@ -32,10 +37,15 @@ GOOGLE_SHEETS_CONFIG = {
         "sheet_id": "1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo",
         "gid": "1743413064",
         "columns": {
-            "date": "Date",
-            "creative": "Creative",
+            "date": "Day",
+            "creative": "Criativo",
             "spend": "Valor investido",
-            "impressions": "Impressions", 
+            "starts": "Video Starts",
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete", 
+            "q75": "75% Video Complete",
+            "q100": "100% Complete",
+            "impressions": "Impressions",
             "clicks": "Clicks",
             "visits": "Visits"
         }
