@@ -170,6 +170,7 @@ class GoogleSheetsProcessor:
             
             logger.info(f"📋 Colunas encontradas: {list(df.columns)}")
             logger.info(f"📊 {len(df)} linhas encontradas")
+            logger.info(f"🔍 Primeiras 3 linhas: {df.head(3).to_dict()}")
             
             # Mapeia colunas
             columns = channel_config['columns']
