@@ -23,7 +23,7 @@ GOOGLE_SHEETS_CONFIG = {
     },
     "TikTok": {
         "sheet_id": "1co9l8f7GhhcoWk4HDhUH2kVkUgox73oM",
-        "gid": "1727929489",
+        "sheet_name": "Report",  # Usar nome da aba em vez de GID
         "columns": {
             "date": "By Day",
             "creative": "Ad name",
@@ -52,19 +52,24 @@ GOOGLE_SHEETS_CONFIG = {
     },
     "Disney": {
         "sheet_id": "1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o",
-        "gid": "1743413064",
+        "sheet_name": "Setembro",  # Usar nome da aba específica do Disney
         "columns": {
-            "date": "Date",
-            "creative": "Creative",
+            "date": "Day",
+            "creative": "Criativo",
             "spend": "Valor investido",
+            "starts": "Video Starts",
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete", 
+            "q75": "75% Video Complete",
+            "q100": "100% Complete",
             "impressions": "Impressions",
-            "clicks": "Clicks", 
+            "clicks": "Clicks",
             "visits": "Visits"
         }
     },
     "CTV": {
         "sheet_id": "1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U",
-        "gid": "1743413064",
+        "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
         "columns": {
             "date": "Day",
             "creative": "Creative",
@@ -76,7 +81,7 @@ GOOGLE_SHEETS_CONFIG = {
     },
     "Footfall Display": {
         "sheet_id": "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA", 
-        "gid": "1743413064",
+        "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
         "columns": {
             "date": "Date",
             "creative": "Creative",
