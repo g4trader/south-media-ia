@@ -71,9 +71,14 @@ GOOGLE_SHEETS_CONFIG = {
         "sheet_id": "1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U",
         "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
         "columns": {
-            "date": "Day",
+            "date": "Day",  # Primeira coluna é a data
             "creative": "Creative",
             "spend": "Valor investido",
+            "starts": "Starts (Video)",
+            "q25": "First-Quartile Views (Video)",
+            "q50": "Midpoint Views (Video)",
+            "q75": "Third-Quartile Views (Video)",
+            "q100": "Complete Views (Video)",
             "impressions": "Impressions",
             "clicks": "Clicks",
             "visits": "Visits"
