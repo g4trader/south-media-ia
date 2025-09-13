@@ -1185,156 +1185,127 @@ function updateFootfallMetrics() {
 
 
 function initializeFootfallMap() {
-    try {
-        const mapElement = document.getElementById('footfall-map');
-        if (!mapElement) {
-            console.error('Elemento footfall-map não encontrado');
-            return;
-        }
-        
-        // Verificar se Leaflet está disponível
-        if (typeof L === 'undefined') {
-            console.error('Leaflet não está carregado');
-            mapElement.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Mapa não disponível - Leaflet não carregado</div>';
-            return;
-        }
-        
-        // Destruir mapa existente se houver
-        if (window.footfallMap) {
-            try {
-                window.footfallMap.remove();
-            } catch (e) {
-                console.log('Erro ao remover mapa existente:', e);
-            }
-        }
-        
-         // Criar mapa simples
-         const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
-         window.footfallMap = map;
-         
-         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-             attribution: '© OpenStreetMap contributors'
-         }).addTo(map);
-         
-         // Aguardar o mapa ser renderizado antes de adicionar dados
-         setTimeout(() => {
-             // Invalidar tamanho do mapa para garantir que está renderizado
-             map.invalidateSize();
-             
-             // Verificar se o mapa tem dimensões válidas
-             const mapSize = map.getSize();
-             if (mapSize.x === 0 || mapSize.y === 0) {
-                 console.error('Mapa não tem dimensões válidas:', mapSize);
-                 return;
-             }
-             
-             // Adicionar dados do footfall com mapa de calor
-             if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
-             const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
-             
-             // Criar dados para heatmap
-             const heatmapData = [];
-             const markers = [];
-             
-             footfallData.forEach(point => {
-                 if (point.lat && point.lon && point.users > 0) {
-                     try {
-                         const lat = point.lat > 100 ? point.lat / 1e13 : point.lat;
-                         const lon = point.lon > 100 ? point.lon / 1e13 : point.lon;
-                         
-                         // Adicionar marker
-                         const marker = L.marker([lat, lon]);
-                         marker.bindPopup(`
-                             <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
-                                 <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
-                                 <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
-                                 <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
-                             </div>
-                         `);
-                         markers.push(marker);
-                         
-                         // Criar dados para heatmap baseado na taxa de conversão
-                         const intensity = Math.max(0.1, Math.min(1.0, point.rate / 20)); // Normalizar para 0-1
-                         
-                         // Adicionar ponto central com intensidade baseada na taxa
-                         heatmapData.push([lat, lon, intensity]);
-                         
-                         // Adicionar pontos espalhados para simular densidade baseada no número de usuários
-                         const spreadRadius = 0.005;
-                         const numPoints = Math.max(2, Math.floor(point.users / 1000));
-                         
-                         for (let i = 0; i < numPoints; i++) {
-                             const offsetLat = (Math.random() - 0.5) * spreadRadius;
-                             const offsetLng = (Math.random() - 0.5) * spreadRadius;
-                             const pointIntensity = intensity * (0.3 + Math.random() * 0.4);
-                             
-                             heatmapData.push([
-                                 lat + offsetLat, 
-                                 lon + offsetLng, 
-                                 pointIntensity
-                             ]);
-                         }
-                         
-                     } catch (e) {
-                         console.error('Erro ao processar ponto:', e);
-                     }
-                 }
-             });
-             
-             // Adicionar markers ao mapa
-             markers.forEach(marker => marker.addTo(map));
-             
-             // Criar heatmap layer se houver dados
-             if (heatmapData.length > 0) {
-                 try {
-                     const heatmapLayer = L.heatLayer(heatmapData, {
-                         radius: 60,
-                         blur: 25,
-                         maxZoom: 18,
-                         minOpacity: 0.2,
-                         gradient: {
-                             0.0: 'rgba(0, 255, 136, 0.1)',    // Verde - baixa intensidade
-                             0.2: 'rgba(6, 182, 212, 0.4)',    // Azul - média-baixa
-                             0.4: 'rgba(139, 92, 246, 0.6)',   // Roxo - média
-                             0.6: 'rgba(236, 72, 153, 0.8)',   // Rosa - alta
-                             0.8: 'rgba(255, 107, 53, 0.9)',   // Laranja - muito alta
-                             1.0: 'rgba(255, 107, 53, 1.0)'    // Laranja forte - máxima
-                         }
-                     });
-                     
-                     // Adicionar heatmap ao mapa
-                     map.addLayer(heatmapLayer);
-                     
-                     // Controle de layers
-                     const overlayMaps = {
-                         "🔥 Mapa de Calor": heatmapLayer,
-                         "📍 Marcadores": L.layerGroup(markers)
-                     };
-                     
-                     L.control.layers(null, overlayMaps, {
-                         position: 'topright',
-                         collapsed: false
-                     }).addTo(map);
-                     
-                     console.log(`Heatmap criado: ${heatmapData.length} pontos de calor, ${markers.length} marcadores`);
-                     
-                 } catch (e) {
-                     console.error('Erro ao criar heatmap:', e);
-                 }
-             }
-         }
-         
-         }, 500); // Fechar setTimeout - aguardar 500ms para o mapa renderizar
-         
-         console.log('Mapa Footfall inicializado com sucesso');
-        
-    } catch (error) {
-        console.error('Erro ao inicializar mapa Footfall:', error);
-        const mapElement = document.getElementById('footfall-map');
-        if (mapElement) {
-            mapElement.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Erro ao carregar mapa</div>';
-        }
+    const mapElement = document.getElementById('footfall-map');
+    if (!mapElement) {
+        console.error('Elemento footfall-map não encontrado');
+        return;
     }
+    
+    // Destruir mapa existente se houver
+    if (window.footfallMap) {
+        window.footfallMap.remove();
+    }
+    
+    const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
+    window.footfallMap = map;
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+        const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
+        
+        // Criar cluster de markers
+        const markers = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            iconCreateFunction: function(cluster) {
+                const childCount = cluster.getChildCount();
+                let c = ' marker-cluster-';
+                if (childCount < 10) {
+                    c += 'small';
+                } else if (childCount < 100) {
+                    c += 'medium';
+                } else {
+                    c += 'large';
+                }
+                return new L.DivIcon({
+                    html: '<div><span>' + childCount + '</span></div>',
+                    className: 'marker-cluster' + c,
+                    iconSize: new L.Point(40, 40)
+                });
+            }
+        });
+        
+        // Adicionar markers
+        footfallData.forEach(point => {
+            const marker = L.marker([point.lat, point.lon]);
+            marker.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
+                </div>
+            `);
+            markers.addLayer(marker);
+        });
+        
+        // Dados para heatmap
+        const heatmapData = [];
+        footfallData.forEach(store => {
+            // Intensidade baseada na taxa de conversão
+            const baseIntensity = Math.max(0.1, store.rate / 20); // Normalizar para 0-1
+            
+            // Adicionar pontos espalhados para simular densidade
+            const spreadRadius = 0.005; // Raio de espalhamento
+            const numPoints = Math.max(3, Math.floor(store.users / 1000)); // Mais pontos para mais usuários
+            
+            for (let i = 0; i < numPoints; i++) {
+                const offsetLat = (Math.random() - 0.5) * spreadRadius;
+                const offsetLng = (Math.random() - 0.5) * spreadRadius;
+                const pointIntensity = baseIntensity * (0.7 + Math.random() * 0.6);
+                
+                heatmapData.push([
+                    store.lat + offsetLat, 
+                    store.lon + offsetLng, 
+                    pointIntensity
+                ]);
+            }
+            
+            // Ponto central com intensidade máxima
+            heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
+        });
+        
+        // Adicionar layers ao mapa
+        map.addLayer(markers);
+        
+        // Heatmap layer
+        const heatmapLayer = L.heatLayer(heatmapData, {
+            radius: 50,
+            blur: 20,
+            maxZoom: 18,
+            minOpacity: 0.3,
+            gradient: {
+                0.0: 'rgba(0, 255, 136, 0.1)',
+                0.2: 'rgba(6, 182, 212, 0.4)',
+                0.4: 'rgba(139, 92, 246, 0.6)',
+                0.6: 'rgba(236, 72, 153, 0.8)',
+                0.8: 'rgba(255, 107, 53, 0.9)',
+                1.0: 'rgba(255, 107, 53, 1.0)'
+            }
+        }).addTo(map);
+        
+        // Controle de layers
+        const overlayMaps = {
+            "🔥 Mapa de Calor": heatmapLayer,
+            "📍 Marcadores": markers
+        };
+        
+        L.control.layers(null, overlayMaps, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+        
+        console.log(`Mapa footfall inicializado: ${footfallData.length} lojas, ${heatmapData.length} pontos de calor`);
+    }
+    
+    // Invalidar tamanho do mapa
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+    
+    return map;
 }
 
 function initializeFootfallChart() {
