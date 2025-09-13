@@ -537,7 +537,12 @@
           <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Mapa interativo com localização das lojas e intensidade de footfall</p>
         </div>
         <div class="card-content" style="padding: 1.5rem;">
-          <div id="footfall-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2);"></div>
+          <div id="footfall-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2); position: relative;">
+            <div id="map-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: rgba(0, 0, 0, 0.8); color: white; padding: 1rem; border-radius: 8px; text-align: center;">
+              <div style="margin-bottom: 0.5rem;">🗺️ Carregando mapa...</div>
+              <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">Aguarde alguns segundos</div>
+            </div>
+          </div>
           <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.8rem;">
             <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
               <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #ff6b35;"></div>
@@ -1193,6 +1198,13 @@ function initializeFootfallMap() {
         return;
     }
     
+    // Mostrar indicador de carregamento
+    const loadingElement = document.getElementById('map-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'block';
+        loadingElement.innerHTML = '<div style="margin-bottom: 0.5rem;">🗺️ Inicializando mapa...</div><div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">Aguarde...</div>';
+    }
+    
     // Destruir mapa existente se houver
     if (window.footfallMap) {
         window.footfallMap.remove();
@@ -1294,8 +1306,19 @@ function initializeFootfallMap() {
                             
                             console.log(`Heatmap criado: ${heatmapData.length} pontos de calor, ${markers.length} marcadores`);
                             
+                            // Ocultar indicador de carregamento
+                            const loadingElement = document.getElementById('map-loading');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
+                            
                         } catch (e) {
                             console.error('Erro ao criar heatmap:', e);
+                            // Ocultar indicador mesmo em caso de erro
+                            const loadingElement = document.getElementById('map-loading');
+                            if (loadingElement) {
+                                loadingElement.style.display = 'none';
+                            }
                         }
                     }, 500);
                     
