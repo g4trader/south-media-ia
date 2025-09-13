@@ -146,6 +146,10 @@ class GoogleSheetsProcessor:
             if len(values) > 0:
                 logger.info(f"🔍 Cabeçalho: {values[0]}")
                 logger.info(f"🔍 Primeira linha de dados: {values[1] if len(values) > 1 else 'Nenhuma'}")
+                # Log das primeiras 10 linhas para debug
+                for i in range(min(10, len(values))):
+                    if values[i]:
+                        logger.info(f"🔍 Linha {i+1}: {values[i][:5]}")  # Primeiras 5 colunas
             
             # Procura pelo cabeçalho real (linha com nomes de colunas válidos)
             header_row = None
