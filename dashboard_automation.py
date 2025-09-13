@@ -114,6 +114,16 @@ class DashboardAutomation:
         try:
             logger.info("📊 Calculando dados consolidados...")
             
+            # Valores de orçamento contratado por canal
+            budget_contratado = {
+                "YouTube": 25000.00,
+                "TikTok": 25000.00,
+                "Netflix": 25000.00,
+                "Disney": 25000.00,
+                "CTV": 12000.00,
+                "Footfall Display": 10000.00
+            }
+            
             # Agrupar por canal
             channels = {}
             for item in daily_data:
@@ -123,12 +133,22 @@ class DashboardAutomation:
                         'spend': 0,
                         'impressions': 0,
                         'clicks': 0,
-                        'visits': 0
+                        'visits': 0,
+                        'starts': 0,
+                        'q25': 0,
+                        'q50': 0,
+                        'q75': 0,
+                        'q100': 0
                     }
                 
                 channels[channel]['spend'] += item['spend']
                 channels[channel]['impressions'] += item['impressions']
                 channels[channel]['clicks'] += item['clicks']
+                channels[channel]['starts'] += item.get('starts', 0) if item.get('starts', '') != '' else 0
+                channels[channel]['q25'] += item.get('q25', 0) if item.get('q25', '') != '' else 0
+                channels[channel]['q50'] += item.get('q50', 0) if item.get('q50', '') != '' else 0
+                channels[channel]['q75'] += item.get('q75', 0) if item.get('q75', '') != '' else 0
+                channels[channel]['q100'] += item.get('q100', 0) if item.get('q100', '') != '' else 0
                 if item['visits'] and str(item['visits']).isdigit():
                     channels[channel]['visits'] += int(item['visits'])
             
@@ -137,22 +157,44 @@ class DashboardAutomation:
             total_impressions = sum(ch['impressions'] for ch in channels.values())
             total_clicks = sum(ch['clicks'] for ch in channels.values())
             total_visits = sum(ch['visits'] for ch in channels.values())
+            total_starts = sum(ch['starts'] for ch in channels.values())
+            total_q100 = sum(ch['q100'] for ch in channels.values())
+            
+            # Calcular totais de orçamento contratado
+            total_budget_contratado = sum(budget_contratado.get(channel, 0) for channel in channels.keys())
+            
+            # Calcular métricas consolidadas
+            ctr = (total_clicks / total_impressions) * 100 if total_impressions > 0 else 0
+            vtr = (total_q100 / total_starts) * 100 if total_starts > 0 else 0
+            cpv = (total_spend / total_q100) if total_q100 > 0 else 0
+            cpm = (total_spend / (total_impressions / 1000)) if total_impressions > 0 else 0
+            pacing = (total_spend / total_budget_contratado) * 100 if total_budget_contratado > 0 else 0
             
             # Criar dados CONS
             cons_data = {
-                "Budget Contratado (R$)": total_spend * 1.2,  # Assume 20% a mais que utilizado
+                "Budget Contratado (R$)": total_budget_contratado,
                 "Budget Utilizado (R$)": total_spend,
                 "Impressões": total_impressions,
                 "Cliques": total_clicks,
-                "VC (100%)": total_visits,
-                "Pacing (%)": (total_spend / (total_spend * 1.2)) * 100 if total_spend > 0 else 0
+                "CTR (%)": ctr,
+                "VC (100%)": total_q100,
+                "VTR (100%)": vtr / 100,  # Converter para decimal para o dashboard
+                "CPV (R$)": cpv,
+                "CPM (R$)": cpm,
+                "Pacing (%)": pacing
             }
             
             logger.info(f"✅ Dados CONS calculados:")
+            logger.info(f"  - Budget Contratado: R$ {total_budget_contratado:.2f}")
             logger.info(f"  - Budget Utilizado: R$ {total_spend:.2f}")
             logger.info(f"  - Impressões: {total_impressions:,}")
             logger.info(f"  - Cliques: {total_clicks:,}")
-            logger.info(f"  - Visitas: {total_visits:,}")
+            logger.info(f"  - CTR: {ctr:.2f}%")
+            logger.info(f"  - VC (100%): {total_q100:,}")
+            logger.info(f"  - VTR: {vtr:.2f}%")
+            logger.info(f"  - CPV: R$ {cpv:.2f}")
+            logger.info(f"  - CPM: R$ {cpm:.2f}")
+            logger.info(f"  - Pacing: {pacing:.2f}%")
             
             return cons_data
             
@@ -165,6 +207,16 @@ class DashboardAutomation:
         try:
             logger.info("📊 Calculando dados por canal...")
             
+            # Valores de orçamento contratado por canal
+            budget_contratado = {
+                "YouTube": 25000.00,
+                "TikTok": 25000.00,
+                "Netflix": 25000.00,
+                "Disney": 25000.00,
+                "CTV": 12000.00,
+                "Footfall Display": 10000.00
+            }
+            
             # Agrupar por canal
             channels = {}
             for item in daily_data:
@@ -175,38 +227,73 @@ class DashboardAutomation:
                         'impressions': 0,
                         'clicks': 0,
                         'visits': 0,
+                        'starts': 0,
+                        'q25': 0,
+                        'q50': 0,
+                        'q75': 0,
+                        'q100': 0,
                         'creatives': set()
                     }
                 
                 channels[channel]['spend'] += item['spend']
                 channels[channel]['impressions'] += item['impressions']
                 channels[channel]['clicks'] += item['clicks']
+                channels[channel]['starts'] += item.get('starts', 0) if item.get('starts', '') != '' else 0
+                channels[channel]['q25'] += item.get('q25', 0) if item.get('q25', '') != '' else 0
+                channels[channel]['q50'] += item.get('q50', 0) if item.get('q50', '') != '' else 0
+                channels[channel]['q75'] += item.get('q75', 0) if item.get('q75', '') != '' else 0
+                channels[channel]['q100'] += item.get('q100', 0) if item.get('q100', '') != '' else 0
                 if item['visits'] and str(item['visits']).isdigit():
                     channels[channel]['visits'] += int(item['visits'])
                 channels[channel]['creatives'].add(item['creative'])
             
-            # Calcular totais gerais
-            total_spend = sum(ch['spend'] for ch in channels.values())
-            
             # Criar dados PER
             per_data = []
             for channel_name, data in channels.items():
-                pacing = (data['spend'] / (data['spend'] * 1.2)) * 100 if data['spend'] > 0 else 0
+                # Calcular métricas
+                budget_contratado_val = budget_contratado.get(channel_name, data['spend'] * 1.2)
+                pacing = (data['spend'] / budget_contratado_val) * 100 if budget_contratado_val > 0 else 0
+                
+                # CTR = Clicks / Impressions * 100
+                ctr = (data['clicks'] / data['impressions']) * 100 if data['impressions'] > 0 else 0
+                
+                # VTR = Video Completions / Video Starts * 100 (apenas para canais de vídeo)
+                vtr = 0
+                if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['starts'] > 0:
+                    vtr = (data['q100'] / data['starts']) * 100
+                elif channel_name == "TikTok" and data['starts'] > 0:
+                    # TikTok não tem quartis, usar starts como completions
+                    vtr = (data['starts'] / data['starts']) * 100
+                
+                # CPV = Spend / Video Completions (apenas para canais de vídeo)
+                cpv = 0
+                if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['q100'] > 0:
+                    cpv = data['spend'] / data['q100']
+                elif channel_name == "TikTok" and data['starts'] > 0:
+                    # TikTok usa starts como completions
+                    cpv = data['spend'] / data['starts']
+                
+                # CPM = Spend / (Impressions / 1000)
+                cpm = (data['spend'] / (data['impressions'] / 1000)) if data['impressions'] > 0 else 0
                 
                 channel_data = {
                     "Canal": channel_name,
-                    "Budget Contratado (R$)": data['spend'] * 1.2,
+                    "Budget Contratado (R$)": budget_contratado_val,
                     "Budget Utilizado (R$)": data['spend'],
                     "Impressões": data['impressions'],
                     "Cliques": data['clicks'],
-                    "VC (100%)": data['visits'],
+                    "CTR (%)": ctr,
+                    "VC (100%)": data['q100'] if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] else data['starts'] if channel_name == "TikTok" else 0,
+                    "VTR (100%)": vtr / 100,  # Converter para decimal para o dashboard
+                    "CPV (R$)": cpv,
+                    "CPM (R$)": cpm,
                     "Pacing (%)": pacing,
                     "Criativos Únicos": len(data['creatives'])
                 }
                 
                 per_data.append(channel_data)
             
-            logger.info(f"✅ Dados PER calculados para {len(per_data)} canais")
+            logger.info(f"✅ Dados PER calculados para {len(per_data)} canais com métricas completas")
             return per_data
             
         except Exception as e:
