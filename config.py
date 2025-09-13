@@ -95,19 +95,6 @@ GOOGLE_SHEETS_CONFIG = {
             "clicks": "Clicks",
             "visits": "Visits"
         }
-    },
-    "Footfall Data": {
-        "sheet_id": "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA", 
-        "gid": "120680471",  # Aba Footfall específica
-        "columns": {
-            "lat": "lat",
-            "lon": "long",
-            "proximity": "proximidade metros",
-            "name": "name",
-            "users": "Footfall Users",
-            "rate": "Footfall Rate %",
-            "date": "date"  # Adicionar campo date para evitar erro
-        }
     }
 }
 
