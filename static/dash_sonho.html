@@ -1208,16 +1208,28 @@ function initializeFootfallMap() {
             }
         }
         
-        // Criar mapa simples
-        const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
-        window.footfallMap = map;
-        
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        
-         // Adicionar dados do footfall com mapa de calor
-         if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+         // Criar mapa simples
+         const map = L.map('footfall-map').setView([-8.05, -34.9], 11);
+         window.footfallMap = map;
+         
+         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+             attribution: '© OpenStreetMap contributors'
+         }).addTo(map);
+         
+         // Aguardar o mapa ser renderizado antes de adicionar dados
+         setTimeout(() => {
+             // Invalidar tamanho do mapa para garantir que está renderizado
+             map.invalidateSize();
+             
+             // Verificar se o mapa tem dimensões válidas
+             const mapSize = map.getSize();
+             if (mapSize.x === 0 || mapSize.y === 0) {
+                 console.error('Mapa não tem dimensões válidas:', mapSize);
+                 return;
+             }
+             
+             // Adicionar dados do footfall com mapa de calor
+             if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
              const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
              
              // Criar dados para heatmap
@@ -1311,8 +1323,10 @@ function initializeFootfallMap() {
                  }
              }
          }
-        
-        console.log('Mapa Footfall inicializado com sucesso');
+         
+         }, 500); // Fechar setTimeout - aguardar 500ms para o mapa renderizar
+         
+         console.log('Mapa Footfall inicializado com sucesso');
         
     } catch (error) {
         console.error('Erro ao inicializar mapa Footfall:', error);
