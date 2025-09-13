@@ -29,7 +29,7 @@ GOOGLE_SHEETS_CONFIG = {
             "creative": "Ad name",
             "spend": "Valor Investido", 
             "impressions": "Impressions",
-            "clicks": "Clicks",
+            "clicks": "Clicks ",  # Com espaço no final
             "visits": "Visits"
         }
     },
