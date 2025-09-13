@@ -95,7 +95,8 @@ GOOGLE_SHEETS_CONFIG = {
             "proximity": "proximidade metros",
             "name": "name",
             "users": "Footfall Users",
-            "rate": "Footfall Rate %"
+            "rate": "Footfall Rate %",
+            "date": "date"  # Adicionar campo date para evitar erro
         }
     }
 }

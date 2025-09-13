@@ -155,6 +155,7 @@ class GoogleSheetsProcessor:
         """Processa dados de um canal específico"""
         try:
             logger.info(f"📊 Processando dados do canal: {channel_name}")
+            logger.info(f"🔍 Configuração: {channel_config}")
             
             # Lê dados da planilha
             df = self.read_sheet_data(
@@ -166,6 +167,9 @@ class GoogleSheetsProcessor:
             if df.empty:
                 logger.warning(f"⚠️ Nenhum dado encontrado para {channel_name}")
                 return []
+            
+            logger.info(f"📋 Colunas encontradas: {list(df.columns)}")
+            logger.info(f"📊 {len(df)} linhas encontradas")
             
             # Mapeia colunas
             columns = channel_config['columns']
