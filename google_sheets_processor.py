@@ -147,19 +147,35 @@ class GoogleSheetsProcessor:
                 logger.info(f"🔍 Cabeçalho: {values[0]}")
                 logger.info(f"🔍 Primeira linha de dados: {values[1] if len(values) > 1 else 'Nenhuma'}")
             
-            # Verifica se o cabeçalho está vazio (primeira linha não é cabeçalho)
-            if len(values) > 0 and (not values[0] or len(values[0]) == 0 or values[0][0] == ''):
-                logger.info("🔧 Cabeçalho vazio detectado - tentando usar segunda linha como cabeçalho")
-                if len(values) > 1:
-                    # Usa a segunda linha como cabeçalho e a terceira em diante como dados
-                    df = pd.DataFrame(values[2:], columns=values[1])
-                    logger.info(f"✅ Usando linha 2 como cabeçalho: {values[1]}")
-                else:
-                    logger.warning("⚠️ Não há dados suficientes para processar")
-                    return pd.DataFrame()
+            # Procura pelo cabeçalho real (linha com nomes de colunas válidos)
+            header_row = None
+            data_start_row = None
+            
+            for i, row in enumerate(values):
+                if row and len(row) > 0 and row[0]:
+                    # Verifica se a primeira coluna parece ser um cabeçalho (não é data)
+                    first_cell = str(row[0]).strip()
+                    if (first_cell and 
+                        not first_cell.replace('/', '').replace('-', '').replace(' ', '').isdigit() and  # Não é data
+                        len(row) > 3 and  # Tem várias colunas
+                        any('Video' in str(cell) or 'Creative' in str(cell) or 'Valor' in str(cell) for cell in row[:5])):  # Contém palavras-chave de cabeçalho
+                        header_row = i
+                        data_start_row = i + 1
+                        logger.info(f"🔧 Cabeçalho encontrado na linha {i + 1}: {row[:5]}")
+                        break
+            
+            if header_row is not None:
+                # Usa o cabeçalho encontrado
+                df = pd.DataFrame(values[data_start_row:], columns=values[header_row])
+                logger.info(f"✅ Usando linha {header_row + 1} como cabeçalho")
             else:
-                # Converte para DataFrame normalmente
-                df = pd.DataFrame(values[1:], columns=values[0])
+                # Fallback: tenta usar primeira linha como cabeçalho normalmente
+                if len(values) > 0 and values[0]:
+                    df = pd.DataFrame(values[1:], columns=values[0])
+                    logger.info("✅ Usando primeira linha como cabeçalho (fallback)")
+                else:
+                    logger.warning("⚠️ Não foi possível encontrar cabeçalho válido")
+                    return pd.DataFrame()
             logger.info(f"✅ {len(df)} registros lidos da planilha {sheet_name or gid}")
             
             return df
