@@ -135,6 +135,7 @@ class FootfallProcessor:
             
             # Substituir FOOTFALL_POINTS no arquivo
             import re
+            # Padrão para capturar desde const FOOTFALL_POINTS até o final da linha com ];
             pattern = r'const FOOTFALL_POINTS = \[.*?\];'
             replacement = f'const FOOTFALL_POINTS = {footfall_json};'
             
