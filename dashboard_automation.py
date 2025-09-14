@@ -345,67 +345,40 @@ class DashboardAutomation:
             return False
     
     def commit_and_push_to_github(self):
-        """Faz commit e push das alterações para o GitHub usando API"""
+        """Faz commit e push das alterações para o GitHub usando API com validação"""
         try:
             logger.info("📤 Fazendo commit e push para o GitHub...")
+            
+            # Importar validador de template
+            from template_validator import TemplateValidator
             
             # Ler o arquivo atualizado
             with open(self.dashboard_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Usar GitHub API para atualizar o arquivo
-            import requests
-            import base64
+            # Validar template antes de fazer commit
+            validator = TemplateValidator(self.dashboard_file)
+            is_valid, errors = validator.validate_template(content)
             
-            # Configurações do GitHub
-            repo_owner = "g4trader"  # Seu username do GitHub
-            repo_name = "south-media-ia"  # Nome do repositório
-            file_path = "static/dash_sonho.html"
-            github_token = os.environ.get('GITHUB_TOKEN')  # Token do GitHub
-            
-            if not github_token:
-                logger.warning("⚠️ GITHUB_TOKEN não configurado, pulando push para GitHub")
+            if not is_valid:
+                logger.error("❌ Template inválido, commit cancelado para manter estabilidade")
+                for error in errors:
+                    logger.error(f"  {error}")
                 return False
             
-            # Limpar quebras de linha do token
-            github_token = github_token.strip()
+            logger.info("✅ Template validado, prosseguindo com commit seguro...")
             
-            # Obter SHA do arquivo atual
-            url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}"
+            # Usar commit seguro
+            success, message = validator.safe_commit_and_push(
+                content, 
+                f"🤖 Atualização automática do dashboard - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+            )
             
-            # Log para debug
-            logger.info(f"🔍 Token GitHub configurado: {github_token[:10]}...")
-            logger.info(f"🔍 URL da requisição: {url}")
-            headers = {
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json"
-            }
-            
-            # Fazer requisição para obter SHA atual
-            response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                logger.error(f"❌ Erro ao obter SHA do arquivo: {response.status_code}")
-                return False
-            
-            current_sha = response.json()["sha"]
-            
-            # Preparar dados para atualização
-            content_b64 = base64.b64encode(content.encode('utf-8')).decode('utf-8')
-            commit_message = f"🤖 Atualização automática do dashboard - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-            
-            data = {
-                "message": commit_message,
-                "content": content_b64,
-                "sha": current_sha
-            }
-            
-            # Fazer commit via API
-            response = requests.put(url, headers=headers, json=data)
-            if response.status_code == 200:
-                logger.info("✅ Commit e push realizados com sucesso via GitHub API")
+            if success:
+                logger.info(f"✅ {message}")
                 return True
             else:
-                logger.error(f"❌ Erro ao fazer commit via GitHub API: {response.status_code}")
+                logger.error(f"❌ {message}")
                 return False
             
         except Exception as e:

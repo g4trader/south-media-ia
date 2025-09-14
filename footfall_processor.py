@@ -263,52 +263,39 @@ class FootfallProcessor:
             return False
     
     def commit_and_push(self):
-        """Faz commit e push das mudanças via GitHub API"""
+        """Faz commit e push das mudanças via GitHub API com validação"""
         try:
-            import requests
-            import os
-            from datetime import datetime
-            
-            github_token = os.environ.get('GITHUB_TOKEN')
-            if not github_token:
-                logger.warning("⚠️ GITHUB_TOKEN não encontrado, pulando commit/push")
-                return False
+            from template_validator import TemplateValidator
             
             # Ler arquivo atualizado
             dashboard_file = "static/dash_sonho.html"
             with open(dashboard_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Fazer commit via GitHub API
-            url = "https://api.github.com/repos/g4trader/south-media-ia/contents/static/dash_sonho.html"
-            headers = {
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json"
-            }
+            # Validar template antes de fazer commit
+            validator = TemplateValidator(dashboard_file)
+            is_valid, errors = validator.validate_template(content)
             
-            import base64
-            content_b64 = base64.b64encode(content.encode('utf-8')).decode('utf-8')
-            
-            # Obter SHA atual do arquivo
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                current_sha = response.json()['sha']
-            else:
-                logger.warning("⚠️ Não foi possível obter SHA atual do arquivo")
+            if not is_valid:
+                logger.error("❌ Template inválido, commit de footfall cancelado para manter estabilidade")
+                for error in errors:
+                    logger.error(f"  {error}")
                 return False
             
-            data = {
-                "message": f"Update: Atualização automática de footfall - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-                "content": content_b64,
-                "sha": current_sha
-            }
+            logger.info("✅ Template validado, prosseguindo com commit seguro de footfall...")
             
-            response = requests.put(url, headers=headers, json=data)
-            if response.status_code == 200:
-                logger.info("✅ Commit e push de footfall realizados com sucesso via GitHub API")
+            # Usar commit seguro
+            from datetime import datetime
+            success, message = validator.safe_commit_and_push(
+                content, 
+                f"🗺️ Atualização automática de footfall - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+            )
+            
+            if success:
+                logger.info(f"✅ {message}")
                 return True
             else:
-                logger.error(f"❌ Erro ao fazer commit de footfall via GitHub API: {response.status_code}")
+                logger.error(f"❌ {message}")
                 return False
                 
         except Exception as e:
