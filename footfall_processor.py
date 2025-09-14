@@ -7,6 +7,7 @@ Separa a lógica de atualização da aba Footfall dos canais principais
 import os
 import json
 import logging
+import pandas as pd
 from datetime import datetime
 from google_sheets_processor import GoogleSheetsProcessor
 
@@ -51,22 +52,28 @@ class FootfallProcessor:
                     gid=footfall_config["gid"]
                 )
                 
-                if footfall_data:
+                if footfall_data is not None and not footfall_data.empty:
                     # Processar dados conforme configuração
                     processed_data = []
-                    for row in footfall_data[1:]:  # Pular cabeçalho
-                        if len(row) >= 6 and row[0] and row[1]:  # Verificar se tem lat/lon
-                            try:
-                                processed_data.append({
-                                    "lat": float(row[0].replace('.', '').replace(',', '.')),
-                                    "lon": float(row[1].replace('.', '').replace(',', '.')),
-                                    "name": row[3] if len(row) > 3 else "",
-                                    "users": int(row[4]) if len(row) > 4 and row[4] else 0,
-                                    "rate": float(row[5].replace(',', '.')) if len(row) > 5 and row[5] else 0.0
-                                })
-                            except (ValueError, IndexError) as e:
-                                logger.warning(f"⚠️ Erro ao processar linha: {row} - {e}")
+                    for index, row in footfall_data.iterrows():
+                        if index == 0:  # Pular cabeçalho
+                            continue
+                        
+                        try:
+                            # Verificar se tem dados válidos
+                            if pd.isna(row.iloc[0]) or pd.isna(row.iloc[1]):
                                 continue
+                                
+                            processed_data.append({
+                                "lat": float(str(row.iloc[0]).replace('.', '').replace(',', '.')),
+                                "lon": float(str(row.iloc[1]).replace('.', '').replace(',', '.')),
+                                "name": str(row.iloc[3]) if len(row) > 3 and not pd.isna(row.iloc[3]) else "",
+                                "users": int(row.iloc[4]) if len(row) > 4 and not pd.isna(row.iloc[4]) else 0,
+                                "rate": float(str(row.iloc[5]).replace(',', '.')) if len(row) > 5 and not pd.isna(row.iloc[5]) else 0.0
+                            })
+                        except (ValueError, IndexError) as e:
+                            logger.warning(f"⚠️ Erro ao processar linha {index}: {row.tolist()} - {e}")
+                            continue
                     
                     if processed_data:
                         logger.info(f"✅ {len(processed_data)} pontos de footfall coletados da planilha")
