@@ -214,14 +214,11 @@ class FootfallProcessor:
         try:
             dashboard_file = "static/dash_sonho.html"
             
-            if not os.path.exists(dashboard_file):
-                logger.warning(f"⚠️ Arquivo do dashboard não encontrado localmente: {dashboard_file}")
-                logger.info("📥 Baixando arquivo do GitHub...")
-                
-                # Baixar arquivo do GitHub
-                if not self.download_dashboard_from_github():
-                    logger.error(f"❌ Falha ao baixar arquivo do dashboard")
-                    return False
+            # Sempre baixar arquivo atualizado do GitHub primeiro
+            logger.info("📥 Baixando versão mais recente do dashboard do GitHub...")
+            if not self.download_dashboard_from_github():
+                logger.error(f"❌ Falha ao baixar arquivo do dashboard")
+                return False
             
             # Ler arquivo atual
             with open(dashboard_file, 'r', encoding='utf-8') as f:

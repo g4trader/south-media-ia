@@ -13,6 +13,7 @@ from datetime import datetime
 import logging
 import schedule
 import time
+import requests
 from google_sheets_processor import GoogleSheetsProcessor
 from config import AUTOMATION_CONFIG
 
@@ -40,6 +41,29 @@ class DashboardAutomation:
         # Criar diretório de backup se necessário
         if self.backup_enabled:
             os.makedirs(self.backup_dir, exist_ok=True)
+    
+    def download_dashboard_from_github(self):
+        """Baixa o arquivo do dashboard do GitHub antes de fazer atualizações"""
+        try:
+            github_url = "https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/dash_sonho.html"
+            logger.info(f"📥 Baixando dashboard atualizado de: {github_url}")
+            
+            response = requests.get(github_url, timeout=30)
+            response.raise_for_status()
+            
+            # Criar diretório static se não existir
+            os.makedirs("static", exist_ok=True)
+            
+            # Salvar arquivo
+            with open(self.dashboard_file, "w", encoding="utf-8") as f:
+                f.write(response.text)
+            
+            logger.info("✅ Dashboard baixado com sucesso do GitHub")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao baixar dashboard do GitHub: {e}")
+            return False
     
     def create_backup(self):
         """Cria backup do dashboard atual"""
@@ -389,6 +413,12 @@ class DashboardAutomation:
         """Executa uma atualização completa do dashboard"""
         try:
             logger.info("🚀 Iniciando atualização automática do dashboard...")
+            
+            # Baixar arquivo atualizado do GitHub primeiro
+            logger.info("📥 Baixando versão mais recente do dashboard do GitHub...")
+            if not self.download_dashboard_from_github():
+                logger.error("❌ Falha ao baixar dashboard do GitHub")
+                return False
             
             # Criar backup
             self.create_backup()
