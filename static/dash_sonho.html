@@ -14,18 +14,19 @@
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
     const ctx = document.getElementById('insVideoEff');
     if (ctx) {
       const data = {
-        labels: video.map(r=>r["Canal"]),
+        // labels: video.map(r=>r["Canal"]),
         datasets: [{
           label: 'Canais de Vídeo',
-          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          data: [],
           pointRadius: 6
         }]
       };
@@ -69,7 +70,8 @@
     const list = document.getElementById('insightsList');
     if (list) {
       // Best CPV among video
-      const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      // const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const videoValid = [];
       const bestCPV = videoValid.reduce((acc,cur)=>{
         const v = Number(cur["CPV (R$)"]||Infinity);
         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
@@ -109,18 +111,19 @@
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
     const ctx = document.getElementById('insVideoEff');
     if (ctx) {
       const data = {
-        labels: video.map(r=>r["Canal"]),
+        // labels: video.map(r=>r["Canal"]),
         datasets: [{
           label: 'Canais de Vídeo',
-          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          data: [],
           pointRadius: 6
         }]
       };
@@ -164,7 +167,8 @@
     const list = document.getElementById('insightsList');
     if (list) {
       // Best CPV among video
-      const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      // const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const videoValid = [];
       const bestCPV = videoValid.reduce((acc,cur)=>{
         const v = Number(cur["CPV (R$)"]||Infinity);
         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
@@ -929,18 +933,19 @@ renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
     const ctx = document.getElementById('insVideoEff');
     if (ctx) {
       const data = {
-        labels: video.map(r=>r["Canal"]),
+        // labels: video.map(r=>r["Canal"]),
         datasets: [{
           label: 'Canais de Vídeo',
-          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          data: [],
           pointRadius: 6
         }]
       };
@@ -984,7 +989,8 @@ renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
     const list = document.getElementById('insightsList');
     if (list) {
       // Best CPV among video
-      const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      // const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const videoValid = [];
       const bestCPV = videoValid.reduce((acc,cur)=>{
         const v = Number(cur["CPV (R$)"]||Infinity);
         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
