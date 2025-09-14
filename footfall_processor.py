@@ -79,9 +79,21 @@ class FootfallProcessor:
                                 lon_parts = lon_str.split('.')
                                 lon_str = lon_parts[0] + '.' + ''.join(lon_parts[1:])
                             
+                            # Converter para float e validar ranges
+                            lat_val = float(lat_str)
+                            lon_val = float(lon_str)
+                            
+                            # Ajustar longitude se estiver fora do range
+                            if lon_val < -180:
+                                # Adicionar 34 para corrigir longitude do Brasil
+                                lon_val = lon_val + 34
+                            elif lon_val > 180:
+                                # Subtrair 34 se necessário
+                                lon_val = lon_val - 34
+                            
                             processed_data.append({
-                                "lat": float(lat_str),
-                                "lon": float(lon_str),
+                                "lat": lat_val,
+                                "lon": lon_val,
                                 "name": str(row.iloc[3]) if len(row) > 3 and not pd.isna(row.iloc[3]) else "",
                                 "users": int(row.iloc[4]) if len(row) > 4 and not pd.isna(row.iloc[4]) else 0,
                                 "rate": float(str(row.iloc[5]).replace(',', '.')) if len(row) > 5 and not pd.isna(row.iloc[5]) else 0.0
