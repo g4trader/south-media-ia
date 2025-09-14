@@ -94,7 +94,7 @@ class DashboardControlPanel {
 
         card.innerHTML = `
             <div class="dashboard-header">
-                <div class="thumbnail">${dashboard.thumbnail}</div>
+                <div class="dashboard-thumbnail">${dashboard.thumbnail}</div>
                 <div class="dashboard-info">
                     <div class="dashboard-name">${dashboard.name}</div>
                     <a href="${dashboard.url}" target="_blank" class="dashboard-url">${dashboard.url}</a>
@@ -102,11 +102,11 @@ class DashboardControlPanel {
             </div>
             
             <div class="dashboard-actions">
-                <button class="sync-btn" onclick="controlPanel.syncDashboard('${dashboard.id}')" id="sync-${dashboard.id}">
-                    <span class="sync-icon">🔄</span>
+                <button class="btn" onclick="controlPanel.syncDashboard('${dashboard.id}')" id="sync-${dashboard.id}">
+                    <span>🔄</span>
                     Sincronizar
                 </button>
-                <a href="${dashboard.url}" target="_blank" class="view-btn">
+                <a href="${dashboard.url}" target="_blank" class="btn secondary">
                     <span>👁️</span>
                     Visualizar
                 </a>
@@ -119,7 +119,10 @@ class DashboardControlPanel {
             </div>
             
             <div class="logs-section" id="logs-${dashboard.id}">
-                <div class="log-entry info">Sistema inicializado</div>
+                <div class="log-entry info">
+                    <span class="log-timestamp">[${new Date().toLocaleTimeString('pt-BR')}]</span>
+                    Sistema inicializado
+                </div>
             </div>
         `;
 

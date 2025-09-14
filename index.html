@@ -9,323 +9,126 @@
     <meta name="author" content="South Media IA">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎛️</text></svg>">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            color: white;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .dashboard-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-        }
-
-        .dashboard-card.updating {
-            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        .dashboard-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .thumbnail {
-            width: 80px;
-            height: 60px;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin-right: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .dashboard-info {
-            flex: 1;
-        }
-
-        .dashboard-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #2d3748;
-        }
-
-        .dashboard-url {
-            font-size: 0.9rem;
-            color: #718096;
-            text-decoration: none;
-        }
-
-        .dashboard-url:hover {
-            color: #667eea;
-        }
-
-        .dashboard-actions {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .sync-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .sync-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .sync-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .sync-btn.updating {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-            animation: spin 1s linear infinite;
-        }
-
-        .sync-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .view-btn {
-            background: #e2e8f0;
-            color: #4a5568;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .view-btn:hover {
-            background: #cbd5e0;
-            transform: translateY(-1px);
-        }
-
-        .status-section {
-            background: #f7fafc;
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 4px solid #48bb78;
-        }
-
-        .status-section.error {
-            border-left-color: #f56565;
-            background: #fed7d7;
-        }
-
-        .status-section.updating {
-            border-left-color: #ed8936;
-            background: #fef5e7;
-        }
-
-        .status-label {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #2d3748;
-        }
-
-        .status-value {
-            font-size: 1.1rem;
-            color: #4a5568;
-        }
-
-        .status-value.updating {
-            color: #ed8936;
-            font-weight: 600;
-        }
-
-        .status-value.error {
-            color: #f56565;
-            font-weight: 600;
-        }
-
-        .last-update {
-            font-size: 0.9rem;
-            color: #718096;
-            margin-top: 5px;
-        }
-
-        .logs-section {
-            margin-top: 20px;
-            background: #1a202c;
-            border-radius: 8px;
-            padding: 15px;
-            color: #e2e8f0;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .log-entry {
-            margin-bottom: 5px;
-            padding: 2px 0;
-        }
-
-        .log-entry.success {
-            color: #68d391;
-        }
-
-        .log-entry.error {
-            color: #fc8181;
-        }
-
-        .log-entry.info {
-            color: #63b3ed;
-        }
-
-        .log-timestamp {
-            color: #a0aec0;
-        }
-
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 40px;
-            opacity: 0.8;
-        }
-
-        .add-dashboard-btn {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0 auto;
-        }
-
-        .add-dashboard-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
-        }
-
-        @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .dashboard-actions {
-                flex-direction: column;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
+        :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+             --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+             background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+        .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+        .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+        .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+        .logo{display:flex;align-items:center;gap:12px}
+        .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+        .muted{color:var(--muted)}
+        
+        /* Painel de Controle Styles */
+        .control-panel-header{text-align:center;margin-bottom:40px}
+        .control-panel-title{font-size:2.5rem;font-weight:700;margin-bottom:10px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .control-panel-subtitle{color:var(--muted);font-size:1.1rem}
+        
+        .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px;margin-bottom:40px}
+        
+        .dashboard-card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:24px;backdrop-filter:blur(8px);transition:transform 0.3s ease,box-shadow 0.3s ease}
+        .dashboard-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(139,92,246,0.2)}
+        .dashboard-card.updating{background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.5);animation:pulse 2s infinite}
+        
+        @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+        
+        .dashboard-header{display:flex;align-items:center;margin-bottom:20px}
+        .dashboard-thumbnail{width:60px;height:60px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-right:16px;box-shadow:0 4px 16px rgba(139,92,246,0.3)}
+        .dashboard-info{flex:1}
+        .dashboard-name{font-size:1.4rem;font-weight:600;margin-bottom:4px;color:#fff}
+        .dashboard-url{font-size:0.9rem;color:var(--muted);text-decoration:none;transition:color 0.3s ease}
+        .dashboard-url:hover{color:#8B5CF6}
+        
+        .dashboard-actions{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+        
+        .btn{background:var(--grad);color:#fff;border:none;padding:12px 20px;border-radius:8px;font-weight:600;cursor:pointer;transition:all 0.3s ease;display:flex;align-items:center;gap:8px;text-decoration:none;font-size:0.9rem}
+        .btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 16px rgba(139,92,246,0.4)}
+        .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+        .btn.updating{animation:spin 1s linear infinite}
+        .btn.secondary{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)}
+        .btn.secondary:hover{background:rgba(255,255,255,0.15)}
+        
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        
+        .status-section{background:rgba(255,255,255,0.05);border-radius:8px;padding:16px;margin-bottom:16px;border-left:4px solid #10B981}
+        .status-section.error{border-left-color:#EF4444;background:rgba(239,68,68,0.1)}
+        .status-section.updating{border-left-color:#F59E0B;background:rgba(245,158,11,0.1)}
+        .status-label{font-weight:600;margin-bottom:8px;color:#fff;font-size:0.9rem}
+        .status-value{font-size:1.1rem;color:#10B981;font-weight:500}
+        .status-value.updating{color:#F59E0B}
+        .status-value.error{color:#EF4444}
+        .last-update{font-size:0.85rem;color:var(--muted);margin-top:4px}
+        
+        .logs-section{background:rgba(0,0,0,0.3);border-radius:8px;padding:16px;color:#E5E7EB;font-family:'Courier New',monospace;font-size:0.8rem;max-height:120px;overflow-y:auto;border:1px solid rgba(255,255,255,0.1)}
+        .log-entry{margin-bottom:4px;padding:2px 0;display:flex;align-items:center;gap:8px}
+        .log-entry.success{color:#10B981}
+        .log-entry.error{color:#EF4444}
+        .log-entry.info{color:#3B82F6}
+        .log-timestamp{color:var(--muted);font-size:0.75rem}
+        
+        .footer{text-align:center;color:var(--muted);margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1)}
+        
+        .add-dashboard-btn{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;padding:16px 32px;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.3s ease;display:flex;align-items:center;gap:10px;margin:0 auto;font-size:1rem}
+        .add-dashboard-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,185,129,0.3)}
+        
+        .nav-buttons{display:flex;gap:16px;justify-content:center;margin-bottom:32px;flex-wrap:wrap}
+        .nav-btn{background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:500;transition:all 0.3s ease;display:flex;align-items:center;gap:8px}
+        .nav-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-1px)}
+        
+        @media (max-width:768px){
+            .dashboard-grid{grid-template-columns:1fr}
+            .dashboard-actions{flex-direction:column}
+            .control-panel-title{font-size:2rem}
+            .nav-buttons{flex-direction:column;align-items:center}
+            .container{padding:20px 16px}
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🎛️ Painel de Controle</h1>
-            <p>Gerencie todos os dashboards automatizados em um só lugar</p>
+        <!-- Header -->
+        <div class="card">
+            <div class="header">
+                <div class="logo">
+                    <div class="logo-icon">🎛️</div>
+                    <div>
+                        <div style="font-weight:700;font-size:1.2rem">South Media</div>
+                        <div class="muted" style="font-size:0.9rem">Painel de Controle</div>
+                    </div>
+                </div>
+                <div class="muted" style="text-align:right">
+                    <div>Dashboard Multicanal — Vídeo + Display</div>
+                    <div style="font-size:0.85rem">Sistema de Automação</div>
+                </div>
+            </div>
         </div>
 
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="static/dash_sonho.html" target="_blank" class="nav-btn">
+                <span>📊</span>
+                Acessar Dashboard Original
+            </a>
+            <button class="nav-btn" onclick="addNewDashboard()">
+                <span>➕</span>
+                Adicionar Novo Dashboard
+            </button>
+        </div>
+
+        <!-- Control Panel Header -->
+        <div class="control-panel-header">
+            <h1 class="control-panel-title">Painel de Controle</h1>
+            <p class="control-panel-subtitle">Gerencie todos os dashboards automatizados em um só lugar</p>
+        </div>
+
+        <!-- Dashboard Grid -->
         <div class="dashboard-grid" id="dashboardGrid">
             <!-- Dashboards serão carregados dinamicamente aqui -->
         </div>
 
-        <div style="text-align: center; margin-bottom: 30px;">
-            <button class="add-dashboard-btn" onclick="addNewDashboard()">
-                <span>➕</span>
-                Adicionar Novo Dashboard
-            </button>
-            <a href="static/dash_sonho.html" target="_blank" style="margin-left: 15px; display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 15px 30px; border-radius: 10px; font-weight: 600; transition: all 0.3s ease;">
-                <span>📊</span>
-                Acessar Dashboard Original
-            </a>
-        </div>
-
+        <!-- Footer -->
         <div class="footer">
             <p>🚀 Sistema de Automação South Media IA</p>
             <p>Última atualização do painel: <span id="panelLastUpdate"></span></p>
