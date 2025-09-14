@@ -7,7 +7,7 @@ Executa automação do dashboard e serve endpoints HTTP
 import os
 import json
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from datetime import datetime
 import threading
 import time
@@ -20,6 +20,31 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Configurar CORS
+def configure_cors():
+    """Configurar headers CORS"""
+    cors_origin = os.environ.get('CORS_ORIGIN', '*')
+    return {
+        'Access-Control-Allow-Origin': cors_origin,
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '3600'
+    }
+
+def add_cors_headers(response):
+    """Adicionar headers CORS à resposta"""
+    cors_headers = configure_cors()
+    for key, value in cors_headers.items():
+        response.headers[key] = value
+    return response
+
+# Handler para OPTIONS requests (CORS preflight)
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        return add_cors_headers(response)
 
 # Variáveis globais para controle
 automation_thread = None
@@ -61,22 +86,24 @@ def run_automation_update():
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({
+    response = jsonify({
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "service": "dashboard-automation"
     })
+    return add_cors_headers(response)
 
 @app.route('/status', methods=['GET'])
 def get_status():
     """Endpoint para verificar status da automação"""
     global last_run_status, is_running
     
-    return jsonify({
+    response = jsonify({
         "automation_status": last_run_status,
         "is_running": is_running,
         "timestamp": datetime.now().isoformat()
     })
+    return add_cors_headers(response)
 
 @app.route('/trigger', methods=['POST'])
 def trigger_automation():
@@ -84,10 +111,11 @@ def trigger_automation():
     global last_run_status, is_running
     
     if is_running:
-        return jsonify({
+        response = jsonify({
             "status": "error",
             "message": "Automação já está em execução"
-        }), 409
+        })
+        return add_cors_headers(response), 409
     
     try:
         # Executar diretamente em vez de usar thread
@@ -109,12 +137,13 @@ def trigger_automation():
         is_running = False
         logger.info(f"✅ Automação concluída: {'sucesso' if success else 'falha'}")
         
-        return jsonify({
+        response = jsonify({
             "status": "completed",
             "message": f"Automação {'bem-sucedida' if success else 'falhou'}",
             "timestamp": datetime.now().isoformat(),
             "success": success
         })
+        return add_cors_headers(response)
         
     except Exception as e:
         logger.error(f"❌ Erro ao disparar automação: {e}")
@@ -124,10 +153,11 @@ def trigger_automation():
             "error": str(e)
         }
         is_running = False
-        return jsonify({
+        response = jsonify({
             "status": "error",
             "message": str(e)
-        }), 500
+        })
+        return add_cors_headers(response), 500
 
 @app.route('/logs', methods=['GET'])
 def get_logs():
