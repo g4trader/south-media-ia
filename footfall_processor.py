@@ -61,8 +61,11 @@ class FootfallProcessor:
                     logger.info(f"🔍 Total de linhas para processar: {len(footfall_data)}")
                     for index, row in footfall_data.iterrows():
                         logger.info(f"🔍 Processando linha {index}: {row.tolist()}")
-                        if index == 0:  # Pular cabeçalho
-                            logger.info(f"⏭️ Linha {index} pulada (cabeçalho)")
+                        
+                        # Verificar se é cabeçalho (se contém texto como "lat", "lon", etc.)
+                        first_col = str(row.iloc[0]).lower()
+                        if first_col in ['lat', 'latitude', 'coord', 'coordenadas']:
+                            logger.info(f"⏭️ Linha {index} pulada (cabeçalho detectado)")
                             continue
                         
                         try:
