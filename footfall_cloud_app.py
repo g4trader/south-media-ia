@@ -72,6 +72,17 @@ def get_status():
     """Endpoint para verificar status da automação de footfall"""
     global last_run_status, is_running
     
+    # Auto-reset se o último run foi há mais de 10 minutos e ainda está marcado como running
+    if is_running and last_run_status.get('timestamp'):
+        try:
+            from datetime import datetime, timedelta
+            last_timestamp = datetime.fromisoformat(last_run_status['timestamp'].replace('Z', '+00:00'))
+            if datetime.now(last_timestamp.tzinfo) - last_timestamp > timedelta(minutes=10):
+                logger.warning("⚠️ Auto-reset: execução travada há mais de 10 minutos")
+                is_running = False
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao verificar timestamp: {e}")
+    
     return jsonify({
         "footfall_status": last_run_status,
         "is_running": is_running,
@@ -106,8 +117,11 @@ def trigger_footfall_update():
             "error": None if success else "Falha na atualização de footfall"
         }
         
-        is_running = False
         logger.info(f"✅ Atualização de footfall concluída: {'sucesso' if success else 'falha'}")
+        
+        # Auto-reset após conclusão para garantir que não fique travado
+        is_running = False
+        logger.info("🔄 Auto-reset executado após conclusão")
         
         return jsonify({
             "status": "completed",
@@ -123,7 +137,10 @@ def trigger_footfall_update():
             "timestamp": datetime.now().isoformat(),
             "error": str(e)
         }
+        # Auto-reset mesmo em caso de erro
         is_running = False
+        logger.info("🔄 Auto-reset executado após erro")
+        
         return jsonify({
             "status": "error",
             "message": str(e)
