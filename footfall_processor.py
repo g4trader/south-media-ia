@@ -37,23 +37,46 @@ class FootfallProcessor:
                     logger.warning("⚠️ Autenticação falhou, usando dados estáticos de footfall")
                     return self.get_static_footfall_data()
             
-            # Configuração específica para footfall
-            footfall_config = {
-                "sheet_id": "SEU_SHEET_ID_FOOTFALL",  # ID da planilha de footfall
-                "gid": "SEU_GID_FOOTFALL",  # GID da aba de footfall
-                "columns": {
-                    "name": "Nome da Loja",
-                    "lat": "Latitude", 
-                    "lon": "Longitude",
-                    "users": "Usuários",
-                    "rate": "Taxa de Conversão (%)"
-                }
-            }
+            # Importar configuração real
+            from footfall_config import FOOTFALL_SHEETS_CONFIG
             
-            logger.info("🗺️ Coletando dados de footfall...")
+            footfall_config = FOOTFALL_SHEETS_CONFIG["Footfall Data"]
             
-            # Aqui você pode implementar a lógica específica para footfall
-            # Por enquanto, vou usar dados estáticos como exemplo
+            logger.info("🗺️ Coletando dados de footfall da planilha real...")
+            
+            # Tentar coletar dados reais da planilha
+            try:
+                footfall_data = self.processor.get_sheet_data(
+                    footfall_config["sheet_id"], 
+                    footfall_config["gid"]
+                )
+                
+                if footfall_data:
+                    # Processar dados conforme configuração
+                    processed_data = []
+                    for row in footfall_data[1:]:  # Pular cabeçalho
+                        if len(row) >= 6 and row[0] and row[1]:  # Verificar se tem lat/lon
+                            try:
+                                processed_data.append({
+                                    "lat": float(row[0].replace('.', '').replace(',', '.')),
+                                    "lon": float(row[1].replace('.', '').replace(',', '.')),
+                                    "name": row[3] if len(row) > 3 else "",
+                                    "users": int(row[4]) if len(row) > 4 and row[4] else 0,
+                                    "rate": float(row[5].replace(',', '.')) if len(row) > 5 and row[5] else 0.0
+                                })
+                            except (ValueError, IndexError) as e:
+                                logger.warning(f"⚠️ Erro ao processar linha: {row} - {e}")
+                                continue
+                    
+                    if processed_data:
+                        logger.info(f"✅ {len(processed_data)} pontos de footfall coletados da planilha")
+                        return processed_data
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Erro ao coletar dados reais: {e}")
+            
+            # Fallback para dados estáticos
+            logger.warning("⚠️ Usando dados estáticos como fallback")
             footfall_data = self.get_static_footfall_data()
             
             logger.info(f"✅ {len(footfall_data)} pontos de footfall coletados")

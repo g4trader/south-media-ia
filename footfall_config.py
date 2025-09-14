@@ -2,17 +2,18 @@
 Configurações específicas para processamento de Footfall
 """
 
-# Configuração da planilha de footfall (quando disponível)
+# Configuração da planilha de footfall (dados reais)
 FOOTFALL_SHEETS_CONFIG = {
     "Footfall Data": {
-        "sheet_id": "SEU_SHEET_ID_FOOTFALL",  # Substituir pelo ID real
-        "gid": "SEU_GID_FOOTFALL",  # Substituir pelo GID real
+        "sheet_id": "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA",
+        "gid": "120680471",
         "columns": {
-            "name": "Nome da Loja",
-            "lat": "Latitude",
-            "lon": "Longitude", 
-            "users": "Usuários Detectados",
-            "rate": "Taxa de Conversão (%)"
+            "lat": "lat",
+            "lon": "long", 
+            "proximity": "proximidade metros",
+            "name": "name",
+            "users": "Footfall Users",
+            "rate": "Footfall Rate %"
         }
     }
 }
