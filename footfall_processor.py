@@ -64,9 +64,24 @@ class FootfallProcessor:
                             if pd.isna(row.iloc[0]) or pd.isna(row.iloc[1]):
                                 continue
                                 
+                            # Corrigir formatação das coordenadas
+                            lat_str = str(row.iloc[0])
+                            lon_str = str(row.iloc[1])
+                            
+                            # Se tem muitos pontos, corrigir formatação
+                            if lat_str.count('.') > 1:
+                                # Manter apenas o primeiro ponto (decimal)
+                                lat_parts = lat_str.split('.')
+                                lat_str = lat_parts[0] + '.' + ''.join(lat_parts[1:])
+                            
+                            if lon_str.count('.') > 1:
+                                # Manter apenas o primeiro ponto (decimal)
+                                lon_parts = lon_str.split('.')
+                                lon_str = lon_parts[0] + '.' + ''.join(lon_parts[1:])
+                            
                             processed_data.append({
-                                "lat": float(str(row.iloc[0]).replace('.', '').replace(',', '.')),
-                                "lon": float(str(row.iloc[1]).replace('.', '').replace(',', '.')),
+                                "lat": float(lat_str),
+                                "lon": float(lon_str),
                                 "name": str(row.iloc[3]) if len(row) > 3 and not pd.isna(row.iloc[3]) else "",
                                 "users": int(row.iloc[4]) if len(row) > 4 and not pd.isna(row.iloc[4]) else 0,
                                 "rate": float(str(row.iloc[5]).replace(',', '.')) if len(row) > 5 and not pd.isna(row.iloc[5]) else 0.0
