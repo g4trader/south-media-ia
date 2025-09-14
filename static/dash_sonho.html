@@ -14,8 +14,8 @@
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
@@ -109,8 +109,8 @@
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
@@ -929,8 +929,8 @@ renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  const video = PER.filter(isVideo);
-  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
