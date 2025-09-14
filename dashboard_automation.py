@@ -431,6 +431,42 @@ class DashboardAutomation:
             logger.error(f"❌ Erro ao fazer commit/push via GitHub API: {e}")
             return False
     
+    def trigger_footfall_update(self):
+        """Chama a atualização de footfall após atualização dos canais"""
+        try:
+            logger.info("🔄 Acionando atualização de footfall após atualização dos canais...")
+            
+            # URL do serviço de footfall
+            footfall_url = "https://footfall-automation-609095880025.us-central1.run.app/trigger"
+            
+            # Headers com autenticação
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {os.getenv('GCLOUD_ACCESS_TOKEN', '')}"
+            }
+            
+            # Dados da requisição
+            data = {"test_mode": False}
+            
+            # Fazer chamada para o serviço de footfall
+            response = requests.post(footfall_url, headers=headers, json=data, timeout=120)
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('success'):
+                    logger.info("✅ Atualização de footfall acionada com sucesso")
+                    return True
+                else:
+                    logger.error(f"❌ Erro na atualização de footfall: {result.get('message', 'Erro desconhecido')}")
+                    return False
+            else:
+                logger.error(f"❌ Erro ao acionar footfall: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Erro ao acionar atualização de footfall: {e}")
+            return False
+    
     def run_update(self):
         """Executa uma atualização completa do dashboard"""
         try:
@@ -477,6 +513,14 @@ class DashboardAutomation:
             logger.info(f"📊 Estatísticas da atualização:")
             logger.info(f"  - Canais processados: {len(channels)}")
             logger.info(f"  - Registros totais: {len(daily_data)}")
+            
+            # Acionar atualização de footfall após atualização dos canais
+            logger.info("🔄 Iniciando atualização de footfall...")
+            footfall_success = self.trigger_footfall_update()
+            if footfall_success:
+                logger.info("✅ Processo completo: Canais + Footfall atualizados com sucesso!")
+            else:
+                logger.warning("⚠️ Canais atualizados, mas footfall falhou. Verifique logs.")
             logger.info(f"  - Total investido: R$ {total_spend:.2f}")
             logger.info(f"  - Total impressões: {total_impressions:,}")
             logger.info(f"  - Total cliques: {total_clicks:,}")
