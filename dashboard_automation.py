@@ -438,6 +438,7 @@ class DashboardAutomation:
             
             # URL do serviço de footfall
             footfall_url = "https://footfall-automation-609095880025.us-central1.run.app/trigger"
+            reset_url = "https://footfall-automation-609095880025.us-central1.run.app/reset"
             
             # Headers com autenticação
             headers = {
@@ -458,6 +459,39 @@ class DashboardAutomation:
                     return True
                 else:
                     logger.error(f"❌ Erro na atualização de footfall: {result.get('message', 'Erro desconhecido')}")
+                    return False
+            elif response.status_code == 409:
+                logger.warning("⚠️ Footfall já está em execução, tentando resetar...")
+                
+                # Tentar resetar o footfall
+                try:
+                    reset_response = requests.post(reset_url, headers=headers, timeout=30)
+                    if reset_response.status_code == 200:
+                        logger.info("✅ Footfall resetado com sucesso, tentando novamente...")
+                        
+                        # Aguardar um pouco e tentar novamente
+                        import time
+                        time.sleep(2)
+                        
+                        # Segunda tentativa
+                        retry_response = requests.post(footfall_url, headers=headers, json=data, timeout=120)
+                        if retry_response.status_code == 200:
+                            result = retry_response.json()
+                            if result.get('success'):
+                                logger.info("✅ Atualização de footfall acionada com sucesso após reset")
+                                return True
+                            else:
+                                logger.error(f"❌ Erro na segunda tentativa: {result.get('message', 'Erro desconhecido')}")
+                                return False
+                        else:
+                            logger.error(f"❌ Erro na segunda tentativa: {retry_response.status_code} - {retry_response.text}")
+                            return False
+                    else:
+                        logger.error(f"❌ Erro ao resetar footfall: {reset_response.status_code} - {reset_response.text}")
+                        return False
+                        
+                except Exception as reset_error:
+                    logger.error(f"❌ Erro ao tentar resetar footfall: {reset_error}")
                     return False
             else:
                 logger.error(f"❌ Erro ao acionar footfall: {response.status_code} - {response.text}")
