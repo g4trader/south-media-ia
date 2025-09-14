@@ -129,6 +129,22 @@ def trigger_footfall_update():
             "message": str(e)
         }), 500
 
+@app.route('/reset', methods=['POST'])
+def reset_status():
+    """Endpoint para resetar status de execução"""
+    global last_run_status, is_running
+    
+    is_running = False
+    last_run_status = {"status": "never_run", "timestamp": None, "error": None}
+    
+    logger.info("🔄 Status de execução resetado")
+    
+    return jsonify({
+        "status": "success",
+        "message": "Status resetado com sucesso",
+        "timestamp": datetime.now().isoformat()
+    })
+
 @app.route('/config', methods=['GET'])
 def get_footfall_config():
     """Endpoint para visualizar configuração de footfall"""
