@@ -37,7 +37,15 @@
   .dashboard-card:hover{transform:translateY(-4px);border-color:rgba(255,107,53,.5);box-shadow:0 12px 32px rgba(139,92,246,.2)}
   .card-thumbnail{height:200px;background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(139,92,246,.1));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
   .card-thumbnail::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>') repeat;opacity:0.3}
-  .thumbnail-placeholder{font-size:3rem;color:rgba(255,255,255,.3);z-index:1}
+  .thumbnail-content{display:flex;flex-direction:column;align-items:center;gap:12px;z-index:1}
+  .thumbnail-icon{font-size:3rem;opacity:0.8}
+  .thumbnail-charts{display:flex;gap:8px;align-items:end}
+  .chart-bar{width:8px;background:var(--grad);border-radius:2px;opacity:0.7}
+  .chart-bar:nth-child(1){height:20px}
+  .chart-bar:nth-child(2){height:35px}
+  .chart-bar:nth-child(3){height:25px}
+  .chart-bar:nth-child(4){height:40px}
+  .chart-bar:nth-child(5){height:30px}
   .card-content{padding:24px}
   .card-title{font-size:1.25rem;font-weight:700;margin-bottom:8px;color:#fff}
   .card-description{color:var(--muted);font-size:.9rem;line-height:1.5;margin-bottom:20px}
@@ -111,7 +119,8 @@ const dashboards = [
     description: 'Dashboard multicanal com análise de vídeo + display e footfall das lojas Recibom',
     status: 'active',
     category: 'Multicanal',
-    lastUpdate: 'Hoje'
+    lastUpdate: 'Hoje',
+    icon: '🎯'
   },
   {
     file: 'dash_copacol.html',
@@ -119,7 +128,8 @@ const dashboards = [
     description: 'Dashboard de performance para campanhas Copacol',
     status: 'active',
     category: 'Retail',
-    lastUpdate: 'Ontem'
+    lastUpdate: 'Ontem',
+    icon: '🛒'
   },
   {
     file: 'dash_copacol_mestre_das_grelhas.html',
@@ -127,7 +137,8 @@ const dashboards = [
     description: 'Dashboard especializado para campanha Mestre das Grelhas',
     status: 'active',
     category: 'Retail',
-    lastUpdate: 'Ontem'
+    lastUpdate: 'Ontem',
+    icon: '🔥'
   },
   {
     file: 'dash_dauher_hidrabene.html',
@@ -135,7 +146,8 @@ const dashboards = [
     description: 'Análise de performance para campanhas Dauher Hidrabene',
     status: 'active',
     category: 'Saúde',
-    lastUpdate: '2 dias'
+    lastUpdate: '2 dias',
+    icon: '💊'
   },
   {
     file: 'dash_sebrae.html',
@@ -143,7 +155,8 @@ const dashboards = [
     description: 'Dashboard de métricas e KPIs para campanhas Sebrae',
     status: 'active',
     category: 'Educacional',
-    lastUpdate: '3 dias'
+    lastUpdate: '3 dias',
+    icon: '🎓'
   },
   {
     file: 'dash_unicesusc.html',
@@ -151,7 +164,8 @@ const dashboards = [
     description: 'Análise de performance para campanhas Unicesusc',
     status: 'active',
     category: 'Educacional',
-    lastUpdate: '1 semana'
+    lastUpdate: '1 semana',
+    icon: '🏫'
   },
   {
     file: 'dash_unimed.html',
@@ -159,7 +173,8 @@ const dashboards = [
     description: 'Dashboard de métricas para campanhas Unimed',
     status: 'active',
     category: 'Saúde',
-    lastUpdate: '1 semana'
+    lastUpdate: '1 semana',
+    icon: '🏥'
   }
 ];
 
@@ -171,7 +186,16 @@ function createDashboardCard(dashboard) {
   return `
     <div class="dashboard-card">
       <div class="card-thumbnail">
-        <div class="thumbnail-placeholder">📈</div>
+        <div class="thumbnail-content">
+          <div class="thumbnail-icon">${dashboard.icon}</div>
+          <div class="thumbnail-charts">
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+            <div class="chart-bar"></div>
+          </div>
+        </div>
       </div>
       <div class="card-content">
         <h3 class="card-title">${dashboard.name}</h3>
