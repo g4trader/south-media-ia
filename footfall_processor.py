@@ -195,11 +195,17 @@ class FootfallProcessor:
             
             # Substituir FOOTFALL_POINTS no arquivo
             import re
-            # Padrão para capturar desde const FOOTFALL_POINTS até o final da linha com ];
+            # Padrão mais robusto para capturar desde const FOOTFALL_POINTS até ]; (com quebras de linha)
             pattern = r'const FOOTFALL_POINTS = \[.*?\];'
             replacement = f'const FOOTFALL_POINTS = {footfall_json};'
             
             new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+            
+            # Se não encontrou, tentar padrão mais específico
+            if new_content == content:
+                # Padrão para capturar até o primeiro ]; após const FOOTFALL_POINTS
+                pattern = r'(const FOOTFALL_POINTS = \[)(.*?)(\];)'
+                new_content = re.sub(pattern, r'\1' + footfall_json + r'\3', content, flags=re.DOTALL)
             
             if new_content == content:
                 logger.warning("⚠️ FOOTFALL_POINTS não encontrado no arquivo")
