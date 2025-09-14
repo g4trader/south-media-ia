@@ -85,10 +85,13 @@ class FootfallProcessor:
                             
                             # Ajustar longitude se estiver fora do range
                             if lon_val < -180:
-                                # Adicionar 34 para corrigir longitude do Brasil
-                                lon_val = lon_val + 34
+                                # Para coordenadas do Brasil, ajustar para range válido
+                                if lon_val < -300:
+                                    lon_val = lon_val + 300  # Ajuste para longitude do Brasil
+                                else:
+                                    lon_val = lon_val + 34
                             elif lon_val > 180:
-                                # Subtrair 34 se necessário
+                                # Subtrair se necessário
                                 lon_val = lon_val - 34
                             
                             processed_data.append({
