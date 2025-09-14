@@ -58,12 +58,12 @@ class FootfallProcessor:
                     
                     # Processar dados conforme configuração
                     processed_data = []
+                    logger.info(f"🔍 Total de linhas para processar: {len(footfall_data)}")
                     for index, row in footfall_data.iterrows():
+                        logger.info(f"🔍 Processando linha {index}: {row.tolist()}")
                         if index == 0:  # Pular cabeçalho
-                            logger.info(f"🔍 Linha {index}: {row.tolist()}")
+                            logger.info(f"⏭️ Linha {index} pulada (cabeçalho)")
                             continue
-                        
-                        logger.info(f"🔍 Linha {index}: {row.tolist()}")
                         
                         try:
                             # Verificar se tem dados válidos
