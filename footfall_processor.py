@@ -8,6 +8,7 @@ import os
 import json
 import logging
 import pandas as pd
+import requests
 from datetime import datetime
 from google_sheets_processor import GoogleSheetsProcessor
 
@@ -18,6 +19,31 @@ class FootfallProcessor:
     
     def __init__(self):
         self.processor = None
+        
+    def download_dashboard_from_github(self):
+        """Baixa o arquivo do dashboard do GitHub"""
+        try:
+            # URL do arquivo no GitHub (raw)
+            github_url = "https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/dash_sonho.html"
+            
+            logger.info(f"📥 Baixando dashboard de: {github_url}")
+            
+            response = requests.get(github_url, timeout=30)
+            response.raise_for_status()
+            
+            # Criar diretório se não existir
+            os.makedirs("static", exist_ok=True)
+            
+            # Salvar arquivo
+            with open("static/dash_sonho.html", "w", encoding="utf-8") as f:
+                f.write(response.text)
+            
+            logger.info("✅ Dashboard baixado com sucesso do GitHub")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao baixar dashboard do GitHub: {e}")
+            return False
         
     def authenticate(self):
         """Autentica com Google Sheets"""
@@ -189,8 +215,13 @@ class FootfallProcessor:
             dashboard_file = "static/dash_sonho.html"
             
             if not os.path.exists(dashboard_file):
-                logger.error(f"❌ Arquivo do dashboard não encontrado: {dashboard_file}")
-                return False
+                logger.warning(f"⚠️ Arquivo do dashboard não encontrado localmente: {dashboard_file}")
+                logger.info("📥 Baixando arquivo do GitHub...")
+                
+                # Baixar arquivo do GitHub
+                if not self.download_dashboard_from_github():
+                    logger.error(f"❌ Falha ao baixar arquivo do dashboard")
+                    return False
             
             # Ler arquivo atual
             with open(dashboard_file, 'r', encoding='utf-8') as f:
