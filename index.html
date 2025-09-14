@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Painel de Controle - Dashboards</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{
+    --bg:#0f0f23;
+    --bg2:#1a1a2e;
+    --panel:#16213e;
+    --stroke:rgba(148,163,184,.25);
+    --muted:rgba(148,163,184,.8);
+    --grad:linear-gradient(135deg,#ff6b35,#8b5cf6);
+    --accent:#00ff88;
+    --danger:#ff4757;
+    --warning:#ffa726;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%);
+       min-height:100vh;}
+  .container{max-width:1400px;margin:0 auto;padding:32px 32px 40px}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;margin-bottom:40px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:48px;height:48px;border-radius:12px;background:var(--grad);display:grid;place-items:center;font-weight:700;font-size:1.2rem}
+  .header-content h1{font-size:2.5rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header-content p{color:var(--muted);font-size:1.1rem;margin-top:8px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:40px}
+  .stat-card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:16px;padding:24px;backdrop-filter:blur(8px);text-align:center}
+  .stat-number{font-size:2.5rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .stat-label{color:var(--muted);font-size:.9rem;text-transform:uppercase;letter-spacing:.1em;margin-top:8px}
+  .dashboards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:24px}
+  .dashboard-card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:16px;overflow:hidden;transition:all .3s ease;backdrop-filter:blur(8px)}
+  .dashboard-card:hover{transform:translateY(-4px);border-color:rgba(255,107,53,.5);box-shadow:0 12px 32px rgba(139,92,246,.2)}
+  .card-thumbnail{height:200px;background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(139,92,246,.1));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .card-thumbnail::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>') repeat;opacity:0.3}
+  .thumbnail-placeholder{font-size:3rem;color:rgba(255,255,255,.3);z-index:1}
+  .card-content{padding:24px}
+  .card-title{font-size:1.25rem;font-weight:700;margin-bottom:8px;color:#fff}
+  .card-description{color:var(--muted);font-size:.9rem;line-height:1.5;margin-bottom:20px}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:.85rem}
+  .card-status{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-weight:600;font-size:.8rem}
+  .status-active{background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);color:var(--accent)}
+  .card-link{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--grad);color:#fff;text-decoration:none;border-radius:10px;font-weight:600;transition:all .3s ease;width:100%;justify-content:center}
+  .card-link:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.4)}
+  .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted)}
+  .spinner{border:2px solid rgba(148,163,184,.2);border-top:2px solid var(--accent);border-radius:50%;width:24px;height:24px;animation:spin 1s linear infinite;margin-right:12px}
+  @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+  .empty-state h3{font-size:1.5rem;margin-bottom:12px;color:#fff}
+  .empty-state p{font-size:1rem;line-height:1.6}
+  @media (max-width:768px){
+    .container{padding:20px 16px}
+    .header-content h1{font-size:2rem}
+    .dashboards-grid{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">📊</div>
+    </div>
+    <div class="header-content">
+      <h1>Painel de Controle</h1>
+      <p>Central de gerenciamento de dashboards analíticos</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-number" id="totalDashboards">0</div>
+      <div class="stat-label">Dashboards</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="activeDashboards">0</div>
+      <div class="stat-label">Ativos</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="lastUpdate">-</div>
+      <div class="stat-label">Última Atualização</div>
+    </div>
+  </div>
+
+  <div id="loadingState" class="loading">
+    <div class="spinner"></div>
+    Carregando dashboards...
+  </div>
+
+  <div id="dashboardsContainer" class="dashboards-grid" style="display:none">
+    <!-- Dashboards serão carregados aqui -->
+  </div>
+
+  <div id="emptyState" class="empty-state" style="display:none">
+    <h3>Nenhum dashboard encontrado</h3>
+    <p>Verifique se os arquivos estão na pasta /static</p>
+  </div>
+</div>
+
+<script>
+// Lista de dashboards disponíveis
+const dashboards = [
+  {
+    file: 'dash_sonho.html',
+    name: 'Dashboard Sonho',
+    description: 'Dashboard multicanal com análise de vídeo + display e footfall das lojas Recibom',
+    status: 'active',
+    category: 'Multicanal',
+    lastUpdate: 'Hoje'
+  },
+  {
+    file: 'dash_copacol.html',
+    name: 'Dashboard Copacol',
+    description: 'Dashboard de performance para campanhas Copacol',
+    status: 'active',
+    category: 'Retail',
+    lastUpdate: 'Ontem'
+  },
+  {
+    file: 'dash_copacol_mestre_das_grelhas.html',
+    name: 'Copacol - Mestre das Grelhas',
+    description: 'Dashboard especializado para campanha Mestre das Grelhas',
+    status: 'active',
+    category: 'Retail',
+    lastUpdate: 'Ontem'
+  },
+  {
+    file: 'dash_dauher_hidrabene.html',
+    name: 'Dashboard Dauher Hidrabene',
+    description: 'Análise de performance para campanhas Dauher Hidrabene',
+    status: 'active',
+    category: 'Saúde',
+    lastUpdate: '2 dias'
+  },
+  {
+    file: 'dash_sebrae.html',
+    name: 'Dashboard Sebrae',
+    description: 'Dashboard de métricas e KPIs para campanhas Sebrae',
+    status: 'active',
+    category: 'Educacional',
+    lastUpdate: '3 dias'
+  },
+  {
+    file: 'dash_unicesusc.html',
+    name: 'Dashboard Unicesusc',
+    description: 'Análise de performance para campanhas Unicesusc',
+    status: 'active',
+    category: 'Educacional',
+    lastUpdate: '1 semana'
+  },
+  {
+    file: 'dash_unimed.html',
+    name: 'Dashboard Unimed',
+    description: 'Dashboard de métricas para campanhas Unimed',
+    status: 'active',
+    category: 'Saúde',
+    lastUpdate: '1 semana'
+  }
+];
+
+// Função para criar card de dashboard
+function createDashboardCard(dashboard) {
+  const statusClass = dashboard.status === 'active' ? 'status-active' : '';
+  const statusText = dashboard.status === 'active' ? '🟢 Ativo' : '🔴 Inativo';
+  
+  return `
+    <div class="dashboard-card">
+      <div class="card-thumbnail">
+        <div class="thumbnail-placeholder">📈</div>
+      </div>
+      <div class="card-content">
+        <h3 class="card-title">${dashboard.name}</h3>
+        <p class="card-description">${dashboard.description}</p>
+        <div class="card-meta">
+          <span class="card-status ${statusClass}">${statusText}</span>
+          <span style="color: var(--muted);">${dashboard.category}</span>
+        </div>
+        <a href="/static/${dashboard.file}" class="card-link" target="_blank">
+          <span>📊</span>
+          <span>Acessar Dashboard</span>
+        </a>
+      </div>
+    </div>
+  `;
+}
+
+// Função para carregar dashboards
+function loadDashboards() {
+  const container = document.getElementById('dashboardsContainer');
+  const loadingState = document.getElementById('loadingState');
+  const emptyState = document.getElementById('emptyState');
+  
+  // Simular carregamento
+  setTimeout(() => {
+    loadingState.style.display = 'none';
+    
+    if (dashboards.length === 0) {
+      emptyState.style.display = 'block';
+    } else {
+      container.style.display = 'grid';
+      container.innerHTML = dashboards.map(createDashboardCard).join('');
+      
+      // Atualizar estatísticas
+      document.getElementById('totalDashboards').textContent = dashboards.length;
+      document.getElementById('activeDashboards').textContent = 
+        dashboards.filter(d => d.status === 'active').length;
+      document.getElementById('lastUpdate').textContent = 'Agora';
+    }
+  }, 1000);
+}
+
+// Inicializar quando a página carregar
+document.addEventListener('DOMContentLoaded', loadDashboards);
+
+// Função para verificar se dashboard existe (opcional)
+async function checkDashboardExists(file) {
+  try {
+    const response = await fetch(`/static/${file}`, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+</script>
+</body>
+</html>
