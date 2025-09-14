@@ -809,7 +809,7 @@ PER.forEach(r=>{
       <td>${pct(r["Pacing (%)"])}</td>
       <td>${fmtInt(r["Impressões"])}</td>
       <td>${fmtInt(r["Cliques"])}</td>
-      <td>${pct(r["CTR"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
       <td>${fmtInt(r["VC (100%)"])}</td>
       <td>${pct(r["VTR (100%)"])}</td>
       <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
@@ -899,7 +899,7 @@ function renderChannel(name){
     items.push(
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR'])],
+      ['📈 CTR', pct(r['CTR (%)'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   } else if (isMixedChannel) {
@@ -910,7 +910,7 @@ function renderChannel(name){
       ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR'])],
+      ['📈 CTR', pct(r['CTR (%)'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   }
