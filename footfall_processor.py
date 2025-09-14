@@ -53,15 +53,22 @@ class FootfallProcessor:
                 )
                 
                 if footfall_data is not None and not footfall_data.empty:
+                    logger.info(f"🔍 Dados brutos - {len(footfall_data)} linhas encontradas")
+                    logger.info(f"🔍 Primeira linha de dados: {footfall_data.iloc[0].tolist()}")
+                    
                     # Processar dados conforme configuração
                     processed_data = []
                     for index, row in footfall_data.iterrows():
                         if index == 0:  # Pular cabeçalho
+                            logger.info(f"🔍 Linha {index}: {row.tolist()}")
                             continue
+                        
+                        logger.info(f"🔍 Linha {index}: {row.tolist()}")
                         
                         try:
                             # Verificar se tem dados válidos
                             if pd.isna(row.iloc[0]) or pd.isna(row.iloc[1]):
+                                logger.warning(f"⚠️ Linha {index} pulada - dados de coordenadas inválidos")
                                 continue
                                 
                             # Corrigir formatação das coordenadas
@@ -101,6 +108,7 @@ class FootfallProcessor:
                                 "users": int(row.iloc[4]) if len(row) > 4 and not pd.isna(row.iloc[4]) else 0,
                                 "rate": float(str(row.iloc[5]).replace(',', '.')) if len(row) > 5 and not pd.isna(row.iloc[5]) else 0.0
                             })
+                            logger.info(f"✅ Linha {index} processada com sucesso - Users: {int(row.iloc[4]) if len(row) > 4 and not pd.isna(row.iloc[4]) else 0}")
                         except (ValueError, IndexError) as e:
                             logger.warning(f"⚠️ Erro ao processar linha {index}: {row.tolist()} - {e}")
                             continue
