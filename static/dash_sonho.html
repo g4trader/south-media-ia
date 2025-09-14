@@ -1020,21 +1020,7 @@ renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
 // FOOTFALL FUNCTIONS
 let footfallInitialized = false;
 
-// Dados de footfall
-const footfallData = [
-  {lat: -8.092339308671471, lng: -34.888475077, name: "Recibom - Av. Eng. Domingos Ferreira, 306 - Pina", users: 1740, rate: 3},
-  {lat: -8.131969149507211, lng: -34.890696877, name: "Recibom boa viagem - R. Barão de Souza Leão, 767 - Boa Viagem, Recife - PE, 51030-300", users: 1892, rate: 7},
-  {lat: -8.045915684673571, lng: -34.890921522, name: "Recibom - Torre - Rua Conde de Irajá, 632 - Torre, Recife - PE, 50710-310", users: 211, rate: 9},
-  {lat: -8.047434924792, lng: -34.900162111, name: "Recibom - Graças - Av. Rui Barbosa, 551 - Graças, Recife - PE, 52011-040", users: 548, rate: 8},
-  {lat: -8.029882473548621, lng: -34.906651677, name: "Recibom - Parnamirim - Estr. do Arraial, 2668 - Tamarineira, Recife - PE, 52051-380", users: 555, rate: 11},
-  {lat: -8.119932249004491, lng: -34.890091268, name: "Recibom - Boa Viagem - R. Prof. João Medeiros, 261 - Boa Viagem, Recife - PE, 51021-050", users: 1020, rate: 6},
-  {lat: -8.142543914194251, lng: -34.908109111, name: "Recibom - Setúbal - R. João Cardoso Aires, 407 - Boa Viagem, Recife - PE, 51130-300", users: 1089, rate: 15},
-  {lat: -8.028130780221501, lng: -34.890250688, name: "Recibom - Encruzilhada - Av. Norte Miguel Arraes de Alencar, S/N - Encruzilhada, Recife - PE, 52041-005", users: 4328, rate: 11},
-  {lat: -7.995667724325511, lng: -34.884649217, name: "Recibom - Olinda - Av. Carlos de Lima Cavalcante, 515 - Bultrins, Olinda - PE, 53030-260", users: 5121, rate: 12},
-  {lat: -8.183601155218951, lng: -34.891945002, name: "Recibom - Piedade - Av. Bernardo Vieira de Melo, 3454 - Piedade, Jaboatão dos Guararapes - PE, 54410-010", users: 1212, rate: 11},
-  {lat: -8.182334054796811, lng: -34.920023851, name: "Recibom - Piedade -Av. Ayrton Senna da Silva, 2851 - Piedade, Jaboatão dos Guararapes - PE, 54410-400", users: 1573, rate: 14},
-  {lat: -8.018367819706791, lng: -34.996213511, name: "Recibom - Timbí, Camaragibe - PE, 54765-290", users: 0, rate: 0}
-];
+// Dados de footfall - agora usando FOOTFALL_POINTS atualizado
 
 function initializeFootfall() {
   if (footfallInitialized) return;
