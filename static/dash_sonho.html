@@ -1180,7 +1180,7 @@ function updateFootfallMetrics() {
         return;
     }
     
-    const footfallData = FOOTFALL_POINTS; // Incluir todas as lojas, mesmo com 0 usuários
+    const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
     
     if (footfallData.length === 0) {
         metricsContainer.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Carregando métricas...</div>';
@@ -1249,7 +1249,7 @@ function initializeFootfallMap() {
     }).addTo(map);
     
     if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
-        const footfallData = FOOTFALL_POINTS; // Incluir todas as lojas, mesmo com 0 usuários
+        const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
         
         // Criar cluster de markers
         const markers = L.markerClusterGroup({
