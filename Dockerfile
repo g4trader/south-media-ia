@@ -41,4 +41,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 EXPOSE 8080
 
 # Default command (will be overridden by Cloud Run)
-CMD ["python", "footfall_cloud_app.py"]
+CMD ["python", "cloud_run_app.py"]
