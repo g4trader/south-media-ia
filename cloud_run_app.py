@@ -81,7 +81,7 @@ def get_status():
 @app.route('/trigger', methods=['POST'])
 def trigger_automation():
     """Endpoint para disparar atualização manual"""
-    global automation_thread, is_running
+    global last_run_status, is_running
     
     if is_running:
         return jsonify({
@@ -90,19 +90,40 @@ def trigger_automation():
         }), 409
     
     try:
-        # Iniciar thread para execução
-        automation_thread = threading.Thread(target=run_automation_update)
-        automation_thread.daemon = True
-        automation_thread.start()
+        # Executar diretamente em vez de usar thread
+        is_running = True
+        logger.info("🚀 Iniciando automação...")
+        
+        # Importar e executar automação
+        from dashboard_automation import DashboardAutomation
+        
+        automation = DashboardAutomation()
+        success = automation.run_update()
+        
+        last_run_status = {
+            "status": "success" if success else "failed",
+            "timestamp": datetime.now().isoformat(),
+            "error": None if success else "Falha na atualização"
+        }
+        
+        is_running = False
+        logger.info(f"✅ Automação concluída: {'sucesso' if success else 'falha'}")
         
         return jsonify({
-            "status": "triggered",
-            "message": "Automação iniciada",
-            "timestamp": datetime.now().isoformat()
+            "status": "completed",
+            "message": f"Automação {'bem-sucedida' if success else 'falhou'}",
+            "timestamp": datetime.now().isoformat(),
+            "success": success
         })
         
     except Exception as e:
         logger.error(f"❌ Erro ao disparar automação: {e}")
+        last_run_status = {
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
+        is_running = False
         return jsonify({
             "status": "error",
             "message": str(e)
