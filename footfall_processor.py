@@ -46,9 +46,9 @@ class FootfallProcessor:
             
             # Tentar coletar dados reais da planilha
             try:
-                footfall_data = self.processor.get_sheet_data(
+                footfall_data = self.processor.read_sheet_data(
                     footfall_config["sheet_id"], 
-                    footfall_config["gid"]
+                    gid=footfall_config["gid"]
                 )
                 
                 if footfall_data:
