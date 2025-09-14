@@ -1035,6 +1035,7 @@ function initializeFootfall() {
 }
 
 function initializeFootfallMetrics() {
+  const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
   const totalLojas = footfallData.length;
   const totalUsuarios = footfallData.reduce((sum, item) => sum + item.users, 0);
   const taxaMedia = footfallData.reduce((sum, item) => sum + item.rate, 0) / totalLojas;
@@ -1348,7 +1349,7 @@ function initializeFootfallMap() {
 function initializeFootfallChart() {
   const ctx = document.getElementById('footfall-performanceChart').getContext('2d');
   
-  const chartData = footfallData
+  const chartData = FOOTFALL_POINTS
     .filter(store => store.users > 0)
     .sort((a, b) => b.users - a.users)
     .slice(0, 8);
@@ -1421,6 +1422,7 @@ function initializeFootfallChart() {
 }
 
 function initializeFootfallTopStores() {
+  const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
   const topStores = footfallData
     .filter(store => store.users > 0)
     .sort((a, b) => b.users - a.users)
