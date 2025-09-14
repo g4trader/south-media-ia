@@ -9,92 +9,92 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// ==== INSIGHTS LOGIC ==== (COMENTADO - PER ainda não definido)
-// (function(){
+// ==== INSIGHTS LOGIC ====
+(function(){
   // Separate channels
-//   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
-//   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  // const video = PER.filter(isVideo);
-  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
+  const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
+  const video = PER.filter(isVideo);
+  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
-//   try {
-//     const ctx = document.getElementById('insVideoEff');
-//     if (ctx) {
-//       const data = {
-        // labels: video.map(r=>r["Canal"]),
-//         datasets: [{
-//           label: 'Canais de Vídeo',
-          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
-//           pointRadius: 6
-//         }]
-//       };
-//       new Chart(ctx, {
-//         type: 'scatter',
-//         data,
-//         options: {
-//           plugins:{legend:{display:false}},
-//           scales:{
-//             x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
-//             y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
-//           }
-//         }
-//       });
-//     }
-//   } catch(e){}
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const data = {
+        labels: video.map(r=>r["Canal"]),
+        datasets: [{
+          label: 'Canais de Vídeo',
+          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          pointRadius: 6
+        }]
+      };
+      new Chart(ctx, {
+        type: 'scatter',
+        data,
+        options: {
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+            y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+          }
+        }
+      });
+    }
+  } catch(e){}
 
 
   // Pacing: Utilizado vs Contratado
-//   try {
-//     const ctx = document.getElementById('insPacing');
-//     if (ctx) {
-//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
-//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
-//       new Chart(ctx, {
-//         type: 'bar',
-//         data: {
-//           labels: ['Pacing'],
-//           datasets: [
-//             { label: 'Contratado', data: [contratado] },
-//             { label: 'Utilizado', data: [utilizado] }
-//           ]
-//         },
-//         options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
-//       });
-//     }
-//   } catch(e){}
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
 
   // Insights text
-//   try {
-//     const list = document.getElementById('insightsList');
-//     if (list) {
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
       // Best CPV among video
-//       const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
-//       const bestCPV = videoValid.reduce((acc,cur)=>{
-//         const v = Number(cur["CPV (R$)"]||Infinity);
-//         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
-//       }, {});
-//       const bestVTR = videoValid.reduce((acc,cur)=>{
-//         const v = Number(cur["VTR (100%)"]||0);
-//         return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
-//       }, {});
+      const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const bestCPV = videoValid.reduce((acc,cur)=>{
+        const v = Number(cur["CPV (R$)"]||Infinity);
+        return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
+      }, {});
+      const bestVTR = videoValid.reduce((acc,cur)=>{
+        const v = Number(cur["VTR (100%)"]||0);
+        return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
+      }, {});
 
 
       // Pacing
-//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
-//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
-//       const pacing = contratado>0 ? (utilizado/contratado) : 0;
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
 
-//       const items = [];
-//       if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
-//       if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
-//       items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
+      const items = [];
+      if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
+      if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
+      items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
 
-//       if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
-//       list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
-//     }
-//   } catch(e){}
-// })();
+      if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
 
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -109,18 +109,18 @@
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  // const video = PER.filter(isVideo);
-  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  const video = PER.filter(isVideo);
+  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
     const ctx = document.getElementById('insVideoEff');
     if (ctx) {
       const data = {
-        // labels: video.map(r=>r["Canal"]),
+        labels: video.map(r=>r["Canal"]),
         datasets: [{
           label: 'Canais de Vídeo',
-          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
           pointRadius: 6
         }]
       };
@@ -683,87 +683,80 @@ const DAILY = [{"date": "01/09/2025", "channel": "YouTube", "creative": "shorts"
 const FOOTFALL_POINTS = [
   {
     "lat": -8.09233930867147,
-    "lon": -3.48847507746984,
+    "lon": -34.8847507746984,
     "name": "Recibom - Av. Eng. Domingos Ferreira, 306 - Pina",
-    "users": 3784,
+    "users": 3589,
     "rate": 9.5
   },
   {
     "lat": -8.13196914950721,
-    "lon": -3.49069687730163,
+    "lon": -34.9069687730163,
     "name": "Recibom boa viagem - R. Barão de Souza Leão, 767 - Boa Viagem, Recife - PE, 51030-300",
-    "users": 4377,
+    "users": 4182,
     "rate": 7.9
   },
   {
     "lat": -8.04591568467357,
-    "lon": -3.49092152269836,
+    "lon": -34.9092152269836,
     "name": "Recibom - Torre - Rua Conde de Irajá, 632 - Torre, Recife - PE, 50710-310",
-    "users": 3189,
+    "users": 3099,
     "rate": 9.5
   },
   {
     "lat": -8.047434924792,
     "lon": -34.9001621153442,
     "name": "Recibom - Graças - Av. Rui Barbosa, 551 - Graças, Recife - PE, 52011-040",
-    "users": 2776,
+    "users": 2689,
     "rate": 9.3
   },
   {
     "lat": -8.02988247354862,
     "lon": -34.9066516730163,
     "name": "Recibom - Parnamirim - Estr. do Arraial, 2668 - Tamarineira, Recife - PE, 52051-380",
-    "users": 1267,
+    "users": 1184,
     "rate": 12.5
   },
   {
     "lat": -8.11993224900449,
-    "lon": -3.49009126846557,
+    "lon": -34.90091268465557,
     "name": "Recibom - Boa Viagem - R. Prof. João Medeiros, 261 - Boa Viagem, Recife - PE, 51021-050",
-    "users": 3673,
+    "users": 3451,
     "rate": 14.5
   },
   {
     "lat": -8.14254391419425,
     "lon": -34.9081091134918,
     "name": "Recibom - Setúbal - R. João Cardoso Aires, 407 - Boa Viagem, Recife - PE, 51130-300",
-    "users": 4563,
+    "users": 4321,
     "rate": 6.5
   },
   {
     "lat": -8.0281307802215,
-    "lon": -3.49025068846557,
+    "lon": -34.90250688465557,
     "name": "Recibom - Encruzilhada - Av. Norte Miguel Arraes de Alencar, S/N - Encruzilhada, Recife - PE, 52041-005",
-    "users": 8355,
+    "users": 8256,
     "rate": 11.5
   },
   {
-    "lat": -79.9956677243255,
-    "lon": -3.48464921711639,
+    "lat": -7.99956677243255,
+    "lon": -34.8464921711639,
     "name": "Recibom - Olinda - Av. Carlos de Lima Cavalcante, 515 - Bultrins, Olinda - PE, 53030-260",
-    "users": 8843,
+    "users": 8793,
     "rate": 13.5
   },
   {
     "lat": -8.18360115521895,
-    "lon": -3.4919450028836,
+    "lon": -34.919450028836,
     "name": "Recibom - Piedade - Av. Bernardo Vieira de Melo, 3454 - Piedade, Jaboatão dos Guararapes - PE, 54410-010",
-    "users": 2021,
+    "users": 1987,
     "rate": 11.2
   },
   {
     "lat": -8.18233405479681,
-    "lon": -34.9182002385581,
+    "lon": -34.9200238558197,
     "name": "Recibom - Piedade -Av. Ayrton Senna da Silva, 2851 - Piedade, Jaboatão dos Guararapes - PE, 54410-400",
-    "users": 4128,
+    "users": 4089,
     "rate": 14.51
-  },
-  {
-    "lat": -8.01836781970679,
-    "lon": -34.9962135137705,
-    "name": "Recibom - Timbi, Camaragibe - PE, 54765-290",
-    "users": 0,
-    "rate": 0.0
   }
 ];
 
@@ -809,7 +802,7 @@ PER.forEach(r=>{
       <td>${pct(r["Pacing (%)"])}</td>
       <td>${fmtInt(r["Impressões"])}</td>
       <td>${fmtInt(r["Cliques"])}</td>
-      <td>${pct(r["CTR (%)"])}</td>
+      <td>${pct(r["CTR"])}</td>
       <td>${fmtInt(r["VC (100%)"])}</td>
       <td>${pct(r["VTR (100%)"])}</td>
       <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
@@ -899,7 +892,7 @@ function renderChannel(name){
     items.push(
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR (%)'])],
+      ['📈 CTR', pct(r['CTR'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   } else if (isMixedChannel) {
@@ -910,7 +903,7 @@ function renderChannel(name){
       ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR (%)'])],
+      ['📈 CTR', pct(r['CTR'])],
       ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
     );
   }
@@ -936,18 +929,18 @@ renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
   // Separate channels
   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
-  // const video = PER.filter(isVideo);
-  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+  const video = PER.filter(isVideo);
+  const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
 
   // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
   try {
     const ctx = document.getElementById('insVideoEff');
     if (ctx) {
       const data = {
-        // labels: video.map(r=>r["Canal"]),
+        labels: video.map(r=>r["Canal"]),
         datasets: [{
           label: 'Canais de Vídeo',
-          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
           pointRadius: 6
         }]
       };
