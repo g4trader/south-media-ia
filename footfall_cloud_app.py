@@ -81,7 +81,7 @@ def get_status():
 @app.route('/trigger', methods=['POST'])
 def trigger_footfall_update():
     """Endpoint para disparar atualização de footfall"""
-    global footfall_thread, is_running
+    global last_run_status, is_running
     
     if is_running:
         return jsonify({
@@ -90,19 +90,40 @@ def trigger_footfall_update():
         }), 409
     
     try:
-        # Iniciar thread para execução
-        footfall_thread = threading.Thread(target=run_footfall_update)
-        footfall_thread.daemon = True
-        footfall_thread.start()
+        # Executar diretamente em vez de usar thread
+        is_running = True
+        logger.info("🗺️ Iniciando atualização de footfall...")
+        
+        # Importar e executar processador de footfall
+        from footfall_processor import FootfallProcessor
+        
+        processor = FootfallProcessor()
+        success = processor.run_footfall_update()
+        
+        last_run_status = {
+            "status": "success" if success else "failed",
+            "timestamp": datetime.now().isoformat(),
+            "error": None if success else "Falha na atualização de footfall"
+        }
+        
+        is_running = False
+        logger.info(f"✅ Atualização de footfall concluída: {'sucesso' if success else 'falha'}")
         
         return jsonify({
-            "status": "triggered",
-            "message": "Atualização de footfall iniciada",
-            "timestamp": datetime.now().isoformat()
+            "status": "completed",
+            "message": f"Atualização de footfall {'bem-sucedida' if success else 'falhou'}",
+            "timestamp": datetime.now().isoformat(),
+            "success": success
         })
         
     except Exception as e:
         logger.error(f"❌ Erro ao disparar atualização de footfall: {e}")
+        last_run_status = {
+            "status": "error",
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }
+        is_running = False
         return jsonify({
             "status": "error",
             "message": str(e)

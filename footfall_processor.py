@@ -195,14 +195,70 @@ class FootfallProcessor:
                 logger.error("❌ Falha ao atualizar dashboard footfall")
                 return False
             
-            # Fazer commit e push (opcional) - comentado para evitar travamentos
-            # self.commit_and_push()
+            # Fazer commit e push
+            try:
+                self.commit_and_push()
+            except Exception as e:
+                logger.warning(f"⚠️ Erro no commit/push: {e}")
             
             logger.info("🎉 Atualização de footfall concluída com sucesso!")
             return True
             
         except Exception as e:
             logger.error(f"❌ Erro na atualização de footfall: {e}")
+            return False
+    
+    def commit_and_push(self):
+        """Faz commit e push das mudanças via GitHub API"""
+        try:
+            import requests
+            import os
+            from datetime import datetime
+            
+            github_token = os.environ.get('GITHUB_TOKEN')
+            if not github_token:
+                logger.warning("⚠️ GITHUB_TOKEN não encontrado, pulando commit/push")
+                return False
+            
+            # Ler arquivo atualizado
+            dashboard_file = "static/dash_sonho.html"
+            with open(dashboard_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Fazer commit via GitHub API
+            url = "https://api.github.com/repos/g4trader/south-media-ia/contents/static/dash_sonho.html"
+            headers = {
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json"
+            }
+            
+            import base64
+            content_b64 = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+            
+            # Obter SHA atual do arquivo
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                current_sha = response.json()['sha']
+            else:
+                logger.warning("⚠️ Não foi possível obter SHA atual do arquivo")
+                return False
+            
+            data = {
+                "message": f"Update: Atualização automática de footfall - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+                "content": content_b64,
+                "sha": current_sha
+            }
+            
+            response = requests.put(url, headers=headers, json=data)
+            if response.status_code == 200:
+                logger.info("✅ Commit e push de footfall realizados com sucesso via GitHub API")
+                return True
+            else:
+                logger.error(f"❌ Erro ao fazer commit de footfall via GitHub API: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Erro ao fazer commit/push de footfall: {e}")
             return False
 
 def main():
