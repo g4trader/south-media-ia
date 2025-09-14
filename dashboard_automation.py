@@ -74,9 +74,9 @@ class DashboardAutomation:
             return 'null'
     
     def update_dashboard_data(self, daily_data):
-        """Atualiza dados do dashboard"""
+        """Atualiza apenas dados de canais (DAILY) do dashboard, preservando FOOTFALL_POINTS"""
         try:
-            logger.info("🔧 Atualizando dados do dashboard...")
+            logger.info("🔧 Atualizando dados de canais do dashboard (preservando footfall)...")
             
             # Ler HTML atual
             with open(self.dashboard_file, 'r', encoding='utf-8') as f:
@@ -94,7 +94,7 @@ class DashboardAutomation:
             
             new_daily_js = "const DAILY = [" + ", ".join(daily_items) + "];"
             
-            # Substituir no HTML
+            # Substituir apenas a seção DAILY, preservando FOOTFALL_POINTS
             daily_pattern = r'const DAILY = \[(.*?)\];'
             html_content = re.sub(daily_pattern, new_daily_js, html_content, flags=re.DOTALL)
             
@@ -102,11 +102,11 @@ class DashboardAutomation:
             with open(self.dashboard_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             
-            logger.info(f"✅ Dashboard atualizado com {len(daily_data)} registros")
+            logger.info(f"✅ Dados de canais atualizados com {len(daily_data)} registros (FOOTFALL_POINTS preservado)")
             return True
             
         except Exception as e:
-            logger.error(f"❌ Erro ao atualizar dashboard: {e}")
+            logger.error(f"❌ Erro ao atualizar dados de canais: {e}")
             return False
     
     def calculate_cons_data(self, daily_data):
@@ -307,9 +307,9 @@ class DashboardAutomation:
             return []
     
     def update_cons_and_per_data(self, daily_data):
-        """Atualiza dados CONS e PER no dashboard"""
+        """Atualiza dados CONS e PER no dashboard, preservando FOOTFALL_POINTS"""
         try:
-            logger.info("🔧 Atualizando dados CONS e PER...")
+            logger.info("🔧 Atualizando dados CONS e PER (preservando footfall)...")
             
             # Calcular dados
             cons_data = self.calculate_cons_data(daily_data)
@@ -337,7 +337,7 @@ class DashboardAutomation:
             with open(self.dashboard_file, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             
-            logger.info("✅ Dados CONS e PER atualizados")
+            logger.info("✅ Dados CONS e PER atualizados (FOOTFALL_POINTS preservado)")
             return True
             
         except Exception as e:
