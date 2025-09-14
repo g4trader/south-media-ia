@@ -765,7 +765,11 @@ const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
   new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
 const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
   new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
-const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+const pct = v => {
+  if (v === null || v === undefined || v === "" || isNaN(v)) return "—";
+  const num = Number(v);
+  return `${(num * 100).toFixed(2)}%`;
+};
 
 // Tabs
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
