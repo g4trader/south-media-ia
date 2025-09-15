@@ -101,13 +101,16 @@
   </div>
 </div>
 
-<script>
-// Credenciais válidas (em produção, isso seria no backend)
-const VALID_CREDENTIALS = {
-  'admin': 'dashboard2025',
-  'user': 'viewer2025',
-  'guest': 'guest2025'
-};
+  <!-- Incluir sistema de autenticação -->
+  <script src="auth_system.js"></script>
+  <script src="auth_middleware.js"></script>
+  
+  <script>
+// Verificar se já está logado usando sistema robusto
+if (window.authSystem && window.authSystem.isAuthenticated()) {
+  const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard-protected.html';
+  window.location.href = decodeURIComponent(redirect);
+}
 
 // Elementos do DOM
 const loginForm = document.getElementById('loginForm');
@@ -188,7 +191,7 @@ function checkExistingSession() {
   return false;
 }
 
-// Função para processar login
+// Função para processar login usando sistema robusto
 async function processLogin(username, password) {
   setLoading(true);
   hideMessages();
@@ -197,33 +200,30 @@ async function processLogin(username, password) {
     // Simular delay de autenticação
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Verificar credenciais
-    if (VALID_CREDENTIALS[username] && VALID_CREDENTIALS[username] === password) {
-      // Login bem-sucedido
-      showSuccess('Login realizado com sucesso! Redirecionando...');
+    // Usar sistema de autenticação robusto
+    if (window.authSystem) {
+      const result = await window.authSystem.authenticate(username, password);
       
-      // Determinar role do usuário
-      let role = 'viewer';
-      if (username === 'admin') role = 'admin';
-      else if (username === 'user') role = 'user';
-      
-      // Salvar sessão
-      saveSession(username, role);
-      
-      // Redirecionar após 1.5 segundos
-      setTimeout(() => {
-        window.location.href = '/dashboard-protected.html';
-      }, 1500);
-      
+      if (result.success) {
+        showSuccess(`Bem-vindo, ${result.user.profile.full_name}!`);
+        
+        // Redirecionar após delay
+        setTimeout(() => {
+          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard-protected.html';
+          window.location.href = decodeURIComponent(redirect);
+        }, 1500);
+        
+      } else {
+        showError(result.message || 'Usuário ou senha inválidos');
+      }
     } else {
-      // Credenciais inválidas
-      showError('Usuário ou senha incorretos. Tente novamente.');
-      setLoading(false);
+      showError('Sistema de autenticação não disponível');
     }
     
   } catch (error) {
     console.error('Erro no login:', error);
     showError('Erro interno. Tente novamente.');
+  } finally {
     setLoading(false);
   }
 }
