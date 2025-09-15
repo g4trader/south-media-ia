@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Restrito - Dashboard IA South</title>
+  <style>
+  :root{
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --stroke: #0f3460;
+    --accent: #533483;
+    --grad: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    --muted: #64748b;
+    --text: #e2e8f0;
+  }
+  
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-container{background:rgba(26,26,46,.9);border:1px solid var(--stroke);border-radius:20px;padding:40px;width:100%;max-width:400px;backdrop-filter:blur(10px);box-shadow:0 20px 40px rgba(0,0,0,.3)}
+  .login-header{text-align:center;margin-bottom:32px}
+  .login-logo{width:60px;height:60px;background:var(--grad);border-radius:12px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+  .login-title{font-size:1.8rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+  .login-subtitle{color:var(--muted);font-size:.9rem}
+  .form-group{margin-bottom:20px}
+  .form-label{display:block;margin-bottom:8px;color:var(--text);font-weight:500;font-size:.9rem}
+  .form-input{width:100%;padding:12px 16px;background:rgba(22,33,62,.5);border:1px solid var(--stroke);border-radius:10px;color:var(--text);font-size:1rem;transition:all .3s ease}
+  .form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+  .form-input::placeholder{color:var(--muted)}
+  .login-button{width:100%;padding:14px;background:var(--grad);border:none;border-radius:10px;color:#fff;font-size:1rem;font-weight:600;cursor:pointer;transition:all .3s ease;margin-top:8px}
+  .login-button:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.4)}
+  .login-button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+  .login-button.loading{animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+  .message{display:none;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  .message.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+  .message.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
+  .login-footer{text-align:center;margin-top:24px;color:var(--muted);font-size:.8rem}
+  .login-footer a{color:var(--accent);text-decoration:none}
+  .login-footer a:hover{text-decoration:underline}
+  
+  .demo-credentials{background:rgba(255,107,53,.05);border:1px solid rgba(255,107,53,.2);border-radius:8px;padding:16px;margin-bottom:20px;font-size:.8rem;color:var(--muted)}
+  .demo-credentials h4{color:#fff;margin-bottom:8px;font-size:.9rem}
+  .demo-credentials p{margin:4px 0}
+  .demo-credentials strong{color:var(--accent)}
+  
+  @media (max-width:480px){
+    .login-container{padding:24px;margin:16px}
+  }
+  </style>
+</head>
+<body>
+<div class="login-container">
+  <div class="login-header">
+    <div class="login-logo">🔐</div>
+    <h1 class="login-title">Acesso Restrito</h1>
+    <p class="login-subtitle">Sistema de Autenticação Robusto</p>
+  </div>
+  
+  <div class="demo-credentials">
+    <h4>👥 Usuários Disponíveis:</h4>
+    <p><strong>admin</strong> / dashboard2025 (Super Admin)</p>
+    <p><strong>manager</strong> / manager2025 (Gerente)</p>
+    <p><strong>viewer</strong> / viewer2025 (Visualizador)</p>
+  </div>
+  
+  <div id="errorMessage" class="message error"></div>
+  <div id="successMessage" class="message success"></div>
+  
+  <form id="loginForm">
+    <div class="form-group">
+      <label for="username" class="form-label">Usuário</label>
+      <input type="text" id="username" name="username" class="form-input" placeholder="Digite seu usuário" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="password" class="form-label">Senha</label>
+      <input type="password" id="password" name="password" class="form-input" placeholder="Digite sua senha" required>
+    </div>
+    
+    <button type="submit" class="login-button" id="loginButton">
+      <span id="buttonText">Entrar</span>
+    </button>
+  </form>
+  
+  <div class="login-footer">
+    <p>Sistema de Autenticação Robusto v1.0</p>
+    <p>Dashboard IA South - Todos os direitos reservados</p>
+  </div>
+</div>
+
+<!-- Incluir sistema de autenticação -->
+<script src="auth_system.js"></script>
+<script src="auth_middleware.js"></script>
+
+<script>
+const loginForm = document.getElementById('loginForm');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const loginButton = document.getElementById('loginButton');
+const buttonText = document.getElementById('buttonText');
+
+// Elementos de mensagem
+const errorMessage = document.getElementById('errorMessage');
+const successMessage = document.getElementById('successMessage');
+
+// Verificar se já está logado
+if (window.authSystem.isAuthenticated()) {
+  const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard-protected.html';
+  window.location.href = decodeURIComponent(redirect);
+}
+
+// Função para mostrar mensagem de erro
+function showError(message) {
+  errorMessage.textContent = message;
+  errorMessage.style.display = 'block';
+  successMessage.style.display = 'none';
+}
+
+// Função para mostrar mensagem de sucesso
+function showSuccess(message) {
+  successMessage.textContent = message;
+  successMessage.style.display = 'block';
+  errorMessage.style.display = 'none';
+}
+
+// Função para esconder mensagens
+function hideMessages() {
+  errorMessage.style.display = 'none';
+  successMessage.style.display = 'none';
+}
+
+// Função para definir estado de loading
+function setLoading(loading) {
+  if (loading) {
+    loginButton.disabled = true;
+    loginButton.classList.add('loading');
+    buttonText.textContent = 'Entrando...';
+  } else {
+    loginButton.disabled = false;
+    loginButton.classList.remove('loading');
+    buttonText.textContent = 'Entrar';
+  }
+}
+
+// Função para processar login
+async function processLogin(username, password) {
+  setLoading(true);
+  hideMessages();
+  
+  try {
+    // Simular delay de autenticação
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Usar sistema de autenticação robusto
+    const result = await window.authSystem.authenticate(username, password);
+    
+    if (result.success) {
+      showSuccess(`Bem-vindo, ${result.user.profile.full_name}!`);
+      
+      // Redirecionar após delay
+      setTimeout(() => {
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/dashboard-protected.html';
+        window.location.href = decodeURIComponent(redirect);
+      }, 1500);
+      
+    } else {
+      showError(result.message || 'Usuário ou senha inválidos');
+    }
+    
+  } catch (error) {
+    console.error('Erro no login:', error);
+    showError('Erro interno. Tente novamente.');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// Event listener para o formulário
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+  
+  if (!username || !password) {
+    showError('Por favor, preencha todos os campos');
+    return;
+  }
+  
+  await processLogin(username, password);
+});
+
+// Auto-focus no campo de usuário
+document.addEventListener('DOMContentLoaded', () => {
+  usernameInput.focus();
+});
+
+// Event listeners para limpar mensagens
+usernameInput.addEventListener('focus', hideMessages);
+passwordInput.addEventListener('focus', hideMessages);
+
+// Enter no campo de senha
+passwordInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    loginForm.dispatchEvent(new Event('submit'));
+  }
+});
+</script>
+</body>
+</html>
