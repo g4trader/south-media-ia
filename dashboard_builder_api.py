@@ -99,6 +99,9 @@ class DashboardBuilder:
             for channel in data['channels']:
                 if not channel.get('sheetId'):
                     return False, f"Planilha não configurada para o canal {channel.get('displayName', 'desconhecido')}"
+                
+                if not channel.get('budget') or channel.get('budget', 0) <= 0:
+                    return False, f"Orçamento não configurado para o canal {channel.get('displayName', 'desconhecido')}"
             
             return True, "Dados válidos"
             
@@ -250,7 +253,8 @@ class DashboardBuilder:
             channels_config[channel['name']] = {
                 'sheet_id': channel['sheetId'],
                 'gid': channel['gid'],
-                'display_name': channel['displayName']
+                'display_name': channel['displayName'],
+                'budget': channel.get('budget', 0)
             }
         
         return json.dumps(channels_config, ensure_ascii=False, indent=2)
