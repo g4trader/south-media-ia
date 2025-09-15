@@ -115,6 +115,7 @@
       <div class="user-details">
         <div class="user-name" id="userName">Usuário</div>
         <div class="user-role" id="userRole">admin</div>
+        <div class="user-company" id="userCompany">Empresa</div>
       </div>
       <div class="user-avatar" id="userAvatar">👤</div>
       <a href="#" class="logout-button" onclick="logout()">
@@ -189,78 +190,32 @@ function updateUserInfo(sessionData) {
   const user = window.authSystem.getCurrentUser();
   const systemData = window.authSystem.getSystemData();
   const role = systemData.roles.find(r => r.id === sessionData.role);
+  const company = window.authSystem.getCurrentUserCompany();
   
   document.getElementById('userName').textContent = user.profile.full_name || sessionData.username;
   document.getElementById('userRole').textContent = role ? role.name : sessionData.role;
   document.getElementById('userAvatar').textContent = (user.profile.full_name || sessionData.username).charAt(0).toUpperCase();
+  
+  // Exibir empresa do usuário se não for super admin
+  const companyInfo = document.getElementById('userCompany');
+  if (companyInfo) {
+    if (user.role === 'super_admin') {
+      companyInfo.textContent = 'Todas as Empresas';
+      companyInfo.style.color = 'var(--accent)';
+    } else if (company) {
+      companyInfo.textContent = company.name;
+      companyInfo.style.color = 'var(--muted)';
+    } else {
+      companyInfo.textContent = 'Sem Empresa';
+      companyInfo.style.color = 'var(--error)';
+    }
+  }
 }
 
-// Lista de dashboards disponíveis (igual ao original)
-const dashboards = [
-  {
-    file: 'dash_sonho.html',
-    name: 'Dashboard Sonho',
-    description: 'Dashboard multicanal com análise de vídeo + display e footfall das lojas Recibom',
-    status: 'active',
-    category: 'Multicanal',
-    lastUpdate: 'Hoje',
-    icon: '🎯'
-  },
-  {
-    file: 'dash_copacol.html',
-    name: 'Dashboard Copacol',
-    description: 'Dashboard de performance para campanhas Copacol',
-    status: 'active',
-    category: 'Retail',
-    lastUpdate: 'Ontem',
-    icon: '🛒'
-  },
-  {
-    file: 'dash_copacol_mestre_das_grelhas.html',
-    name: 'Copacol - Mestre das Grelhas',
-    description: 'Dashboard especializado para campanha Mestre das Grelhas',
-    status: 'active',
-    category: 'Retail',
-    lastUpdate: 'Ontem',
-    icon: '🔥'
-  },
-  {
-    file: 'dash_dauher_hidrabene.html',
-    name: 'Dashboard Dauher Hidrabene',
-    description: 'Análise de performance para campanhas Dauher Hidrabene',
-    status: 'active',
-    category: 'Saúde',
-    lastUpdate: '2 dias',
-    icon: '💊'
-  },
-  {
-    file: 'dash_sebrae.html',
-    name: 'Dashboard Sebrae',
-    description: 'Dashboard de métricas e KPIs para campanhas Sebrae',
-    status: 'active',
-    category: 'Educacional',
-    lastUpdate: '3 dias',
-    icon: '🎓'
-  },
-  {
-    file: 'dash_unicesusc.html',
-    name: 'Dashboard Unicesusc',
-    description: 'Análise de performance para campanhas Unicesusc',
-    status: 'active',
-    category: 'Educacional',
-    lastUpdate: '1 semana',
-    icon: '🏫'
-  },
-  {
-    file: 'dash_unimed.html',
-    name: 'Dashboard Unimed',
-    description: 'Dashboard de métricas para campanhas Unimed',
-    status: 'active',
-    category: 'Saúde',
-    lastUpdate: '1 semana',
-    icon: '🏥'
-  }
-];
+// Obter dashboards do sistema multi-tenant
+function getDashboards() {
+  return window.authSystem.getDashboardsForUser();
+}
 
 // Função para criar card de dashboard (igual ao original)
 function createDashboardCard(dashboard) {
@@ -315,7 +270,7 @@ function createDashboardCard(dashboard) {
   `;
 }
 
-// Função para carregar dashboards (igual ao original)
+// Função para carregar dashboards com sistema multi-tenant
 function loadDashboards() {
   const container = document.getElementById('dashboardsContainer');
   const loadingState = document.getElementById('loadingState');
@@ -324,6 +279,8 @@ function loadDashboards() {
   // Simular carregamento
   setTimeout(() => {
     loadingState.style.display = 'none';
+    
+    const dashboards = getDashboards();
     
     if (dashboards.length === 0) {
       emptyState.style.display = 'block';
