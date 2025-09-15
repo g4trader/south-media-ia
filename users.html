@@ -88,12 +88,219 @@
   .message.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
   .message.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
   
+  .btn-secondary {
+    background: var(--muted);
+    color: white;
+  }
+  
+  .btn-secondary:hover {
+    background: #475569;
+  }
+  
+  .users-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: center;
+  }
+  
+  .users-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+  }
+  
+  .modal-content {
+    background: var(--surface);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modal-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--stroke);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    color: var(--text);
+  }
+  
+  .close {
+    color: var(--muted);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .close:hover {
+    color: var(--text);
+  }
+  
+  .modal-body {
+    padding: 30px;
+  }
+  
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid var(--stroke);
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
+  .user-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+  
+  .user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .user-role {
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .user-details {
+    display: grid;
+    gap: 8px;
+  }
+  
+  .user-detail {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  
+  .user-detail strong {
+    color: var(--text);
+  }
+  
+  .user-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .user-actions .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 1;
+  }
+  
+  .edit-user-btn {
+    background: var(--warning);
+  }
+  
+  .edit-user-btn:hover {
+    background: #d97706;
+  }
+  
+  .delete-user-btn {
+    background: var(--error);
+  }
+  
+  .delete-user-btn:hover {
+    background: #dc2626;
+  }
+
   @media (max-width:768px){
     .users-grid{grid-template-columns:1fr}
     .header-content{flex-direction:column;gap:16px;text-align:center}
     .user-info{flex-direction:column;text-align:center}
     .page-title{font-size:2rem}
     .form-grid{grid-template-columns:1fr}
+    .users-actions{flex-direction:column;align-items:stretch}
+    .modal-content{width:95%;margin:10% auto}
   }
   </style>
 </head>
@@ -171,8 +378,79 @@
       </form>
     </div>
     
+    <div class="users-actions">
+      <button class="btn btn-primary" id="createUserBtn">
+        <span>➕</span> Novo Usuário
+      </button>
+      <button class="btn btn-secondary" id="refreshUsersBtn">
+        <span>🔄</span> Atualizar
+      </button>
+    </div>
+    
     <div class="users-grid" id="usersGrid">
       <!-- Usuários serão carregados dinamicamente -->
+    </div>
+  </div>
+
+  <!-- Modal de Criação/Edição de Usuário -->
+  <div id="userModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Criar Usuário</h3>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="userForm">
+          <div class="form-group">
+            <label for="userName">Nome Completo</label>
+            <input type="text" id="userName" name="userName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="userEmail">Email</label>
+            <input type="email" id="userEmail" name="userEmail" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="userUsername">Username</label>
+            <input type="text" id="userUsername" name="userUsername" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="userPassword">Senha</label>
+            <input type="password" id="userPassword" name="userPassword" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="userRole">Role</label>
+            <select id="userRole" name="userRole" required>
+              <option value="">Selecione um role</option>
+              <option value="super_admin">Super Administrador</option>
+              <option value="manager">Gerente</option>
+              <option value="viewer">Visualizador</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="userCompany">Empresa</label>
+            <select id="userCompany" name="userCompany">
+              <option value="">Selecione uma empresa</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="userStatus">Status</label>
+            <select id="userStatus" name="userStatus" required>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveUserBtn">Salvar</button>
+      </div>
     </div>
   </div>
 
@@ -183,7 +461,7 @@
 
   <script>
 // Verificar autenticação e permissões
-if (!window.authSystem.isAuthenticated()) {
+if (!window.authSystem || !window.authSystem.isAuthenticated()) {
   window.location.href = '/login.html';
 }
 
@@ -192,22 +470,248 @@ if (!window.authSystem.hasPermission('users:view')) {
   window.location.href = '/dashboard-protected.html';
 }
 
-// Exibir informações do usuário
-const session = window.authSystem.getCurrentSession();
-const user = window.authSystem.getCurrentUser();
+// Variáveis globais
+let currentEditingUserId = null;
+let users = [];
+let companies = [];
 
-if (session && user) {
-  document.getElementById('userName').textContent = user.profile.full_name || session.username;
-  document.getElementById('userAvatar').textContent = (user.profile.full_name || session.username).charAt(0).toUpperCase();
-  
-  // Exibir role do usuário
-  const roleElement = document.getElementById('userRole');
-  if (roleElement) {
-    const systemData = window.authSystem.getSystemData();
-    const role = systemData.roles.find(r => r.id === session.role);
-    roleElement.textContent = role ? role.name : session.role;
+// Exibir informações do usuário
+async function updateUserInfo() {
+  try {
+    const session = window.authSystem.getCurrentSession();
+    const user = await window.authSystem.getCurrentUser();
+
+    if (session && user) {
+      document.getElementById('userName').textContent = user.profile?.full_name || session.username;
+      document.getElementById('userAvatar').textContent = (user.profile?.full_name || session.username).charAt(0).toUpperCase();
+      
+      // Exibir role do usuário
+      const roleElement = document.getElementById('userRole');
+      if (roleElement) {
+        const systemData = window.authSystem.getSystemData();
+        const role = systemData.roles.find(r => r.id === session.role);
+        roleElement.textContent = role ? role.name : session.role;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar informações do usuário:', error);
   }
 }
+
+// Carregar usuários
+async function loadUsers() {
+  try {
+    users = await window.authSystem.getAllUsers();
+    renderUsers();
+  } catch (error) {
+    console.error('Erro ao carregar usuários:', error);
+    showMessage('Erro ao carregar usuários', 'error');
+  }
+}
+
+// Carregar empresas
+async function loadCompanies() {
+  try {
+    companies = await window.authSystem.getAllCompanies();
+    updateCompanySelect();
+  } catch (error) {
+    console.error('Erro ao carregar empresas:', error);
+  }
+}
+
+// Renderizar usuários
+function renderUsers() {
+  const usersGrid = document.getElementById('usersGrid');
+  
+  if (users.length === 0) {
+    usersGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+        <div style="font-size: 48px; margin-bottom: 16px;">👥</div>
+        <h3>Nenhum usuário encontrado</h3>
+        <p>Clique em "Novo Usuário" para criar o primeiro usuário</p>
+      </div>
+    `;
+    return;
+  }
+  
+  usersGrid.innerHTML = users.map(user => `
+    <div class="user-card">
+      <div class="user-header">
+        <div class="user-name">${user.profile?.full_name || user.username}</div>
+        <div class="user-role">${getRoleName(user.role)}</div>
+      </div>
+      <div class="user-details">
+        <div class="user-detail">
+          <span>Username:</span>
+          <strong>${user.username}</strong>
+        </div>
+        <div class="user-detail">
+          <span>Email:</span>
+          <strong>${user.profile?.email || 'N/A'}</strong>
+        </div>
+        <div class="user-detail">
+          <span>Empresa:</span>
+          <strong>${getCompanyName(user.company_id)}</strong>
+        </div>
+        <div class="user-detail">
+          <span>Status:</span>
+          <strong style="color: ${user.status === 'active' ? 'var(--success)' : 'var(--error)'}">
+            ${user.status === 'active' ? 'Ativo' : 'Inativo'}
+          </strong>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn edit-user-btn" onclick="editUser('${user.id}')">
+          ✏️ Editar
+        </button>
+        <button class="btn delete-user-btn" onclick="deleteUser('${user.id}')">
+          🗑️ Excluir
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Obter nome do role
+function getRoleName(roleId) {
+  const roleNames = {
+    'super_admin': 'Super Admin',
+    'manager': 'Gerente',
+    'viewer': 'Visualizador'
+  };
+  return roleNames[roleId] || roleId;
+}
+
+// Obter nome da empresa
+function getCompanyName(companyId) {
+  if (!companyId) return 'Sem empresa';
+  const company = companies.find(c => c.id === companyId);
+  return company ? company.name : 'Empresa não encontrada';
+}
+
+// Atualizar select de empresas
+function updateCompanySelect() {
+  const companySelect = document.getElementById('userCompany');
+  companySelect.innerHTML = '<option value="">Selecione uma empresa</option>';
+  
+  companies.forEach(company => {
+    const option = document.createElement('option');
+    option.value = company.id;
+    option.textContent = company.name;
+    companySelect.appendChild(option);
+  });
+}
+
+// Abrir modal para criar usuário
+function openCreateUserModal() {
+  currentEditingUserId = null;
+  document.getElementById('modalTitle').textContent = 'Criar Usuário';
+  document.getElementById('userForm').reset();
+  document.getElementById('userModal').style.display = 'block';
+}
+
+// Editar usuário
+function editUser(userId) {
+  const user = users.find(u => u.id === userId);
+  if (!user) return;
+  
+  currentEditingUserId = userId;
+  document.getElementById('modalTitle').textContent = 'Editar Usuário';
+  
+  // Preencher formulário
+  document.getElementById('userName').value = user.profile?.full_name || '';
+  document.getElementById('userEmail').value = user.profile?.email || '';
+  document.getElementById('userUsername').value = user.username;
+  document.getElementById('userPassword').value = '';
+  document.getElementById('userRole').value = user.role;
+  document.getElementById('userCompany').value = user.company_id || '';
+  document.getElementById('userStatus').value = user.status;
+  
+  document.getElementById('userModal').style.display = 'block';
+}
+
+// Salvar usuário
+async function saveUser() {
+  try {
+    const formData = {
+      profile: {
+        full_name: document.getElementById('userName').value,
+        email: document.getElementById('userEmail').value
+      },
+      username: document.getElementById('userUsername').value,
+      password: document.getElementById('userPassword').value,
+      role: document.getElementById('userRole').value,
+      company_id: document.getElementById('userCompany').value || null,
+      status: document.getElementById('userStatus').value
+    };
+    
+    if (currentEditingUserId) {
+      // Atualizar usuário existente
+      await window.authSystem.updateUser(currentEditingUserId, formData);
+      showMessage('Usuário atualizado com sucesso!', 'success');
+    } else {
+      // Criar novo usuário
+      await window.authSystem.createUser(formData);
+      showMessage('Usuário criado com sucesso!', 'success');
+    }
+    
+    closeModal();
+    await loadUsers();
+  } catch (error) {
+    console.error('Erro ao salvar usuário:', error);
+    showMessage('Erro ao salvar usuário', 'error');
+  }
+}
+
+// Excluir usuário
+async function deleteUser(userId) {
+  const user = users.find(u => u.id === userId);
+  if (!user) return;
+  
+  if (confirm(`Tem certeza que deseja excluir o usuário "${user.profile?.full_name || user.username}"?`)) {
+    try {
+      await window.authSystem.deleteUser(userId);
+      showMessage('Usuário excluído com sucesso!', 'success');
+      await loadUsers();
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      showMessage('Erro ao excluir usuário', 'error');
+    }
+  }
+}
+
+// Fechar modal
+function closeModal() {
+  document.getElementById('userModal').style.display = 'none';
+  currentEditingUserId = null;
+}
+
+// Mostrar mensagem
+function showMessage(message, type) {
+  // Implementar sistema de mensagens se necessário
+  console.log(`${type.toUpperCase()}: ${message}`);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', async () => {
+  await updateUserInfo();
+  await loadCompanies();
+  await loadUsers();
+  
+  // Event listeners dos botões
+  document.getElementById('createUserBtn').addEventListener('click', openCreateUserModal);
+  document.getElementById('refreshUsersBtn').addEventListener('click', loadUsers);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('saveUserBtn').addEventListener('click', saveUser);
+  
+  // Fechar modal ao clicar fora
+  document.getElementById('userModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('userModal')) {
+      closeModal();
+    }
+  });
+});
 
 // Função de logout
 function logout() {
