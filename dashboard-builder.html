@@ -72,6 +72,18 @@
   .channel-config{flex:2;display:flex;gap:12px;align-items:center}
   .channel-sheet-input{flex:1;padding:8px 12px;background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:8px;color:#fff;font-size:.85rem}
   .channel-sheet-input:focus{outline:none;border-color:var(--accent)}
+  .channel-budget-input{flex:0.8;padding:8px 12px;background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:8px;color:#fff;font-size:.85rem}
+  .channel-budget-input:focus{outline:none;border-color:var(--accent)}
+  .budget-summary{margin-bottom:24px;padding:20px;background:rgba(26,26,46,.3);border:1px solid var(--stroke);border-radius:12px}
+  .budget-summary-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .budget-summary-header h4{color:#fff;font-size:1.1rem;margin:0}
+  .budget-totals{display:flex;gap:20px;font-size:.9rem}
+  .budget-totals span{color:var(--muted)}
+  .budget-totals strong{color:var(--accent)}
+  .budget-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .budget-item{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(26,26,46,.5);border-radius:8px;font-size:.85rem}
+  .budget-item-name{color:#fff;font-weight:500}
+  .budget-item-value{color:var(--accent);font-weight:600}
   .modal-footer{display:flex;gap:12px;justify-content:flex-end;padding:24px 32px;border-top:1px solid var(--stroke)}
   .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border:none;border-radius:10px;font-weight:600;cursor:pointer;transition:all .3s ease;text-decoration:none}
   .btn-primary{background:var(--grad);color:#fff}
@@ -169,6 +181,9 @@
           <div class="form-group">
             <label class="form-label" for="totalBudget">Verba Total Líquida (R$) *</label>
             <input type="number" id="totalBudget" class="form-input" placeholder="50000" step="0.01" min="0" required>
+            <small style="color: var(--muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+              💡 Este valor será distribuído entre os canais selecionados
+            </small>
           </div>
           <div class="form-group">
             <label class="form-label" for="reportModel">Modelo de Relatório *</label>
@@ -214,7 +229,19 @@
         <!-- Seleção de Canais -->
         <div class="channels-section">
           <h3 class="channels-title">📺 Canais de Mídia</h3>
-          <p style="color: var(--muted); margin-bottom: 20px; font-size: 0.9rem;">Selecione os canais que serão utilizados e configure as planilhas do Google Sheets para cada um:</p>
+          <p style="color: var(--muted); margin-bottom: 20px; font-size: 0.9rem;">Selecione os canais que serão utilizados, configure as planilhas do Google Sheets e defina o orçamento para cada canal:</p>
+          
+          <!-- Resumo de Orçamento -->
+          <div id="budgetSummary" class="budget-summary" style="display: none;">
+            <div class="budget-summary-header">
+              <h4>💰 Resumo de Orçamento</h4>
+              <div class="budget-totals">
+                <span>Total Distribuído: <strong id="distributedTotal">R$ 0,00</strong></span>
+                <span>Restante: <strong id="remainingBudget">R$ 0,00</strong></span>
+              </div>
+            </div>
+            <div id="budgetBreakdown" class="budget-breakdown"></div>
+          </div>
           
           <div class="channel-item">
             <input type="checkbox" id="channel_youtube" class="channel-checkbox" value="youtube">
@@ -222,6 +249,7 @@
             <div class="channel-config">
               <input type="text" id="youtube_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="youtube_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="youtube_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -231,6 +259,7 @@
             <div class="channel-config">
               <input type="text" id="tiktok_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="tiktok_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="tiktok_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -240,6 +269,7 @@
             <div class="channel-config">
               <input type="text" id="netflix_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="netflix_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="netflix_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -249,6 +279,7 @@
             <div class="channel-config">
               <input type="text" id="disney_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="disney_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="disney_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -258,6 +289,7 @@
             <div class="channel-config">
               <input type="text" id="ctv_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="ctv_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="ctv_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -267,6 +299,7 @@
             <div class="channel-config">
               <input type="text" id="programmatic_display_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="programmatic_display_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="programmatic_display_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -276,6 +309,7 @@
             <div class="channel-config">
               <input type="text" id="programmatic_video_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="programmatic_video_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="programmatic_video_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -285,6 +319,7 @@
             <div class="channel-config">
               <input type="text" id="footfall_display_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="footfall_display_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="footfall_display_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
 
@@ -294,6 +329,7 @@
             <div class="channel-config">
               <input type="text" id="footfall_map_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
               <input type="text" id="footfall_map_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="footfall_map_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
             </div>
           </div>
         </div>
@@ -399,19 +435,26 @@ function initializeDashboardBuilder() {
       const channelName = this.value;
       const sheetInput = document.getElementById(`${channelName}_sheet`);
       const gidInput = document.getElementById(`${channelName}_gid`);
+      const budgetInput = document.getElementById(`${channelName}_budget`);
       
       if (this.checked) {
         sheetInput.disabled = false;
         gidInput.disabled = false;
+        budgetInput.disabled = false;
         sheetInput.required = true;
+        budgetInput.required = true;
       } else {
         sheetInput.disabled = true;
         gidInput.disabled = true;
+        budgetInput.disabled = true;
         sheetInput.required = false;
+        budgetInput.required = false;
         sheetInput.value = '';
         gidInput.value = '';
+        budgetInput.value = '';
       }
       
+      updateBudgetSummary();
       updatePreview();
     });
   });
@@ -419,8 +462,25 @@ function initializeDashboardBuilder() {
   // Adicionar event listeners para atualizar preview em tempo real
   const formInputs = document.querySelectorAll('#createDashboardForm input, #createDashboardForm select, #createDashboardForm textarea');
   formInputs.forEach(input => {
-    input.addEventListener('input', updatePreview);
-    input.addEventListener('change', updatePreview);
+    input.addEventListener('input', function() {
+      if (input.id === 'totalBudget') {
+        updateBudgetSummary();
+      }
+      updatePreview();
+    });
+    input.addEventListener('change', function() {
+      if (input.id === 'totalBudget') {
+        updateBudgetSummary();
+      }
+      updatePreview();
+    });
+  });
+  
+  // Adicionar event listeners para inputs de orçamento por canal
+  const budgetInputs = document.querySelectorAll('.channel-budget-input');
+  budgetInputs.forEach(input => {
+    input.addEventListener('input', updateBudgetSummary);
+    input.addEventListener('change', updateBudgetSummary);
   });
 }
 
@@ -449,6 +509,62 @@ function openCreateDashboardModal() {
 function closeCreateDashboardModal() {
   const modal = document.getElementById('createDashboardModal');
   modal.classList.remove('active');
+}
+
+function updateBudgetSummary() {
+  const totalBudget = parseFloat(document.getElementById('totalBudget').value) || 0;
+  const budgetSummary = document.getElementById('budgetSummary');
+  const distributedTotal = document.getElementById('distributedTotal');
+  const remainingBudget = document.getElementById('remainingBudget');
+  const budgetBreakdown = document.getElementById('budgetBreakdown');
+  
+  // Calcular orçamento distribuído
+  let distributed = 0;
+  const budgetItems = [];
+  
+  const channelCheckboxes = document.querySelectorAll('.channel-checkbox:checked');
+  channelCheckboxes.forEach(checkbox => {
+    const channelName = checkbox.value;
+    const budgetInput = document.getElementById(`${channelName}_budget`);
+    const budgetValue = parseFloat(budgetInput.value) || 0;
+    
+    if (budgetValue > 0) {
+      distributed += budgetValue;
+      budgetItems.push({
+        name: checkbox.nextElementSibling.textContent,
+        value: budgetValue
+      });
+    }
+  });
+  
+  const remaining = totalBudget - distributed;
+  
+  // Atualizar totais
+  distributedTotal.textContent = `R$ ${distributed.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+  remainingBudget.textContent = `R$ ${remaining.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+  
+  // Atualizar cor do restante
+  if (remaining < 0) {
+    remainingBudget.style.color = '#ff4757'; // Vermelho se excedeu
+  } else if (remaining === 0) {
+    remainingBudget.style.color = '#00ff88'; // Verde se exato
+  } else {
+    remainingBudget.style.color = '#ffa726'; // Laranja se sobrou
+  }
+  
+  // Atualizar breakdown
+  if (budgetItems.length > 0) {
+    budgetBreakdown.innerHTML = budgetItems.map(item => `
+      <div class="budget-item">
+        <span class="budget-item-name">${item.name}</span>
+        <span class="budget-item-value">R$ ${item.value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+      </div>
+    `).join('');
+    
+    budgetSummary.style.display = 'block';
+  } else {
+    budgetSummary.style.display = 'none';
+  }
 }
 
 function updatePreview() {
@@ -551,10 +667,12 @@ function validateForm() {
     isValid = false;
   }
   
-  // Verificar se todos os canais selecionados têm planilha configurada
+  // Verificar se todos os canais selecionados têm planilha e orçamento configurados
   selectedChannels.forEach(checkbox => {
     const channelName = checkbox.value;
     const sheetInput = document.getElementById(`${channelName}_sheet`);
+    const budgetInput = document.getElementById(`${channelName}_budget`);
+    
     if (!sheetInput.value.trim()) {
       alert(`⚠️ Configure a planilha do Google Sheets para o canal ${checkbox.nextElementSibling.textContent}!`);
       sheetInput.style.borderColor = '#ff4757';
@@ -562,7 +680,31 @@ function validateForm() {
     } else {
       sheetInput.style.borderColor = '';
     }
+    
+    if (!budgetInput.value || parseFloat(budgetInput.value) <= 0) {
+      alert(`⚠️ Configure o orçamento para o canal ${checkbox.nextElementSibling.textContent}!`);
+      budgetInput.style.borderColor = '#ff4757';
+      isValid = false;
+    } else {
+      budgetInput.style.borderColor = '';
+    }
   });
+  
+  // Verificar se o orçamento total está sendo respeitado
+  const totalBudget = parseFloat(document.getElementById('totalBudget').value) || 0;
+  let distributedBudget = 0;
+  
+  selectedChannels.forEach(checkbox => {
+    const channelName = checkbox.value;
+    const budgetInput = document.getElementById(`${channelName}_budget`);
+    const budgetValue = parseFloat(budgetInput.value) || 0;
+    distributedBudget += budgetValue;
+  });
+  
+  if (distributedBudget > totalBudget) {
+    alert(`⚠️ O orçamento distribuído (R$ ${distributedBudget.toLocaleString('pt-BR', {minimumFractionDigits: 2})}) excede o orçamento total (R$ ${totalBudget.toLocaleString('pt-BR', {minimumFractionDigits: 2})})!`);
+    isValid = false;
+  }
   
   // Verificar datas
   const startDate = new Date(document.getElementById('startDate').value);
@@ -608,12 +750,14 @@ async function saveDashboard() {
       const channelName = checkbox.value;
       const sheetId = document.getElementById(`${channelName}_sheet`).value;
       const gid = document.getElementById(`${channelName}_gid`).value;
+      const budget = parseFloat(document.getElementById(`${channelName}_budget`).value);
       
       formData.channels.push({
         name: channelName,
         displayName: checkbox.nextElementSibling.textContent,
         sheetId: sheetId,
-        gid: gid || null
+        gid: gid || null,
+        budget: budget
       });
     });
     
