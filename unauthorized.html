@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Negado - Dashboard IA South</title>
+  <style>
+  :root{
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --stroke: #0f3460;
+    --accent: #533483;
+    --grad: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    --muted: #64748b;
+    --text: #e2e8f0;
+    --error: #ef4444;
+  }
+  
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  
+  .error-container{background:rgba(26,26,46,.9);border:1px solid var(--stroke);border-radius:20px;padding:60px 40px;width:100%;max-width:500px;backdrop-filter:blur(10px);box-shadow:0 20px 40px rgba(0,0,0,.3);text-align:center}
+  .error-icon{width:120px;height:120px;background:rgba(239,68,68,.1);border:2px solid rgba(239,68,68,.3);border-radius:50%;margin:0 auto 32px;display:flex;align-items:center;justify-content:center;font-size:48px;animation:pulse 2s infinite}
+  .error-title{font-size:2.5rem;font-weight:700;color:#fca5a5;margin-bottom:16px}
+  .error-subtitle{font-size:1.2rem;color:var(--muted);margin-bottom:24px;line-height:1.6}
+  .error-description{color:var(--muted);font-size:1rem;margin-bottom:40px;line-height:1.6}
+  .error-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+  .btn{padding:12px 24px;border-radius:10px;text-decoration:none;font-size:1rem;font-weight:600;transition:all .3s ease;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary{background:var(--grad);color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.4)}
+  .btn-secondary{background:rgba(83,52,131,.1);color:var(--accent);border:1px solid rgba(83,52,131,.3)}
+  .btn-secondary:hover{background:rgba(83,52,131,.2)}
+  
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+  
+  @media (max-width:480px){
+    .error-container{padding:40px 24px}
+    .error-title{font-size:2rem}
+    .error-actions{flex-direction:column}
+  }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-icon">🚫</div>
+    <h1 class="error-title">Acesso Negado</h1>
+    <h2 class="error-subtitle">Você não tem permissão para acessar esta página</h2>
+    <p class="error-description">
+      Esta área requer permissões específicas que não estão disponíveis na sua conta atual. 
+      Entre em contato com o administrador do sistema se você acredita que deveria ter acesso.
+    </p>
+    
+    <div class="error-actions">
+      <a href="/dashboard-protected.html" class="btn btn-primary">
+        <span>🏠</span>
+        <span>Voltar ao Painel</span>
+      </a>
+      <a href="/login.html" class="btn btn-secondary">
+        <span>🔑</span>
+        <span>Fazer Login</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

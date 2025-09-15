@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciamento de Usuários - Dashboard IA South</title>
+  <style>
+  :root{
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --stroke: #0f3460;
+    --accent: #533483;
+    --grad: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    --muted: #64748b;
+    --text: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+  
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  
+  .header{background:rgba(22,33,62,.8);border-bottom:1px solid var(--stroke);padding:20px 0;backdrop-filter:blur(10px)}
+  .header-content{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center}
+  .header-left{display:flex;align-items:center;gap:16px}
+  .header-logo{width:40px;height:40px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+  .header-title{font-size:1.5rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header-right{display:flex;align-items:center;gap:16px}
+  .user-info{display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(83,52,131,.1);border:1px solid rgba(83,52,131,.3);border-radius:8px}
+  .user-avatar{width:32px;height:32px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+  .user-details{display:flex;flex-direction:column;gap:2px}
+  .user-name{font-size:.9rem;font-weight:600}
+  .user-role{font-size:.75rem;color:var(--muted)}
+  .logout-btn{padding:8px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;text-decoration:none;font-size:.9rem;transition:all .3s ease}
+  .logout-btn:hover{background:rgba(239,68,68,.2);transform:translateY(-1px)}
+  
+  .container{max-width:1200px;margin:0 auto;padding:40px 20px}
+  .page-title{font-size:2.5rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+  .page-subtitle{color:var(--muted);font-size:1.1rem;margin-bottom:40px}
+  
+  .users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;margin-bottom:40px}
+  .user-card{background:rgba(22,33,62,.6);border:1px solid var(--stroke);border-radius:16px;padding:24px;transition:all .3s ease;position:relative;overflow:hidden}
+  .user-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 32px rgba(139,92,246,.1)}
+  .user-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad)}
+  
+  .user-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  .user-avatar-large{width:60px;height:60px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600}
+  .user-info-card{flex:1}
+  .user-name{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+  .user-email{color:var(--muted);font-size:.9rem}
+  .user-role{display:inline-block;padding:4px 12px;background:rgba(83,52,131,.1);color:var(--accent);border:1px solid rgba(83,52,131,.3);border-radius:20px;font-size:.8rem;font-weight:600;margin-top:8px}
+  
+  .user-details{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .detail-row{display:flex;justify-content:space-between;align-items:center}
+  .detail-label{color:var(--muted);font-size:.9rem}
+  .detail-value{color:var(--text);font-size:.9rem;font-weight:500}
+  
+  .user-actions{display:flex;gap:8px}
+  .btn{padding:8px 16px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;transition:all .3s ease;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--grad);color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(139,92,246,.3)}
+  .btn-secondary{background:rgba(83,52,131,.1);color:var(--accent);border:1px solid rgba(83,52,131,.3)}
+  .btn-secondary:hover{background:rgba(83,52,131,.2)}
+  .btn-danger{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .btn-danger:hover{background:rgba(239,68,68,.2)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  
+  .add-user-section{background:rgba(83,52,131,.05);border:1px solid rgba(83,52,131,.2);border-radius:16px;padding:24px;margin-bottom:40px}
+  .add-user-title{font-size:1.3rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px}
+  .form-group{margin-bottom:16px}
+  .form-label{display:block;margin-bottom:8px;color:var(--text);font-weight:500;font-size:.9rem}
+  .form-input{width:100%;padding:12px 16px;background:rgba(22,33,62,.5);border:1px solid var(--stroke);border-radius:10px;color:var(--text);font-size:1rem;transition:all .3s ease}
+  .form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+  .form-input::placeholder{color:var(--muted)}
+  .form-select{width:100%;padding:12px 16px;background:rgba(22,33,62,.5);border:1px solid var(--stroke);border-radius:10px;color:var(--text);font-size:1rem;transition:all .3s ease}
+  .form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+  
+  .permissions-section{margin-top:20px}
+  .permissions-title{font-size:1rem;font-weight:600;margin-bottom:12px;color:var(--text)}
+  .permissions-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  .permission-item{display:flex;align-items:center;gap:8px}
+  .permission-checkbox{width:16px;height:16px;accent-color:var(--accent)}
+  .permission-label{color:var(--text);font-size:.9rem}
+  
+  .message{display:none;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  .message.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+  .message.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
+  
+  @media (max-width:768px){
+    .users-grid{grid-template-columns:1fr}
+    .header-content{flex-direction:column;gap:16px;text-align:center}
+    .user-info{flex-direction:column;text-align:center}
+    .page-title{font-size:2rem}
+    .form-grid{grid-template-columns:1fr}
+  }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="header-logo">👥</div>
+        <h1 class="header-title">Gerenciamento de Usuários</h1>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-role" id="userRole">Role</div>
+          </div>
+        </div>
+        <a href="/dashboard-protected.html" class="btn btn-secondary">Voltar</a>
+        <a href="#" class="logout-btn" onclick="logout()">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">Gerenciamento de Usuários</h1>
+    <p class="page-subtitle">Gerencie usuários, roles e permissões do sistema</p>
+    
+    <div class="add-user-section">
+      <h2 class="add-user-title">➕ Adicionar Novo Usuário</h2>
+      
+      <div id="errorMessage" class="message error"></div>
+      <div id="successMessage" class="message success"></div>
+      
+      <form id="addUserForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="newUsername" class="form-label">Usuário</label>
+            <input type="text" id="newUsername" name="username" class="form-input" placeholder="Digite o nome de usuário" required>
+          </div>
+          <div class="form-group">
+            <label for="newPassword" class="form-label">Senha</label>
+            <input type="password" id="newPassword" name="password" class="form-input" placeholder="Digite a senha" required>
+          </div>
+          <div class="form-group">
+            <label for="newEmail" class="form-label">Email</label>
+            <input type="email" id="newEmail" name="email" class="form-input" placeholder="Digite o email" required>
+          </div>
+          <div class="form-group">
+            <label for="newFullName" class="form-label">Nome Completo</label>
+            <input type="text" id="newFullName" name="fullName" class="form-input" placeholder="Digite o nome completo" required>
+          </div>
+          <div class="form-group">
+            <label for="newDepartment" class="form-label">Departamento</label>
+            <input type="text" id="newDepartment" name="department" class="form-input" placeholder="Digite o departamento">
+          </div>
+          <div class="form-group">
+            <label for="newRole" class="form-label">Role</label>
+            <select id="newRole" name="role" class="form-select" required>
+              <option value="">Selecione uma role</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="permissions-section">
+          <h3 class="permissions-title">🔐 Permissões</h3>
+          <div class="permissions-grid" id="permissionsGrid">
+            <!-- Permissões serão carregadas dinamicamente -->
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn btn-primary">Criar Usuário</button>
+        </div>
+      </form>
+    </div>
+    
+    <div class="users-grid" id="usersGrid">
+      <!-- Usuários serão carregados dinamicamente -->
+    </div>
+  </div>
+
+  <!-- Incluir sistema de autenticação -->
+  <script src="auth_system.js"></script>
+  <script src="auth_middleware.js"></script>
+
+  <script>
+// Verificar autenticação e permissões
+if (!window.authSystem.isAuthenticated()) {
+  window.location.href = '/login.html';
+}
+
+if (!window.authSystem.hasPermission('users:view')) {
+  alert('Você não tem permissão para acessar esta página');
+  window.location.href = '/dashboard-protected.html';
+}
+
+// Exibir informações do usuário
+const session = window.authSystem.getCurrentSession();
+const user = window.authSystem.getCurrentUser();
+
+if (session && user) {
+  document.getElementById('userName').textContent = user.profile.full_name || session.username;
+  document.getElementById('userAvatar').textContent = (user.profile.full_name || session.username).charAt(0).toUpperCase();
+  
+  // Exibir role do usuário
+  const roleElement = document.getElementById('userRole');
+  if (roleElement) {
+    const systemData = window.authSystem.getSystemData();
+    const role = systemData.roles.find(r => r.id === session.role);
+    roleElement.textContent = role ? role.name : session.role;
+  }
+}
+
+// Função de logout
+function logout() {
+  if (confirm('Tem certeza que deseja sair?')) {
+    window.authSystem.logout();
+    window.location.href = '/login.html';
+  }
+}
+
+// Função para mostrar mensagem de erro
+function showError(message) {
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  errorMessage.textContent = message;
+  errorMessage.style.display = 'block';
+  successMessage.style.display = 'none';
+}
+
+// Função para mostrar mensagem de sucesso
+function showSuccess(message) {
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  successMessage.textContent = message;
+  successMessage.style.display = 'block';
+  errorMessage.style.display = 'none';
+}
+
+// Função para esconder mensagens
+function hideMessages() {
+  document.getElementById('errorMessage').style.display = 'none';
+  document.getElementById('successMessage').style.display = 'none';
+}
+
+// Carregar roles no select
+function loadRoles() {
+  const roleSelect = document.getElementById('newRole');
+  const roles = window.authSystem.getRoles();
+  
+  roles.forEach(role => {
+    const option = document.createElement('option');
+    option.value = role.id;
+    option.textContent = role.name;
+    roleSelect.appendChild(option);
+  });
+}
+
+// Carregar permissões
+function loadPermissions() {
+  const permissionsGrid = document.getElementById('permissionsGrid');
+  const permissions = window.authSystem.getPermissions();
+  
+  permissions.forEach(permission => {
+    const permissionItem = document.createElement('div');
+    permissionItem.className = 'permission-item';
+    permissionItem.innerHTML = `
+      <input type="checkbox" class="permission-checkbox" id="perm_${permission.id}" value="${permission.id}">
+      <label for="perm_${permission.id}" class="permission-label">${permission.name}</label>
+    `;
+    permissionsGrid.appendChild(permissionItem);
+  });
+}
+
+// Renderizar usuários
+function renderUsers() {
+  const usersGrid = document.getElementById('usersGrid');
+  const result = window.authSystem.getAllUsers();
+  
+  if (!result.success) {
+    showError(result.message);
+    return;
+  }
+  
+  const users = result.users;
+  const roles = window.authSystem.getRoles();
+  
+  const userElements = users.map(user => {
+    const role = roles.find(r => r.id === user.role);
+    const roleName = role ? role.name : user.role;
+    
+    let actionsHtml = '';
+    
+    if (window.authSystem.hasPermission('users:manage')) {
+      actionsHtml = `
+        <button class="btn btn-secondary" onclick="editUser('${user.id}')">Editar</button>
+        <button class="btn btn-danger" onclick="deleteUser('${user.id}')">Excluir</button>
+      `;
+    }
+    
+    return `
+      <div class="user-card">
+        <div class="user-header">
+          <div class="user-avatar-large">${(user.profile.full_name || user.username).charAt(0).toUpperCase()}</div>
+          <div class="user-info-card">
+            <div class="user-name">${user.profile.full_name || user.username}</div>
+            <div class="user-email">${user.email}</div>
+            <div class="user-role">${roleName}</div>
+          </div>
+        </div>
+        
+        <div class="user-details">
+          <div class="detail-row">
+            <span class="detail-label">Usuário:</span>
+            <span class="detail-value">${user.username}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">${user.status === 'active' ? 'Ativo' : 'Inativo'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Criado em:</span>
+            <span class="detail-value">${new Date(user.created_at).toLocaleDateString('pt-BR')}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Último login:</span>
+            <span class="detail-value">${user.last_login ? new Date(user.last_login).toLocaleDateString('pt-BR') : 'Nunca'}</span>
+          </div>
+        </div>
+        
+        <div class="user-actions">
+          ${actionsHtml}
+        </div>
+      </div>
+    `;
+  });
+  
+  usersGrid.innerHTML = userElements.join('');
+}
+
+// Adicionar novo usuário
+document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const permissions = Array.from(document.querySelectorAll('.permission-checkbox:checked')).map(cb => cb.value);
+  
+  const userData = {
+    username: formData.get('username'),
+    password: formData.get('password'),
+    email: formData.get('email'),
+    role: formData.get('role'),
+    permissions: permissions,
+    profile: {
+      full_name: formData.get('fullName'),
+      department: formData.get('department')
+    }
+  };
+  
+  const result = window.authSystem.createUser(userData);
+  
+  if (result.success) {
+    showSuccess('Usuário criado com sucesso!');
+    e.target.reset();
+    renderUsers();
+  } else {
+    showError(result.message);
+  }
+});
+
+// Funções de edição e exclusão (placeholder)
+function editUser(userId) {
+  alert(`Editar usuário ${userId} - Funcionalidade em desenvolvimento`);
+}
+
+function deleteUser(userId) {
+  if (confirm('Tem certeza que deseja excluir este usuário?')) {
+    alert(`Excluir usuário ${userId} - Funcionalidade em desenvolvimento`);
+  }
+}
+
+// Inicializar página
+document.addEventListener('DOMContentLoaded', () => {
+  loadRoles();
+  loadPermissions();
+  renderUsers();
+});
+</script>
+</body>
+</html>
