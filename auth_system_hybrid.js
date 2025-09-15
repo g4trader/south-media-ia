@@ -46,16 +46,16 @@ class HybridAuthSystem {
             }
             
             // Try to load Firebase modules
-            if (typeof import !== 'undefined') {
-                try {
-                    const { firebaseAuthSystem } = await import('./auth_system_firebase.js');
-                    this.firebaseAuth = firebaseAuthSystem;
+            try {
+                // Check if Firebase is available globally
+                if (typeof window !== 'undefined' && window.firebaseAuthSystem) {
+                    this.firebaseAuth = window.firebaseAuthSystem;
                     this.isFirebaseAvailable = true;
-                    console.log('✅ Firebase carregado via import');
+                    console.log('✅ Firebase carregado globalmente');
                     return true;
-                } catch (importError) {
-                    console.log('⚠️ Firebase não pôde ser importado:', importError.message);
                 }
+            } catch (error) {
+                console.log('⚠️ Firebase não pôde ser carregado:', error.message);
             }
             
             return false;
@@ -703,8 +703,8 @@ class HybridAuthSystem {
     }
 }
 
-// Export the hybrid auth system
-export const hybridAuthSystem = new HybridAuthSystem();
+// Create and export the hybrid auth system
+const hybridAuthSystem = new HybridAuthSystem();
 
 // Make it available globally for backward compatibility
 if (typeof window !== 'undefined') {
