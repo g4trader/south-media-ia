@@ -19,6 +19,7 @@ class NavigationMenu {
     getCurrentPage() {
         const path = window.location.pathname;
         if (path.includes('dashboard-protected.html')) return 'dashboard';
+        if (path.includes('dashboard-builder.html')) return 'dashboard-builder';
         if (path.includes('users.html')) return 'users';
         if (path.includes('companies.html')) return 'companies';
         if (path.includes('system-status.html')) return 'system-status';
@@ -56,6 +57,12 @@ class NavigationMenu {
                     <div class="nav-section">
                         <h3 class="nav-section-title">Gerenciamento</h3>
                         <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="/dashboard-builder.html" class="nav-link" data-page="dashboard-builder">
+                                    <span class="nav-icon">🎯</span>
+                                    <span class="nav-text">Dashboard Builder</span>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a href="/users.html" class="nav-link" data-page="users">
                                     <span class="nav-icon">👥</span>
