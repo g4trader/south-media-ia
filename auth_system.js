@@ -82,14 +82,14 @@ class AuthSystem {
                 {
                     id: 'admin_001',
                     username: 'admin',
-                    password: 'dashboard2025', // Hash será implementado
+                    password: 'dashboard2025',
                     email: 'admin@iasouth.tech',
                     role: 'super_admin',
-                    permissions: ['*'], // Todas as permissões
+                    permissions: ['*'],
                     status: 'active',
                     created_at: new Date().toISOString(),
                     last_login: null,
-                    company_id: null, // Super admin não tem empresa específica
+                    company_id: null,
                     profile: {
                         full_name: 'Administrador do Sistema',
                         department: 'TI',
@@ -106,7 +106,7 @@ class AuthSystem {
                     status: 'active',
                     created_at: new Date().toISOString(),
                     last_login: null,
-                    company_id: 'company_001', // IA South Tech
+                    company_id: 'company_001',
                     profile: {
                         full_name: 'Gerente de Operações',
                         department: 'Operações',
@@ -123,7 +123,7 @@ class AuthSystem {
                     status: 'active',
                     created_at: new Date().toISOString(),
                     last_login: null,
-                    company_id: 'company_001', // IA South Tech
+                    company_id: 'company_001',
                     profile: {
                         full_name: 'Visualizador',
                         department: 'Comercial',
@@ -140,7 +140,7 @@ class AuthSystem {
                     status: 'active',
                     created_at: new Date().toISOString(),
                     last_login: null,
-                    company_id: 'company_002', // Sonho Digital
+                    company_id: 'company_002',
                     profile: {
                         full_name: 'Gerente Sonho Digital',
                         department: 'Marketing',
@@ -157,7 +157,7 @@ class AuthSystem {
                     status: 'active',
                     created_at: new Date().toISOString(),
                     last_login: null,
-                    company_id: 'company_003', // Analytics Pro
+                    company_id: 'company_003',
                     profile: {
                         full_name: 'Analista de Dados',
                         department: 'Analytics',
@@ -167,7 +167,8 @@ class AuthSystem {
             ];
         }
             
-            // Roles do sistema
+        // Roles do sistema
+        if (!systemData.roles) {
             systemData.roles = [
                 {
                     id: 'super_admin',
@@ -212,8 +213,10 @@ class AuthSystem {
                     level: 20
                 }
             ];
+        }
 
-            // Permissões do sistema
+        // Permissões do sistema
+        if (!systemData.permissions) {
             systemData.permissions = [
                 { id: 'dashboard:view', name: 'Visualizar Dashboard', category: 'dashboard' },
                 { id: 'dashboard:sync', name: 'Sincronizar Dashboard', category: 'dashboard' },
@@ -226,111 +229,111 @@ class AuthSystem {
                 { id: 'reports:create', name: 'Criar Relatórios', category: 'reports' },
                 { id: 'system:config', name: 'Configurar Sistema', category: 'system' }
             ];
-
-            // Inicializar dashboards com associação às empresas
-            if (!systemData.dashboards) {
-                systemData.dashboards = [
-                    {
-                        id: 'dashboard_001',
-                        file: 'dash_sonho.html',
-                        name: 'Dashboard Sonho',
-                        description: 'Dashboard principal com métricas de performance e análise de dados',
-                        category: 'Principal',
-                        icon: '📈',
-                        status: 'active',
-                        company_id: 'company_002', // Sonho Digital
-                        permissions: ['dashboard:view', 'dashboard:sync'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_002',
-                        file: 'dash_analytics.html',
-                        name: 'Analytics Dashboard',
-                        description: 'Análise detalhada de métricas e KPIs do negócio',
-                        category: 'Analytics',
-                        icon: '📊',
-                        status: 'active',
-                        company_id: 'company_001', // IA South Tech
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_003',
-                        file: 'dash_financeiro.html',
-                        name: 'Dashboard Financeiro',
-                        description: 'Controle financeiro e métricas de receita',
-                        category: 'Financeiro',
-                        icon: '💰',
-                        status: 'active',
-                        company_id: 'company_001', // IA South Tech
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_004',
-                        file: 'dash_operacional.html',
-                        name: 'Dashboard Operacional',
-                        description: 'Métricas operacionais e indicadores de produção',
-                        category: 'Operacional',
-                        icon: '⚙️',
-                        status: 'active',
-                        company_id: 'company_001', // IA South Tech
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_005',
-                        file: 'dash_comercial.html',
-                        name: 'Dashboard Comercial',
-                        description: 'Análise de vendas e performance comercial',
-                        category: 'Comercial',
-                        icon: '🛒',
-                        status: 'active',
-                        company_id: 'company_002', // Sonho Digital
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_006',
-                        file: 'dash_rh.html',
-                        name: 'Dashboard RH',
-                        description: 'Métricas de recursos humanos e produtividade',
-                        category: 'RH',
-                        icon: '👥',
-                        status: 'active',
-                        company_id: 'company_001', // IA South Tech
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_007',
-                        file: 'dash_marketing.html',
-                        name: 'Dashboard Marketing',
-                        description: 'Análise de campanhas e métricas de marketing',
-                        category: 'Marketing',
-                        icon: '📢',
-                        status: 'active',
-                        company_id: 'company_002', // Sonho Digital
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    },
-                    {
-                        id: 'dashboard_008',
-                        file: 'dash_data_analytics.html',
-                        name: 'Data Analytics Pro',
-                        description: 'Análise avançada de dados e machine learning',
-                        category: 'Analytics',
-                        icon: '🤖',
-                        status: 'active',
-                        company_id: 'company_003', // Analytics Pro
-                        permissions: ['dashboard:view'],
-                        created_at: new Date().toISOString()
-                    }
-                ];
-            }
-
-            this.saveSystemData(systemData);
         }
+
+        // Inicializar dashboards com associação às empresas
+        if (!systemData.dashboards) {
+            systemData.dashboards = [
+                {
+                    id: 'dashboard_001',
+                    file: 'dash_sonho.html',
+                    name: 'Dashboard Sonho',
+                    description: 'Dashboard principal com métricas de performance e análise de dados',
+                    category: 'Principal',
+                    icon: '📈',
+                    status: 'active',
+                    company_id: 'company_002',
+                    permissions: ['dashboard:view', 'dashboard:sync'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_002',
+                    file: 'dash_analytics.html',
+                    name: 'Analytics Dashboard',
+                    description: 'Análise detalhada de métricas e KPIs do negócio',
+                    category: 'Analytics',
+                    icon: '📊',
+                    status: 'active',
+                    company_id: 'company_001',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_003',
+                    file: 'dash_financeiro.html',
+                    name: 'Dashboard Financeiro',
+                    description: 'Controle financeiro e métricas de receita',
+                    category: 'Financeiro',
+                    icon: '💰',
+                    status: 'active',
+                    company_id: 'company_001',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_004',
+                    file: 'dash_operacional.html',
+                    name: 'Dashboard Operacional',
+                    description: 'Métricas operacionais e indicadores de produção',
+                    category: 'Operacional',
+                    icon: '⚙️',
+                    status: 'active',
+                    company_id: 'company_001',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_005',
+                    file: 'dash_comercial.html',
+                    name: 'Dashboard Comercial',
+                    description: 'Análise de vendas e performance comercial',
+                    category: 'Comercial',
+                    icon: '🛒',
+                    status: 'active',
+                    company_id: 'company_002',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_006',
+                    file: 'dash_rh.html',
+                    name: 'Dashboard RH',
+                    description: 'Métricas de recursos humanos e produtividade',
+                    category: 'RH',
+                    icon: '👥',
+                    status: 'active',
+                    company_id: 'company_001',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_007',
+                    file: 'dash_marketing.html',
+                    name: 'Dashboard Marketing',
+                    description: 'Análise de campanhas e métricas de marketing',
+                    category: 'Marketing',
+                    icon: '📢',
+                    status: 'active',
+                    company_id: 'company_002',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                },
+                {
+                    id: 'dashboard_008',
+                    file: 'dash_data_analytics.html',
+                    name: 'Data Analytics Pro',
+                    description: 'Análise avançada de dados e machine learning',
+                    category: 'Analytics',
+                    icon: '🤖',
+                    status: 'active',
+                    company_id: 'company_003',
+                    permissions: ['dashboard:view'],
+                    created_at: new Date().toISOString()
+                }
+            ];
+        }
+
+        this.saveSystemData(systemData);
     }
 
     /**
@@ -374,7 +377,7 @@ class AuthSystem {
             role: user.role,
             permissions: user.permissions,
             login_time: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 horas
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
             token: this.generateToken(user),
             profile: user.profile
         };
@@ -472,10 +475,9 @@ class AuthSystem {
     }
 
     /**
-     * Gerar token simples (para evolução futura)
+     * Gerar token simples
      */
     generateToken(user) {
-        // Implementação simples - pode ser melhorada com JWT
         return btoa(`${user.id}:${user.username}:${Date.now()}`);
     }
 
@@ -488,7 +490,7 @@ class AuthSystem {
     }
 
     /**
-     * Obter todos os usuários (apenas para admin)
+     * Obter todos os usuários
      */
     getAllUsers() {
         if (!this.hasPermission('users:view')) {
@@ -503,7 +505,7 @@ class AuthSystem {
     }
 
     /**
-     * Criar novo usuário (apenas para admin)
+     * Criar novo usuário
      */
     createUser(userData) {
         if (!this.hasPermission('users:manage')) {
@@ -512,7 +514,6 @@ class AuthSystem {
 
         const systemData = this.getSystemData();
         
-        // Verificar se usuário já existe
         if (systemData.users.find(u => u.username === userData.username)) {
             return { success: false, message: 'Usuário já existe' };
         }
@@ -520,13 +521,14 @@ class AuthSystem {
         const newUser = {
             id: `user_${Date.now()}`,
             username: userData.username,
-            password: userData.password, // Hash será implementado
+            password: userData.password,
             email: userData.email,
             role: userData.role || 'viewer',
             permissions: userData.permissions || [],
             status: 'active',
             created_at: new Date().toISOString(),
             last_login: null,
+            company_id: userData.company_id || null,
             profile: userData.profile || {}
         };
 
@@ -564,7 +566,7 @@ class AuthSystem {
     }
 
     /**
-     * Obter todas as empresas (apenas para super admin)
+     * Obter todas as empresas
      */
     getAllCompanies() {
         if (!this.hasPermission('companies:view')) {
@@ -579,7 +581,7 @@ class AuthSystem {
     }
 
     /**
-     * Criar nova empresa (apenas para super admin)
+     * Criar nova empresa
      */
     createCompany(companyData) {
         if (!this.hasPermission('companies:manage')) {
@@ -588,7 +590,6 @@ class AuthSystem {
 
         const systemData = this.getSystemData();
         
-        // Verificar se empresa já existe
         if (systemData.companies.find(c => c.code === companyData.code)) {
             return { success: false, message: 'Código da empresa já existe' };
         }
