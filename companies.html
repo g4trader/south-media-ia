@@ -87,12 +87,222 @@
   .stat-number{font-size:2rem;font-weight:700;color:var(--accent);margin-bottom:4px}
   .stat-label{color:var(--muted);font-size:.9rem}
   
+  .btn-secondary {
+    background: var(--muted);
+    color: white;
+  }
+  
+  .btn-secondary:hover {
+    background: #475569;
+  }
+  
+  .companies-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: center;
+  }
+  
+  .companies-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+  }
+  
+  .modal-content {
+    background: var(--surface);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modal-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--stroke);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    color: var(--text);
+  }
+  
+  .close {
+    color: var(--muted);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .close:hover {
+    color: var(--text);
+  }
+  
+  .modal-body {
+    padding: 30px;
+  }
+  
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid var(--stroke);
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
+  .company-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .company-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+  
+  .company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .company-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .company-code {
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .company-details {
+    display: grid;
+    gap: 8px;
+  }
+  
+  .company-detail {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  
+  .company-detail strong {
+    color: var(--text);
+  }
+  
+  .company-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .company-actions .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 1;
+  }
+  
+  .edit-company-btn {
+    background: var(--warning);
+  }
+  
+  .edit-company-btn:hover {
+    background: #d97706;
+  }
+  
+  .delete-company-btn {
+    background: var(--error);
+  }
+  
+  .delete-company-btn:hover {
+    background: #dc2626;
+  }
+  
   @media (max-width:768px){
     .companies-grid{grid-template-columns:1fr}
     .header-content{flex-direction:column;gap:16px;text-align:center}
     .user-info{flex-direction:column;text-align:center}
     .page-title{font-size:2rem}
     .form-grid{grid-template-columns:1fr}
+    .companies-actions{flex-direction:column;align-items:stretch}
+    .modal-content{width:95%;margin:10% auto}
   }
   </style>
 </head>
@@ -185,8 +395,100 @@
       </form>
     </div>
     
+    <div class="companies-actions">
+      <button class="btn btn-primary" id="createCompanyBtn">
+        <span>➕</span> Nova Empresa
+      </button>
+      <button class="btn btn-secondary" id="refreshCompaniesBtn">
+        <span>🔄</span> Atualizar
+      </button>
+    </div>
+    
     <div class="companies-grid" id="companiesGrid">
       <!-- Empresas serão carregadas dinamicamente -->
+    </div>
+  </div>
+
+  <!-- Modal de Criação/Edição de Empresa -->
+  <div id="companyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Criar Empresa</h3>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="companyForm">
+          <div class="form-group">
+            <label for="companyName">Nome da Empresa</label>
+            <input type="text" id="companyName" name="companyName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyCode">Código</label>
+            <input type="text" id="companyCode" name="companyCode" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyDescription">Descrição</label>
+            <textarea id="companyDescription" name="companyDescription" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyEmail">Email</label>
+            <input type="email" id="companyEmail" name="companyEmail" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyPhone">Telefone</label>
+            <input type="tel" id="companyPhone" name="companyPhone">
+          </div>
+          
+          <div class="form-group">
+            <label for="companyAddress">Endereço</label>
+            <textarea id="companyAddress" name="companyAddress" rows="2"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyTheme">Tema</label>
+            <select id="companyTheme" name="companyTheme" required>
+              <option value="default">Padrão</option>
+              <option value="dark">Escuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyTimezone">Fuso Horário</label>
+            <select id="companyTimezone" name="companyTimezone" required>
+              <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
+              <option value="America/New_York">Nova York (GMT-5)</option>
+              <option value="Europe/London">Londres (GMT+0)</option>
+              <option value="Asia/Tokyo">Tóquio (GMT+9)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyLanguage">Idioma</label>
+            <select id="companyLanguage" name="companyLanguage" required>
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="en-US">English (US)</option>
+              <option value="es-ES">Español</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyStatus">Status</label>
+            <select id="companyStatus" name="companyStatus" required>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveCompanyBtn">Salvar</button>
+      </div>
     </div>
   </div>
 
@@ -197,7 +499,7 @@
 
   <script>
 // Verificar autenticação e permissões
-if (!window.authSystem.isAuthenticated()) {
+if (!window.authSystem || !window.authSystem.isAuthenticated()) {
   window.location.href = '/login.html';
 }
 
@@ -206,21 +508,215 @@ if (!window.authSystem.hasPermission('companies:view')) {
   window.location.href = '/dashboard-protected.html';
 }
 
-// Exibir informações do usuário
-const session = window.authSystem.getCurrentSession();
-const user = window.authSystem.getCurrentUser();
+// Variáveis globais
+let currentEditingCompanyId = null;
+let companies = [];
 
-if (session && user) {
-  document.getElementById('userName').textContent = user.profile.full_name || session.username;
-  document.getElementById('userAvatar').textContent = (user.profile.full_name || session.username).charAt(0).toUpperCase();
-  
-  // Exibir role do usuário
-  const roleElement = document.getElementById('userRole');
-  if (roleElement) {
-    const systemData = window.authSystem.getSystemData();
-    const role = systemData.roles.find(r => r.id === session.role);
-    roleElement.textContent = role ? role.name : session.role;
+// Exibir informações do usuário
+async function updateUserInfo() {
+  try {
+    const session = window.authSystem.getCurrentSession();
+    const user = await window.authSystem.getCurrentUser();
+
+    if (session && user) {
+      document.getElementById('userName').textContent = user.profile?.full_name || session.username;
+      document.getElementById('userAvatar').textContent = (user.profile?.full_name || session.username).charAt(0).toUpperCase();
+      
+      // Exibir role do usuário
+      const roleElement = document.getElementById('userRole');
+      if (roleElement) {
+        const systemData = window.authSystem.getSystemData();
+        const role = systemData.roles.find(r => r.id === session.role);
+        roleElement.textContent = role ? role.name : session.role;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar informações do usuário:', error);
   }
+}
+
+// Carregar empresas
+async function loadCompanies() {
+  try {
+    companies = await window.authSystem.getAllCompanies();
+    renderCompanies();
+    updateStats();
+  } catch (error) {
+    console.error('Erro ao carregar empresas:', error);
+    showMessage('Erro ao carregar empresas', 'error');
+  }
+}
+
+// Renderizar empresas
+function renderCompanies() {
+  const companiesGrid = document.getElementById('companiesGrid');
+  
+  if (companies.length === 0) {
+    companiesGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+        <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+        <h3>Nenhuma empresa encontrada</h3>
+        <p>Clique em "Nova Empresa" para criar a primeira empresa</p>
+      </div>
+    `;
+    return;
+  }
+  
+  companiesGrid.innerHTML = companies.map(company => `
+    <div class="company-card">
+      <div class="company-header">
+        <div class="company-name">${company.name}</div>
+        <div class="company-code">${company.code}</div>
+      </div>
+      <div class="company-details">
+        <div class="company-detail">
+          <span>Descrição:</span>
+          <strong>${company.description || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Email:</span>
+          <strong>${company.contact?.email || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Telefone:</span>
+          <strong>${company.contact?.phone || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Tema:</span>
+          <strong>${company.settings?.theme || 'Padrão'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Idioma:</span>
+          <strong>${company.settings?.language || 'pt-BR'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Status:</span>
+          <strong style="color: ${company.status === 'active' ? 'var(--success)' : 'var(--error)'}">
+            ${company.status === 'active' ? 'Ativo' : 'Inativo'}
+          </strong>
+        </div>
+      </div>
+      <div class="company-actions">
+        <button class="btn edit-company-btn" onclick="editCompany('${company.id}')">
+          ✏️ Editar
+        </button>
+        <button class="btn delete-company-btn" onclick="deleteCompany('${company.id}')">
+          🗑️ Excluir
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Atualizar estatísticas
+function updateStats() {
+  const totalCompanies = companies.length;
+  const activeCompanies = companies.filter(c => c.status === 'active').length;
+  const inactiveCompanies = companies.filter(c => c.status === 'inactive').length;
+  
+  // Atualizar elementos de estatísticas se existirem
+  const totalElement = document.querySelector('.stat-number');
+  if (totalElement) {
+    totalElement.textContent = totalCompanies;
+  }
+}
+
+// Abrir modal para criar empresa
+function openCreateCompanyModal() {
+  currentEditingCompanyId = null;
+  document.getElementById('modalTitle').textContent = 'Criar Empresa';
+  document.getElementById('companyForm').reset();
+  document.getElementById('companyModal').style.display = 'block';
+}
+
+// Editar empresa
+function editCompany(companyId) {
+  const company = companies.find(c => c.id === companyId);
+  if (!company) return;
+  
+  currentEditingCompanyId = companyId;
+  document.getElementById('modalTitle').textContent = 'Editar Empresa';
+  
+  // Preencher formulário
+  document.getElementById('companyName').value = company.name || '';
+  document.getElementById('companyCode').value = company.code || '';
+  document.getElementById('companyDescription').value = company.description || '';
+  document.getElementById('companyEmail').value = company.contact?.email || '';
+  document.getElementById('companyPhone').value = company.contact?.phone || '';
+  document.getElementById('companyAddress').value = company.contact?.address || '';
+  document.getElementById('companyTheme').value = company.settings?.theme || 'default';
+  document.getElementById('companyTimezone').value = company.settings?.timezone || 'America/Sao_Paulo';
+  document.getElementById('companyLanguage').value = company.settings?.language || 'pt-BR';
+  document.getElementById('companyStatus').value = company.status;
+  
+  document.getElementById('companyModal').style.display = 'block';
+}
+
+// Salvar empresa
+async function saveCompany() {
+  try {
+    const formData = {
+      name: document.getElementById('companyName').value,
+      code: document.getElementById('companyCode').value,
+      description: document.getElementById('companyDescription').value,
+      contact: {
+        email: document.getElementById('companyEmail').value,
+        phone: document.getElementById('companyPhone').value,
+        address: document.getElementById('companyAddress').value
+      },
+      settings: {
+        theme: document.getElementById('companyTheme').value,
+        timezone: document.getElementById('companyTimezone').value,
+        language: document.getElementById('companyLanguage').value
+      },
+      status: document.getElementById('companyStatus').value
+    };
+    
+    if (currentEditingCompanyId) {
+      // Atualizar empresa existente
+      await window.authSystem.updateCompany(currentEditingCompanyId, formData);
+      showMessage('Empresa atualizada com sucesso!', 'success');
+    } else {
+      // Criar nova empresa
+      await window.authSystem.createCompany(formData);
+      showMessage('Empresa criada com sucesso!', 'success');
+    }
+    
+    closeModal();
+    await loadCompanies();
+  } catch (error) {
+    console.error('Erro ao salvar empresa:', error);
+    showMessage('Erro ao salvar empresa', 'error');
+  }
+}
+
+// Excluir empresa
+async function deleteCompany(companyId) {
+  const company = companies.find(c => c.id === companyId);
+  if (!company) return;
+  
+  if (confirm(`Tem certeza que deseja excluir a empresa "${company.name}"?`)) {
+    try {
+      await window.authSystem.deleteCompany(companyId);
+      showMessage('Empresa excluída com sucesso!', 'success');
+      await loadCompanies();
+    } catch (error) {
+      console.error('Erro ao excluir empresa:', error);
+      showMessage('Erro ao excluir empresa', 'error');
+    }
+  }
+}
+
+// Fechar modal
+function closeModal() {
+  document.getElementById('companyModal').style.display = 'none';
+  currentEditingCompanyId = null;
+}
+
+// Mostrar mensagem
+function showMessage(message, type) {
+  // Implementar sistema de mensagens se necessário
+  console.log(`${type.toUpperCase()}: ${message}`);
 }
 
 // Função de logout
@@ -230,6 +726,26 @@ function logout() {
     window.location.href = '/login.html';
   }
 }
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', async () => {
+  await updateUserInfo();
+  await loadCompanies();
+  
+  // Event listeners dos botões
+  document.getElementById('createCompanyBtn').addEventListener('click', openCreateCompanyModal);
+  document.getElementById('refreshCompaniesBtn').addEventListener('click', loadCompanies);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('saveCompanyBtn').addEventListener('click', saveCompany);
+  
+  // Fechar modal ao clicar fora
+  document.getElementById('companyModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('companyModal')) {
+      closeModal();
+    }
+  });
+});
 
 // Função para mostrar mensagem de erro
 function showError(message) {
