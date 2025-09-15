@@ -78,9 +78,12 @@ def debug_multi_tenant():
         logger.info(f"✅ Dados do sistema carregados: {'Sim' if system_data else 'Não'}")
         
         if system_data:
-            logger.info(f"✅ Empresas: {len(system_data.companies) if system_data.companies else 0}")
-            logger.info(f"✅ Usuários: {len(system_data.users) if system_data.users else 0}")
-            logger.info(f"✅ Dashboards: {len(system_data.dashboards) if system_data.dashboards else 0}")
+            companies_count = len(system_data.get('companies', []))
+            users_count = len(system_data.get('users', []))
+            dashboards_count = len(system_data.get('dashboards', []))
+            logger.info(f"✅ Empresas: {companies_count}")
+            logger.info(f"✅ Usuários: {users_count}")
+            logger.info(f"✅ Dashboards: {dashboards_count}")
         
         # Teste 4: Tentar login
         logger.info("🔑 Teste 4: Tentar login")
