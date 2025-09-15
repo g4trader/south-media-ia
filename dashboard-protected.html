@@ -230,8 +230,13 @@ async function updateUserInfo(sessionData) {
 }
 
 // Obter dashboards do sistema multi-tenant
-function getDashboards() {
-  return window.authSystem.getDashboardsForUser();
+async function getDashboards() {
+  try {
+    return await window.authSystem.getDashboardsForUser();
+  } catch (error) {
+    console.error('Erro ao obter dashboards:', error);
+    return [];
+  }
 }
 
 // Função para criar card de dashboard (igual ao original)
@@ -288,18 +293,20 @@ function createDashboardCard(dashboard) {
 }
 
 // Função para carregar dashboards com sistema multi-tenant
-function loadDashboards() {
+async function loadDashboards() {
   const container = document.getElementById('dashboardsContainer');
   const loadingState = document.getElementById('loadingState');
   const emptyState = document.getElementById('emptyState');
   
-  // Simular carregamento
-  setTimeout(() => {
+  try {
+    // Simular carregamento
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     loadingState.style.display = 'none';
     
-    const dashboards = getDashboards();
+    const dashboards = await getDashboards();
     
-    if (dashboards.length === 0) {
+    if (!dashboards || dashboards.length === 0) {
       emptyState.style.display = 'block';
     } else {
       container.style.display = 'grid';
@@ -311,7 +318,11 @@ function loadDashboards() {
         dashboards.filter(d => d.status === 'active').length;
       document.getElementById('lastUpdate').textContent = 'Agora';
     }
-  }, 1000);
+  } catch (error) {
+    console.error('Erro ao carregar dashboards:', error);
+    loadingState.style.display = 'none';
+    emptyState.style.display = 'block';
+  }
 }
 
 // Função para sincronizar dashboard via Cloud Run (igual ao original)
@@ -407,7 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Carregar dashboards
-  loadDashboards();
+  loadDashboards().catch(error => {
+    console.error('Erro ao carregar dashboards:', error);
+  });
 });
 </script>
 </body>
