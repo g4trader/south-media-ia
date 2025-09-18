@@ -465,10 +465,46 @@ if (!window.authSystem || !window.authSystem.isAuthenticated()) {
   window.location.href = '/login.html';
 }
 
-if (!window.authSystem.hasPermission('users:view')) {
-  alert('Você não tem permissão para acessar esta página');
-  window.location.href = '/dashboard-protected.html';
-}
+// Verificar permissões após carregamento completo
+document.addEventListener('DOMContentLoaded', async () => {
+  // Aguardar sistema de autenticação carregar
+  await new Promise(resolve => {
+    const checkAuth = () => {
+      if (window.authSystem && window.authSystem.isInitialized) {
+        resolve();
+      } else {
+        setTimeout(checkAuth, 100);
+      }
+    };
+    checkAuth();
+  });
+  
+  // Verificar permissões
+  if (!window.authSystem.hasPermission('users:view')) {
+    alert('Você não tem permissão para acessar esta página');
+    window.location.href = '/dashboard-protected.html';
+    return;
+  }
+  
+  // Continuar com o carregamento da página
+  await updateUserInfo();
+  await loadCompanies();
+  await loadUsers();
+  
+  // Event listeners dos botões
+  document.getElementById('createUserBtn').addEventListener('click', openCreateUserModal);
+  document.getElementById('refreshUsersBtn').addEventListener('click', loadUsers);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('saveUserBtn').addEventListener('click', saveUser);
+  
+  // Fechar modal ao clicar fora
+  document.getElementById('userModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('userModal')) {
+      closeModal();
+    }
+  });
+});
 
 // Variáveis globais
 let currentEditingUserId = null;
@@ -692,26 +728,7 @@ function showMessage(message, type) {
   console.log(`${type.toUpperCase()}: ${message}`);
 }
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', async () => {
-  await updateUserInfo();
-  await loadCompanies();
-  await loadUsers();
-  
-  // Event listeners dos botões
-  document.getElementById('createUserBtn').addEventListener('click', openCreateUserModal);
-  document.getElementById('refreshUsersBtn').addEventListener('click', loadUsers);
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  document.getElementById('cancelBtn').addEventListener('click', closeModal);
-  document.getElementById('saveUserBtn').addEventListener('click', saveUser);
-  
-  // Fechar modal ao clicar fora
-  document.getElementById('userModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('userModal')) {
-      closeModal();
-    }
-  });
-});
+// Event listeners já configurados acima
 
 // Função de logout
 function logout() {
@@ -881,12 +898,7 @@ function deleteUser(userId) {
   }
 }
 
-// Inicializar página
-document.addEventListener('DOMContentLoaded', () => {
-  loadRoles();
-  loadPermissions();
-  renderUsers();
-});
+// Inicialização já configurada acima
 </script>
 </body>
 </html>

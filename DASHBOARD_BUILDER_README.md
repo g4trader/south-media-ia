@@ -227,3 +227,4 @@ O sistema está funcional e permite:
 6. ✅ **Preview em tempo real** da configuração
 
 O sistema está pronto para uso e pode ser facilmente estendido com as funcionalidades pendentes de agendamento automático e integração completa com Google Scheduler.
+

@@ -1,0 +1,26 @@
+{
+  "CHANNEL_1_NAME": "YouTube",
+  "CHANNEL_1_COMPLETION": "49.5",
+  "CHANNEL_2_NAME": "Programática Video",
+  "CHANNEL_2_COMPLETION": "52.4",
+  "CHART_LABELS": [
+    "YouTube",
+    "Programática Video"
+  ],
+  "CHART_DATA": [
+    49.458239999999996,
+    52.434666697189414
+  ],
+  "CHART_COLORS": [
+    "#FB923C",
+    "#8B5CF6"
+  ],
+  "youtube_budget_completion": 49.458239999999996,
+  "youtube_impressions_completion": 49.458239999999996,
+  "prog_budget_completion": 47.304674999999996,
+  "prog_impressions_completion": 57.56465839437883,
+  "youtube_total_spend": 24729.12,
+  "youtube_total_views": 309114,
+  "prog_total_spend": 18921.87,
+  "prog_total_impressions": 100113
+}

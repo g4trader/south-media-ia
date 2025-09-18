@@ -503,10 +503,45 @@ if (!window.authSystem || !window.authSystem.isAuthenticated()) {
   window.location.href = '/login.html';
 }
 
-if (!window.authSystem.hasPermission('companies:view')) {
-  alert('Você não tem permissão para acessar esta página');
-  window.location.href = '/dashboard-protected.html';
-}
+// Verificar permissões após carregamento completo
+document.addEventListener('DOMContentLoaded', async () => {
+  // Aguardar sistema de autenticação carregar
+  await new Promise(resolve => {
+    const checkAuth = () => {
+      if (window.authSystem && window.authSystem.isInitialized) {
+        resolve();
+      } else {
+        setTimeout(checkAuth, 100);
+      }
+    };
+    checkAuth();
+  });
+  
+  // Verificar permissões
+  if (!window.authSystem.hasPermission('companies:view')) {
+    alert('Você não tem permissão para acessar esta página');
+    window.location.href = '/dashboard-protected.html';
+    return;
+  }
+  
+  // Continuar com o carregamento da página
+  await updateUserInfo();
+  await loadCompanies();
+  
+  // Event listeners dos botões
+  document.getElementById('createCompanyBtn').addEventListener('click', openCreateCompanyModal);
+  document.getElementById('refreshCompaniesBtn').addEventListener('click', loadCompanies);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('saveCompanyBtn').addEventListener('click', saveCompany);
+  
+  // Fechar modal ao clicar fora
+  document.getElementById('companyModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('companyModal')) {
+      closeModal();
+    }
+  });
+});
 
 // Variáveis globais
 let currentEditingCompanyId = null;
@@ -727,25 +762,7 @@ function logout() {
   }
 }
 
-// Event listeners
-document.addEventListener('DOMContentLoaded', async () => {
-  await updateUserInfo();
-  await loadCompanies();
-  
-  // Event listeners dos botões
-  document.getElementById('createCompanyBtn').addEventListener('click', openCreateCompanyModal);
-  document.getElementById('refreshCompaniesBtn').addEventListener('click', loadCompanies);
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-  document.getElementById('cancelBtn').addEventListener('click', closeModal);
-  document.getElementById('saveCompanyBtn').addEventListener('click', saveCompany);
-  
-  // Fechar modal ao clicar fora
-  document.getElementById('companyModal').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('companyModal')) {
-      closeModal();
-    }
-  });
-});
+// Event listeners já configurados acima
 
 // Função para mostrar mensagem de erro
 function showError(message) {
@@ -891,10 +908,7 @@ function deleteCompany(companyId) {
   }
 }
 
-// Inicializar página
-document.addEventListener('DOMContentLoaded', () => {
-  renderCompanies();
-});
+// Inicialização já configurada acima
 </script>
 </body>
 </html>

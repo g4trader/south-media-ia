@@ -483,7 +483,7 @@ function createDashboardCard(dashboard) {
   }
   
   return `
-    <div class="dashboard-card">
+    <div class="dashboard-card" data-dashboard-file="${dashboard.file}" style="cursor: pointer;">
       <div class="card-thumbnail">
         <div class="thumbnail-content">
           <div class="thumbnail-icon">${dashboard.icon}</div>
@@ -509,6 +509,13 @@ function createDashboardCard(dashboard) {
   `;
 }
 
+// Função para abrir dashboard
+function openDashboard(fileName) {
+  if (fileName) {
+    window.open(`/static/${fileName}`, '_blank');
+  }
+}
+
 // Função para carregar dashboards
 async function loadDashboards() {
   const container = document.getElementById('dashboardsContainer');
@@ -516,27 +523,8 @@ async function loadDashboards() {
   const emptyState = document.getElementById('emptyState');
   
   try {
-    // Carregar dashboards dinâmicos da API
-    const response = await fetch('http://localhost:8081/api/dashboards');
+    // Usar apenas dashboards estáticos
     let dynamicDashboards = [];
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success) {
-        dynamicDashboards = result.dashboards.map(dash => ({
-          file: dash.fileName,
-          name: dash.campaignName,
-          description: `Dashboard ${dash.status} - ${dash.startDate} a ${dash.endDate}`,
-          status: dash.status === 'active' ? 'active' : 'inactive',
-          category: 'Dinâmico',
-          lastUpdate: new Date(dash.createdAt).toLocaleDateString('pt-BR'),
-          icon: '🎯',
-          id: dash.id,
-          url: dash.url,
-          isDynamic: true
-        }));
-      }
-    }
     
     // Combinar dashboards estáticos e dinâmicos
     const allDashboards = [...dashboards, ...dynamicDashboards];
@@ -581,6 +569,17 @@ async function loadDashboards() {
 document.addEventListener('DOMContentLoaded', function() {
   loadDashboards();
   initializeDashboardBuilder();
+});
+
+// Event delegation para cliques nos cards de dashboard
+document.addEventListener('click', (e) => {
+  const dashboardCard = e.target.closest('.dashboard-card');
+  if (dashboardCard) {
+    const fileName = dashboardCard.getAttribute('data-dashboard-file');
+    if (fileName) {
+      openDashboard(fileName);
+    }
+  }
 });
 
 // ===== DASHBOARD BUILDER FUNCTIONS =====
