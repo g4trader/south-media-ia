@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Painel de Controle - Dashboards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -517,51 +518,25 @@ function openDashboard(fileName) {
 }
 
 // Função para carregar dashboards
-async function loadDashboards() {
+function loadDashboards() {
   const container = document.getElementById('dashboardsContainer');
   const loadingState = document.getElementById('loadingState');
   const emptyState = document.getElementById('emptyState');
   
-  try {
-    // Usar apenas dashboards estáticos
-    let dynamicDashboards = [];
+  // Usar apenas dashboards estáticos - sem fetch, sem async
+  loadingState.style.display = 'none';
+  
+  if (dashboards.length === 0) {
+    emptyState.style.display = 'block';
+  } else {
+    container.style.display = 'grid';
+    container.innerHTML = dashboards.map(createDashboardCard).join('');
     
-    // Combinar dashboards estáticos e dinâmicos
-    const allDashboards = [...dashboards, ...dynamicDashboards];
-    
-    loadingState.style.display = 'none';
-    
-    if (allDashboards.length === 0) {
-      emptyState.style.display = 'block';
-    } else {
-      container.style.display = 'grid';
-      container.innerHTML = allDashboards.map(createDashboardCard).join('');
-      
-      // Atualizar estatísticas
-      document.getElementById('totalDashboards').textContent = allDashboards.length;
-      document.getElementById('activeDashboards').textContent = 
-        allDashboards.filter(d => d.status === 'active').length;
-      document.getElementById('lastUpdate').textContent = 'Agora';
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao carregar dashboards:', error);
-    
-    // Fallback para dashboards estáticos
-    loadingState.style.display = 'none';
-    
-    if (dashboards.length === 0) {
-      emptyState.style.display = 'block';
-    } else {
-      container.style.display = 'grid';
-      container.innerHTML = dashboards.map(createDashboardCard).join('');
-      
-      // Atualizar estatísticas
-      document.getElementById('totalDashboards').textContent = dashboards.length;
-      document.getElementById('activeDashboards').textContent = 
-        dashboards.filter(d => d.status === 'active').length;
-      document.getElementById('lastUpdate').textContent = 'Agora';
-    }
+    // Atualizar estatísticas
+    document.getElementById('totalDashboards').textContent = dashboards.length;
+    document.getElementById('activeDashboards').textContent = 
+      dashboards.filter(d => d.status === 'active').length;
+    document.getElementById('lastUpdate').textContent = 'Agora';
   }
 }
 
@@ -812,14 +787,12 @@ async function saveDashboard() {
     
     console.log('📊 Dados do dashboard:', formData);
     
-    // Fazer chamada para a API
-    const response = await fetch('http://localhost:8081/api/dashboards', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData)
-    });
+    // API local não disponível - funcionalidade desabilitada temporariamente
+    console.log('📊 Dados do dashboard preparados:', formData);
+    alert('Dashboard builder em desenvolvimento. Dados preparados com sucesso!');
+    document.getElementById('createDashboardBtn').disabled = false;
+    document.getElementById('createDashboardBtn').innerHTML = '<span>📊</span><span>Criar Dashboard</span>';
+    return;
     
     const result = await response.json();
     
@@ -870,12 +843,12 @@ async function validateDashboard(dashboardId) {
   try {
     console.log(`✅ Validando dashboard ${dashboardId}...`);
     
-    const response = await fetch(`http://localhost:8081/api/dashboards/${dashboardId}/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    // API local não disponível - validação desabilitada temporariamente
+    console.log(`✅ Validação simulada para dashboard ${dashboardId}`);
+    button.disabled = false;
+    button.innerHTML = '<span>✅</span><span>Validar</span>';
+    alert('Validação simulada com sucesso!');
+    return;
     
     const result = await response.json();
     
@@ -891,10 +864,8 @@ async function validateDashboard(dashboardId) {
     button.innerHTML = '<span>✅</span><span>Validado!</span>';
     button.style.background = 'linear-gradient(135deg,rgba(0,255,136,.3),rgba(0,255,136,.5))';
     
-    // Recarregar lista de dashboards para atualizar status
-    setTimeout(() => {
-      loadDashboards();
-    }, 1000);
+    // Recarregar lista de dashboards desabilitado (API não disponível)
+    console.log('Recarga de dashboards desabilitada');
     
   } catch (error) {
     console.error('❌ Erro na validação:', error);
@@ -938,10 +909,8 @@ async function activateDashboard(dashboardId) {
     
     alert('🎉 Dashboard ativado com sucesso!\n\nO agendamento automático foi configurado e a coleta de dados será iniciada.');
     
-    // Recarregar lista de dashboards para atualizar status
-    setTimeout(() => {
-      loadDashboards();
-    }, 1000);
+    // Recarregar lista de dashboards desabilitado (API não disponível)
+    console.log('Recarga de dashboards desabilitada');
     
   } catch (error) {
     console.error('❌ Erro na ativação:', error);
