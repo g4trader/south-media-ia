@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CAMPAIGN_NAME}} - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(26, 26, 46, 0.8);
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff6b35, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: rgba(148, 163, 184, 0.8);
+            font-size: 1.1rem;
+        }
+        
+        .campaign-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .info-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .info-card h3 {
+            color: #00ff88;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .info-card p {
+            color: rgba(148, 163, 184, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        .channels-section {
+            margin-bottom: 40px;
+        }
+        
+        .channels-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .channel-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 16px;
+            padding: 24px;
+        }
+        
+        .channel-card h4 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #00ff88;
+        }
+        
+        .channel-details {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        .detail-label {
+            color: rgba(148, 163, 184, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        .detail-value {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        .status-created {
+            background: rgba(255, 167, 38, 0.2);
+            border: 1px solid rgba(255, 167, 38, 0.4);
+            color: #ffa726;
+        }
+        
+        .status-validated {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+        }
+        
+        .status-active {
+            background: rgba(0, 255, 136, 0.3);
+            border: 1px solid rgba(0, 255, 136, 0.5);
+            color: #00ff88;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: rgba(148, 163, 184, 0.6);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .campaign-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .channels-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>{{CAMPAIGN_NAME}}</h1>
+            <p>Dashboard de Campanha - {{START_DATE}} a {{END_DATE}}</p>
+            <div style="margin-top: 20px;">
+                <span class="status-badge status-{{STATUS}}">{{STATUS}}</span>
+            </div>
+        </div>
+        
+        <!-- Informações da Campanha -->
+        <div class="campaign-info">
+            <div class="info-card">
+                <h3>R$ {{TOTAL_BUDGET}}</h3>
+                <p>Orçamento Total</p>
+            </div>
+            <div class="info-card">
+                <h3>{{KPI_TYPE}}</h3>
+                <p>KPI Negociado</p>
+            </div>
+            <div class="info-card">
+                <h3>R$ {{KPI_VALUE}}</h3>
+                <p>Valor Unitário</p>
+            </div>
+            <div class="info-card">
+                <h3>{{KPI_TARGET}}</h3>
+                <p>Meta do KPI</p>
+            </div>
+        </div>
+        
+        <!-- Canais -->
+        <div class="channels-section">
+            <h2 class="channels-title">📺 Canais de Mídia</h2>
+            <div class="channels-grid" id="channelsContainer">
+                <!-- Canais serão inseridos via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Estratégias -->
+        <div class="info-card" style="margin-bottom: 40px;">
+            <h3 style="margin-bottom: 16px;">💡 Estratégias da Campanha</h3>
+            <p style="text-align: left; line-height: 1.6;">{{STRATEGIES}}</p>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Dashboard gerado em {{CREATED_AT}} | ID: {{CAMPAIGN_ID}}</p>
+        </div>
+    </div>
+    
+    <script>
+        // Configuração da campanha
+        const campaignConfig = {{JS_CONFIG}};
+        
+        // Configuração dos canais
+        const channelsConfig = {{CHANNELS_CONFIG}};
+        
+        // Função para renderizar canais
+        function renderChannels() {
+            const container = document.getElementById('channelsContainer');
+            const channels = campaignConfig.channels;
+            
+            container.innerHTML = channels.map(channel => {
+                const config = channelsConfig[channel.name];
+                return `
+                    <div class="channel-card">
+                        <h4>${channel.displayName}</h4>
+                        <div class="channel-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Planilha:</span>
+                                <span class="detail-value">${config.sheet_id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">GID:</span>
+                                <span class="detail-value">${config.gid || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Orçamento:</span>
+                                <span class="detail-value">R$ ${config.budget.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Quantidade:</span>
+                                <span class="detail-value">${config.quantity.toLocaleString()} unidades</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            renderChannels();
+            
+            // Log para debug
+            console.log('Dashboard carregado:', campaignConfig);
+            console.log('Canais configurados:', channelsConfig);
+        });
+    </script>
+</body>
+</html>
+

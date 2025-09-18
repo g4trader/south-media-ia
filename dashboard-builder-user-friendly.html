@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criador de Dashboards - Interface Amigável</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1e40af;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f9fafb;
+            --border: #374151;
+            --text: #ffffff;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .wizard-container {
+            background: var(--dark);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .wizard-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .step.active {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .step.completed {
+            background: var(--success);
+        }
+
+        .wizard-content {
+            padding: 2rem;
+        }
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--darker);
+            color: var(--text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .channels-section {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .channel-item {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--dark);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .channel-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .channel-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .channel-checkbox label {
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .channel-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .channel-input label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .channel-input input {
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .budget-summary {
+            background: linear-gradient(135deg, var(--success), var(--primary));
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .budget-summary h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .budget-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .budget-stat {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .budget-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .budget-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .preview-section {
+            background: var(--darker);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .preview-card {
+            background: var(--dark);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .required {
+            color: var(--danger);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .channel-item {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .wizard-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Criador de Dashboards</h1>
+            <p>Crie dashboards profissionais de forma simples e intuitiva</p>
+        </div>
+
+        <div class="wizard-container">
+            <div class="wizard-header">
+                <h2>Configuração da Campanha</h2>
+                <div class="wizard-steps">
+                    <div class="step active" id="step-1">
+                        <span>1</span>
+                        <span>Informações Básicas</span>
+                    </div>
+                    <div class="step" id="step-2">
+                        <span>2</span>
+                        <span>Canais de Mídia</span>
+                    </div>
+                    <div class="step" id="step-3">
+                        <span>3</span>
+                        <span>Revisão e Criação</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="wizard-content">
+                <div class="error-message" id="error-message"></div>
+                <div class="success-message" id="success-message"></div>
+
+                <!-- Step 1: Informações Básicas -->
+                <div class="step-content active" id="step-content-1">
+                    <div class="form-section">
+                        <h3>📋 Informações da Campanha</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="campaign-name">Nome da Campanha <span class="required">*</span></label>
+                                <input type="text" id="campaign-name" placeholder="Ex: Semana do Pescado" required>
+                                <div class="help-text">Nome que aparecerá no dashboard</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="campaign-start">Data de Início <span class="required">*</span></label>
+                                <input type="date" id="campaign-start" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="campaign-end">Data de Fim <span class="required">*</span></label>
+                                <input type="date" id="campaign-end" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="total-budget">Orçamento Total (R$) <span class="required">*</span></label>
+                                <input type="number" id="total-budget" placeholder="90000" min="0" step="0.01" required>
+                                <div class="help-text">Valor total disponível para a campanha</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>🎯 Objetivos e KPIs</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="kpi-type">Tipo de KPI <span class="required">*</span></label>
+                                <select id="kpi-type" required>
+                                    <option value="">Selecione o KPI</option>
+                                    <option value="CPM">CPM (Custo por Mil Impressões)</option>
+                                    <option value="CPV">CPV (Custo por Visualização)</option>
+                                    <option value="CPC">CPC (Custo por Clique)</option>
+                                    <option value="Lead">Lead</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="kpi-value">Valor do KPI (R$) <span class="required">*</span></label>
+                                <input type="number" id="kpi-value" placeholder="0.08" min="0" step="0.01" required>
+                                <div class="help-text">Valor alvo para o KPI selecionado</div>
+                            </div>
+                            <div class="form-group">
+                                <label for="report-model">Modelo de Relatório <span class="required">*</span></label>
+                                <select id="report-model" required>
+                                    <option value="">Selecione o modelo</option>
+                                    <option value="simple">Simples</option>
+                                    <option value="multichannel">Multicanal</option>
+                                </select>
+                                <div class="help-text">Simples: foco em um canal principal | Multicanal: múltiplos canais</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📝 Estratégias da Campanha</h3>
+                        <div class="form-group">
+                            <label for="strategies">Descrição das Estratégias</label>
+                            <textarea id="strategies" placeholder="Descreva as estratégias principais da campanha, público-alvo, objetivos específicos, etc."></textarea>
+                            <div class="help-text">Esta informação aparecerá na aba de insights do dashboard</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Canais de Mídia -->
+                <div class="step-content" id="step-content-2">
+                    <div class="form-section">
+                        <h3>📺 Canais de Mídia</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                            Selecione os canais que serão utilizados na campanha e configure as informações de cada um.
+                        </p>
+                        
+                        <div class="channels-section">
+                            <div class="channel-item">
+                                <div class="channel-checkbox">
+                                    <input type="checkbox" id="channel-youtube" data-channel="YouTube">
+                                    <label for="channel-youtube">📺 YouTube</label>
+                                </div>
+                                <div class="channel-input">
+                                    <label>ID da Planilha</label>
+                                    <input type="text" id="youtube-sheet-id" placeholder="1ABC..." disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>GID (opcional)</label>
+                                    <input type="text" id="youtube-gid" placeholder="0" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Orçamento (R$)</label>
+                                    <input type="number" id="youtube-budget" placeholder="50000" min="0" step="0.01" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Meta (Visualizações)</label>
+                                    <input type="number" id="youtube-quantity" placeholder="625000" min="0" disabled>
+                                </div>
+                            </div>
+
+                            <div class="channel-item">
+                                <div class="channel-checkbox">
+                                    <input type="checkbox" id="channel-programatica-video" data-channel="Programática Video">
+                                    <label for="channel-programatica-video">🎯 Programática Video</label>
+                                </div>
+                                <div class="channel-input">
+                                    <label>ID da Planilha</label>
+                                    <input type="text" id="programatica-video-sheet-id" placeholder="1XYZ..." disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>GID (opcional)</label>
+                                    <input type="text" id="programatica-video-gid" placeholder="0" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Orçamento (R$)</label>
+                                    <input type="number" id="programatica-video-budget" placeholder="40000" min="0" step="0.01" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Meta (Impressões)</label>
+                                    <input type="number" id="programatica-video-quantity" placeholder="173914" min="0" disabled>
+                                </div>
+                            </div>
+
+                            <div class="channel-item">
+                                <div class="channel-checkbox">
+                                    <input type="checkbox" id="channel-programatica-display" data-channel="Programática Display">
+                                    <label for="channel-programatica-display">📊 Programática Display</label>
+                                </div>
+                                <div class="channel-input">
+                                    <label>ID da Planilha</label>
+                                    <input type="text" id="programatica-display-sheet-id" placeholder="1DEF..." disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>GID (opcional)</label>
+                                    <input type="text" id="programatica-display-gid" placeholder="0" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Orçamento (R$)</label>
+                                    <input type="number" id="programatica-display-budget" placeholder="0" min="0" step="0.01" disabled>
+                                </div>
+                                <div class="channel-input">
+                                    <label>Meta (Impressões)</label>
+                                    <input type="number" id="programatica-display-quantity" placeholder="0" min="0" disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="budget-summary" id="budget-summary" style="display: none;">
+                            <h4>💰 Resumo do Orçamento</h4>
+                            <div class="budget-stats">
+                                <div class="budget-stat">
+                                    <div class="budget-stat-value" id="total-distributed">R$ 0,00</div>
+                                    <div class="budget-stat-label">Total Distribuído</div>
+                                </div>
+                                <div class="budget-stat">
+                                    <div class="budget-stat-value" id="budget-remaining">R$ 0,00</div>
+                                    <div class="budget-stat-label">Restante</div>
+                                </div>
+                                <div class="budget-stat">
+                                    <div class="budget-stat-value" id="budget-percentage">0%</div>
+                                    <div class="budget-stat-label">Utilizado</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Revisão e Criação -->
+                <div class="step-content" id="step-content-3">
+                    <div class="form-section">
+                        <h3>🔍 Revisão da Configuração</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+                            Revise todas as informações antes de criar o dashboard.
+                        </p>
+                        
+                        <div class="preview-section">
+                            <div class="preview-card">
+                                <h4>📋 Informações da Campanha</h4>
+                                <div id="preview-basic-info"></div>
+                            </div>
+                            
+                            <div class="preview-card" style="margin-top: 1rem;">
+                                <h4>📺 Canais Selecionados</h4>
+                                <div id="preview-channels"></div>
+                            </div>
+                            
+                            <div class="preview-card" style="margin-top: 1rem;">
+                                <h4>💰 Resumo Financeiro</h4>
+                                <div id="preview-budget"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-secondary" id="prev-btn" onclick="previousStep()" style="display: none;">
+                        ← Anterior
+                    </button>
+                    <div style="flex: 1;"></div>
+                    <button type="button" class="btn btn-primary" id="next-btn" onclick="nextStep()">
+                        Próximo →
+                    </button>
+                    <button type="button" class="btn btn-success" id="create-btn" onclick="createDashboard()" style="display: none;">
+                        <span class="loading" id="create-loading">
+                            <div class="spinner"></div>
+                            Criando...
+                        </span>
+                        <span id="create-text">🚀 Criar Dashboard</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeForm();
+            setupEventListeners();
+            setMinDates();
+        });
+
+        function initializeForm() {
+            // Configurar datas mínimas
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('campaign-start').min = today;
+            document.getElementById('campaign-end').min = today;
+        }
+
+        function setMinDates() {
+            const startDate = document.getElementById('campaign-start');
+            const endDate = document.getElementById('campaign-end');
+            
+            startDate.addEventListener('change', function() {
+                endDate.min = this.value;
+            });
+        }
+
+        function setupEventListeners() {
+            // Event listeners para checkboxes de canais
+            document.querySelectorAll('input[type="checkbox"][data-channel]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const channelName = this.dataset.channel.toLowerCase().replace(' ', '-');
+                    const inputs = document.querySelectorAll(`[id*="${channelName}"]:not([type="checkbox"])`);
+                    
+                    inputs.forEach(input => {
+                        input.disabled = !this.checked;
+                        if (!this.checked) {
+                            input.value = '';
+                        }
+                    });
+                    
+                    updateBudgetSummary();
+                });
+            });
+
+            // Event listeners para inputs de orçamento
+            document.querySelectorAll('input[id*="budget"]').forEach(input => {
+                input.addEventListener('input', updateBudgetSummary);
+            });
+
+            // Event listeners para validação em tempo real
+            document.querySelectorAll('input[required], select[required]').forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', clearFieldError);
+            });
+        }
+
+        function updateBudgetSummary() {
+            const totalBudget = parseFloat(document.getElementById('total-budget').value) || 0;
+            let distributedBudget = 0;
+
+            document.querySelectorAll('input[id*="budget"]:not([id="total-budget"])').forEach(input => {
+                if (!input.disabled && input.value) {
+                    distributedBudget += parseFloat(input.value) || 0;
+                }
+            });
+
+            const remaining = totalBudget - distributedBudget;
+            const percentage = totalBudget > 0 ? (distributedBudget / totalBudget * 100) : 0;
+
+            document.getElementById('total-distributed').textContent = formatCurrency(distributedBudget);
+            document.getElementById('budget-remaining').textContent = formatCurrency(remaining);
+            document.getElementById('budget-percentage').textContent = percentage.toFixed(1) + '%';
+
+            // Mostrar/ocultar resumo
+            const summary = document.getElementById('budget-summary');
+            summary.style.display = distributedBudget > 0 ? 'block' : 'none';
+
+            // Atualizar cores baseado no status
+            const remainingElement = document.getElementById('budget-remaining');
+            if (remaining < 0) {
+                remainingElement.style.color = 'var(--danger)';
+            } else if (remaining === 0) {
+                remainingElement.style.color = 'var(--success)';
+            } else {
+                remainingElement.style.color = 'var(--warning)';
+            }
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        function validateField(event) {
+            const field = event.target;
+            const value = field.value.trim();
+
+            if (field.hasAttribute('required') && !value) {
+                showFieldError(field, 'Este campo é obrigatório');
+                return false;
+            }
+
+            if (field.type === 'number' && value && (isNaN(value) || parseFloat(value) < 0)) {
+                showFieldError(field, 'Digite um valor válido');
+                return false;
+            }
+
+            if (field.type === 'date' && value) {
+                const date = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (date < today) {
+                    showFieldError(field, 'A data não pode ser no passado');
+                    return false;
+                }
+            }
+
+            clearFieldError(field);
+            return true;
+        }
+
+        function showFieldError(field, message) {
+            clearFieldError(field);
+            field.style.borderColor = 'var(--danger)';
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            errorDiv.style.color = 'var(--danger)';
+            errorDiv.style.fontSize = '0.8rem';
+            errorDiv.style.marginTop = '0.25rem';
+            errorDiv.textContent = message;
+            
+            field.parentNode.appendChild(errorDiv);
+        }
+
+        function clearFieldError(field) {
+            field.style.borderColor = '';
+            const errorDiv = field.parentNode.querySelector('.field-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        function validateStep(step) {
+            const stepContent = document.getElementById(`step-content-${step}`);
+            const requiredFields = stepContent.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!validateField({ target: field })) {
+                    isValid = false;
+                }
+            });
+
+            // Validações específicas por step
+            if (step === 2) {
+                const selectedChannels = document.querySelectorAll('input[type="checkbox"][data-channel]:checked');
+                if (selectedChannels.length === 0) {
+                    showError('Selecione pelo menos um canal de mídia');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        }
+
+        function nextStep() {
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStepDisplay();
+                updatePreview();
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepDisplay();
+            }
+        }
+
+        function updateStepDisplay() {
+            // Atualizar steps
+            for (let i = 1; i <= totalSteps; i++) {
+                const step = document.getElementById(`step-${i}`);
+                const content = document.getElementById(`step-content-${i}`);
+                
+                step.classList.remove('active', 'completed');
+                content.classList.remove('active');
+                
+                if (i < currentStep) {
+                    step.classList.add('completed');
+                } else if (i === currentStep) {
+                    step.classList.add('active');
+                    content.classList.add('active');
+                }
+            }
+
+            // Atualizar botões
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const createBtn = document.getElementById('create-btn');
+
+            prevBtn.style.display = currentStep > 1 ? 'inline-flex' : 'none';
+            nextBtn.style.display = currentStep < totalSteps ? 'inline-flex' : 'none';
+            createBtn.style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
+        }
+
+        function updatePreview() {
+            if (currentStep !== 3) return;
+
+            // Informações básicas
+            const basicInfo = `
+                <p><strong>Nome:</strong> ${document.getElementById('campaign-name').value}</p>
+                <p><strong>Período:</strong> ${document.getElementById('campaign-start').value} a ${document.getElementById('campaign-end').value}</p>
+                <p><strong>KPI:</strong> ${document.getElementById('kpi-type').value} - R$ ${document.getElementById('kpi-value').value}</p>
+                <p><strong>Modelo:</strong> ${document.getElementById('report-model').value}</p>
+            `;
+            document.getElementById('preview-basic-info').innerHTML = basicInfo;
+
+            // Canais selecionados
+            const selectedChannels = [];
+            document.querySelectorAll('input[type="checkbox"][data-channel]:checked').forEach(checkbox => {
+                const channelName = checkbox.dataset.channel;
+                const channelId = channelName.toLowerCase().replace(' ', '-');
+                const budget = document.getElementById(`${channelId}-budget`).value;
+                const quantity = document.getElementById(`${channelId}-quantity`).value;
+                
+                selectedChannels.push(`
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>${channelName}:</strong> R$ ${formatCurrency(parseFloat(budget) || 0)} | Meta: ${(parseFloat(quantity) || 0).toLocaleString('pt-BR')}
+                    </div>
+                `);
+            });
+            document.getElementById('preview-channels').innerHTML = selectedChannels.join('');
+
+            // Resumo financeiro
+            const totalBudget = parseFloat(document.getElementById('total-budget').value) || 0;
+            const distributedBudget = Array.from(document.querySelectorAll('input[id*="budget"]:not([id="total-budget"])'))
+                .filter(input => !input.disabled && input.value)
+                .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+            
+            const budgetInfo = `
+                <p><strong>Orçamento Total:</strong> ${formatCurrency(totalBudget)}</p>
+                <p><strong>Distribuído:</strong> ${formatCurrency(distributedBudget)}</p>
+                <p><strong>Restante:</strong> ${formatCurrency(totalBudget - distributedBudget)}</p>
+            `;
+            document.getElementById('preview-budget').innerHTML = budgetInfo;
+        }
+
+        function createDashboard() {
+            if (!validateStep(currentStep)) {
+                return;
+            }
+
+            const createBtn = document.getElementById('create-btn');
+            const loading = document.getElementById('create-loading');
+            const text = document.getElementById('create-text');
+
+            // Mostrar loading
+            createBtn.disabled = true;
+            loading.style.display = 'flex';
+            text.style.display = 'none';
+
+            // Coletar dados do formulário
+            const formData = collectFormData();
+
+            // Simular criação (substituir por chamada real à API)
+            setTimeout(() => {
+                // Aqui seria a chamada real para a API
+                console.log('Dados do dashboard:', formData);
+                
+                // Simular sucesso
+                showSuccess('Dashboard criado com sucesso! 🎉');
+                
+                // Resetar loading
+                createBtn.disabled = false;
+                loading.style.display = 'none';
+                text.style.display = 'inline';
+                
+                // Opcional: redirecionar ou mostrar link do dashboard
+                setTimeout(() => {
+                    alert('Dashboard criado! Em uma implementação real, você seria redirecionado para o dashboard.');
+                }, 1000);
+                
+            }, 3000);
+        }
+
+        function collectFormData() {
+            const channels = [];
+            
+            document.querySelectorAll('input[type="checkbox"][data-channel]:checked').forEach(checkbox => {
+                const channelName = checkbox.dataset.channel;
+                const channelId = channelName.toLowerCase().replace(' ', '-');
+                
+                channels.push({
+                    name: channelName,
+                    sheet_id: document.getElementById(`${channelId}-sheet-id`).value,
+                    gid: document.getElementById(`${channelId}-gid`).value || null,
+                    budget: parseFloat(document.getElementById(`${channelId}-budget`).value) || 0,
+                    quantity: parseInt(document.getElementById(`${channelId}-quantity`).value) || 0
+                });
+            });
+
+    return {
+        campaignName: document.getElementById('campaign-name').value,
+        startDate: document.getElementById('campaign-start').value,
+        endDate: document.getElementById('campaign-end').value,
+        totalBudget: parseFloat(document.getElementById('total-budget').value) || 0,
+        kpiType: document.getElementById('kpi-type').value,
+        kpiValue: parseFloat(document.getElementById('kpi-value').value) || 0,
+        reportModel: document.getElementById('report-model').value,
+        strategies: document.getElementById('strategies').value,
+        channels: channels
+    };
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
