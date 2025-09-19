@@ -228,3 +228,4 @@ O sistema está funcional e permite:
 
 O sistema está pronto para uso e pode ser facilmente estendido com as funcionalidades pendentes de agendamento automático e integração completa com Google Scheduler.
 
+

@@ -151,3 +151,4 @@ O dashboard gerado está **pronto para uso** e pode ser acessado diretamente no 
 - `template_simple_with_variables.html` - Template com variáveis
 - `dash_semana_do_pescado_20250915_182110.html` - Dashboard gerado
 
+

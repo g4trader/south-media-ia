@@ -225,3 +225,4 @@ Combinação YouTube + Programática Video mostrou-se ideal para awareness de ma
 if __name__ == "__main__":
     update_insights_tab()
 
+

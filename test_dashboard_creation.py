@@ -132,3 +132,4 @@ if __name__ == "__main__":
         print("\n❌ API não está disponível")
         print("💡 Execute: python dashboard_builder_api.py")
 
+

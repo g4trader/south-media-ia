@@ -130,3 +130,4 @@ def generate_dashboard_quartis_fixed():
 if __name__ == "__main__":
     generate_dashboard_quartis_fixed()
 
+

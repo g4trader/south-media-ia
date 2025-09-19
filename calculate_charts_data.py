@@ -106,3 +106,4 @@ def calculate_charts_data():
 if __name__ == "__main__":
     calculate_charts_data()
 
+

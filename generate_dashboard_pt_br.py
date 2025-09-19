@@ -117,3 +117,4 @@ def generate_dashboard_pt_br():
 if __name__ == "__main__":
     generate_dashboard_pt_br()
 
+
