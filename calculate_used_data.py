@@ -122,3 +122,4 @@ if __name__ == "__main__":
     print(f"\n🎉 Cálculo de dados utilizados concluído!")
     print(f"📊 Variáveis criadas: {len(data)}")
 
+

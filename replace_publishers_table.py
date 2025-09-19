@@ -96,3 +96,4 @@ def generate_publishers_table_body(sites_list):
 if __name__ == "__main__":
     replace_publishers_table()
 
+

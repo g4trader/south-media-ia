@@ -162,3 +162,4 @@ def generate_sites_list_html(sites_list):
 if __name__ == "__main__":
     update_sites_list()
 
+

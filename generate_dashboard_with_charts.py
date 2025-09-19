@@ -110,3 +110,4 @@ def generate_dashboard_with_charts():
 if __name__ == "__main__":
     generate_dashboard_with_charts()
 
+

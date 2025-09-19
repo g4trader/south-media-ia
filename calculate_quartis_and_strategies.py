@@ -169,3 +169,4 @@ def calculate_quartis_and_strategies():
 if __name__ == "__main__":
     calculate_quartis_and_strategies()
 
+
