@@ -912,14 +912,33 @@ async function saveDashboard() {
       channels: []
     };
     
+    // Função para extrair ID da planilha de uma URL do Google Sheets
+    function extractSheetId(url) {
+      if (!url) return '';
+      
+      // Se já é um ID (sem caracteres especiais), retorna como está
+      if (!url.includes('/') && !url.includes('?')) {
+        return url;
+      }
+      
+      // Extrair ID de URLs do Google Sheets
+      const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      return match ? match[1] : url;
+    }
+    
     // Coletar canais selecionados
     const channelCheckboxes = document.querySelectorAll('.channel-checkbox:checked');
     channelCheckboxes.forEach(checkbox => {
       const channelName = checkbox.value;
-      const sheetId = document.getElementById(`${channelName}_sheet`).value;
+      const sheetIdRaw = document.getElementById(`${channelName}_sheet`).value;
+      const sheetId = extractSheetId(sheetIdRaw);
       const gid = document.getElementById(`${channelName}_gid`).value;
       const budget = parseFloat(document.getElementById(`${channelName}_budget`).value);
       const quantity = parseInt(document.getElementById(`${channelName}_quantity`).value);
+      
+      if (!sheetId) {
+        throw new Error(`ID da planilha obrigatório para ${channelName}`);
+      }
       
       formData.channels.push({
         name: channelName,
