@@ -227,7 +227,7 @@ def create_dashboard():
             from dashboard_builder_api_enhanced import DashboardBuilderEnhanced
             
             builder = DashboardBuilderEnhanced()
-            result = builder.create_dashboard_api(data)
+            result = builder.create_dashboard(data)
         except ImportError as e:
             logger.error(f"❌ Erro ao importar DashboardBuilderAPI: {e}")
             return add_cors_headers(jsonify({
