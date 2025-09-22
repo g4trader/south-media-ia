@@ -297,16 +297,13 @@ class HybridAuthSystem {
     // Nova função para listar dashboards da pasta /static
     async getStaticDashboards() {
         try {
-            // Lista de arquivos HTML na pasta static (baseado no que vimos no ls)
+            // Lista de arquivos HTML na pasta static (atualizada com arquivos existentes)
             const staticFiles = [
-                'dash_campaign_20250922_070105.html',
                 'dash_copacol.html',
                 'dash_copacol_mestre_das_grelhas.html',
                 'dash_dauher_hidrabene.html',
                 'dash_sebrae.html',
                 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html',
-                'dash_semana_do_pescado_NO_NETFLIX_20250916_172717.html',
-                'dash_semana_do_pescado_PLANNING_UPDATED_20250916_172348.html',
                 'dash_sonho.html',
                 'dash_unicesusc.html',
                 'dash_unimed.html'
