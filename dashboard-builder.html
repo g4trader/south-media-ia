@@ -993,6 +993,9 @@ async function saveDashboard() {
     
     console.log('📊 Dados do dashboard:', formData);
     
+    // Debug: mostrar dados finais antes de enviar
+    alert(`🔍 DEBUG: Dados finais antes de enviar:\nCanais: ${formData.channels.length}\nPrimeiro canal:\n- name: ${formData.channels[0]?.name}\n- sheetId: "${formData.channels[0]?.sheetId}"\n- gid: "${formData.channels[0]?.gid}"\n- budget: ${formData.channels[0]?.budget}\n- quantity: ${formData.channels[0]?.quantity}`);
+    
     // Fazer chamada para a API do Cloud Run
     const response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/api/dashboards', {
       method: 'POST',
