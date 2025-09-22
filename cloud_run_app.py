@@ -406,42 +406,42 @@ def create_dashboard():
                 'channels': processed_channels
             }
             
-               # Gerar HTML do dashboard
-               try:
-                   html_content = builder.generate_dashboard_html(dashboard_data)
-                   
-                   # Salvar arquivo HTML na pasta static
-                   import os
-                   os.makedirs('static', exist_ok=True)
-                   filepath = os.path.join('static', filename)
-                   
-                   with open(filepath, 'w', encoding='utf-8') as f:
-                       f.write(html_content)
-                   
-                   logger.info(f"✅ Dashboard HTML salvo em: {filepath}")
-                   
-                   # Tentar fazer commit e push para o Git (para deploy automático no Vercel)
-                   git_success = commit_and_push_dashboard(filepath, data.get('campaignName', 'Campaign'))
-                   
-                   # Atualizar lista de dashboards no frontend
-                   list_updated = False
-                   if git_success:
-                       list_updated = update_dashboard_list(filename)
-                   
-                   result = {
-                       "success": True,
-                       "dashboard": {
-                           "id": dashboard_id,
-                           "name": data.get('campaignName', 'Campaign'),
-                           "status": "created",
-                           "html_file": filename,
-                           "html_path": filepath,
-                           "html_content": html_content,  # Incluir conteúdo HTML na resposta
-                           "channels": processed_channels,
-                           "git_pushed": git_success,
-                           "list_updated": list_updated
-                       }
-                   }
+            # Gerar HTML do dashboard
+            try:
+                html_content = builder.generate_dashboard_html(dashboard_data)
+                
+                # Salvar arquivo HTML na pasta static
+                import os
+                os.makedirs('static', exist_ok=True)
+                filepath = os.path.join('static', filename)
+                
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                
+                logger.info(f"✅ Dashboard HTML salvo em: {filepath}")
+                
+                # Tentar fazer commit e push para o Git (para deploy automático no Vercel)
+                git_success = commit_and_push_dashboard(filepath, data.get('campaignName', 'Campaign'))
+                
+                # Atualizar lista de dashboards no frontend
+                list_updated = False
+                if git_success:
+                    list_updated = update_dashboard_list(filename)
+                
+                result = {
+                    "success": True,
+                    "dashboard": {
+                        "id": dashboard_id,
+                        "name": data.get('campaignName', 'Campaign'),
+                        "status": "created",
+                        "html_file": filename,
+                        "html_path": filepath,
+                        "html_content": html_content,  # Incluir conteúdo HTML na resposta
+                        "channels": processed_channels,
+                        "git_pushed": git_success,
+                        "list_updated": list_updated
+                    }
+                }
                 
             except Exception as e:
                 logger.error(f"❌ Erro ao gerar HTML do dashboard: {e}")
