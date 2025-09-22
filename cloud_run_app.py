@@ -82,6 +82,69 @@ def commit_and_push_dashboard(file_path, dashboard_name):
         logger.error(f"❌ Erro ao fazer commit/push do dashboard: {e}")
         return False
 
+def update_dashboard_list(new_filename):
+    """Atualizar lista de dashboards no arquivo auth_system_hybrid.js"""
+    try:
+        js_file_path = 'auth_system_hybrid.js'
+        
+        # Ler o arquivo atual
+        with open(js_file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Encontrar a lista de staticFiles
+        import re
+        pattern = r"const staticFiles = \[(.*?)\];"
+        match = re.search(pattern, content, re.DOTALL)
+        
+        if match:
+            # Extrair a lista atual
+            current_files = match.group(1)
+            
+            # Verificar se o arquivo já está na lista
+            if new_filename not in current_files:
+                # Adicionar o novo arquivo à lista (em ordem alfabética)
+                files_list = []
+                for line in current_files.split('\n'):
+                    line = line.strip()
+                    if line.startswith("'") and line.endswith("',"):
+                        file_name = line[1:-2]  # Remove aspas e vírgula
+                        files_list.append(file_name)
+                
+                # Adicionar o novo arquivo
+                files_list.append(new_filename)
+                files_list.sort()  # Ordenar alfabeticamente
+                
+                # Reconstruir a lista
+                new_files_list = "[\n"
+                for file_name in files_list:
+                    new_files_list += f"                '{file_name}',\n"
+                new_files_list += "            ]"
+                
+                # Substituir no conteúdo
+                new_content = content.replace(match.group(0), f"const staticFiles = {new_files_list};")
+                
+                # Salvar o arquivo atualizado
+                with open(js_file_path, 'w', encoding='utf-8') as f:
+                    f.write(new_content)
+                
+                # Fazer commit e push da atualização
+                subprocess.run(['git', 'add', js_file_path], 
+                              capture_output=True, text=True, cwd='/app')
+                subprocess.run(['git', 'commit', '-m', f'Update dashboard list: add {new_filename}'], 
+                              capture_output=True, text=True, cwd='/app')
+                subprocess.run(['git', 'push', 'origin', 'main'], 
+                              capture_output=True, text=True, cwd='/app')
+                
+                logger.info(f"✅ Lista de dashboards atualizada com {new_filename}")
+                return True
+        
+        logger.warning(f"❌ Não foi possível encontrar a lista staticFiles no arquivo {js_file_path}")
+        return False
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao atualizar lista de dashboards: {e}")
+        return False
+
 # Handler para OPTIONS requests (CORS preflight)
 @app.before_request
 def handle_preflight():
@@ -353,6 +416,11 @@ def create_dashboard():
                 # Fazer commit e push para o Git (para deploy automático no Vercel)
                 git_success = commit_and_push_dashboard(filepath, data.get('campaignName', 'Campaign'))
                 
+                # Atualizar lista de dashboards no frontend
+                list_updated = False
+                if git_success:
+                    list_updated = update_dashboard_list(filename)
+                
                 result = {
                     "success": True,
                     "dashboard": {
@@ -362,7 +430,8 @@ def create_dashboard():
                         "html_file": filename,
                         "html_path": filepath,
                         "channels": processed_channels,
-                        "git_pushed": git_success
+                        "git_pushed": git_success,
+                        "list_updated": list_updated
                     }
                 }
                 
