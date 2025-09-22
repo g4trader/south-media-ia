@@ -228,9 +228,11 @@ def create_dashboard():
             from dashboard_builder_api_enhanced import DashboardBuilderEnhanced
             
             builder = DashboardBuilderEnhanced()
+            logger.info(f"🔧 Builder inicializado: {type(builder)}")
             
             # Validar dados da campanha
             validation_result = builder.validate_campaign_data(data)
+            logger.info(f"✅ Validação da campanha: {validation_result}")
             if not validation_result['valid']:
                 return add_cors_headers(jsonify({
                     "success": False,
