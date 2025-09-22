@@ -167,7 +167,7 @@ class DashboardBuilderEnhanced:
             if not self.sheets_processor:
                 raise Exception("Google Sheets não configurado - configure as credenciais")
             
-            sheet_id = channel.get('sheet_id')
+            sheet_id = channel.get('sheetId') or channel.get('sheet_id')
             gid = channel.get('gid')
             
             if not sheet_id:
