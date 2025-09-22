@@ -6,10 +6,14 @@ API aprimorada para criação de dashboards - Interface amigável
 import json
 import os
 import uuid
+import logging
 from datetime import datetime
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import traceback
+
+# Configurar logging
+logger = logging.getLogger(__name__)
 
 # Importar processador de planilhas
 try:
