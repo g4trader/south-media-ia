@@ -246,6 +246,7 @@ class DashboardBuilderEnhanced:
                 # Converter DataFrame para lista
                 headers = data.columns.tolist()
                 rows = data.values.tolist()
+                logger.info(f"📊 DataFrame convertido para lista com {len(rows)} linhas")
             else:  # É uma lista
                 logger.info(f"📊 Lista com {len(data) if data else 0} elementos")
                 if not data or len(data) < 2:
@@ -257,6 +258,15 @@ class DashboardBuilderEnhanced:
             
             logger.info(f"📋 Cabeçalhos: {headers}")
             logger.info(f"📋 Número de linhas: {len(rows)}")
+            
+            # Debug: verificar estrutura das primeiras linhas
+            if rows:
+                logger.info(f"🔍 Primeira linha: {rows[0] if rows else 'Nenhuma'}")
+                logger.info(f"🔍 Tipo da primeira linha: {type(rows[0])}")
+                if rows[0]:
+                    logger.info(f"🔍 Primeira linha é lista: {isinstance(rows[0], list)}")
+                    if isinstance(rows[0], list):
+                        logger.info(f"🔍 Tamanho da primeira linha: {len(rows[0])}")
             
             # Calcular métricas básicas
             metrics = {
@@ -270,19 +280,33 @@ class DashboardBuilderEnhanced:
             }
             
             # Calcular totais se houver colunas numéricas
-            if rows:
+            if rows and headers:
                 for i, header in enumerate(headers):
                     if header and any(keyword in header.lower() for keyword in ['spend', 'gasto', 'custo', 'impress', 'view', 'click']):
                         try:
-                            total = sum(float(row[i]) for row in rows if row[i] and str(row[i]).replace('.', '').replace(',', '').isdigit())
+                            # Verificar se a linha é uma lista antes de acessar por índice
+                            total = 0
+                            for row in rows:
+                                if isinstance(row, list) and i < len(row) and row[i] is not None:
+                                    try:
+                                        # Tentar converter para float, removendo vírgulas e pontos
+                                        value_str = str(row[i]).replace(',', '').replace('.', '')
+                                        if value_str.isdigit():
+                                            total += float(row[i])
+                                    except (ValueError, TypeError):
+                                        continue
                             metrics[f'total_{header.lower().replace(" ", "_")}'] = total
-                        except (ValueError, IndexError):
+                            logger.info(f"📊 Total calculado para {header}: {total}")
+                        except (ValueError, IndexError, TypeError) as e:
+                            logger.warning(f"⚠️ Erro ao calcular total para {header}: {e}")
                             continue
             
             return metrics
             
         except Exception as e:
             logger.error(f"❌ Erro ao calcular métricas do canal {channel.get('name')}: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             raise Exception(f"Erro ao processar dados do canal: {str(e)}")
 
     def generate_dashboard_html(self, config):
