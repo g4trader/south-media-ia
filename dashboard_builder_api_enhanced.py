@@ -178,7 +178,7 @@ class DashboardBuilderEnhanced:
                 raise Exception(f"Não foi possível acessar a planilha {sheet_id}")
             
             # Ler dados reais da planilha
-            data = self.sheets_processor.read_sheet_data(sheet_id, None, gid)
+            data = self.sheets_processor.read_sheet_data(sheet_id, sheet_name=None, gid=gid)
             if not data:
                 raise Exception(f"Nenhum dado encontrado na planilha {sheet_id}")
             
@@ -223,9 +223,41 @@ class DashboardBuilderEnhanced:
 
     def calculate_channel_metrics(self, data, channel):
         """Calcular métricas de um canal baseado nos dados da planilha"""
-        # Implementar lógica específica de cálculo
-        # Por enquanto, retornar dados simulados
-        return self.get_simulated_channel_data(channel)
+        try:
+            # Processar dados reais da planilha
+            if not data or len(data) < 2:
+                raise Exception("Dados insuficientes na planilha")
+            
+            # Extrair cabeçalhos e dados
+            headers = data[0] if data else []
+            rows = data[1:] if len(data) > 1 else []
+            
+            # Calcular métricas básicas
+            metrics = {
+                'name': channel.get('name', 'Unknown'),
+                'budget': float(channel.get('budget', 0)),
+                'quantity': int(channel.get('quantity', 0)),
+                'sheet_id': channel.get('sheet_id'),
+                'gid': channel.get('gid'),
+                'data_rows': len(rows),
+                'headers': headers
+            }
+            
+            # Calcular totais se houver colunas numéricas
+            if rows:
+                for i, header in enumerate(headers):
+                    if header and any(keyword in header.lower() for keyword in ['spend', 'gasto', 'custo', 'impress', 'view', 'click']):
+                        try:
+                            total = sum(float(row[i]) for row in rows if row[i] and str(row[i]).replace('.', '').replace(',', '').isdigit())
+                            metrics[f'total_{header.lower().replace(" ", "_")}'] = total
+                        except (ValueError, IndexError):
+                            continue
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao calcular métricas do canal {channel.get('name')}: {e}")
+            raise Exception(f"Erro ao processar dados do canal: {str(e)}")
 
     def generate_dashboard_html(self, config):
         """Gerar HTML do dashboard"""
