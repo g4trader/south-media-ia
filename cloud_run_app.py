@@ -224,9 +224,9 @@ def create_dashboard():
         
         # Importar e usar o DashboardBuilder
         try:
-            from dashboard_builder_api_enhanced import DashboardBuilderAPI
+            from dashboard_builder_api_enhanced import DashboardBuilderEnhanced
             
-            builder = DashboardBuilderAPI()
+            builder = DashboardBuilderEnhanced()
             result = builder.create_dashboard_api(data)
         except ImportError as e:
             logger.error(f"❌ Erro ao importar DashboardBuilderAPI: {e}")
