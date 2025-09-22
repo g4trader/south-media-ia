@@ -173,11 +173,17 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="startDate">Data de Início *</label>
-            <input type="date" id="startDate" class="form-input" required>
+            <input type="date" id="startDate" class="form-input" required placeholder="Selecione a data de início">
+            <small style="color: var(--muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+              📅 Use o calendário ou digite no formato DD/MM/AAAA
+            </small>
           </div>
           <div class="form-group">
             <label class="form-label" for="endDate">Data de Fim *</label>
-            <input type="date" id="endDate" class="form-input" required>
+            <input type="date" id="endDate" class="form-input" required placeholder="Selecione a data de fim">
+            <small style="color: var(--muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+              📅 Deve ser posterior à data de início
+            </small>
           </div>
         </div>
 
@@ -519,6 +525,14 @@ function openCreateDashboardModal() {
   document.getElementById('startDate').min = today;
   document.getElementById('endDate').min = today;
   
+  // Adicionar validação em tempo real para datas
+  document.getElementById('startDate').addEventListener('change', validateDates);
+  document.getElementById('endDate').addEventListener('change', validateDates);
+  
+  // Adicionar correção automática de datas
+  document.getElementById('startDate').addEventListener('blur', autoCorrectDate);
+  document.getElementById('endDate').addEventListener('blur', autoCorrectDate);
+  
   // Limpar formulário
   document.getElementById('createDashboardForm').reset();
   
@@ -597,6 +611,106 @@ function updateBudgetSummary() {
   } else {
     budgetSummary.style.display = 'none';
   }
+}
+
+// Função para validar datas em tempo real
+function validateDates() {
+  const startDateValue = document.getElementById('startDate').value;
+  const endDateValue = document.getElementById('endDate').value;
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+  
+  // Limpar erros anteriores
+  startDateInput.style.borderColor = '';
+  endDateInput.style.borderColor = '';
+  
+  if (startDateValue && endDateValue) {
+    const startDate = new Date(startDateValue);
+    const endDate = new Date(endDateValue);
+    
+    if (endDate <= startDate) {
+      startDateInput.style.borderColor = 'var(--danger)';
+      endDateInput.style.borderColor = 'var(--danger)';
+      showDateError('A data de fim deve ser posterior à data de início!');
+    } else {
+      hideDateError();
+    }
+  }
+}
+
+// Função para mostrar erro de data
+function showDateError(message) {
+  let errorDiv = document.getElementById('dateError');
+  if (!errorDiv) {
+    errorDiv = document.createElement('div');
+    errorDiv.id = 'dateError';
+    errorDiv.style.cssText = 'color: var(--danger); font-size: 0.85rem; margin-top: 8px; padding: 8px; background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.3); border-radius: 6px;';
+    document.getElementById('endDate').parentNode.appendChild(errorDiv);
+  }
+  errorDiv.textContent = '⚠️ ' + message;
+}
+
+// Função para esconder erro de data
+function hideDateError() {
+  const errorDiv = document.getElementById('dateError');
+  if (errorDiv) {
+    errorDiv.remove();
+  }
+}
+
+// Função para corrigir automaticamente datas inválidas
+function autoCorrectDate(event) {
+  const input = event.target;
+  let value = input.value;
+  
+  // Se o usuário digitou manualmente, tentar corrigir
+  if (value && !value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    // Tentar corrigir formato DD/MM/YYYY para YYYY-MM-DD
+    if (value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const parts = value.split('/');
+      const correctedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      
+      // Verificar se a data é válida
+      const date = new Date(correctedDate);
+      if (!isNaN(date.getTime())) {
+        input.value = correctedDate;
+        showDateCorrection(`Data corrigida para: ${date.toLocaleDateString('pt-BR')}`);
+        validateDates();
+      }
+    }
+    // Tentar corrigir ano com 5 dígitos (ex: 20205 -> 2025)
+    else if (value.match(/^\d{2}\/\d{2}\/\d{5}$/)) {
+      const parts = value.split('/');
+      const year = parts[2].substring(0, 4); // Pegar apenas os primeiros 4 dígitos
+      const correctedDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+      
+      const date = new Date(correctedDate);
+      if (!isNaN(date.getTime())) {
+        input.value = correctedDate;
+        showDateCorrection(`Ano corrigido de ${parts[2]} para ${year}`);
+        validateDates();
+      }
+    }
+  }
+}
+
+// Função para mostrar correção de data
+function showDateCorrection(message) {
+  let correctionDiv = document.getElementById('dateCorrection');
+  if (!correctionDiv) {
+    correctionDiv = document.createElement('div');
+    correctionDiv.id = 'dateCorrection';
+    correctionDiv.style.cssText = 'color: var(--accent); font-size: 0.85rem; margin-top: 8px; padding: 8px; background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px;';
+    document.getElementById('endDate').parentNode.appendChild(correctionDiv);
+  }
+  correctionDiv.textContent = '✅ ' + message;
+  
+  // Remover após 3 segundos
+  setTimeout(() => {
+    if (correctionDiv) {
+      correctionDiv.remove();
+    }
+  }, 3000);
 }
 
 function updatePreview() {
@@ -748,11 +862,24 @@ function validateForm() {
   }
   
   // Verificar datas
-  const startDate = new Date(document.getElementById('startDate').value);
-  const endDate = new Date(document.getElementById('endDate').value);
-  if (endDate <= startDate) {
-    alert('⚠️ A data de fim deve ser posterior à data de início!');
+  const startDateValue = document.getElementById('startDate').value;
+  const endDateValue = document.getElementById('endDate').value;
+  
+  if (!startDateValue || !endDateValue) {
+    alert('⚠️ Por favor, preencha as datas de início e fim!');
     isValid = false;
+  } else {
+    const startDate = new Date(startDateValue);
+    const endDate = new Date(endDateValue);
+    
+    // Verificar se as datas são válidas
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      alert('⚠️ Por favor, insira datas válidas!');
+      isValid = false;
+    } else if (endDate <= startDate) {
+      alert('⚠️ A data de fim deve ser posterior à data de início!');
+      isValid = false;
+    }
   }
   
   return isValid;
