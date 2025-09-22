@@ -286,23 +286,62 @@ class DashboardBuilderEnhanced:
             # Calcular totais se houver colunas numéricas
             if rows and headers:
                 for i, header in enumerate(headers):
-                    if header and any(keyword in header.lower() for keyword in ['spend', 'gasto', 'custo', 'impress', 'view', 'click']):
+                    if header:
                         try:
-                            # Verificar se a linha é uma lista antes de acessar por índice
                             total = 0
+                            count = 0
                             for row in rows:
                                 if isinstance(row, list) and i < len(row) and row[i] is not None:
                                     try:
-                                        # Tentar converter para float, removendo vírgulas e pontos
-                                        value_str = str(row[i]).replace(',', '').replace('.', '')
-                                        if value_str.isdigit():
-                                            total += float(row[i])
+                                        # Converter valor para número
+                                        value_str = str(row[i]).strip()
+                                        if value_str:
+                                            # Remover caracteres não numéricos exceto vírgulas e pontos
+                                            clean_value = ''.join(c for c in value_str if c.isdigit() or c in '.,')
+                                            if clean_value:
+                                                # Converter vírgula para ponto se necessário
+                                                if ',' in clean_value and '.' in clean_value:
+                                                    # Formato brasileiro: 1.234,56
+                                                    clean_value = clean_value.replace('.', '').replace(',', '.')
+                                                elif ',' in clean_value:
+                                                    # Pode ser decimal brasileiro ou separador de milhares
+                                                    parts = clean_value.split(',')
+                                                    if len(parts) == 2 and len(parts[1]) <= 2:
+                                                        # Decimal brasileiro
+                                                        clean_value = clean_value.replace(',', '.')
+                                                    else:
+                                                        # Separador de milhares
+                                                        clean_value = clean_value.replace(',', '')
+                                                
+                                                value = float(clean_value)
+                                                total += value
+                                                count += 1
                                     except (ValueError, TypeError):
                                         continue
-                            metrics[f'total_{header.lower().replace(" ", "_")}'] = total
-                            logger.info(f"📊 Total calculado para {header}: {total}")
+                            
+                            # Armazenar total baseado no tipo de coluna
+                            header_lower = header.lower()
+                            if any(keyword in header_lower for keyword in ['spend', 'gasto', 'custo', 'investimento']):
+                                metrics['total_spend'] = total
+                                logger.info(f"💰 Total spend: {total}")
+                            elif any(keyword in header_lower for keyword in ['impress', 'impression']):
+                                metrics['total_impressions'] = total
+                                logger.info(f"👁️ Total impressions: {total}")
+                            elif any(keyword in header_lower for keyword in ['view', 'visualiz', 'assistir']):
+                                metrics['total_views'] = total
+                                logger.info(f"📺 Total views: {total}")
+                            elif any(keyword in header_lower for keyword in ['click']):
+                                metrics['total_clicks'] = total
+                                logger.info(f"🖱️ Total clicks: {total}")
+                            elif any(keyword in header_lower for keyword in ['video start', 'inicio']):
+                                metrics['total_video_starts'] = total
+                                logger.info(f"▶️ Total video starts: {total}")
+                            elif any(keyword in header_lower for keyword in ['100%', 'complet']):
+                                metrics['total_video_completion'] = total
+                                logger.info(f"✅ Total video completion: {total}")
+                            
                         except (ValueError, IndexError, TypeError) as e:
-                            logger.warning(f"⚠️ Erro ao calcular total para {header}: {e}")
+                            logger.warning(f"⚠️ Erro ao processar coluna {header}: {e}")
                             continue
             
             return metrics
@@ -357,26 +396,113 @@ class DashboardBuilderEnhanced:
             '{{KPI_VALUE}}': f"R$ {float(config.get('kpiValue', 0)):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
         }
         
-        # Aplicar substituições
-        for placeholder, value in replacements.items():
-            template_content = template_content.replace(placeholder, str(value))
+        # Calcular dados reais dos canais
+        total_spend = 0
+        total_impressions = 0
+        total_clicks = 0
+        total_video_completion = 0
+        total_video_starts = 0
         
-        # Substituir dados dos canais (implementar lógica específica)
-        # Por enquanto, usar valores padrão
-        default_replacements = {
-            '{{TOTAL_SPEND_USED}}': 'R$ 0,00',
-            '{{TOTAL_IMPRESSIONS_USED}}': '0',
-            '{{TOTAL_CLICKS_USED}}': '0',
-            '{{TOTAL_CPV_USED}}': 'R$ 0,00',
-            '{{TOTAL_CTR_USED}}': '0,00%',
-            '{{BUDGET_UTILIZATION_PERCENTAGE}}': '0,00%',
-            '{{IMPRESSIONS_UTILIZATION_PERCENTAGE}}': '0,00%'
+        # Processar dados de cada canal
+        for channel_name, channel in channel_data.items():
+            if 'data_rows' in channel and channel['data_rows'] > 0:
+                # Calcular totais baseados nos dados da planilha
+                if 'total_spend' in channel:
+                    total_spend += channel['total_spend']
+                if 'total_impressions' in channel:
+                    total_impressions += channel['total_impressions']
+                if 'total_clicks' in channel:
+                    total_clicks += channel['total_clicks']
+                if 'total_views' in channel:
+                    total_video_completion += channel['total_views']
+                if 'total_video_starts' in channel:
+                    total_video_starts += channel['total_video_starts']
+        
+        # Calcular percentuais de utilização
+        total_budget = float(config.get('totalBudget', 0))
+        budget_utilization = (total_spend / total_budget * 100) if total_budget > 0 else 0
+        
+        # Calcular CPV
+        cpv = (total_spend / total_video_completion) if total_video_completion > 0 else 0
+        
+        # Calcular CTR
+        ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
+        
+        # Dados calculados dos canais
+        calculated_replacements = {
+            '{{TOTAL_SPEND_USED}}': f"R$ {total_spend:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            '{{TOTAL_IMPRESSIONS_USED}}': f"{total_impressions:,.0f}".replace(',', '.'),
+            '{{TOTAL_CLICKS_USED}}': f"{total_clicks:,.0f}".replace(',', '.'),
+            '{{TOTAL_CPV_USED}}': f"R$ {cpv:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+            '{{TOTAL_CTR_USED}}': f"{ctr:.2f}%".replace('.', ','),
+            '{{BUDGET_UTILIZATION_PERCENTAGE}}': f"{budget_utilization:.2f}%".replace('.', ','),
+            '{{IMPRESSIONS_UTILIZATION_PERCENTAGE}}': '100,00%',  # Assumir 100% se há dados
+            '{{TOTAL_VIDEO_COMPLETION}}': f"{total_video_completion:,.0f}".replace(',', '.'),
+            '{{TOTAL_VIDEO_STARTS}}': f"{total_video_starts:,.0f}".replace(',', '.')
         }
         
-        for placeholder, value in default_replacements.items():
+        # Processar lista de publishers das estratégias
+        strategies_text = config.get('strategies', '')
+        publishers_list = self.extract_publishers_from_strategies(strategies_text)
+        
+        # Substituir lista de publishers
+        if publishers_list:
+            publishers_html = '\n'.join([f'<li>{publisher}</li>' for publisher in publishers_list])
+            template_content = template_content.replace('{{PUBLISHERS_LIST}}', publishers_html)
+        else:
+            template_content = template_content.replace('{{PUBLISHERS_LIST}}', '<li>Nenhum publisher encontrado</li>')
+        
+        # Combinar todas as substituições
+        all_replacements = {**replacements, **calculated_replacements}
+        
+        # Aplicar substituições
+        for placeholder, value in all_replacements.items():
             template_content = template_content.replace(placeholder, str(value))
         
         return template_content
+
+    def extract_publishers_from_strategies(self, strategies_text):
+        """Extrair lista de publishers do texto das estratégias"""
+        try:
+            publishers = []
+            
+            # Dividir o texto por linhas
+            lines = strategies_text.split('\n')
+            
+            # Procurar por padrões de publishers
+            for line in lines:
+                line = line.strip()
+                if line:
+                    # Verificar se a linha contém um domínio (.com, .br, etc.)
+                    if any(domain in line for domain in ['.com', '.br', '.net', '.org', '.gov']):
+                        # Extrair o domínio
+                        import re
+                        domains = re.findall(r'[a-zA-Z0-9.-]+\.(?:com|br|net|org|gov)', line)
+                        for domain in domains:
+                            if domain not in publishers:
+                                publishers.append(domain)
+            
+            # Se não encontrou domínios, tentar extrair nomes de sites conhecidos
+            if not publishers:
+                known_sites = [
+                    'correiobraziliense.com.br', 'terra.com.br', 'cnnbrasil.com.br', 
+                    'tudogostoso.com.br', 'oglobo.globo.com', 'r7.com', 'noticias.r7.com',
+                    'extra.globo.com', 'metropoles.com', 'noticias.uol.com.br', 'esportes.r7.com',
+                    'lance.com.br', 'estadao.com.br', 'uol.com.br', 'valor.globo.com',
+                    'hugogloss.uol.com.br', 'g1.globo.com', 'natelinha.uol.com.br',
+                    'globo.com', 'veja.abril.com.br'
+                ]
+                
+                for site in known_sites:
+                    if site in strategies_text.lower():
+                        publishers.append(site)
+            
+            logger.info(f"📰 Publishers extraídos: {publishers}")
+            return publishers
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao extrair publishers: {e}")
+            return []
 
     def format_date_to_dd_mm_aa(self, date_str):
         """Formatar data para dd/mm/aa"""
