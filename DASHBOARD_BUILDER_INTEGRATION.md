@@ -182,3 +182,4 @@ O Dashboard Builder está agora **100% integrado** ao sistema existente:
 O sistema está pronto para uso e pode ser facilmente estendido com as funcionalidades de agendamento automático e integração completa com Google Scheduler.
 
 
+

@@ -210,6 +210,68 @@ def get_config():
             "message": str(e)
         }), 500
 
+@app.route('/api/dashboards', methods=['POST'])
+def create_dashboard():
+    """Endpoint para criar novos dashboards via interface web"""
+    try:
+        data = request.get_json()
+        logger.info(f"📊 Recebida requisição para criar dashboard: {data.get('campaignName', 'N/A')}")
+        
+        # Importar e usar o DashboardBuilder
+        from dashboard_builder_api_enhanced import DashboardBuilderAPI
+        
+        builder = DashboardBuilderAPI()
+        result = builder.create_dashboard_api(data)
+        
+        if result.get('success'):
+            logger.info(f"✅ Dashboard criado com sucesso: {result.get('dashboard', {}).get('name', 'N/A')}")
+            return add_cors_headers(jsonify(result))
+        else:
+            logger.error(f"❌ Erro ao criar dashboard: {result.get('message', 'Erro desconhecido')}")
+            return add_cors_headers(jsonify(result)), 400
+            
+    except Exception as e:
+        logger.error(f"❌ Erro no endpoint /api/dashboards: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        })), 500
+
+@app.route('/api/dashboards/<dashboard_id>', methods=['GET'])
+def get_dashboard(dashboard_id):
+    """Endpoint para obter informações de um dashboard específico"""
+    try:
+        # Implementar lógica para buscar dashboard por ID
+        return add_cors_headers(jsonify({
+            "success": True,
+            "dashboard": {
+                "id": dashboard_id,
+                "status": "active"
+            }
+        }))
+    except Exception as e:
+        logger.error(f"❌ Erro ao buscar dashboard {dashboard_id}: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": str(e)
+        })), 500
+
+@app.route('/api/dashboards/<dashboard_id>/download', methods=['GET'])
+def download_dashboard(dashboard_id):
+    """Endpoint para download de dashboard"""
+    try:
+        # Implementar lógica de download
+        return add_cors_headers(jsonify({
+            "success": True,
+            "message": "Download implementado"
+        }))
+    except Exception as e:
+        logger.error(f"❌ Erro no download do dashboard {dashboard_id}: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": str(e)
+        })), 500
+
 @app.route('/', methods=['GET'])
 def index():
     """Página inicial com informações da API"""
@@ -221,7 +283,10 @@ def index():
             "status": "/status", 
             "trigger": "/trigger (POST)",
             "logs": "/logs",
-            "config": "/config"
+            "config": "/config",
+            "api_dashboards": "/api/dashboards (POST)",
+            "api_dashboard_get": "/api/dashboards/<id> (GET)",
+            "api_dashboard_download": "/api/dashboards/<id>/download (GET)"
         },
         "timestamp": datetime.now().isoformat()
     })

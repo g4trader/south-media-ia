@@ -99,30 +99,95 @@ class DashboardBuilderEnhanced:
         
         return errors
 
+    def load_real_sheets_data(self):
+        """Carregar dados reais das planilhas processadas"""
+        try:
+            # Procurar por arquivos de dados processados
+            import glob
+            
+            # Buscar arquivos de dados mais recentes
+            data_files = glob.glob('data_pt_br_formatted_*.json')
+            if not data_files:
+                data_files = glob.glob('quartis_corrected_*.json')
+            if not data_files:
+                data_files = glob.glob('used_data_*.json')
+            
+            if data_files:
+                # Pegar o arquivo mais recente
+                latest_file = max(data_files, key=os.path.getctime)
+                with open(latest_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            
+            return None
+        except Exception as e:
+            print(f"Erro ao carregar dados reais: {e}")
+            return None
+
+    def get_real_channel_data(self, channel, real_data):
+        """Usar dados reais das planilhas"""
+        channel_name = channel.get('name', '').lower()
+        
+        if 'youtube' in channel_name:
+            return {
+                'name': 'YouTube',
+                'impressions': real_data.get('YOUTUBE_TOTAL_IMPRESSIONS', 0),
+                'clicks': real_data.get('YOUTUBE_TOTAL_CLICKS', 0),
+                'spend': real_data.get('YOUTUBE_TOTAL_SPEND', 0),
+                'ctr': real_data.get('YOUTUBE_CTR', 0),
+                'cpv': real_data.get('YOUTUBE_CPV', 0),
+                'completion_rate': real_data.get('YOUTUBE_COMPLETION_RATE', 0)
+            }
+        elif 'programatica' in channel_name and 'video' in channel_name:
+            return {
+                'name': 'Programática Video',
+                'impressions': real_data.get('PROG_TOTAL_IMPRESSIONS', 0),
+                'clicks': real_data.get('PROG_TOTAL_CLICKS', 0),
+                'spend': real_data.get('PROG_TOTAL_SPEND', 0),
+                'ctr': real_data.get('PROG_CTR', 0),
+                'cpv': real_data.get('PROG_CPV', 0),
+                'completion_rate': real_data.get('PROG_COMPLETION_RATE', 0)
+            }
+        elif 'programatica' in channel_name and 'display' in channel_name:
+            return {
+                'name': 'Programática Display',
+                'impressions': real_data.get('PROG_DISPLAY_IMPRESSIONS', 0),
+                'clicks': real_data.get('PROG_DISPLAY_CLICKS', 0),
+                'spend': real_data.get('PROG_DISPLAY_SPEND', 0),
+                'ctr': real_data.get('PROG_DISPLAY_CTR', 0),
+                'cpv': real_data.get('PROG_DISPLAY_CPV', 0),
+                'completion_rate': real_data.get('PROG_DISPLAY_COMPLETION_RATE', 0)
+            }
+        else:
+            return self.get_simulated_channel_data(channel)
+
     def process_channel_data(self, channel):
         """Processar dados de um canal"""
         try:
+            # SEMPRE tentar usar dados reais das planilhas
             if not self.sheets_processor:
-                return self.get_simulated_channel_data(channel)
+                raise Exception("Google Sheets não configurado - configure as credenciais")
             
             sheet_id = channel.get('sheet_id')
             gid = channel.get('gid')
             
             if not sheet_id:
-                return self.get_simulated_channel_data(channel)
+                raise Exception(f"ID da planilha obrigatório para {channel.get('name')}")
             
-            # Ler dados da planilha
+            # Validar acesso à planilha
+            if not self.sheets_processor.validate_sheet_access(sheet_id, gid):
+                raise Exception(f"Não foi possível acessar a planilha {sheet_id}")
+            
+            # Ler dados reais da planilha
             data = self.sheets_processor.read_sheet_data(sheet_id, None, gid)
-            
             if not data:
-                return self.get_simulated_channel_data(channel)
+                raise Exception(f"Nenhum dado encontrado na planilha {sheet_id}")
             
-            # Processar dados (implementar lógica específica por canal)
+            # Processar dados reais
             return self.calculate_channel_metrics(data, channel)
             
         except Exception as e:
-            print(f"Erro ao processar canal {channel.get('name')}: {e}")
-            return self.get_simulated_channel_data(channel)
+            print(f"❌ Erro ao processar canal {channel.get('name')}: {e}")
+            raise Exception(f"Erro ao processar dados do canal {channel.get('name')}: {e}")
 
     def get_simulated_channel_data(self, channel):
         """Dados simulados para um canal"""
@@ -303,7 +368,7 @@ def create_dashboard():
             html_content = builder.generate_dashboard_html(data)
             
             # Salvar arquivo HTML
-            filename = f"dash_{data.get('campaign_name', 'campaign').lower().replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            filename = f"dash_{data.get('campaignName', 'campaign').lower().replace(' ', '_')}.html"
             filepath = os.path.join(builder.output_dir, filename)
             
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -485,4 +550,4 @@ if __name__ == '__main__':
     print(f"📁 Output: {builder.output_dir}")
     print(f"📊 Google Sheets: {'✅ Disponível' if SHEETS_AVAILABLE else '❌ Não disponível'}")
     
-    app.run(host='0.0.0.0', port=8082, debug=True)
+    app.run(host='0.0.0.0', port=8084, debug=True)

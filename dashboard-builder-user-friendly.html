@@ -680,7 +680,12 @@
             // Event listeners para checkboxes de canais
             document.querySelectorAll('input[type="checkbox"][data-channel]').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    const channelName = this.dataset.channel.toLowerCase().replace(' ', '-');
+                    const channelName = this.dataset.channel.toLowerCase()
+                        .replace(/\s+/g, '-')  // Substituir espaços por hífens
+                        .replace(/á/g, 'a')    // Remover acentos
+                        .replace(/ã/g, 'a')
+                        .replace(/ç/g, 'c');
+                    
                     const inputs = document.querySelectorAll(`[id*="${channelName}"]:not([type="checkbox"])`);
                     
                     inputs.forEach(input => {
@@ -702,7 +707,9 @@
             // Event listeners para validação em tempo real
             document.querySelectorAll('input[required], select[required]').forEach(input => {
                 input.addEventListener('blur', validateField);
-                input.addEventListener('input', clearFieldError);
+                input.addEventListener('input', function(event) {
+                    clearFieldError(event.target);
+                });
             });
         }
 
@@ -759,22 +766,15 @@
                 return false;
             }
 
-            if (field.type === 'date' && value) {
-                const date = new Date(value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                if (date < today) {
-                    showFieldError(field, 'A data não pode ser no passado');
-                    return false;
-                }
-            }
+            // Validação de data no passado removida conforme solicitado
 
             clearFieldError(field);
             return true;
         }
 
         function showFieldError(field, message) {
+            if (!field) return; // Verificar se o campo existe
+            
             clearFieldError(field);
             field.style.borderColor = 'var(--danger)';
             
@@ -789,6 +789,8 @@
         }
 
         function clearFieldError(field) {
+            if (!field) return; // Verificar se o campo existe
+            
             field.style.borderColor = '';
             const errorDiv = field.parentNode.querySelector('.field-error');
             if (errorDiv) {
@@ -881,9 +883,22 @@
             const selectedChannels = [];
             document.querySelectorAll('input[type="checkbox"][data-channel]:checked').forEach(checkbox => {
                 const channelName = checkbox.dataset.channel;
-                const channelId = channelName.toLowerCase().replace(' ', '-');
-                const budget = document.getElementById(`${channelId}-budget`).value;
-                const quantity = document.getElementById(`${channelId}-quantity`).value;
+                const channelId = channelName.toLowerCase()
+                    .replace(/\s+/g, '-')  // Substituir espaços por hífens
+                    .replace(/á/g, 'a')    // Remover acentos
+                    .replace(/ã/g, 'a')
+                    .replace(/ç/g, 'c');
+                
+                const budgetElement = document.getElementById(`${channelId}-budget`);
+                const quantityElement = document.getElementById(`${channelId}-quantity`);
+                
+                if (!budgetElement || !quantityElement) {
+                    console.warn(`Elementos não encontrados para canal: ${channelName} (ID: ${channelId})`);
+                    return;
+                }
+                
+                const budget = budgetElement.value;
+                const quantity = quantityElement.value;
                 
                 selectedChannels.push(`
                     <div style="margin-bottom: 0.5rem;">
@@ -924,25 +939,92 @@
             // Coletar dados do formulário
             const formData = collectFormData();
 
-            // Simular criação (substituir por chamada real à API)
-            setTimeout(() => {
-                // Aqui seria a chamada real para a API
-                console.log('Dados do dashboard:', formData);
-                
-                // Simular sucesso
-                showSuccess('Dashboard criado com sucesso! 🎉');
-                
+            // Chamada real para a API
+            fetch('http://localhost:8084/api/dashboards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(`Dashboard "${data.dashboard.name}" criado com sucesso! 🎉`);
+                    
+                    // Mostrar informações do dashboard criado
+                    setTimeout(() => {
+                        const dashboardInfo = `
+                            <div style="background: var(--dark); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                                <h4>📊 Dashboard Criado:</h4>
+                                <p><strong>ID:</strong> ${data.dashboard.id}</p>
+                                <p><strong>Nome:</strong> ${data.dashboard.name}</p>
+                                <p><strong>Status:</strong> ${data.dashboard.status}</p>
+                                <p><strong>Arquivo:</strong> ${data.dashboard.html_file}</p>
+                                <div style="margin-top: 1rem;">
+                                    <button onclick="downloadDashboard('${data.dashboard.id}')" style="margin-right: 0.5rem; padding: 0.5rem 1rem; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        📥 Download Dashboard
+                                    </button>
+                                    <button onclick="openDashboard('${data.dashboard.html_file}')" style="padding: 0.5rem 1rem; background: var(--success); color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        👁️ Abrir Dashboard
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        const successDiv = document.querySelector('.success-message');
+                        if (successDiv) {
+                            successDiv.innerHTML += dashboardInfo;
+                        }
+                    }, 1000);
+                } else {
+                    showError(`Erro ao criar dashboard: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                showError('Erro de conexão com a API. Verifique se o servidor está rodando em http://localhost:8084');
+            })
+            .finally(() => {
                 // Resetar loading
                 createBtn.disabled = false;
                 loading.style.display = 'none';
                 text.style.display = 'inline';
+            });
+        }
+
+        function downloadDashboard(dashboardId) {
+            // Fazer download do dashboard via API
+            fetch(`http://localhost:8084/api/dashboards/${dashboardId}/download`)
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Erro ao baixar dashboard');
+            })
+            .then(blob => {
+                // Criar link de download
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `dashboard_${dashboardId}.html`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
                 
-                // Opcional: redirecionar ou mostrar link do dashboard
-                setTimeout(() => {
-                    alert('Dashboard criado! Em uma implementação real, você seria redirecionado para o dashboard.');
-                }, 1000);
-                
-            }, 3000);
+                showSuccess('Dashboard baixado com sucesso! 📥');
+            })
+            .catch(error => {
+                console.error('Erro no download:', error);
+                showError('Erro ao baixar dashboard');
+            });
+        }
+
+        function openDashboard(filename) {
+            // Abrir dashboard em nova aba
+            const dashboardUrl = `http://localhost:8084/static/${filename}`;
+            window.open(dashboardUrl, '_blank');
         }
 
         function collectFormData() {
@@ -950,14 +1032,28 @@
             
             document.querySelectorAll('input[type="checkbox"][data-channel]:checked').forEach(checkbox => {
                 const channelName = checkbox.dataset.channel;
-                const channelId = channelName.toLowerCase().replace(' ', '-');
+                const channelId = channelName.toLowerCase()
+                    .replace(/\s+/g, '-')  // Substituir espaços por hífens
+                    .replace(/á/g, 'a')    // Remover acentos
+                    .replace(/ã/g, 'a')
+                    .replace(/ç/g, 'c');
+                
+                const sheetIdElement = document.getElementById(`${channelId}-sheet-id`);
+                const gidElement = document.getElementById(`${channelId}-gid`);
+                const budgetElement = document.getElementById(`${channelId}-budget`);
+                const quantityElement = document.getElementById(`${channelId}-quantity`);
+                
+                if (!sheetIdElement || !budgetElement || !quantityElement) {
+                    console.warn(`Elementos não encontrados para canal: ${channelName} (ID: ${channelId})`);
+                    return;
+                }
                 
                 channels.push({
                     name: channelName,
-                    sheet_id: document.getElementById(`${channelId}-sheet-id`).value,
-                    gid: document.getElementById(`${channelId}-gid`).value || null,
-                    budget: parseFloat(document.getElementById(`${channelId}-budget`).value) || 0,
-                    quantity: parseInt(document.getElementById(`${channelId}-quantity`).value) || 0
+                    sheet_id: sheetIdElement.value,
+                    gid: gidElement ? gidElement.value || null : null,
+                    budget: parseFloat(budgetElement.value) || 0,
+                    quantity: parseInt(quantityElement.value) || 0
                 });
             });
 

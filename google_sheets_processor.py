@@ -407,6 +407,22 @@ class GoogleSheetsProcessor:
         
         return all_daily_data
 
+    def validate_sheet_access(self, sheet_id, gid=None):
+        """Validar se podemos acessar uma planilha específica"""
+        try:
+            if not self.service:
+                logger.error("❌ Serviço Google Sheets não inicializado")
+                return False
+            
+            # Tentar acessar a planilha
+            result = self.service.spreadsheets().get(spreadsheetId=sheet_id).execute()
+            logger.info(f"✅ Acesso validado para planilha {sheet_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao validar acesso à planilha {sheet_id}: {e}")
+            return False
+
 def test_connection():
     """Testa conexão com Google Sheets"""
     try:

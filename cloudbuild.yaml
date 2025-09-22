@@ -1,35 +1,44 @@
+# Google Cloud Build configuration for Dashboard Builder
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA', '.']
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA']
   
   # Deploy container image to Cloud Run
-  - name: 'gcr.io/cloud-builders/gcloud'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
     args:
-    - 'run'
-    - 'deploy'
-    - 'dashboard-automation'
-    - '--image'
-    - 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA'
-    - '--region'
-    - 'us-central1'
-    - '--platform'
-    - 'managed'
-    - '--allow-unauthenticated'
-    - '--memory'
-    - '2Gi'
-    - '--cpu'
-    - '2'
-    - '--timeout'
-    - '3600'
-    - '--max-instances'
-    - '10'
-    - '--set-env-vars'
-    - 'AUTOMATION_MODE=scheduler'
+      - 'run'
+      - 'deploy'
+      - 'dashboard-builder'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--set-env-vars'
+      - 'GOOGLE_APPLICATION_CREDENTIALS=/app/service-account-key.json'
 
+# Store images in Google Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/dashboard-automation:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY

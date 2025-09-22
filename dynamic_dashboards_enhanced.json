@@ -1,0 +1,362 @@
+[
+  {
+    "id": "0249eba1-3ca2-40a8-85d6-86de79766f6f",
+    "name": "Teste Interface Amigável",
+    "status": "active",
+    "created_at": "2025-09-22T06:23:20.282910",
+    "config": {
+      "campaignName": "Teste Interface Amigável",
+      "startDate": "2025-09-20",
+      "endDate": "2025-09-30",
+      "totalBudget": 50000,
+      "kpiType": "CPV",
+      "kpiValue": 0.1,
+      "reportModel": "simple",
+      "strategies": "Campanha de teste para validar a interface amigável de criação de dashboards.",
+      "channels": [
+        {
+          "name": "YouTube",
+          "sheet_id": "1ABC123",
+          "gid": "0",
+          "budget": 30000,
+          "quantity": 500000
+        },
+        {
+          "name": "Programática Video",
+          "sheet_id": "1XYZ789",
+          "gid": "0",
+          "budget": 20000,
+          "quantity": 200000
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_062320.html",
+    "html_path": "static/dash_campaign_20250922_062320.html",
+    "validated_at": "2025-09-22T06:23:20.305051",
+    "activated_at": "2025-09-22T06:23:20.339603"
+  },
+  {
+    "id": "7e3d91c0-2519-40dc-ac2b-c2d6457b1ba1",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:00:52.048201",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070052.html",
+    "html_path": "static/dash_campaign_20250922_070052.html"
+  },
+  {
+    "id": "0dd5dd6c-406f-441a-943a-414148ea4fde",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:00.867846",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070100.html",
+    "html_path": "static/dash_campaign_20250922_070100.html"
+  },
+  {
+    "id": "b0635d39-5888-4a14-b664-1a01edd0f2dd",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:02.086160",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070102.html",
+    "html_path": "static/dash_campaign_20250922_070102.html"
+  },
+  {
+    "id": "b6a06cdb-52e8-4945-9d9b-17feae36ffe4",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:02.564592",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070102.html",
+    "html_path": "static/dash_campaign_20250922_070102.html"
+  },
+  {
+    "id": "f20a8892-6758-4e62-8c12-111768ab8068",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:02.835106",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070102.html",
+    "html_path": "static/dash_campaign_20250922_070102.html"
+  },
+  {
+    "id": "47b6ce73-1e54-4586-8325-62715c4629e8",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.001649",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "25114738-f646-419a-a8ee-9734d612358e",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.203518",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "e4320b85-51bb-480d-b441-bf78d779dd27",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.363668",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "0b79a4c9-6150-4456-a494-6b7b7a2e16fe",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.580615",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "6cfec059-19bb-4362-8a2f-aa3b97c7e680",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.782510",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "d42d20f4-d479-4890-abc3-b4a8e4b5c6fa",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:03.947479",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070103.html",
+    "html_path": "static/dash_campaign_20250922_070103.html"
+  },
+  {
+    "id": "0c5a3c25-2da5-4d24-b37a-f3288f853b45",
+    "name": "UNIMED CURITIBA DISPLAY",
+    "status": "created",
+    "created_at": "2025-09-22T07:01:05.528787",
+    "config": {
+      "campaignName": "UNIMED CURITIBA DISPLAY",
+      "startDate": "2025-09-11",
+      "endDate": "2025-12-06",
+      "totalBudget": 16700,
+      "kpiType": "CPM",
+      "kpiValue": 12,
+      "reportModel": "simple",
+      "strategies": "Lista de publishers \nSegmentações do Contrato \tDouble Verify - DV Display Fraud & Invalid Traffic > Fraud & IVT by Site/App . Safe from Fraudulent or No Ads Sites/Apps/ (100% Invalid Traffic)\n\t\n\tNavegg: Interest . Health > Health Care - Cuidados com a Saude",
+      "channels": [
+        {
+          "name": "Programática Display",
+          "sheet_id": "https://docs.google.com/spreadsheets/d/11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8/edit?gid=1247484316#gid=1247484316",
+          "gid": "1247484316",
+          "budget": 16700,
+          "quantity": 139668
+        }
+      ]
+    },
+    "html_file": "dash_campaign_20250922_070105.html",
+    "html_path": "static/dash_campaign_20250922_070105.html"
+  }
+]
