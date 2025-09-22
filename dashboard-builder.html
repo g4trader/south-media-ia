@@ -930,6 +930,12 @@ async function saveDashboard() {
     const channelCheckboxes = document.querySelectorAll('.channel-checkbox:checked');
     console.log(`🔍 Canais selecionados: ${channelCheckboxes.length}`);
     
+    // Debug: mostrar quantos canais foram selecionados
+    if (channelCheckboxes.length === 0) {
+      alert('❌ ERRO: Nenhum canal foi selecionado!');
+      throw new Error('Nenhum canal foi selecionado');
+    }
+    
     channelCheckboxes.forEach(checkbox => {
       const channelName = checkbox.value;
       console.log(`🔍 Processando canal: ${channelName}`);
@@ -959,6 +965,7 @@ async function saveDashboard() {
       
       if (!sheetId || sheetId.trim() === '') {
         console.error(`❌ Sheet ID vazio para ${channelName}`);
+        alert(`❌ ERRO: ID da planilha obrigatório para ${channelName}!\n\nValores encontrados:\n- sheetIdRaw: "${sheetIdRaw}"\n- sheetId: "${sheetId}"\n\nVerifique se o campo foi preenchido corretamente.`);
         throw new Error(`ID da planilha obrigatório para ${channelName}. Verifique se o campo foi preenchido corretamente.`);
       }
       
