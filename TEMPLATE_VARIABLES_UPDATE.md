@@ -100,3 +100,4 @@ O dashboard está **funcionalmente completo** com:
 **O sistema está pronto para uso básico e pode ser expandido com dados reais conforme necessário.**
 
 
+

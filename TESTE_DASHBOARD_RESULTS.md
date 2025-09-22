@@ -152,3 +152,4 @@ O dashboard gerado está **pronto para uso** e pode ser acessado diretamente no 
 - `dash_semana_do_pescado_20250915_182110.html` - Dashboard gerado
 
 
+

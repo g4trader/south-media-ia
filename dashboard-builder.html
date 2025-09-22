@@ -806,8 +806,8 @@ async function saveDashboard() {
     
     console.log('📊 Dados do dashboard:', formData);
     
-    // Fazer chamada para a API
-    const response = await fetch('http://localhost:8081/api/dashboards', {
+    // Fazer chamada para a API do Cloud Run
+    const response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/api/dashboards', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

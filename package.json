@@ -1,0 +1,22 @@
+{
+  "name": "dashboard-builder-frontend",
+  "version": "1.0.0",
+  "description": "Dashboard Builder - Frontend Interface",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static build - no build step needed'",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "dashboard",
+    "analytics",
+    "google-sheets",
+    "data-visualization"
+  ],
+  "author": "South Media",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}

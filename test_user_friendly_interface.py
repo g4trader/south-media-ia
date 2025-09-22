@@ -14,7 +14,7 @@ def test_api_health():
     print("=" * 50)
     
     try:
-        response = requests.get('http://localhost:8083/health', timeout=5)
+        response = requests.get('http://localhost:8084/health', timeout=5)
         if response.status_code == 200:
             data = response.json()
             print(f"✅ API está saudável")
@@ -63,7 +63,7 @@ def test_create_dashboard():
     
     try:
         response = requests.post(
-            'http://localhost:8083/api/dashboards',
+            'http://localhost:8084/api/dashboards',
             json=test_data,
             headers={'Content-Type': 'application/json'},
             timeout=30
@@ -97,7 +97,7 @@ def test_list_dashboards():
     print("=" * 50)
     
     try:
-        response = requests.get('http://localhost:8083/api/dashboards', timeout=10)
+        response = requests.get('http://localhost:8084/api/dashboards', timeout=10)
         
         if response.status_code == 200:
             data = response.json()
@@ -132,7 +132,7 @@ def test_validate_dashboard(dashboard_id):
     
     try:
         response = requests.post(
-            f'http://localhost:8083/api/dashboards/{dashboard_id}/validate',
+            f'http://localhost:8084/api/dashboards/{dashboard_id}/validate',
             timeout=10
         )
         
@@ -159,7 +159,7 @@ def test_activate_dashboard(dashboard_id):
     
     try:
         response = requests.post(
-            f'http://localhost:8083/api/dashboards/{dashboard_id}/activate',
+            f'http://localhost:8084/api/dashboards/{dashboard_id}/activate',
             timeout=10
         )
         
@@ -186,7 +186,7 @@ def test_download_dashboard(dashboard_id):
     
     try:
         response = requests.get(
-            f'http://localhost:8083/api/dashboards/{dashboard_id}/download',
+            f'http://localhost:8084/api/dashboards/{dashboard_id}/download',
             timeout=30
         )
         
@@ -215,7 +215,7 @@ def test_templates():
     print("=" * 50)
     
     try:
-        response = requests.get('http://localhost:8083/api/templates', timeout=10)
+        response = requests.get('http://localhost:8084/api/templates', timeout=10)
         
         if response.status_code == 200:
             data = response.json()
