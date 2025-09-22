@@ -254,16 +254,53 @@ def create_dashboard():
             dashboard_id = str(uuid.uuid4())
             filename = f"dash_{data.get('campaignName', 'campaign').lower().replace(' ', '_')}.html"
             
-            result = {
-                "success": True,
-                "dashboard": {
-                    "id": dashboard_id,
-                    "name": data.get('campaignName', 'Campaign'),
-                    "status": "created",
-                    "html_file": filename,
-                    "channels": processed_channels
-                }
+            # Preparar dados para geração do dashboard
+            dashboard_data = {
+                'id': dashboard_id,
+                'campaignName': data.get('campaignName', 'Campaign'),
+                'startDate': data.get('startDate'),
+                'endDate': data.get('endDate'),
+                'totalBudget': data.get('totalBudget'),
+                'reportModel': data.get('reportModel', 'Simples'),
+                'kpiType': data.get('kpiType'),
+                'kpiValue': data.get('kpiValue'),
+                'kpiTarget': data.get('kpiTarget'),
+                'strategies': data.get('strategies'),
+                'channels': processed_channels
             }
+            
+            # Gerar HTML do dashboard
+            try:
+                html_content = builder.generate_dashboard_html(dashboard_data)
+                
+                # Salvar arquivo HTML na pasta static
+                import os
+                os.makedirs('static', exist_ok=True)
+                filepath = os.path.join('static', filename)
+                
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(html_content)
+                
+                logger.info(f"✅ Dashboard HTML salvo em: {filepath}")
+                
+                result = {
+                    "success": True,
+                    "dashboard": {
+                        "id": dashboard_id,
+                        "name": data.get('campaignName', 'Campaign'),
+                        "status": "created",
+                        "html_file": filename,
+                        "html_path": filepath,
+                        "channels": processed_channels
+                    }
+                }
+                
+            except Exception as e:
+                logger.error(f"❌ Erro ao gerar HTML do dashboard: {e}")
+                return add_cors_headers(jsonify({
+                    "success": False,
+                    "message": f"Erro ao gerar dashboard: {str(e)}"
+                })), 500
             
         except ImportError as e:
             logger.error(f"❌ Erro ao importar DashboardBuilderEnhanced: {e}")
