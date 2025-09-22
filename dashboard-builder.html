@@ -904,10 +904,15 @@ async function saveDashboard() {
   
   try {
     // Coletar dados do formulário
+    // Debug das datas antes de enviar
+    const startDateValue = document.getElementById('startDate').value;
+    const endDateValue = document.getElementById('endDate').value;
+    alert(`🗓️ DEBUG DATAS:\nstartDate: "${startDateValue}"\nendDate: "${endDateValue}"`);
+    
     const formData = {
       campaignName: document.getElementById('campaignName').value,
-      startDate: document.getElementById('startDate').value,
-      endDate: document.getElementById('endDate').value,
+      startDate: startDateValue,
+      endDate: endDateValue,
       totalBudget: parseFloat(document.getElementById('totalBudget').value),
       reportModel: document.getElementById('reportModel').value,
       kpiType: document.getElementById('kpiType').value,
