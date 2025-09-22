@@ -8,7 +8,7 @@ import os
 import json
 import logging
 import uuid
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, send_from_directory
 from datetime import datetime
 import threading
 import time
@@ -96,6 +96,27 @@ def health_check():
         "service": "dashboard-automation"
     })
     return add_cors_headers(response)
+
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Servir arquivos estáticos (dashboards HTML)"""
+    try:
+        static_dir = os.path.join(os.getcwd(), 'static')
+        if not os.path.exists(static_dir):
+            os.makedirs(static_dir, exist_ok=True)
+        
+        file_path = os.path.join(static_dir, filename)
+        if not os.path.exists(file_path):
+            logger.warning(f"Arquivo não encontrado: {file_path}")
+            return jsonify({'error': 'Arquivo não encontrado'}), 404
+        
+        response = make_response(send_from_directory(static_dir, filename))
+        response.headers['Content-Type'] = 'text/html; charset=utf-8'
+        return add_cors_headers(response)
+        
+    except Exception as e:
+        logger.error(f"Erro ao servir arquivo estático {filename}: {e}")
+        return jsonify({'error': 'Erro interno do servidor'}), 500
 
 @app.route('/status', methods=['GET'])
 def get_status():
