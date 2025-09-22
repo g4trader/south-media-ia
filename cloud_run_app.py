@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Criar diretório de logs se não existir
+os.makedirs('logs', exist_ok=True)
+
 # Configurar CORS
 def configure_cors():
     """Configurar headers CORS"""
