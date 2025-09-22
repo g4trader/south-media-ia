@@ -7,6 +7,7 @@ Executa automação do dashboard e serve endpoints HTTP
 import os
 import json
 import logging
+import uuid
 from flask import Flask, request, jsonify, make_response
 from datetime import datetime
 import threading
@@ -227,9 +228,45 @@ def create_dashboard():
             from dashboard_builder_api_enhanced import DashboardBuilderEnhanced
             
             builder = DashboardBuilderEnhanced()
-            result = builder.create_dashboard(data)
+            
+            # Validar dados da campanha
+            validation_result = builder.validate_campaign_data(data)
+            if not validation_result['valid']:
+                return add_cors_headers(jsonify({
+                    "success": False,
+                    "message": f"Dados inválidos: {validation_result['errors']}"
+                })), 400
+            
+            # Processar canais
+            processed_channels = []
+            for channel in data.get('channels', []):
+                try:
+                    channel_data = builder.process_channel_data(channel)
+                    processed_channels.append(channel_data)
+                except Exception as e:
+                    logger.error(f"❌ Erro ao processar canal {channel.get('name')}: {e}")
+                    return add_cors_headers(jsonify({
+                        "success": False,
+                        "message": f"Erro ao processar canal {channel.get('name')}: {str(e)}"
+                    })), 400
+            
+            # Gerar dashboard
+            dashboard_id = str(uuid.uuid4())
+            filename = f"dash_{data.get('campaignName', 'campaign').lower().replace(' ', '_')}.html"
+            
+            result = {
+                "success": True,
+                "dashboard": {
+                    "id": dashboard_id,
+                    "name": data.get('campaignName', 'Campaign'),
+                    "status": "created",
+                    "html_file": filename,
+                    "channels": processed_channels
+                }
+            }
+            
         except ImportError as e:
-            logger.error(f"❌ Erro ao importar DashboardBuilderAPI: {e}")
+            logger.error(f"❌ Erro ao importar DashboardBuilderEnhanced: {e}")
             return add_cors_headers(jsonify({
                 "success": False,
                 "message": f"Erro ao importar módulo: {str(e)}"
