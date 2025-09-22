@@ -529,9 +529,9 @@ function openCreateDashboardModal() {
   document.getElementById('startDate').addEventListener('change', validateDates);
   document.getElementById('endDate').addEventListener('change', validateDates);
   
-  // Adicionar correção automática de datas
-  document.getElementById('startDate').addEventListener('blur', autoCorrectDate);
-  document.getElementById('endDate').addEventListener('blur', autoCorrectDate);
+  // Adicionar correção automática de datas - DESABILITADO TEMPORARIAMENTE
+  // document.getElementById('startDate').addEventListener('blur', autoCorrectDate);
+  // document.getElementById('endDate').addEventListener('blur', autoCorrectDate);
   
   // Limpar formulário
   document.getElementById('createDashboardForm').reset();
