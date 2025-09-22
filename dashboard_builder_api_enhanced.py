@@ -170,6 +170,13 @@ class DashboardBuilderEnhanced:
             sheet_id = channel.get('sheetId') or channel.get('sheet_id')
             gid = channel.get('gid')
             
+            # Debug logging
+            print(f"🔍 DEBUG - Canal: {channel.get('name')}")
+            print(f"🔍 DEBUG - sheetId (camelCase): {channel.get('sheetId')}")
+            print(f"🔍 DEBUG - sheet_id (snake_case): {channel.get('sheet_id')}")
+            print(f"🔍 DEBUG - sheet_id final: {sheet_id}")
+            print(f"🔍 DEBUG - gid: {gid}")
+            
             if not sheet_id:
                 raise Exception(f"ID da planilha obrigatório para {channel.get('name')}")
             
