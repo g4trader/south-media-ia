@@ -97,7 +97,7 @@ class DashboardBuilderEnhanced:
         if total_channel_budget > total_budget:
             errors.append("Soma dos orçamentos dos canais não pode exceder o orçamento total")
         
-        return errors
+        return {'valid': len(errors) == 0, 'errors': errors}
 
     def load_real_sheets_data(self):
         """Carregar dados reais das planilhas processadas"""
