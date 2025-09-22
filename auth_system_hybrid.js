@@ -274,11 +274,11 @@ class HybridAuthSystem {
             if (this.isFirebaseAvailable && this.firebaseAuth) {
                 return await this.firebaseAuth.getDashboardsForUser();
             } else {
+                // Listar dashboards dinamicamente da pasta /static
+                const dashboards = await this.getStaticDashboards();
                 const user = await this.getCurrentUser();
-                if (!user) return [];
                 
-                const systemData = this.getSystemData();
-                const dashboards = systemData.dashboards || [];
+                if (!user) return [];
                 
                 if (user.role === 'super_admin') {
                     return dashboards;
@@ -290,6 +290,73 @@ class HybridAuthSystem {
             }
         } catch (error) {
             console.error('❌ Erro ao obter dashboards do usuário:', error);
+            return [];
+        }
+    }
+
+    // Nova função para listar dashboards da pasta /static
+    async getStaticDashboards() {
+        try {
+            // Lista de arquivos HTML na pasta static (baseado no que vimos no ls)
+            const staticFiles = [
+                'dash_campaign_20250922_070105.html',
+                'dash_copacol.html',
+                'dash_copacol_mestre_das_grelhas.html',
+                'dash_dauher_hidrabene.html',
+                'dash_sebrae.html',
+                'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html',
+                'dash_semana_do_pescado_NO_NETFLIX_20250916_172717.html',
+                'dash_semana_do_pescado_PLANNING_UPDATED_20250916_172348.html',
+                'dash_sonho.html',
+                'dash_unicesusc.html',
+                'dash_unimed.html'
+            ];
+
+            const dashboards = staticFiles.map((file, index) => {
+                // Extrair nome da campanha do arquivo
+                let name = file.replace('dash_', '').replace('.html', '');
+                
+                // Limpar nome removendo timestamps e sufixos
+                name = name.replace(/_\d{8}_\d{6}/g, ''); // Remove timestamps
+                name = name.replace(/_FINAL_NO_NETFLIX/g, '');
+                name = name.replace(/_NO_NETFLIX/g, '');
+                name = name.replace(/_PLANNING_UPDATED/g, '');
+                
+                // Capitalizar primeira letra de cada palavra
+                name = name.split('_').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                ).join(' ');
+
+                // Determinar ícone baseado no nome
+                let icon = '📊';
+                if (name.toLowerCase().includes('sonho')) icon = '🌟';
+                else if (name.toLowerCase().includes('copacol')) icon = '🏢';
+                else if (name.toLowerCase().includes('sebrae')) icon = '💼';
+                else if (name.toLowerCase().includes('unimed')) icon = '🏥';
+                else if (name.toLowerCase().includes('unicesusc')) icon = '🎓';
+                else if (name.toLowerCase().includes('dauher')) icon = '💊';
+                else if (name.toLowerCase().includes('pescado')) icon = '🐟';
+                else if (name.toLowerCase().includes('campaign')) icon = '📈';
+
+                return {
+                    id: `dashboard_${index + 1}`,
+                    file: file,
+                    name: name,
+                    company_id: 'company_001', // Default para super admin
+                    description: `Dashboard ${name} - Relatório analítico completo`,
+                    icon: icon,
+                    status: 'active',
+                    category: 'Campanha',
+                    last_updated: new Date().toISOString(),
+                    created_at: new Date().toISOString()
+                };
+            });
+
+            console.log(`✅ ${dashboards.length} dashboards encontrados na pasta /static`);
+            return dashboards;
+
+        } catch (error) {
+            console.error('❌ Erro ao listar dashboards da pasta /static:', error);
             return [];
         }
     }
