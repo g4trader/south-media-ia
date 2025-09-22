@@ -989,7 +989,7 @@ async function saveDashboard() {
         name: channelName,
         displayName: checkbox.nextElementSibling.textContent,
         sheetId: sheetId,
-        gid: gid || null,
+        gid: gid, // gid já é null se vazio
         budget: budget,
         quantity: quantity
       });
@@ -1000,13 +1000,17 @@ async function saveDashboard() {
     // Debug: mostrar dados finais antes de enviar
     alert(`🔍 DEBUG: Dados finais antes de enviar:\nCanais: ${formData.channels.length}\nPrimeiro canal:\n- name: ${formData.channels[0]?.name}\n- sheetId: "${formData.channels[0]?.sheetId}"\n- gid: ${formData.channels[0]?.gid}\n- budget: ${formData.channels[0]?.budget}\n- quantity: ${formData.channels[0]?.quantity}\n\nTipo do gid: ${typeof formData.channels[0]?.gid}`);
     
+    // Debug: verificar serialização JSON
+    const jsonString = JSON.stringify(formData);
+    console.log('🔍 JSON sendo enviado:', jsonString);
+    
     // Fazer chamada para a API do Cloud Run
     const response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/api/dashboards', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData)
+      body: jsonString
     });
     
     const result = await response.json();
