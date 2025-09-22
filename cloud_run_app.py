@@ -353,6 +353,10 @@ def create_dashboard():
         data = request.get_json()
         logger.info(f"📊 Recebida requisição para criar dashboard: {data.get('campaignName', 'N/A')}")
         
+        # Debug específico para datas
+        logger.info(f"🗓️ Debug datas - startDate: '{data.get('startDate')}' (tipo: {type(data.get('startDate'))})")
+        logger.info(f"🗓️ Debug datas - endDate: '{data.get('endDate')}' (tipo: {type(data.get('endDate'))})")
+        
         # Importar e usar o DashboardBuilder
         try:
             from dashboard_builder_api_enhanced import DashboardBuilderEnhanced
