@@ -8,6 +8,7 @@ import os
 import json
 import logging
 import uuid
+import subprocess
 from flask import Flask, request, jsonify, make_response, send_from_directory
 from datetime import datetime
 import threading
@@ -42,6 +43,44 @@ def add_cors_headers(response):
     for key, value in cors_headers.items():
         response.headers[key] = value
     return response
+
+def commit_and_push_dashboard(file_path, dashboard_name):
+    """Fazer commit e push do dashboard criado para o Git"""
+    try:
+        # Configurar Git (se necessário)
+        subprocess.run(['git', 'config', '--global', 'user.email', 'g4trader.news@gmail.com'], 
+                      capture_output=True, text=True)
+        subprocess.run(['git', 'config', '--global', 'user.name', 'Dashboard Bot'], 
+                      capture_output=True, text=True)
+        
+        # Adicionar arquivo ao Git
+        result = subprocess.run(['git', 'add', file_path], 
+                               capture_output=True, text=True, cwd='/app')
+        if result.returncode != 0:
+            logger.warning(f"Erro ao adicionar arquivo ao Git: {result.stderr}")
+            return False
+        
+        # Fazer commit
+        commit_message = f"Add dashboard: {dashboard_name}"
+        result = subprocess.run(['git', 'commit', '-m', commit_message], 
+                               capture_output=True, text=True, cwd='/app')
+        if result.returncode != 0:
+            logger.warning(f"Erro ao fazer commit: {result.stderr}")
+            return False
+        
+        # Fazer push
+        result = subprocess.run(['git', 'push', 'origin', 'main'], 
+                               capture_output=True, text=True, cwd='/app')
+        if result.returncode != 0:
+            logger.warning(f"Erro ao fazer push: {result.stderr}")
+            return False
+        
+        logger.info(f"✅ Dashboard {dashboard_name} commitado e enviado para o Git")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao fazer commit/push do dashboard: {e}")
+        return False
 
 # Handler para OPTIONS requests (CORS preflight)
 @app.before_request
@@ -311,6 +350,9 @@ def create_dashboard():
                 
                 logger.info(f"✅ Dashboard HTML salvo em: {filepath}")
                 
+                # Fazer commit e push para o Git (para deploy automático no Vercel)
+                git_success = commit_and_push_dashboard(filepath, data.get('campaignName', 'Campaign'))
+                
                 result = {
                     "success": True,
                     "dashboard": {
@@ -319,7 +361,8 @@ def create_dashboard():
                         "status": "created",
                         "html_file": filename,
                         "html_path": filepath,
-                        "channels": processed_channels
+                        "channels": processed_channels,
+                        "git_pushed": git_success
                     }
                 }
                 
