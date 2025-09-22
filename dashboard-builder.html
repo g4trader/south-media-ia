@@ -928,16 +928,38 @@ async function saveDashboard() {
     
     // Coletar canais selecionados
     const channelCheckboxes = document.querySelectorAll('.channel-checkbox:checked');
+    console.log(`🔍 Canais selecionados: ${channelCheckboxes.length}`);
+    
     channelCheckboxes.forEach(checkbox => {
       const channelName = checkbox.value;
-      const sheetIdRaw = document.getElementById(`${channelName}_sheet`).value;
-      const sheetId = extractSheetId(sheetIdRaw);
-      const gid = document.getElementById(`${channelName}_gid`).value;
-      const budget = parseFloat(document.getElementById(`${channelName}_budget`).value);
-      const quantity = parseInt(document.getElementById(`${channelName}_quantity`).value);
+      console.log(`🔍 Processando canal: ${channelName}`);
       
-      if (!sheetId) {
-        throw new Error(`ID da planilha obrigatório para ${channelName}`);
+      const sheetIdElement = document.getElementById(`${channelName}_sheet`);
+      const gidElement = document.getElementById(`${channelName}_gid`);
+      const budgetElement = document.getElementById(`${channelName}_budget`);
+      const quantityElement = document.getElementById(`${channelName}_quantity`);
+      
+      if (!sheetIdElement) {
+        console.error(`❌ Elemento não encontrado: ${channelName}_sheet`);
+        throw new Error(`Campo de planilha não encontrado para ${channelName}`);
+      }
+      
+      const sheetIdRaw = sheetIdElement.value;
+      const sheetId = extractSheetId(sheetIdRaw);
+      const gid = gidElement ? gidElement.value : '';
+      const budget = budgetElement ? parseFloat(budgetElement.value) : 0;
+      const quantity = quantityElement ? parseInt(quantityElement.value) : 0;
+      
+      console.log(`📊 Canal ${channelName}:`);
+      console.log(`  - sheetIdRaw: "${sheetIdRaw}"`);
+      console.log(`  - sheetId: "${sheetId}"`);
+      console.log(`  - gid: "${gid}"`);
+      console.log(`  - budget: ${budget}`);
+      console.log(`  - quantity: ${quantity}`);
+      
+      if (!sheetId || sheetId.trim() === '') {
+        console.error(`❌ Sheet ID vazio para ${channelName}`);
+        throw new Error(`ID da planilha obrigatório para ${channelName}. Verifique se o campo foi preenchido corretamente.`);
       }
       
       formData.channels.push({
@@ -984,7 +1006,14 @@ async function saveDashboard() {
     
   } catch (error) {
     console.error('❌ Erro ao salvar dashboard:', error);
-    alert('❌ Erro ao salvar dashboard. Tente novamente.');
+    
+    // Mostrar erro específico
+    let errorMessage = '❌ Erro ao salvar dashboard.';
+    if (error.message) {
+      errorMessage += '\n\nDetalhes: ' + error.message;
+    }
+    
+    alert(errorMessage);
     
     // Restaurar botão
     saveBtn.disabled = false;
