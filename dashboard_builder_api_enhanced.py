@@ -186,7 +186,10 @@ class DashboardBuilderEnhanced:
             return self.calculate_channel_metrics(data, channel)
             
         except Exception as e:
-            print(f"❌ Erro ao processar canal {channel.get('name')}: {e}")
+            logger.error(f"❌ Erro ao processar canal {channel.get('name')}: {e}")
+            logger.error(f"❌ Tipo do erro: {type(e).__name__}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
             raise Exception(f"Erro ao processar dados do canal {channel.get('name')}: {e}")
 
     def get_simulated_channel_data(self, channel):
@@ -224,6 +227,10 @@ class DashboardBuilderEnhanced:
     def calculate_channel_metrics(self, data, channel):
         """Calcular métricas de um canal baseado nos dados da planilha"""
         try:
+            logger.info(f"🧮 Calculando métricas para {channel.get('name')}")
+            logger.info(f"📊 Tipo dos dados: {type(data)}")
+            logger.info(f"📊 Tamanho dos dados: {len(data) if data else 0}")
+            
             # Processar dados reais da planilha
             if not data or len(data) < 2:
                 raise Exception("Dados insuficientes na planilha")
@@ -231,6 +238,9 @@ class DashboardBuilderEnhanced:
             # Extrair cabeçalhos e dados
             headers = data[0] if data else []
             rows = data[1:] if len(data) > 1 else []
+            
+            logger.info(f"📋 Cabeçalhos: {headers}")
+            logger.info(f"📋 Número de linhas: {len(rows)}")
             
             # Calcular métricas básicas
             metrics = {
