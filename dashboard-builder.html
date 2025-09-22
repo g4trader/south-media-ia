@@ -964,7 +964,8 @@ async function saveDashboard() {
       
       const sheetIdRaw = sheetIdElement.value;
       const sheetId = extractSheetId(sheetIdRaw);
-      const gid = gidElement ? gidElement.value : '';
+      const gidRaw = gidElement ? gidElement.value : '';
+      const gid = gidRaw && gidRaw.trim() !== '' ? gidRaw : null;
       const budget = budgetElement ? parseFloat(budgetElement.value) : 0;
       const quantity = quantityElement ? parseInt(quantityElement.value) : 0;
       
