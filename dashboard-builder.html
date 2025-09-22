@@ -957,10 +957,10 @@ async function saveDashboard() {
     
     setTimeout(() => {
       closeCreateDashboardModal();
-      alert(`🎉 Dashboard criado com sucesso!\n\nID: ${result.dashboard.id}\nArquivo: ${result.dashboard.fileName}\n\nPróximos passos:\n1. Validar o dashboard gerado\n2. Configurar agendamento automático\n3. Iniciar coleta de dados`);
+      alert(`🎉 Dashboard criado com sucesso!\n\nID: ${result.dashboard.id}\nArquivo: ${result.dashboard.html_file}\n\nPróximos passos:\n1. Validar o dashboard gerado\n2. Configurar agendamento automático\n3. Iniciar coleta de dados`);
       
-      // Recarregar lista de dashboards
-      loadDashboards();
+      // Redirecionar para a página de dashboards
+      window.location.href = '/dashboard-protected.html';
     }, 1000);
     
   } catch (error) {
