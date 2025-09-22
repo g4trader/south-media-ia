@@ -236,15 +236,24 @@ class DashboardBuilderEnhanced:
         try:
             logger.info(f"🧮 Calculando métricas para {channel.get('name')}")
             logger.info(f"📊 Tipo dos dados: {type(data)}")
-            logger.info(f"📊 Tamanho dos dados: {len(data) if data else 0}")
             
-            # Processar dados reais da planilha
-            if not data or len(data) < 2:
-                raise Exception("Dados insuficientes na planilha")
-            
-            # Extrair cabeçalhos e dados
-            headers = data[0] if data else []
-            rows = data[1:] if len(data) > 1 else []
+            # Verificar se é DataFrame ou lista
+            if hasattr(data, 'empty'):  # É um DataFrame
+                logger.info(f"📊 DataFrame com {len(data)} linhas")
+                if data.empty:
+                    raise Exception("DataFrame vazio - dados insuficientes na planilha")
+                
+                # Converter DataFrame para lista
+                headers = data.columns.tolist()
+                rows = data.values.tolist()
+            else:  # É uma lista
+                logger.info(f"📊 Lista com {len(data) if data else 0} elementos")
+                if not data or len(data) < 2:
+                    raise Exception("Dados insuficientes na planilha")
+                
+                # Extrair cabeçalhos e dados
+                headers = data[0] if data else []
+                rows = data[1:] if len(data) > 1 else []
             
             logger.info(f"📋 Cabeçalhos: {headers}")
             logger.info(f"📋 Número de linhas: {len(rows)}")
