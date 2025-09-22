@@ -1,0 +1,118 @@
+{
+  "YouTube": {
+    "sheet_id": "1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg",
+    "gid": "304137877",
+    "url": "https://docs.google.com/spreadsheets/d/1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg/edit?gid=304137877",
+    "info": {
+      "Data de início": "01/09/2025",
+      "Data de conclusão": "30/09/2025",
+      "Impressões contratadas": "625.000",
+      "Valor contratado": "50.000,00",
+      "CPV": "R$ 0,08"
+    },
+    "columns": [
+      "Day",
+      "Creative",
+      "Impressions",
+      "Clicks",
+      "Valor",
+      "Visits",
+      "Starts",
+      "Q25",
+      "Q50",
+      "Q75",
+      "Q100"
+    ],
+    "sample_data": [
+      {
+        "Day": "01/09/2025",
+        "Creative": "Semana do Pescado - YouTube 1",
+        "Impressions": "25,000",
+        "Clicks": "500",
+        "Valor": "2,000.00",
+        "Visits": "450",
+        "Starts": "24,500",
+        "Q25": "22,000",
+        "Q50": "20,000",
+        "Q75": "18,000",
+        "Q100": "15,000"
+      },
+      {
+        "Day": "02/09/2025",
+        "Creative": "Semana do Pescado - YouTube 2",
+        "Impressions": "30,000",
+        "Clicks": "600",
+        "Valor": "2,400.00",
+        "Visits": "540",
+        "Starts": "29,400",
+        "Q25": "26,400",
+        "Q50": "24,000",
+        "Q75": "21,600",
+        "Q100": "18,000"
+      },
+      {
+        "Day": "03/09/2025",
+        "Creative": "Semana do Pescado - YouTube 3",
+        "Impressions": "28,000",
+        "Clicks": "560",
+        "Valor": "2,240.00",
+        "Visits": "504",
+        "Starts": "27,440",
+        "Q25": "24,640",
+        "Q50": "22,400",
+        "Q75": "20,160",
+        "Q100": "16,800"
+      }
+    ]
+  },
+  "Programática Video": {
+    "sheet_id": "1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o",
+    "gid": "1489416055",
+    "url": "https://docs.google.com/spreadsheets/d/1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o/edit?gid=1489416055",
+    "info": {
+      "Data de início": "01/09/2025",
+      "Data de conclusão": "30/09/2025",
+      "Impressões contratadas": "173.914",
+      "Valor contratado": "40.000,00",
+      "CPV": "R$ 0,23"
+    },
+    "columns": [
+      "Day",
+      "Creative",
+      "Impressions",
+      "Clicks",
+      "Valor",
+      "Visits",
+      "Publisher"
+    ],
+    "sample_data": [
+      {
+        "Day": "01/09/2025",
+        "Creative": "Semana do Pescado - Programática 1",
+        "Impressions": "8,000",
+        "Clicks": "160",
+        "Valor": "1,840.00",
+        "Visits": "144",
+        "Publisher": "g1.globo.com"
+      },
+      {
+        "Day": "02/09/2025",
+        "Creative": "Semana do Pescado - Programática 2",
+        "Impressions": "9,500",
+        "Clicks": "190",
+        "Valor": "2,185.00",
+        "Visits": "171",
+        "Publisher": "oglobo.globo.com"
+      },
+      {
+        "Day": "03/09/2025",
+        "Creative": "Semana do Pescado - Programática 3",
+        "Impressions": "7,200",
+        "Clicks": "144",
+        "Valor": "1,656.00",
+        "Visits": "130",
+        "Publisher": "uol.com.br"
+      }
+    ]
+  }
+}

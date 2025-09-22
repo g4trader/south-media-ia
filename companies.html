@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciamento de Empresas - Dashboard IA South</title>
+  <style>
+  :root{
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --stroke: #0f3460;
+    --accent: #533483;
+    --grad: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    --muted: #64748b;
+    --text: #e2e8f0;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+  
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  
+  .header{background:rgba(22,33,62,.8);border-bottom:1px solid var(--stroke);padding:20px 0;backdrop-filter:blur(10px)}
+  .header-content{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center}
+  .header-left{display:flex;align-items:center;gap:16px}
+  .header-logo{width:40px;height:40px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700}
+  .header-title{font-size:1.5rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header-right{display:flex;align-items:center;gap:16px}
+  .user-info{display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(83,52,131,.1);border:1px solid rgba(83,52,131,.3);border-radius:8px}
+  .user-avatar{width:32px;height:32px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+  .user-details{display:flex;flex-direction:column;gap:2px}
+  .user-name{font-size:.9rem;font-weight:600}
+  .user-role{font-size:.75rem;color:var(--muted)}
+  .logout-btn{padding:8px 16px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;text-decoration:none;font-size:.9rem;transition:all .3s ease}
+  .logout-btn:hover{background:rgba(239,68,68,.2);transform:translateY(-1px)}
+  
+  .container{max-width:1200px;margin:0 auto;padding:40px 20px}
+  .page-title{font-size:2.5rem;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+  .page-subtitle{color:var(--muted);font-size:1.1rem;margin-bottom:40px}
+  
+  .companies-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:24px;margin-bottom:40px}
+  .company-card{background:rgba(22,33,62,.6);border:1px solid var(--stroke);border-radius:16px;padding:24px;transition:all .3s ease;position:relative;overflow:hidden}
+  .company-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 32px rgba(139,92,246,.1)}
+  .company-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad)}
+  
+  .company-header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  .company-logo{width:60px;height:60px;background:var(--grad);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600}
+  .company-info{flex:1}
+  .company-name{font-size:1.2rem;font-weight:700;margin-bottom:4px}
+  .company-code{color:var(--muted);font-size:.9rem;background:rgba(83,52,131,.1);padding:2px 8px;border-radius:4px;display:inline-block}
+  
+  .company-details{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .detail-row{display:flex;justify-content:space-between;align-items:center}
+  .detail-label{color:var(--muted);font-size:.9rem}
+  .detail-value{color:var(--text);font-size:.9rem;font-weight:500}
+  
+  .company-actions{display:flex;gap:8px}
+  .btn{padding:8px 16px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;transition:all .3s ease;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .btn-primary{background:var(--grad);color:#fff}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(139,92,246,.3)}
+  .btn-secondary{background:rgba(83,52,131,.1);color:var(--accent);border:1px solid rgba(83,52,131,.3)}
+  .btn-secondary:hover{background:rgba(83,52,131,.2)}
+  .btn-danger{background:rgba(239,68,68,.1);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .btn-danger:hover{background:rgba(239,68,68,.2)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  
+  .add-company-section{background:rgba(83,52,131,.05);border:1px solid rgba(83,52,131,.2);border-radius:16px;padding:24px;margin-bottom:40px}
+  .add-company-title{font-size:1.3rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-bottom:20px}
+  .form-group{margin-bottom:16px}
+  .form-label{display:block;margin-bottom:8px;color:var(--text);font-weight:500;font-size:.9rem}
+  .form-input{width:100%;padding:12px 16px;background:rgba(22,33,62,.5);border:1px solid var(--stroke);border-radius:10px;color:var(--text);font-size:1rem;transition:all .3s ease}
+  .form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+  .form-input::placeholder{color:var(--muted)}
+  .form-textarea{width:100%;padding:12px 16px;background:rgba(22,33,62,.5);border:1px solid var(--stroke);border-radius:10px;color:var(--text);font-size:1rem;transition:all .3s ease;min-height:80px;resize:vertical}
+  .form-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.1)}
+  
+  .message{display:none;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:.9rem}
+  .message.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+  .message.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac}
+  
+  .stats-section{background:rgba(83,52,131,.05);border:1px solid rgba(83,52,131,.2);border-radius:16px;padding:24px;margin-bottom:40px}
+  .stats-title{font-size:1.2rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+  .stat-card{background:rgba(22,33,62,.3);border:1px solid var(--stroke);border-radius:12px;padding:16px;text-align:center}
+  .stat-number{font-size:2rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+  .stat-label{color:var(--muted);font-size:.9rem}
+  
+  .btn-secondary {
+    background: var(--muted);
+    color: white;
+  }
+  
+  .btn-secondary:hover {
+    background: #475569;
+  }
+  
+  .companies-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    align-items: center;
+  }
+  
+  .companies-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* Modal Styles */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+  }
+  
+  .modal-content {
+    background: var(--surface);
+    margin: 5% auto;
+    padding: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .modal-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--stroke);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    color: var(--text);
+  }
+  
+  .close {
+    color: var(--muted);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  
+  .close:hover {
+    color: var(--text);
+  }
+  
+  .modal-body {
+    padding: 30px;
+  }
+  
+  .modal-footer {
+    padding: 20px 30px;
+    border-top: 1px solid var(--stroke);
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+  }
+  
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  
+  .company-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+  }
+  
+  .company-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  }
+  
+  .company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .company-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  
+  .company-code {
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .company-details {
+    display: grid;
+    gap: 8px;
+  }
+  
+  .company-detail {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  
+  .company-detail strong {
+    color: var(--text);
+  }
+  
+  .company-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  
+  .company-actions .btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    flex: 1;
+  }
+  
+  .edit-company-btn {
+    background: var(--warning);
+  }
+  
+  .edit-company-btn:hover {
+    background: #d97706;
+  }
+  
+  .delete-company-btn {
+    background: var(--error);
+  }
+  
+  .delete-company-btn:hover {
+    background: #dc2626;
+  }
+  
+  @media (max-width:768px){
+    .companies-grid{grid-template-columns:1fr}
+    .header-content{flex-direction:column;gap:16px;text-align:center}
+    .user-info{flex-direction:column;text-align:center}
+    .page-title{font-size:2rem}
+    .form-grid{grid-template-columns:1fr}
+    .companies-actions{flex-direction:column;align-items:stretch}
+    .modal-content{width:95%;margin:10% auto}
+  }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="header-logo">🏢</div>
+        <h1 class="header-title">Gerenciamento de Empresas</h1>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Usuário</div>
+            <div class="user-role" id="userRole">Role</div>
+          </div>
+        </div>
+        <a href="/dashboard-protected.html" class="btn btn-secondary">Voltar</a>
+        <a href="#" class="logout-btn" onclick="logout()">Sair</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <h1 class="page-title">Gerenciamento de Empresas</h1>
+    <p class="page-subtitle">Gerencie empresas e suas configurações no sistema multi-tenant</p>
+    
+    <div class="stats-section">
+      <h3 class="stats-title">📊 Estatísticas</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="totalCompanies">0</div>
+          <div class="stat-label">Total de Empresas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="activeCompanies">0</div>
+          <div class="stat-label">Empresas Ativas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalUsers">0</div>
+          <div class="stat-label">Usuários Associados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalDashboards">0</div>
+          <div class="stat-label">Dashboards</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="add-company-section">
+      <h2 class="add-company-title">➕ Adicionar Nova Empresa</h2>
+      
+      <div id="errorMessage" class="message error"></div>
+      <div id="successMessage" class="message success"></div>
+      
+      <form id="addCompanyForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="companyName" class="form-label">Nome da Empresa</label>
+            <input type="text" id="companyName" name="name" class="form-input" placeholder="Digite o nome da empresa" required>
+          </div>
+          <div class="form-group">
+            <label for="companyCode" class="form-label">Código da Empresa</label>
+            <input type="text" id="companyCode" name="code" class="form-input" placeholder="Ex: IASOUTH" required>
+          </div>
+          <div class="form-group">
+            <label for="companyEmail" class="form-label">Email de Contato</label>
+            <input type="email" id="companyEmail" name="email" class="form-input" placeholder="contato@empresa.com">
+          </div>
+          <div class="form-group">
+            <label for="companyPhone" class="form-label">Telefone</label>
+            <input type="text" id="companyPhone" name="phone" class="form-input" placeholder="+55 11 99999-9999">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="companyDescription" class="form-label">Descrição</label>
+          <textarea id="companyDescription" name="description" class="form-textarea" placeholder="Descreva a empresa e seus objetivos"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="companyAddress" class="form-label">Endereço</label>
+          <input type="text" id="companyAddress" name="address" class="form-input" placeholder="Endereço completo da empresa">
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn btn-primary">Criar Empresa</button>
+        </div>
+      </form>
+    </div>
+    
+    <div class="companies-actions">
+      <button class="btn btn-primary" id="createCompanyBtn">
+        <span>➕</span> Nova Empresa
+      </button>
+      <button class="btn btn-secondary" id="refreshCompaniesBtn">
+        <span>🔄</span> Atualizar
+      </button>
+    </div>
+    
+    <div class="companies-grid" id="companiesGrid">
+      <!-- Empresas serão carregadas dinamicamente -->
+    </div>
+  </div>
+
+  <!-- Modal de Criação/Edição de Empresa -->
+  <div id="companyModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Criar Empresa</h3>
+        <span class="close" id="closeModal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="companyForm">
+          <div class="form-group">
+            <label for="companyName">Nome da Empresa</label>
+            <input type="text" id="companyName" name="companyName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyCode">Código</label>
+            <input type="text" id="companyCode" name="companyCode" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyDescription">Descrição</label>
+            <textarea id="companyDescription" name="companyDescription" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyEmail">Email</label>
+            <input type="email" id="companyEmail" name="companyEmail" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyPhone">Telefone</label>
+            <input type="tel" id="companyPhone" name="companyPhone">
+          </div>
+          
+          <div class="form-group">
+            <label for="companyAddress">Endereço</label>
+            <textarea id="companyAddress" name="companyAddress" rows="2"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyTheme">Tema</label>
+            <select id="companyTheme" name="companyTheme" required>
+              <option value="default">Padrão</option>
+              <option value="dark">Escuro</option>
+              <option value="light">Claro</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyTimezone">Fuso Horário</label>
+            <select id="companyTimezone" name="companyTimezone" required>
+              <option value="America/Sao_Paulo">São Paulo (GMT-3)</option>
+              <option value="America/New_York">Nova York (GMT-5)</option>
+              <option value="Europe/London">Londres (GMT+0)</option>
+              <option value="Asia/Tokyo">Tóquio (GMT+9)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyLanguage">Idioma</label>
+            <select id="companyLanguage" name="companyLanguage" required>
+              <option value="pt-BR">Português (Brasil)</option>
+              <option value="en-US">English (US)</option>
+              <option value="es-ES">Español</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="companyStatus">Status</label>
+            <select id="companyStatus" name="companyStatus" required>
+              <option value="active">Ativo</option>
+              <option value="inactive">Inativo</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="saveCompanyBtn">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incluir sistema de autenticação -->
+  <script src="auth_system_hybrid.js"></script>
+  <script src="auth_middleware.js"></script>
+  <script src="navigation_menu.js"></script>
+
+  <script>
+// Verificar autenticação e permissões
+if (!window.authSystem || !window.authSystem.isAuthenticated()) {
+  window.location.href = '/login.html';
+}
+
+// Verificar permissões após carregamento completo
+document.addEventListener('DOMContentLoaded', async () => {
+  // Aguardar sistema de autenticação carregar
+  await new Promise(resolve => {
+    const checkAuth = () => {
+      if (window.authSystem && window.authSystem.isInitialized) {
+        resolve();
+      } else {
+        setTimeout(checkAuth, 100);
+      }
+    };
+    checkAuth();
+  });
+  
+  // Verificar permissões
+  if (!window.authSystem.hasPermission('companies:view')) {
+    alert('Você não tem permissão para acessar esta página');
+    window.location.href = '/dashboard-protected.html';
+    return;
+  }
+  
+  // Continuar com o carregamento da página
+  await updateUserInfo();
+  await loadCompanies();
+  
+  // Event listeners dos botões
+  document.getElementById('createCompanyBtn').addEventListener('click', openCreateCompanyModal);
+  document.getElementById('refreshCompaniesBtn').addEventListener('click', loadCompanies);
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('saveCompanyBtn').addEventListener('click', saveCompany);
+  
+  // Fechar modal ao clicar fora
+  document.getElementById('companyModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('companyModal')) {
+      closeModal();
+    }
+  });
+});
+
+// Variáveis globais
+let currentEditingCompanyId = null;
+let companies = [];
+
+// Exibir informações do usuário
+async function updateUserInfo() {
+  try {
+    const session = window.authSystem.getCurrentSession();
+    const user = await window.authSystem.getCurrentUser();
+
+    if (session && user) {
+      document.getElementById('userName').textContent = user.profile?.full_name || session.username;
+      document.getElementById('userAvatar').textContent = (user.profile?.full_name || session.username).charAt(0).toUpperCase();
+      
+      // Exibir role do usuário
+      const roleElement = document.getElementById('userRole');
+      if (roleElement) {
+        const systemData = window.authSystem.getSystemData();
+        const role = systemData.roles.find(r => r.id === session.role);
+        roleElement.textContent = role ? role.name : session.role;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar informações do usuário:', error);
+  }
+}
+
+// Carregar empresas
+async function loadCompanies() {
+  try {
+    companies = await window.authSystem.getAllCompanies();
+    renderCompanies();
+    updateStats();
+  } catch (error) {
+    console.error('Erro ao carregar empresas:', error);
+    showMessage('Erro ao carregar empresas', 'error');
+  }
+}
+
+// Renderizar empresas
+function renderCompanies() {
+  const companiesGrid = document.getElementById('companiesGrid');
+  
+  if (companies.length === 0) {
+    companiesGrid.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--muted);">
+        <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+        <h3>Nenhuma empresa encontrada</h3>
+        <p>Clique em "Nova Empresa" para criar a primeira empresa</p>
+      </div>
+    `;
+    return;
+  }
+  
+  companiesGrid.innerHTML = companies.map(company => `
+    <div class="company-card">
+      <div class="company-header">
+        <div class="company-name">${company.name}</div>
+        <div class="company-code">${company.code}</div>
+      </div>
+      <div class="company-details">
+        <div class="company-detail">
+          <span>Descrição:</span>
+          <strong>${company.description || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Email:</span>
+          <strong>${company.contact?.email || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Telefone:</span>
+          <strong>${company.contact?.phone || 'N/A'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Tema:</span>
+          <strong>${company.settings?.theme || 'Padrão'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Idioma:</span>
+          <strong>${company.settings?.language || 'pt-BR'}</strong>
+        </div>
+        <div class="company-detail">
+          <span>Status:</span>
+          <strong style="color: ${company.status === 'active' ? 'var(--success)' : 'var(--error)'}">
+            ${company.status === 'active' ? 'Ativo' : 'Inativo'}
+          </strong>
+        </div>
+      </div>
+      <div class="company-actions">
+        <button class="btn edit-company-btn" onclick="editCompany('${company.id}')">
+          ✏️ Editar
+        </button>
+        <button class="btn delete-company-btn" onclick="deleteCompany('${company.id}')">
+          🗑️ Excluir
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Atualizar estatísticas
+function updateStats() {
+  const totalCompanies = companies.length;
+  const activeCompanies = companies.filter(c => c.status === 'active').length;
+  const inactiveCompanies = companies.filter(c => c.status === 'inactive').length;
+  
+  // Atualizar elementos de estatísticas se existirem
+  const totalElement = document.querySelector('.stat-number');
+  if (totalElement) {
+    totalElement.textContent = totalCompanies;
+  }
+}
+
+// Abrir modal para criar empresa
+function openCreateCompanyModal() {
+  currentEditingCompanyId = null;
+  document.getElementById('modalTitle').textContent = 'Criar Empresa';
+  document.getElementById('companyForm').reset();
+  document.getElementById('companyModal').style.display = 'block';
+}
+
+// Editar empresa
+function editCompany(companyId) {
+  const company = companies.find(c => c.id === companyId);
+  if (!company) return;
+  
+  currentEditingCompanyId = companyId;
+  document.getElementById('modalTitle').textContent = 'Editar Empresa';
+  
+  // Preencher formulário
+  document.getElementById('companyName').value = company.name || '';
+  document.getElementById('companyCode').value = company.code || '';
+  document.getElementById('companyDescription').value = company.description || '';
+  document.getElementById('companyEmail').value = company.contact?.email || '';
+  document.getElementById('companyPhone').value = company.contact?.phone || '';
+  document.getElementById('companyAddress').value = company.contact?.address || '';
+  document.getElementById('companyTheme').value = company.settings?.theme || 'default';
+  document.getElementById('companyTimezone').value = company.settings?.timezone || 'America/Sao_Paulo';
+  document.getElementById('companyLanguage').value = company.settings?.language || 'pt-BR';
+  document.getElementById('companyStatus').value = company.status;
+  
+  document.getElementById('companyModal').style.display = 'block';
+}
+
+// Salvar empresa
+async function saveCompany() {
+  try {
+    const formData = {
+      name: document.getElementById('companyName').value,
+      code: document.getElementById('companyCode').value,
+      description: document.getElementById('companyDescription').value,
+      contact: {
+        email: document.getElementById('companyEmail').value,
+        phone: document.getElementById('companyPhone').value,
+        address: document.getElementById('companyAddress').value
+      },
+      settings: {
+        theme: document.getElementById('companyTheme').value,
+        timezone: document.getElementById('companyTimezone').value,
+        language: document.getElementById('companyLanguage').value
+      },
+      status: document.getElementById('companyStatus').value
+    };
+    
+    if (currentEditingCompanyId) {
+      // Atualizar empresa existente
+      await window.authSystem.updateCompany(currentEditingCompanyId, formData);
+      showMessage('Empresa atualizada com sucesso!', 'success');
+    } else {
+      // Criar nova empresa
+      await window.authSystem.createCompany(formData);
+      showMessage('Empresa criada com sucesso!', 'success');
+    }
+    
+    closeModal();
+    await loadCompanies();
+  } catch (error) {
+    console.error('Erro ao salvar empresa:', error);
+    showMessage('Erro ao salvar empresa', 'error');
+  }
+}
+
+// Excluir empresa
+async function deleteCompany(companyId) {
+  const company = companies.find(c => c.id === companyId);
+  if (!company) return;
+  
+  if (confirm(`Tem certeza que deseja excluir a empresa "${company.name}"?`)) {
+    try {
+      await window.authSystem.deleteCompany(companyId);
+      showMessage('Empresa excluída com sucesso!', 'success');
+      await loadCompanies();
+    } catch (error) {
+      console.error('Erro ao excluir empresa:', error);
+      showMessage('Erro ao excluir empresa', 'error');
+    }
+  }
+}
+
+// Fechar modal
+function closeModal() {
+  document.getElementById('companyModal').style.display = 'none';
+  currentEditingCompanyId = null;
+}
+
+// Mostrar mensagem
+function showMessage(message, type) {
+  // Implementar sistema de mensagens se necessário
+  console.log(`${type.toUpperCase()}: ${message}`);
+}
+
+// Função de logout
+function logout() {
+  if (confirm('Tem certeza que deseja sair?')) {
+    window.authSystem.logout();
+    window.location.href = '/login.html';
+  }
+}
+
+// Event listeners já configurados acima
+
+// Função para mostrar mensagem de erro
+function showError(message) {
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  errorMessage.textContent = message;
+  errorMessage.style.display = 'block';
+  successMessage.style.display = 'none';
+}
+
+// Função para mostrar mensagem de sucesso
+function showSuccess(message) {
+  const errorMessage = document.getElementById('errorMessage');
+  const successMessage = document.getElementById('successMessage');
+  successMessage.textContent = message;
+  successMessage.style.display = 'block';
+  errorMessage.style.display = 'none';
+}
+
+// Função para esconder mensagens
+function hideMessages() {
+  document.getElementById('errorMessage').style.display = 'none';
+  document.getElementById('successMessage').style.display = 'none';
+}
+
+// Renderizar empresas
+function renderCompanies() {
+  const companiesGrid = document.getElementById('companiesGrid');
+  const result = window.authSystem.getAllCompanies();
+  
+  if (!result.success) {
+    showError(result.message);
+    return;
+  }
+  
+  const companies = result.companies;
+  const systemData = window.authSystem.getSystemData();
+  
+  const companyElements = companies.map(company => {
+    // Contar usuários da empresa
+    const companyUsers = systemData.users.filter(u => u.company_id === company.id);
+    
+    // Contar dashboards da empresa
+    const companyDashboards = systemData.dashboards.filter(d => d.company_id === company.id);
+    
+    let actionsHtml = '';
+    
+    if (window.authSystem.hasPermission('companies:manage')) {
+      actionsHtml = `
+        <button class="btn btn-secondary" onclick="editCompany('${company.id}')">Editar</button>
+        <button class="btn btn-danger" onclick="deleteCompany('${company.id}')">Excluir</button>
+      `;
+    }
+    
+    return `
+      <div class="company-card">
+        <div class="company-header">
+          <div class="company-logo">${company.name.charAt(0).toUpperCase()}</div>
+          <div class="company-info">
+            <div class="company-name">${company.name}</div>
+            <div class="company-code">${company.code}</div>
+          </div>
+        </div>
+        
+        <div class="company-details">
+          <div class="detail-row">
+            <span class="detail-label">Status:</span>
+            <span class="detail-value">${company.status === 'active' ? 'Ativo' : 'Inativo'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Usuários:</span>
+            <span class="detail-value">${companyUsers.length}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Dashboards:</span>
+            <span class="detail-value">${companyDashboards.length}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Criado em:</span>
+            <span class="detail-value">${new Date(company.created_at).toLocaleDateString('pt-BR')}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Email:</span>
+            <span class="detail-value">${company.contact.email || 'Não informado'}</span>
+          </div>
+        </div>
+        
+        <div class="company-actions">
+          ${actionsHtml}
+        </div>
+      </div>
+    `;
+  });
+  
+  companiesGrid.innerHTML = companyElements.join('');
+  
+  // Atualizar estatísticas
+  updateStats(companies, systemData);
+}
+
+// Atualizar estatísticas
+function updateStats(companies, systemData) {
+  document.getElementById('totalCompanies').textContent = companies.length;
+  document.getElementById('activeCompanies').textContent = companies.filter(c => c.status === 'active').length;
+  document.getElementById('totalUsers').textContent = systemData.users.filter(u => u.company_id).length;
+  document.getElementById('totalDashboards').textContent = systemData.dashboards.length;
+}
+
+// Adicionar nova empresa
+document.getElementById('addCompanyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  
+  const companyData = {
+    name: formData.get('name'),
+    code: formData.get('code').toUpperCase(),
+    description: formData.get('description'),
+    email: formData.get('email'),
+    phone: formData.get('phone'),
+    address: formData.get('address')
+  };
+  
+  const result = window.authSystem.createCompany(companyData);
+  
+  if (result.success) {
+    showSuccess('Empresa criada com sucesso!');
+    e.target.reset();
+    renderCompanies();
+  } else {
+    showError(result.message);
+  }
+});
+
+// Funções de edição e exclusão (placeholder)
+function editCompany(companyId) {
+  alert(`Editar empresa ${companyId} - Funcionalidade em desenvolvimento`);
+}
+
+function deleteCompany(companyId) {
+  if (confirm('Tem certeza que deseja excluir esta empresa?')) {
+    alert(`Excluir empresa ${companyId} - Funcionalidade em desenvolvimento`);
+  }
+}
+
+// Inicialização já configurada acima
+</script>
+</body>
+</html>

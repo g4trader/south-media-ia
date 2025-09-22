@@ -1,0 +1,112 @@
+{
+  "YouTube": {
+    "daily_data": [
+      {
+        "date": "01/09/2025",
+        "channel": "YouTube",
+        "creative": "Semana do Pescado - YouTube 1",
+        "impressions": 25000,
+        "clicks": 500,
+        "spend": 2000.0,
+        "visits": "450",
+        "starts": 24500,
+        "q25": 22000,
+        "q50": 20000,
+        "q75": 18000,
+        "q100": 15000
+      },
+      {
+        "date": "02/09/2025",
+        "channel": "YouTube",
+        "creative": "Semana do Pescado - YouTube 2",
+        "impressions": 30000,
+        "clicks": 600,
+        "spend": 2400.0,
+        "visits": "540",
+        "starts": 29400,
+        "q25": 26400,
+        "q50": 24000,
+        "q75": 21600,
+        "q100": 18000
+      },
+      {
+        "date": "03/09/2025",
+        "channel": "YouTube",
+        "creative": "Semana do Pescado - YouTube 3",
+        "impressions": 28000,
+        "clicks": 560,
+        "spend": 2240.0,
+        "visits": "504",
+        "starts": 27440,
+        "q25": 24640,
+        "q50": 22400,
+        "q75": 20160,
+        "q100": 16800
+      }
+    ],
+    "totals": {
+      "impressions": 83000,
+      "clicks": 1660,
+      "spend": 6640.0,
+      "ctr": 2.0,
+      "cpv": 0.08,
+      "completion_rate": 99.7
+    },
+    "contract_info": {
+      "Data de início": "01/09/2025",
+      "Data de conclusão": "30/09/2025",
+      "Impressões contratadas": "625.000",
+      "Valor contratado": "50.000,00",
+      "CPV": "R$ 0,08"
+    }
+  },
+  "Programática Video": {
+    "daily_data": [
+      {
+        "date": "01/09/2025",
+        "channel": "Programática Video",
+        "creative": "Semana do Pescado - Programática 1",
+        "impressions": 8000,
+        "clicks": 160,
+        "spend": 1840.0,
+        "visits": "144",
+        "publisher": "g1.globo.com"
+      },
+      {
+        "date": "02/09/2025",
+        "channel": "Programática Video",
+        "creative": "Semana do Pescado - Programática 2",
+        "impressions": 9500,
+        "clicks": 190,
+        "spend": 2185.0,
+        "visits": "171",
+        "publisher": "oglobo.globo.com"
+      },
+      {
+        "date": "03/09/2025",
+        "channel": "Programática Video",
+        "creative": "Semana do Pescado - Programática 3",
+        "impressions": 7200,
+        "clicks": 144,
+        "spend": 1656.0,
+        "visits": "130",
+        "publisher": "uol.com.br"
+      }
+    ],
+    "totals": {
+      "impressions": 24700,
+      "clicks": 494,
+      "spend": 5681.0,
+      "ctr": 2.0,
+      "cpv": 0.23,
+      "completion_rate": 68.5
+    },
+    "contract_info": {
+      "Data de início": "01/09/2025",
+      "Data de conclusão": "30/09/2025",
+      "Impressões contratadas": "173.914",
+      "Valor contratado": "40.000,00",
+      "CPV": "R$ 0,23"
+    }
+  }
+}
