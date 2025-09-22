@@ -243,10 +243,15 @@ def create_dashboard():
             processed_channels = []
             for channel in data.get('channels', []):
                 try:
+                    logger.info(f"🔄 Processando canal: {channel.get('name')}")
+                    logger.info(f"📄 Dados do canal: {channel}")
                     channel_data = builder.process_channel_data(channel)
+                    logger.info(f"✅ Canal processado com sucesso: {channel.get('name')}")
                     processed_channels.append(channel_data)
                 except Exception as e:
                     logger.error(f"❌ Erro ao processar canal {channel.get('name')}: {e}")
+                    import traceback
+                    logger.error(f"❌ Traceback: {traceback.format_exc()}")
                     return add_cors_headers(jsonify({
                         "success": False,
                         "message": f"Erro ao processar canal {channel.get('name')}: {str(e)}"
