@@ -954,8 +954,11 @@ async function saveDashboard() {
       const budgetElement = document.getElementById(`${channelName}_budget`);
       const quantityElement = document.getElementById(`${channelName}_quantity`);
       
+      alert(`🔍 DEBUG: Processando canal ${channelName}\nElementos encontrados:\n- sheetIdElement: ${sheetIdElement ? 'SIM' : 'NÃO'}\n- gidElement: ${gidElement ? 'SIM' : 'NÃO'}\n- budgetElement: ${budgetElement ? 'SIM' : 'NÃO'}\n- quantityElement: ${quantityElement ? 'SIM' : 'NÃO'}`);
+      
       if (!sheetIdElement) {
         console.error(`❌ Elemento não encontrado: ${channelName}_sheet`);
+        alert(`❌ ERRO: Campo de planilha não encontrado para ${channelName}!\nProcurando por: ${channelName}_sheet`);
         throw new Error(`Campo de planilha não encontrado para ${channelName}`);
       }
       
