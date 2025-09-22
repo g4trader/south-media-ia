@@ -24,6 +24,14 @@
       "dest": "/static/$1"
     },
     {
+      "src": "/dashboard-builder.html",
+      "dest": "/dashboard-builder.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "/login.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
