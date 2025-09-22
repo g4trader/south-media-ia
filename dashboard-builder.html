@@ -886,9 +886,14 @@ function validateForm() {
 }
 
 async function saveDashboard() {
+  alert('🔍 DEBUG: Função saveDashboard chamada');
+  
   if (!validateForm()) {
+    alert('❌ DEBUG: Validação do formulário falhou');
     return;
   }
+  
+  alert('✅ DEBUG: Validação do formulário passou');
   
   const saveBtn = document.getElementById('saveDashboardBtn');
   const originalText = saveBtn.innerHTML;
@@ -935,6 +940,10 @@ async function saveDashboard() {
       alert('❌ ERRO: Nenhum canal foi selecionado!');
       throw new Error('Nenhum canal foi selecionado');
     }
+    
+    // Debug: mostrar quais canais foram selecionados
+    const selectedChannels = Array.from(channelCheckboxes).map(cb => cb.value);
+    alert(`🔍 Canais selecionados: ${selectedChannels.join(', ')}`);
     
     channelCheckboxes.forEach(checkbox => {
       const channelName = checkbox.value;
