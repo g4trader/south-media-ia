@@ -329,11 +329,12 @@ class DashboardBuilderEnhanced:
             with open(template_path, 'r', encoding='utf-8') as f:
                 template_content = f.read()
             
-            # Processar dados dos canais
+            # Usar dados dos canais já processados
             channel_data = {}
             for channel in config.get('channels', []):
                 channel_name = channel.get('name', '')
-                channel_data[channel_name] = self.process_channel_data(channel)
+                # Os canais já foram processados em cloud_run_app.py, usar diretamente
+                channel_data[channel_name] = channel
             
             # Substituir variáveis no template
             html_content = self.replace_template_variables(template_content, config, channel_data)
