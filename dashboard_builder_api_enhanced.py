@@ -190,7 +190,7 @@ class DashboardBuilderEnhanced:
             
             # Ler dados reais da planilha
             data = self.sheets_processor.read_sheet_data(sheet_id, sheet_name=None, gid=gid)
-            if not data:
+            if data is None or (hasattr(data, 'empty') and data.empty):
                 raise Exception(f"Nenhum dado encontrado na planilha {sheet_id}")
             
             # Processar dados reais
