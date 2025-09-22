@@ -1045,10 +1045,23 @@ async function saveDashboard() {
     
     setTimeout(() => {
       closeCreateDashboardModal();
-      alert(`🎉 Dashboard criado com sucesso!\n\nID: ${result.dashboard.id}\nArquivo: ${result.dashboard.html_file}\n\nPróximos passos:\n1. Validar o dashboard gerado\n2. Configurar agendamento automático\n3. Iniciar coleta de dados`);
       
-      // Redirecionar para a página de dashboards
-      window.location.href = '/dashboard-protected.html';
+      // Verificar se o Git funcionou
+      const gitWorked = result.dashboard.git_pushed;
+      const listUpdated = result.dashboard.list_updated;
+      
+      let message = `🎉 Dashboard criado com sucesso!\n\nID: ${result.dashboard.id}\nArquivo: ${result.dashboard.html_file}\nGit Push: ${gitWorked ? '✅ Sucesso' : '❌ Falhou'}\nLista Atualizada: ${listUpdated ? '✅ Sim' : '❌ Não'}`;
+      
+      if (!gitWorked) {
+        message += '\n\n⚠️ ATENÇÃO: O dashboard foi criado mas não foi enviado para o Git.\nVocê precisa fazer commit e push manualmente para que apareça no painel.';
+      }
+      
+      alert(message);
+      
+      // Redirecionar para a página de dashboards apenas se Git funcionou
+      if (gitWorked && listUpdated) {
+        window.location.href = '/dashboard-protected.html';
+      }
     }, 1000);
     
   } catch (error) {
