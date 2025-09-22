@@ -163,6 +163,8 @@ def trigger_automation():
 def get_logs():
     """Endpoint para visualizar logs recentes"""
     try:
+        # Criar diretório de logs se não existir
+        os.makedirs('logs', exist_ok=True)
         log_file = 'logs/dashboard_automation.log'
         
         if not os.path.exists(log_file):
@@ -218,10 +220,17 @@ def create_dashboard():
         logger.info(f"📊 Recebida requisição para criar dashboard: {data.get('campaignName', 'N/A')}")
         
         # Importar e usar o DashboardBuilder
-        from dashboard_builder_api_enhanced import DashboardBuilderAPI
-        
-        builder = DashboardBuilderAPI()
-        result = builder.create_dashboard_api(data)
+        try:
+            from dashboard_builder_api_enhanced import DashboardBuilderAPI
+            
+            builder = DashboardBuilderAPI()
+            result = builder.create_dashboard_api(data)
+        except ImportError as e:
+            logger.error(f"❌ Erro ao importar DashboardBuilderAPI: {e}")
+            return add_cors_headers(jsonify({
+                "success": False,
+                "message": f"Erro ao importar módulo: {str(e)}"
+            })), 500
         
         if result.get('success'):
             logger.info(f"✅ Dashboard criado com sucesso: {result.get('dashboard', {}).get('name', 'N/A')}")
