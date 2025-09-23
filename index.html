@@ -538,27 +538,15 @@ function loadDashboards() {
     // Usar apenas dashboards estáticos - sem fetch, sem async
     loadingState.style.display = 'none';
     
-    // Dashboard simples para teste
-    const simpleDashboards = [
-      {
-        file: 'dash_sonho.html',
-        name: 'Dashboard Sonho',
-        description: 'Dashboard multicanal com análise de vídeo + display e footfall das lojas Recibom',
-        status: 'active',
-        category: 'Marketing',
-        lastUpdate: '2025-09-18',
-        icon: '🎯'
-      }
-    ];
-    
-    if (simpleDashboards && simpleDashboards.length > 0) {
+    // Usar todos os dashboards definidos na variável global
+    if (typeof dashboards !== 'undefined' && dashboards && dashboards.length > 0) {
       container.style.display = 'grid';
-      container.innerHTML = simpleDashboards.map(createDashboardCard).join('');
+      container.innerHTML = dashboards.map(createDashboardCard).join('');
       
       // Atualizar estatísticas
-      document.getElementById('totalDashboards').textContent = simpleDashboards.length;
+      document.getElementById('totalDashboards').textContent = dashboards.length;
       document.getElementById('activeDashboards').textContent = 
-        simpleDashboards.filter(d => d.status === 'active').length;
+        dashboards.filter(d => d.status === 'active').length;
       document.getElementById('lastUpdate').textContent = 'Agora';
     } else {
       emptyState.style.display = 'block';
