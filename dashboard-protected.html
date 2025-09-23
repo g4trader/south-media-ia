@@ -230,13 +230,161 @@ async function updateUserInfo(sessionData) {
   }
 }
 
+// Lista de dashboards disponíveis na pasta /static
+const AVAILABLE_DASHBOARDS = [
+  {
+    file: 'dash_copacol_mestre_das_grelhas.html',
+    name: 'Copacol - Mestre das Grelhas',
+    description: 'Dashboard principal da Copacol com métricas consolidadas',
+    category: 'Copacol',
+    icon: '🏆',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol_netflix.html',
+    name: 'Copacol - Netflix',
+    description: 'Métricas específicas para campanhas no Netflix',
+    category: 'Copacol',
+    icon: '🎬',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol_video_institucional_90s.html',
+    name: 'Copacol - Video Institucional 90s',
+    description: 'Análise de vídeos institucionais com tema anos 90',
+    category: 'Copacol',
+    icon: '📺',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol_video_programatico.html',
+    name: 'Copacol - Video Programático',
+    description: 'Dashboard de compra programática de vídeo',
+    category: 'Copacol',
+    icon: '🎯',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol_youtube.html',
+    name: 'Copacol - YouTube',
+    description: 'Métricas e performance no YouTube',
+    category: 'Copacol',
+    icon: '📹',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol.html',
+    name: 'Copacol - Geral',
+    description: 'Dashboard geral da Copacol',
+    category: 'Copacol',
+    icon: '🌽',
+    status: 'active'
+  },
+  {
+    file: 'dash_dauher_hidrabene.html',
+    name: 'Dauher - Hidrabene',
+    description: 'Dashboard para campanhas Hidrabene da Dauher',
+    category: 'Dauher',
+    icon: '💧',
+    status: 'active'
+  },
+  {
+    file: 'dash_iquine_setembro_pinterest.html',
+    name: 'Iquine - Setembro Pinterest',
+    description: 'Campanha Iquine no Pinterest - Setembro',
+    category: 'Iquine',
+    icon: '📌',
+    status: 'active'
+  },
+  {
+    file: 'dash_multicanal_spotify_programatica.html',
+    name: 'Multicanal - Spotify Programático',
+    description: 'Compra programática no Spotify',
+    category: 'Multicanal',
+    icon: '🎵',
+    status: 'active'
+  },
+  {
+    file: 'dash_sebrae_programatica_video.html',
+    name: 'Sebrae - Programática Video',
+    description: 'Dashboard de vídeo programático para Sebrae',
+    category: 'Sebrae',
+    icon: '🎥',
+    status: 'active'
+  },
+  {
+    file: 'dash_sebrae.html',
+    name: 'Sebrae - Geral',
+    description: 'Dashboard principal do Sebrae',
+    category: 'Sebrae',
+    icon: '🏢',
+    status: 'active'
+  },
+  {
+    file: 'dash_semana_do_pescado.html',
+    name: 'Semana do Pescado',
+    description: 'Campanha especial Semana do Pescado',
+    category: 'Especial',
+    icon: '🐟',
+    status: 'active'
+  },
+  {
+    file: 'dash_senai_linkedin.html',
+    name: 'Senai - LinkedIn',
+    description: 'Campanhas do Senai no LinkedIn',
+    category: 'Senai',
+    icon: '💼',
+    status: 'active'
+  },
+  {
+    file: 'dash_sonho.html',
+    name: 'Sonho',
+    description: 'Dashboard da campanha Sonho',
+    category: 'Sonho',
+    icon: '✨',
+    status: 'active'
+  },
+  {
+    file: 'dash_unicesusc.html',
+    name: 'Unicesusc',
+    description: 'Dashboard da Unicesusc',
+    category: 'Unicesusc',
+    icon: '🎓',
+    status: 'active'
+  },
+  {
+    file: 'dash_unimed_curitiba_display.html',
+    name: 'Unimed Curitiba - Display',
+    description: 'Campanhas display da Unimed Curitiba',
+    category: 'Unimed',
+    icon: '🏥',
+    status: 'active'
+  },
+  {
+    file: 'dash_unimed.html',
+    name: 'Unimed - Geral',
+    description: 'Dashboard geral da Unimed',
+    category: 'Unimed',
+    icon: '❤️',
+    status: 'active'
+  }
+];
+
 // Obter dashboards do sistema multi-tenant
 async function getDashboards() {
   try {
-    return await window.authSystem.getDashboardsForUser();
+    // Tentar obter dashboards do sistema multi-tenant primeiro
+    const systemDashboards = await window.authSystem.getDashboardsForUser();
+    if (systemDashboards && systemDashboards.length > 0) {
+      return systemDashboards;
+    }
+    
+    // Fallback para lista estática se sistema multi-tenant não retornar dados
+    console.log('Usando lista estática de dashboards da pasta /static');
+    return AVAILABLE_DASHBOARDS;
   } catch (error) {
-    console.error('Erro ao obter dashboards:', error);
-    return [];
+    console.error('Erro ao obter dashboards do sistema, usando lista estática:', error);
+    return AVAILABLE_DASHBOARDS;
   }
 }
 
@@ -245,10 +393,10 @@ function createDashboardCard(dashboard) {
   const statusClass = dashboard.status === 'active' ? 'status-active' : '';
   const statusText = dashboard.status === 'active' ? '🟢 Ativo' : '🔴 Inativo';
   
-  // Verificar se é o Dashboard Sonho para adicionar botão de sync
-  const isSonhoDashboard = dashboard.file === 'dash_sonho.html';
+  // Verificar se o dashboard precisa de botão de sync
+  const needsSync = dashboard.file === 'dash_sonho.html' || dashboard.file === 'dash_semana_do_pescado.html';
   
-  const actionsHtml = isSonhoDashboard ? `
+  const actionsHtml = needsSync ? `
     <div class="card-actions">
       <a href="https://dash.iasouth.tech/static/${dashboard.file}" class="card-link" target="_blank">
         <span>📊</span>
