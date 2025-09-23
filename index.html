@@ -569,7 +569,7 @@ async function updateSemanaPescadoFile() {
     const semanaPescado = dashboards.find(d => d.name === 'Semana Do Pescado');
     if (semanaPescado && semanaPescado.isDynamic) {
       // Buscar o arquivo mais recente do Semana do Pescado
-      const response = await fetch('/api/semana-pescado/latest-file');
+      const response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/api/semana-pescado/latest-file');
       if (response.ok) {
         const data = await response.json();
         if (data.latest_file) {
@@ -1051,7 +1051,7 @@ async function syncDashboard(file) {
     // Verificar se é o dashboard Semana do Pescado
     if (file.includes('dash_semana_do_pescado_FINAL_NO_NETFLIX_')) {
       // Usar endpoint específico para Semana do Pescado
-      response = await fetch('/api/semana-pescado/sync', {
+      response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/api/semana-pescado/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
