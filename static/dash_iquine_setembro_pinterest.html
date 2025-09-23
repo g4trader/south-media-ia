@@ -952,7 +952,19 @@ async function loadGoogleSheetsData() {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=886087812`;
     
     try {
-        const response = await fetch(csvUrl);
+        // Tentar carregar dados da planilha com CORS proxy se necessário
+        let response;
+        try {
+            response = await fetch(csvUrl);
+        } catch (corsError) {
+            console.log('Erro CORS, tentando com proxy...');
+            // Usar proxy CORS se necessário
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+            const proxyResponse = await fetch(proxyUrl);
+            const proxyData = await proxyResponse.json();
+            response = { ok: true, text: () => Promise.resolve(proxyData.contents) };
+        }
+        
         if (!response.ok) {
             throw new Error('Planilha não está publicada ou não é acessível');
         }
@@ -960,11 +972,16 @@ async function loadGoogleSheetsData() {
         const csvText = await response.text();
         console.log('Dados CSV recebidos:', csvText);
         
-        // Processar dados CSV
-        processCSVData(csvText);
-        
-        // Atualizar timestamp
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR');
+        // Verificar se há dados válidos
+        if (csvText && csvText.trim().length > 0) {
+            // Processar dados CSV
+            processCSVData(csvText);
+            
+            // Atualizar timestamp
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR');
+        } else {
+            throw new Error('Planilha está vazia ou sem dados');
+        }
         
     } catch (error) {
         console.error('Erro ao carregar dados da planilha:', error);
@@ -983,20 +1000,41 @@ function processCSVData(csvText) {
     campaignData.dailyClicks = new Array(30).fill(0);
     campaignData.dailyInvest = new Array(30).fill(0);
     
-    // Processar cada linha (pular cabeçalho se existir)
-    for (let i = 1; i < lines.length; i++) {
+    if (lines.length <= 1) {
+        console.log('Planilha vazia ou apenas cabeçalho encontrado');
+        return;
+    }
+    
+    // Detectar se primeira linha é cabeçalho
+    const firstLine = lines[0].toLowerCase();
+    const hasHeader = firstLine.includes('data') || firstLine.includes('impressões') || firstLine.includes('cliques') || firstLine.includes('investimento');
+    const startIndex = hasHeader ? 1 : 0;
+    
+    let processedRows = 0;
+    
+    // Processar cada linha
+    for (let i = startIndex; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         
-        const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+        // Tentar diferentes separadores
+        let columns;
+        if (line.includes(';')) {
+            columns = line.split(';').map(col => col.trim().replace(/"/g, ''));
+        } else if (line.includes('\t')) {
+            columns = line.split('\t').map(col => col.trim().replace(/"/g, ''));
+        } else {
+            columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+        }
+        
         console.log('Processando linha:', columns);
         
         // Assumir formato: Data, Impressões, Cliques, Investimento
         if (columns.length >= 4) {
             const dateStr = columns[0];
-            const imps = parseInt(columns[1]) || 0;
-            const clicks = parseInt(columns[2]) || 0;
-            const invest = parseFloat(columns[3]) || 0;
+            const imps = parseInt(columns[1].replace(/[^\d]/g, '')) || 0;
+            const clicks = parseInt(columns[2].replace(/[^\d]/g, '')) || 0;
+            const invest = parseFloat(columns[3].replace(',', '.').replace(/[^\d.]/g, '')) || 0;
             
             // Encontrar índice do dia
             const dayIndex = getDayIndex(dateStr);
@@ -1004,11 +1042,13 @@ function processCSVData(csvText) {
                 campaignData.dailyImps[dayIndex] = imps;
                 campaignData.dailyClicks[dayIndex] = clicks;
                 campaignData.dailyInvest[dayIndex] = invest;
+                processedRows++;
             }
         }
     }
     
-    console.log('Dados processados:', campaignData);
+    console.log(`Dados processados: ${processedRows} linhas válidas encontradas`);
+    console.log('Dados finais:', campaignData);
     
     // Recalcular KPIs e atualizar interface
     calculateKPIs();
@@ -1045,6 +1085,9 @@ function getDayIndex(dateStr) {
 function loadExampleData() {
     console.log('Carregando dados de exemplo...');
     
+    // Atualizar mensagem de status
+    document.getElementById('lastUpdate').textContent = 'Dados de exemplo carregados';
+    
     campaignData.dailyImps = [
         7500, 8200, 9100, 8500, 7800, 9200, 8800, 9600, 8900, 8700,
         9400, 9100, 8600, 9300, 9000, 8800, 9200, 8900, 9500, 8700,
@@ -1067,6 +1110,39 @@ function loadExampleData() {
     calculateKPIs();
     updateDailyTable();
     updateCharts();
+    
+    // Mostrar notificação
+    showNotification('Dados de exemplo carregados. Para dados reais, configure a integração com Google Sheets.', 'info');
+}
+
+// Função para mostrar notificações
+function showNotification(message, type = 'info') {
+    // Criar elemento de notificação
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 1000;
+        font-size: 14px;
+        max-width: 400px;
+        word-wrap: break-word;
+    `;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remover após 5 segundos
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 5000);
 }
 
 // Função para atualizar gráficos com novos dados
