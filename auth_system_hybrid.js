@@ -297,56 +297,64 @@ class HybridAuthSystem {
     // Nova função para listar dashboards da pasta /static
     async getStaticDashboards() {
         try {
-            // Lista de arquivos HTML na pasta static (atualizada com arquivos existentes)
+            // Lista atualizada de arquivos HTML na pasta static (baseada na estrutura atual)
             const staticFiles = [
-                'dash_copacol.html',
                 'dash_copacol_mestre_das_grelhas.html',
+                'dash_copacol_netflix.html',
+                'dash_copacol_video_institucional_90s.html',
+                'dash_copacol_video_programatico.html',
+                'dash_copacol_youtube.html',
+                'dash_copacol.html',
                 'dash_dauher_hidrabene.html',
+                'dash_iquine_setembro_pinterest.html',
+                'dash_multicanal_spotify_programatica.html',
+                'dash_sebrae_programatica_video.html',
                 'dash_sebrae.html',
-                'dash_sebrae_institucional_setembro.html',
-                'dash_sebrae_institucional_setembro_reprocessado.html',
-                'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html',
+                'dash_semana_do_pescado.html',
+                'dash_senai_linkedin.html',
                 'dash_sonho.html',
-                'dash_teste_dados_reais.html',
                 'dash_unicesusc.html',
+                'dash_unimed_curitiba_display.html',
                 'dash_unimed.html'
             ];
 
             const dashboards = staticFiles.map((file, index) => {
-                // Extrair nome da campanha do arquivo
-                let name = file.replace('dash_', '').replace('.html', '');
-                
-                // Limpar nome removendo timestamps e sufixos
-                name = name.replace(/_\d{8}_\d{6}/g, ''); // Remove timestamps
-                name = name.replace(/_FINAL_NO_NETFLIX/g, '');
-                name = name.replace(/_NO_NETFLIX/g, '');
-                name = name.replace(/_PLANNING_UPDATED/g, '');
-                
-                // Capitalizar primeira letra de cada palavra
-                name = name.split('_').map(word => 
-                    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                ).join(' ');
+                // Mapeamento específico para cada dashboard com nomes e ícones apropriados
+                const dashboardMap = {
+                    'dash_copacol_mestre_das_grelhas.html': { name: 'Copacol - Mestre das Grelhas', icon: '🏆', category: 'Copacol' },
+                    'dash_copacol_netflix.html': { name: 'Copacol - Netflix', icon: '🎬', category: 'Copacol' },
+                    'dash_copacol_video_institucional_90s.html': { name: 'Copacol - Video Institucional 90s', icon: '📺', category: 'Copacol' },
+                    'dash_copacol_video_programatico.html': { name: 'Copacol - Video Programático', icon: '🎯', category: 'Copacol' },
+                    'dash_copacol_youtube.html': { name: 'Copacol - YouTube', icon: '📹', category: 'Copacol' },
+                    'dash_copacol.html': { name: 'Copacol - Geral', icon: '🌽', category: 'Copacol' },
+                    'dash_dauher_hidrabene.html': { name: 'Dauher - Hidrabene', icon: '💧', category: 'Dauher' },
+                    'dash_iquine_setembro_pinterest.html': { name: 'Iquine - Setembro Pinterest', icon: '📌', category: 'Iquine' },
+                    'dash_multicanal_spotify_programatica.html': { name: 'Multicanal - Spotify Programático', icon: '🎵', category: 'Multicanal' },
+                    'dash_sebrae_programatica_video.html': { name: 'Sebrae - Programática Video', icon: '🎥', category: 'Sebrae' },
+                    'dash_sebrae.html': { name: 'Sebrae - Geral', icon: '🏢', category: 'Sebrae' },
+                    'dash_semana_do_pescado.html': { name: 'Semana do Pescado', icon: '🐟', category: 'Especial' },
+                    'dash_senai_linkedin.html': { name: 'Senai - LinkedIn', icon: '💼', category: 'Senai' },
+                    'dash_sonho.html': { name: 'Sonho', icon: '✨', category: 'Sonho' },
+                    'dash_unicesusc.html': { name: 'Unicesusc', icon: '🎓', category: 'Unicesusc' },
+                    'dash_unimed_curitiba_display.html': { name: 'Unimed Curitiba - Display', icon: '🏥', category: 'Unimed' },
+                    'dash_unimed.html': { name: 'Unimed - Geral', icon: '❤️', category: 'Unimed' }
+                };
 
-                // Determinar ícone baseado no nome
-                let icon = '📊';
-                if (name.toLowerCase().includes('sonho')) icon = '🌟';
-                else if (name.toLowerCase().includes('copacol')) icon = '🏢';
-                else if (name.toLowerCase().includes('sebrae')) icon = '💼';
-                else if (name.toLowerCase().includes('unimed')) icon = '🏥';
-                else if (name.toLowerCase().includes('unicesusc')) icon = '🎓';
-                else if (name.toLowerCase().includes('dauher')) icon = '💊';
-                else if (name.toLowerCase().includes('pescado')) icon = '🐟';
-                else if (name.toLowerCase().includes('campaign')) icon = '📈';
+                const dashboardInfo = dashboardMap[file] || { 
+                    name: file.replace('dash_', '').replace('.html', '').replace(/_/g, ' '), 
+                    icon: '📊', 
+                    category: 'Geral' 
+                };
 
                 return {
                     id: `dashboard_${index + 1}`,
                     file: file,
-                    name: name,
+                    name: dashboardInfo.name,
                     company_id: 'company_001', // Default para super admin
-                    description: `Dashboard ${name} - Relatório analítico completo`,
-                    icon: icon,
+                    description: `Dashboard ${dashboardInfo.name} - Relatório analítico completo`,
+                    icon: dashboardInfo.icon,
                     status: 'active',
-                    category: 'Campanha',
+                    category: dashboardInfo.category,
                     last_updated: new Date().toISOString(),
                     created_at: new Date().toISOString()
                 };
