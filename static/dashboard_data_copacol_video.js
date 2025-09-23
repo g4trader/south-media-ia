@@ -9,34 +9,34 @@ const CAMPAIGN_DATA = {
   "cpm": 4.0
 };
 
-// Dados simulados baseados nas informações fornecidas
+// Dados consolidados baseados na planilha real
 const CONS = {
   "Budget Contratado (R$)": 49009.9,
-  "Budget Utilizado (R$)": 11525.86, // Calculado baseado nas impressões e CPM
-  "Impressões": 1440732,
-  "Starts": 531150,
-  "Skips": 7936,
-  "Complete Views": 6607,
-  "CPM (R$)": 8.0,
-  "Pacing (%)": 23.5 // Calculado: (11525.86 / 49009.9) * 100
+  "Budget Utilizado (R$)": 5762.93, // R$ 4.020,55 + R$ 1.742,38
+  "Impressões": 1440732, // 1.005.138 + 435.594
+  "Starts": 531150, // 228.509 + 302.641
+  "Skips": 7936, // 4.258 + 3.678
+  "Complete Views": 6607, // 3.175 + 3.432
+  "CPM (R$)": 4.0,
+  "Pacing (%)": 11.8 // (5.762,93 / 49.009,9) * 100
 };
 
 const PER = [
   {
     "Canal": "YouTube",
     "Budget Contratado (R$)": 49009.9,
-    "Budget Utilizado (R$)": 11525.86,
+    "Budget Utilizado (R$)": 5762.93,
     "Impressões": 1440732,
     "Starts": 531150,
     "Skips": 7936,
     "Complete Views": 6607,
-    "CPM (R$)": 8.0,
-    "Pacing (%)": 23.5,
+    "CPM (R$)": 4.0,
+    "Pacing (%)": 11.8,
     "Criativos Únicos": 1
   }
 ];
 
-// Dados diários expandidos para mostrar mais dados
+// Dados diários baseados na planilha real
 const DAILY = [
   {
     "date": "08/09/2025",
@@ -141,22 +141,22 @@ const DAILY = [
   {
     "date": "18/09/2025",
     "creative": "Video Institucional 90s",
-    "spend": 5762.93,
-    "impressions": 1005138,
-    "starts": 228509,
-    "skips": 4258,
-    "complete": 3175,
-    "cpm": 5.73
+    "spend": 4020.55, // Dados da planilha
+    "impressions": 1005138, // Dados da planilha
+    "starts": 228509, // Dados da planilha
+    "skips": 4258, // Dados da planilha
+    "complete": 3175, // Dados da planilha
+    "cpm": 4.0 // Dados da planilha
   },
   {
     "date": "19/09/2025",
     "creative": "Video Institucional 90s",
-    "spend": 5762.93,
-    "impressions": 435594,
-    "starts": 302641,
-    "skips": 3678,
-    "complete": 3432,
-    "cpm": 13.23
+    "spend": 1742.38, // Dados da planilha
+    "impressions": 435594, // Dados da planilha
+    "starts": 302641, // Dados da planilha
+    "skips": 3678, // Dados da planilha
+    "complete": 3432, // Dados da planilha
+    "cpm": 4.0 // Dados da planilha
   },
   {
     "date": "20/09/2025",
@@ -320,21 +320,21 @@ const DAILY = [
   }
 ];
 
-// Dados brutos do YouTube
+// Dados brutos do YouTube baseados na planilha
 const YOUTUBE_RAW = {
   "creative": "Video Institucional 90s",
   "date": "2025/09/18-19",
-  "starts": 531150,
-  "skips": 7936,
-  "first_quartile": 31204,
-  "midpoint": 11029,
-  "third_quartile": 7159,
-  "complete_views": 6607,
-  "impressions": 1440732,
-  "spend": 11525.86,
-  "cpm": 8.0,
-  "cpm_calculated": 8.0,
-  "start_rate": 36.87,
-  "completion_rate": 1.24,
-  "skip_rate": 1.49
+  "starts": 531150, // 228509 + 302641
+  "skips": 7936, // 4258 + 3678
+  "first_quartile": 31204, // 15404 + 15800
+  "midpoint": 11029, // 4925 + 6104
+  "third_quartile": 7159, // 2833 + 4326
+  "complete_views": 6607, // 3175 + 3432
+  "impressions": 1440732, // 1005138 + 435594
+  "spend": 5762.93, // 4020.55 + 1742.38
+  "cpm": 4.0,
+  "cpm_calculated": 4.0,
+  "start_rate": 36.87, // (531150 / 1440732) * 100
+  "completion_rate": 1.24, // (6607 / 531150) * 100
+  "skip_rate": 1.49 // (7936 / 531150) * 100
 };
