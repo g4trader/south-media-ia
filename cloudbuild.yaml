@@ -2,11 +2,11 @@
 steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID', '.']
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA']
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID']
   
   # Deploy container image to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -16,7 +16,7 @@ steps:
       - 'deploy'
       - 'dashboard-builder'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID'
       - '--region'
       - 'us-central1'
       - '--platform'
@@ -35,7 +35,7 @@ steps:
 
 # Store images in Google Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/dashboard-builder:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID'
 
 # Build options
 options:
