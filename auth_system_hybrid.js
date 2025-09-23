@@ -304,6 +304,7 @@ class HybridAuthSystem {
                 'dash_dauher_hidrabene.html',
                 'dash_sebrae.html',
                 'dash_sebrae_institucional_setembro.html',
+                'dash_sebrae_institucional_setembro_reprocessado.html',
                 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html',
                 'dash_sonho.html',
                 'dash_teste_dados_reais.html',
