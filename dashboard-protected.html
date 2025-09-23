@@ -349,7 +349,7 @@ async function syncDashboard(file) {
     // Verificar se é o dashboard Semana do Pescado
     if (file.includes('dash_semana_do_pescado_FINAL_NO_NETFLIX_')) {
       // Usar endpoint específico para Semana do Pescado
-      response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/api/semana-pescado/sync', {
+             response = await fetch('https://dashboard-builder-609095880025.us-central1.run.app/api/semana-pescado/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -357,7 +357,7 @@ async function syncDashboard(file) {
       });
     } else {
       // Usar endpoint padrão para outros dashboards (como Sonho)
-      response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/trigger', {
+             response = await fetch('https://dashboard-builder-609095880025.us-central1.run.app/trigger', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
