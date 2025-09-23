@@ -556,6 +556,82 @@ def start_scheduled_automation():
     except Exception as e:
         logger.error(f"❌ Erro ao iniciar automação agendada: {e}")
 
+@app.route('/api/semana-pescado/sync', methods=['POST'])
+def sync_semana_pescado():
+    """Sincronizar dados específicos da campanha Semana do Pescado"""
+    try:
+        logger.info("🔄 Iniciando sincronização da Semana do Pescado")
+        
+        # Executar scripts de processamento específicos para Semana do Pescado
+        scripts_to_run = [
+            'google_sheets_processor.py',
+            'process_daily_data.py',
+            'generate_dashboard_final_no_netflix.py'
+        ]
+        
+        results = []
+        
+        for script in scripts_to_run:
+            try:
+                logger.info(f"📄 Executando script: {script}")
+                result = subprocess.run([
+                    'python', script
+                ], capture_output=True, text=True, timeout=60, cwd='/app')
+                
+                results.append({
+                    'script': script,
+                    'success': result.returncode == 0,
+                    'output': result.stdout,
+                    'error': result.stderr if result.returncode != 0 else None
+                })
+                
+                if result.returncode == 0:
+                    logger.info(f"✅ Script {script} executado com sucesso")
+                else:
+                    logger.error(f"❌ Erro no script {script}: {result.stderr}")
+                    
+            except subprocess.TimeoutExpired:
+                logger.error(f"⏰ Timeout no script {script}")
+                results.append({
+                    'script': script,
+                    'success': False,
+                    'error': 'Timeout - script demorou mais de 60 segundos'
+                })
+            except Exception as e:
+                logger.error(f"❌ Exceção no script {script}: {e}")
+                results.append({
+                    'script': script,
+                    'success': False,
+                    'error': str(e)
+                })
+        
+        # Verificar se todos os scripts executaram com sucesso
+        all_success = all(result['success'] for result in results)
+        
+        # Buscar o arquivo de dashboard mais recente
+        import glob
+        dashboard_files = glob.glob('/app/static/dash_semana_do_pescado_FINAL_NO_NETFLIX_*.html')
+        latest_dashboard = max(dashboard_files, key=lambda x: os.path.getmtime(x)) if dashboard_files else None
+        
+        logger.info(f"🎯 Sincronização concluída. Sucesso: {all_success}")
+        
+        return jsonify({
+            "success": all_success,
+            "message": "Sincronização da Semana do Pescado concluída" if all_success else "Sincronização parcialmente concluída",
+            "timestamp": datetime.now().isoformat(),
+            "scripts_results": results,
+            "dashboard_file": os.path.basename(latest_dashboard) if latest_dashboard else None,
+            "dashboard_path": latest_dashboard if latest_dashboard else None
+        }), 200 if all_success else 207  # 207 = Multi-Status
+        
+    except Exception as e:
+        logger.error(f"❌ Erro na sincronização: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro na sincronização: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 def main():
     """Função principal"""
     logger.info("🚀 Iniciando aplicação Cloud Run...")
