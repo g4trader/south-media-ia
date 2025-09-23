@@ -299,10 +299,12 @@ class HybridAuthSystem {
         try {
             // Lista atualizada de arquivos HTML na pasta static (baseada na estrutura atual)
             const staticFiles = [
+                'dash_copacol_institucional_programatica.html',
                 'dash_copacol_mestre_das_grelhas.html',
                 'dash_copacol_netflix.html',
                 'dash_copacol_video_institucional_90s.html',
-                'dash_copacol_video_programatico.html',
+                'dash_copacol_video_programatico_remarketing.html',
+                'dash_copacol_youtube_remarketing.html',
                 'dash_copacol_youtube.html',
                 'dash_copacol.html',
                 'dash_dauher_hidrabene.html',
@@ -321,10 +323,12 @@ class HybridAuthSystem {
             const dashboards = staticFiles.map((file, index) => {
                 // Mapeamento específico para cada dashboard com nomes e ícones apropriados
                 const dashboardMap = {
+                    'dash_copacol_institucional_programatica.html': { name: 'Copacol - Institucional Programática', icon: '📊', category: 'Copacol' },
                     'dash_copacol_mestre_das_grelhas.html': { name: 'Copacol - Mestre das Grelhas', icon: '🏆', category: 'Copacol' },
                     'dash_copacol_netflix.html': { name: 'Copacol - Netflix', icon: '🎬', category: 'Copacol' },
                     'dash_copacol_video_institucional_90s.html': { name: 'Copacol - Video Institucional 90s', icon: '📺', category: 'Copacol' },
-                    'dash_copacol_video_programatico.html': { name: 'Copacol - Video Programático', icon: '🎯', category: 'Copacol' },
+                    'dash_copacol_video_programatico_remarketing.html': { name: 'Copacol - Video Programático Remarketing', icon: '🎯', category: 'Copacol' },
+                    'dash_copacol_youtube_remarketing.html': { name: 'Copacol - YouTube Remarketing', icon: '🔄', category: 'Copacol' },
                     'dash_copacol_youtube.html': { name: 'Copacol - YouTube', icon: '📹', category: 'Copacol' },
                     'dash_copacol.html': { name: 'Copacol - Geral', icon: '🌽', category: 'Copacol' },
                     'dash_dauher_hidrabene.html': { name: 'Dauher - Hidrabene', icon: '💧', category: 'Dauher' },

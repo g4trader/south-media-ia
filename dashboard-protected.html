@@ -233,6 +233,14 @@ async function updateUserInfo(sessionData) {
 // Lista de dashboards disponíveis na pasta /static
 const AVAILABLE_DASHBOARDS = [
   {
+    file: 'dash_copacol_institucional_programatica.html',
+    name: 'Copacol - Institucional Programática',
+    description: 'Dashboard de campanhas institucionais programáticas da Copacol',
+    category: 'Copacol',
+    icon: '📊',
+    status: 'active'
+  },
+  {
     file: 'dash_copacol_mestre_das_grelhas.html',
     name: 'Copacol - Mestre das Grelhas',
     description: 'Dashboard principal da Copacol com métricas consolidadas',
@@ -257,11 +265,19 @@ const AVAILABLE_DASHBOARDS = [
     status: 'active'
   },
   {
-    file: 'dash_copacol_video_programatico.html',
-    name: 'Copacol - Video Programático',
-    description: 'Dashboard de compra programática de vídeo',
+    file: 'dash_copacol_video_programatico_remarketing.html',
+    name: 'Copacol - Video Programático Remarketing',
+    description: 'Dashboard de vídeo programático com remarketing da Copacol',
     category: 'Copacol',
     icon: '🎯',
+    status: 'active'
+  },
+  {
+    file: 'dash_copacol_youtube_remarketing.html',
+    name: 'Copacol - YouTube Remarketing',
+    description: 'Campanhas de remarketing no YouTube da Copacol',
+    category: 'Copacol',
+    icon: '🔄',
     status: 'active'
   },
   {

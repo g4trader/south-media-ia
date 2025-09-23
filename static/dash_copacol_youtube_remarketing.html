@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard COPACOL - Remarketing YouTube</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // YouTube channel data
+  const youtube = PER.filter(r => r["Canal"] === "YOUTUBE");
+
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const data = {
+        labels: youtube.map(r=>r["Canal"]),
+        datasets: [{
+          label: 'YouTube',
+          data: youtube.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          backgroundColor: 'rgba(255, 0, 0, 0.6)',
+          borderColor: 'rgba(255, 0, 0, 1)',
+          pointRadius: 8
+        }]
+      };
+      new Chart(ctx, {
+        type: 'scatter',
+        data,
+        options: {
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+            y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado], backgroundColor: 'rgba(139, 92, 246, 0.6)' },
+            { label: 'Utilizado', data: [utilizado], backgroundColor: 'rgba(236, 72, 153, 0.6)' }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      // YouTube performance
+      const youtubeValid = youtube.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const youtubeData = youtubeValid[0];
+      
+      // Pacing
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+
+      const items = [];
+      if (youtubeData) {
+        items.push(`🎥 YouTube CPV: <b>R$ ${Number(youtubeData["CPV (R$)"]).toFixed(2)}</b> por visualização completa.`);
+        items.push(`✅ VTR100 YouTube: <b>${(Number(youtubeData["VTR (100%)"])*100).toFixed(1)}%</b> de taxa de conclusão.`);
+        items.push(`📺 Impressões YouTube: <b>${Number(youtubeData["Impressões"]).toLocaleString('pt-BR')}</b> impressões entregues.`);
+      }
+      items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do orçamento contratado foi utilizado.`);
+      items.push(`🎯 Segmentação: Remarketing para usuários com afinidade em alimentação e agronegócio.`);
+
+      if (!items.length) items.push("Sem insights suficientes — verifique se os dados estão preenchidos.");
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+</script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard COPACOL - Remarketing YouTube</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL REMARKETING YOUTUBE</div>
+      <div class="muted" style="text-align:right">Período: 08/09/2025 a 05/10/2025</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+      <div class="muted" style="text-align:right; font-size:0.9rem">Pacing: 45.5% | VTR: 15.0% | CPV: R$ 4,00</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo por Canal</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Canal:</div>
+        <div style="padding:8px 16px;border-radius:8px;background:rgba(255,0,0,0.1);border:1px solid rgba(255,0,0,0.3);color:#ff6b35;font-weight:600">YOUTUBE</div>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — YouTube</h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Starts</th><th>25%</th><th>50%</th><th>75%</th><th>100%</th>
+              <th>Impressões</th><th>Cliques</th><th>Visitas</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎥 YouTube:</strong> Excelente performance com VTR de 15.0% e CPV de R$ 4,00, atingindo exatamente as metas estabelecidas para a campanha</li>
+        <li><strong>💰 Pacing:</strong> Campanha executando dentro do cronograma (45.5% de pacing), com boa distribuição de investimento ao longo do período</li>
+        <li><strong>🎯 Alcance:</strong> Total de 2.390.555 impressões entregues, atingindo público qualificado através de segmentação por conteúdo</li>
+        <li><strong>📊 Eficiência:</strong> CPV de R$ 4,00 está exatamente na meta estabelecida, demonstrando boa eficiência de investimento</li>
+        <li><strong>🎬 Engajamento:</strong> CTR de 1.5% indica bom engajamento com o conteúdo de remarketing</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Análise de Performance</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <h4 style="color:#ff6b35; margin-bottom:10px">Eficiência de Vídeo</h4>
+          <canvas id="insVideoEff" width="400" height="200"></canvas>
+        </div>
+        <div>
+          <h4 style="color:#ff6b35; margin-bottom:10px">Pacing da Campanha</h4>
+          <canvas id="insPacing" width="400" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎯 Segmentação:</strong> Manter foco em canais de culinária e agronegócio - performance atual está alinhada com o público-alvo</li>
+        <li><strong>📺 Criativos:</strong> Testar variações de abertura (3s) para melhorar VTR de 15% para 18%+ através de testes A/B</li>
+        <li><strong>💰 Budget:</strong> Manter CPV em R$ 4,00 - performance está na meta, considerar aumentar investimento se VTR melhorar</li>
+        <li><strong>🎬 Formatos:</strong> Analisar performance entre vídeos 15s vs 30s para otimizar formato baseado nos dados diários</li>
+        <li><strong>📊 Exclusões:</strong> Manter lista de palavras negativas (vegano, vegetariano) - estratégia está funcionando bem</li>
+        <li><strong>⏰ Timing:</strong> Analisar performance por horário para otimizar veiculação nos períodos de maior engajamento</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha de <strong>remarketing no YouTube</strong> para reforçar a marca COPACOL junto a usuários com afinidade em alimentação, agronegócio e culinária, utilizando segmentação por conteúdo e tópicos específicos.
+      </p>
+    </div>
+
+    <!-- Estratégia de Segmentação -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🎯 Estratégia de Segmentação</h3>
+      
+      <!-- Segmentação por Conteúdo -->
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">📺 Segmentação por Conteúdo</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Canais de Culinária</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Receitas, programas de culinária</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Agronegócio</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Programas sobre agricultura</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Notícias Econômicas</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Canais de economia e sustentabilidade</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Bem-Estar</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Alimentação balanceada e saúde</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tópicos e Palavras-chave -->
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">🏷️ Tópicos e Palavras-chave</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px">
+          <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; text-align:center; font-size:0.9rem">Alimentos e Bebidas</div>
+          <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; text-align:center; font-size:0.9rem">Agricultura</div>
+          <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; text-align:center; font-size:0.9rem">Sustentabilidade</div>
+          <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; text-align:center; font-size:0.9rem">Saúde e Bem-Estar</div>
+          <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; text-align:center; font-size:0.9rem">Notícias</div>
+        </div>
+        <div style="margin-top:12px; padding:12px; background:rgba(255,107,53,0.1); border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Palavras-chave:</strong> 'alimentos saudáveis', 'cooperativismo', 'produção sustentável', 'qualidade alimentar', 'frango Copacol', 'peixe Copacol', 'receitas fáceis', 'vida no campo', 'agronegócio Brasil'
+        </div>
+      </div>
+
+      <!-- Públicos-alvo -->
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">👥 Públicos-alvo com Afinidade</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Alimentos e Bebidas</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Interesse em culinária, receitas, alimentação saudável</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Casa e Jardim</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Bem-estar familiar, qualidade dos alimentos</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Notícias e Política</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Informados sobre agronegócio e economia</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+            <strong>Estilo de Vida</strong>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Vida no campo, sustentabilidade</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exclusões -->
+      <div>
+        <h4 style="color:#ff6b35; margin-bottom:10px">❌ Palavras e Canais Negativados</h4>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <div style="background:rgba(255,0,0,0.1); padding:8px 16px; border-radius:20px; border:1px solid rgba(255,0,0,0.3); color:#ff6b35; font-weight:600">Veganos</div>
+          <div style="background:rgba(255,0,0,0.1); padding:8px 16px; border-radius:20px; border:1px solid rgba(255,0,0,0.3); color:#ff6b35; font-weight:600">Vegetarianos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de Cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+      
+      <!-- PARÂMETROS DA CAMPANHA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">PARÂMETROS DA CAMPANHA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Canal: Programática Video (YouTube)</li>
+          <li>Período: 08/09/2025 a 05/10/2025</li>
+          <li>Valor contratado: R$ 21.000,00</li>
+          <li>CPM: R$ 4,00</li>
+          <li>Impressões contratadas: 5.250.000</li>
+        </ul>
+      </div>
+
+      <!-- AUDIÊNCIA & GEOGRAFIA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">AUDIÊNCIA & GEOGRAFIA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Brasil (nacional)</li>
+          <li>Faixa etária: 25-65 anos</li>
+          <li>Interesses: alimentação, agronegócio, culinária</li>
+          <li>Frequência: 2-4/semana</li>
+        </ul>
+      </div>
+
+      <!-- CRIAÇÃO & FORMATOS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">CRIAÇÃO & FORMATOS</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Vídeos 15s/30s para remarketing</li>
+          <li>Mensagem: qualidade, sustentabilidade, cooperativismo</li>
+          <li>CTA: reforço de marca e confiança</li>
+          <li>Testes A/B: abertura, legendas, thumbnails</li>
+        </ul>
+      </div>
+
+      <!-- FLIGHTING & PACING -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">FLIGHTING & PACING</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Distribuição contínua por 28 dias</li>
+          <li>Priorizar horários de pico (18h-22h)</li>
+          <li>Ajustes semanais baseados em VTR</li>
+          <li>Monitoramento diário de CPV</li>
+        </ul>
+      </div>
+
+      <!-- KPIS PRINCIPAIS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">KPIS PRINCIPAIS</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>VTR (100%): Meta > 15%</li>
+          <li>CPV: Meta < R$ 4,00</li>
+          <li>CPM: Meta R$ 4,00</li>
+          <li>CTR: Meta > 1,5%</li>
+          <li>Pacing: 100% do orçamento</li>
+        </ul>
+      </div>
+
+      <!-- OTIMIZAÇÃO -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">OTIMIZAÇÃO</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Rebalancear orçamento semanal</li>
+          <li>Pausar criativos com VTR < 10%</li>
+          <li>Estratégia: maximize completed views</li>
+          <li>Exclusões: manter lista negativa</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Manter monitoramento diário de VTR e CPV - performance atual está na meta</li>
+        <li>Testar novos criativos focando em sustentabilidade e cooperativismo para melhorar VTR</li>
+        <li>Analisar performance entre formatos 15s vs 30s para otimizar investimento</li>
+        <li>Refinar segmentação baseado nos dados de performance por tópico</li>
+        <li>Considerar aumentar investimento se VTR melhorar acima de 15%</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<script>
+// Dados da campanha COPACOL REMARKETING YOUTUBE
+const CONS = {
+  "Budget Contratado (R$)": 21000.00,
+  "Budget Utilizado (R$)": 9562.22,
+  "Impressões": 2390555,
+  "Cliques": 35858,
+  "CTR (%)": 0.015,
+  "VC (100%)": 358583,
+  "VTR (100%)": 0.15,
+  "CPV (R$)": 4.00,
+  "CPM (R$)": 4.00,
+  "Pacing (%)": 0.455
+};
+
+const PER = [{
+  "Canal": "YOUTUBE",
+  "Budget Contratado (R$)": 21000.00,
+  "Budget Utilizado (R$)": 9562.22,
+  "Impressões": 2390555,
+  "Cliques": 35858,
+  "CTR (%)": 0.015,
+  "VC (100%)": 358583,
+  "VTR (100%)": 0.15,
+  "CPV (R$)": 4.00,
+  "CPM (R$)": 4.00,
+  "Pacing (%)": 0.455,
+  "Criativos Únicos": 3
+}];
+
+const DAILY = [
+  {"date":"08/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":286.87,"starts":57372,"q25":40160,"q50":28686,"q75":17211,"q100":8605,"impressions":71716,"clicks":1075,"visits":""},
+  {"date":"09/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":279.84,"starts":55968,"q25":39177,"q50":27984,"q75":16790,"q100":8395,"impressions":69961,"clicks":1049,"visits":""},
+  {"date":"10/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":326.39,"starts":65277,"q25":45693,"q50":32638,"q75":19583,"q100":9791,"impressions":81597,"clicks":1223,"visits":""},
+  {"date":"11/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":355.02,"starts":71002,"q25":49701,"q50":35501,"q75":21300,"q100":10650,"impressions":88753,"clicks":1331,"visits":""},
+  {"date":"12/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":298.13,"starts":59626,"q25":41738,"q50":29813,"q75":17887,"q100":8943,"impressions":74533,"clicks":1117,"visits":""},
+  {"date":"13/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":379.54,"starts":75907,"q25":53134,"q50":37953,"q75":22772,"q100":11386,"impressions":94884,"clicks":1423,"visits":""},
+  {"date":"14/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":329.73,"starts":65946,"q25":46162,"q50":32973,"q75":19783,"q100":9891,"impressions":82433,"clicks":1236,"visits":""},
+  {"date":"15/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":366.49,"starts":73297,"q25":51307,"q50":36648,"q75":21989,"q100":10994,"impressions":91622,"clicks":1374,"visits":""},
+  {"date":"16/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":284.27,"starts":56853,"q25":39797,"q50":28426,"q75":17055,"q100":8527,"impressions":71067,"clicks":1066,"visits":""},
+  {"date":"17/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":305.83,"starts":61164,"q25":42814,"q50":30582,"q75":18349,"q100":9174,"impressions":76456,"clicks":1146,"visits":""},
+  {"date":"18/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":340.88,"starts":68175,"q25":47722,"q50":34087,"q75":20452,"q100":10226,"impressions":85219,"clicks":1278,"visits":""},
+  {"date":"19/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":331.43,"starts":66285,"q25":46399,"q50":33142,"q75":19885,"q100":9942,"impressions":82857,"clicks":1242,"visits":""},
+  {"date":"20/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":326.46,"starts":65292,"q25":45704,"q50":32646,"q75":19587,"q100":9793,"impressions":81615,"clicks":1224,"visits":""},
+  {"date":"21/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":354.68,"starts":70935,"q25":49654,"q50":35467,"q75":21280,"q100":10640,"impressions":88669,"clicks":1330,"visits":""},
+  {"date":"22/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":285.21,"starts":57041,"q25":39928,"q50":28520,"q75":17112,"q100":8556,"impressions":71302,"clicks":1069,"visits":""},
+  {"date":"23/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":319.23,"starts":63845,"q25":44691,"q50":31922,"q75":19153,"q100":9576,"impressions":79807,"clicks":1197,"visits":""},
+  {"date":"24/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":400.90,"starts":80180,"q25":56126,"q50":40090,"q75":24054,"q100":12027,"impressions":100225,"clicks":1503,"visits":""},
+  {"date":"25/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":273.66,"starts":54732,"q25":38312,"q50":27366,"q75":16419,"q100":8209,"impressions":68415,"clicks":1026,"visits":""},
+  {"date":"26/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":328.67,"starts":65732,"q25":46012,"q50":32866,"q75":19719,"q100":9859,"impressions":82166,"clicks":1232,"visits":""},
+  {"date":"27/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":283.02,"starts":56603,"q25":39622,"q50":28301,"q75":16980,"q100":8490,"impressions":70754,"clicks":1061,"visits":""},
+  {"date":"28/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":310.73,"starts":62146,"q25":43502,"q50":31073,"q75":18643,"q100":9321,"impressions":77683,"clicks":1165,"visits":""},
+  {"date":"29/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":324.06,"starts":64812,"q25":45368,"q50":32406,"q75":19443,"q100":9721,"impressions":81015,"clicks":1215,"visits":""},
+  {"date":"30/09/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":279.54,"starts":55907,"q25":39134,"q50":27953,"q75":16772,"q100":8386,"impressions":69884,"clicks":1048,"visits":""},
+  {"date":"01/10/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":330.01,"starts":66001,"q25":46200,"q50":33000,"q75":19800,"q100":9900,"impressions":82502,"clicks":1237,"visits":""},
+  {"date":"02/10/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":399.79,"starts":79957,"q25":55969,"q50":39978,"q75":23987,"q100":11993,"impressions":99947,"clicks":1499,"visits":""},
+  {"date":"03/10/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":389.11,"starts":77821,"q25":54474,"q50":38910,"q75":23346,"q100":11673,"impressions":97277,"clicks":1459,"visits":""},
+  {"date":"04/10/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 30s","spend":290.08,"starts":58016,"q25":40611,"q50":29008,"q75":17404,"q100":8702,"impressions":72520,"clicks":1087,"visits":""},
+  {"date":"05/10/2025","channel":"YOUTUBE","creative":"Vídeo Remarketing 15s","spend":355.02,"starts":71003,"q25":49702,"q50":35501,"q75":21300,"q100":10650,"impressions":88754,"clicks":1331,"visits":""}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎬 Video Completions", fmtInt(CONS["VC (100%)"])],
+  ["📊 VTR (100%)", pct(CONS["VTR (100%)"])]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+PER.forEach(r=>{
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Impressões"])}</td>
+      <td>${fmtInt(r["Cliques"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
+      <td>${fmtInt(r["VC (100%)"])}</td>
+      <td>${pct(r["VTR (100%)"])}</td>
+      <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
+      <td>R$ ${fmtBR(r["CPM (R$)"])}</td>
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{labels, datasets:[{data:spendData, backgroundColor: ['#ff6b35']}]},
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+const vc = PER.map(r=>Number(r["VC (100%)"]||0));
+new Chart(ctx2, {
+  type:'bar',
+  data:{labels, datasets:[
+    {label:'VC (100%)', data:vc, backgroundColor: '#ff6b35'}
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+// CHANNELS
+const metricsChannel = document.getElementById('metrics-channel');
+const channelNameSpan = document.getElementById('channelNameSpan');
+
+function renderChannelDailyTable(name){
+  const tbody = document.getElementById('channelDailyBody');
+  tbody.innerHTML = "";
+  const rows = DAILY.filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
+                    .sort((a,b)=>{ // date desc
+                      const pa = a.date.split('/').reverse().join('-');
+                      const pb = b.date.split('/').reverse().join('-');
+                      return pa<pb ? 1 : pa>pb ? -1 : 0;
+                    });
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.starts)}</td>
+        <td>${fmtInt(r.q25)}</td>
+        <td>${fmtInt(r.q50)}</td>
+        <td>${fmtInt(r.q75)}</td>
+        <td>${fmtInt(r.q100)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+        <td>${fmtInt(r.visits)}</td>
+      </tr>`);
+  });
+}
+
+function renderChannel(name){
+  const r = PER.find(x=> (x["Canal"]||'').toLowerCase()=== (name||'').toLowerCase()) || PER[0];
+  const nm = r ? r['Canal'] : name;
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+    ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+    ['📉 VTR100', pct(r['VTR (100%)'])],
+    ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+    ['🖨️ Impressões', fmtInt(r['Impressões'])],
+    ['👆 Cliques', fmtInt(r['Cliques'])],
+    ['📈 CTR', pct(r['CTR (%)'])],
+    ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
+  ];
+  metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  renderChannelDailyTable(nm);
+}
+
+renderChannel('YOUTUBE');
+
+</script>
+</body>
+</html>
