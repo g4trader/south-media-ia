@@ -541,8 +541,11 @@ async function loadDashboards() {
     
     // Usar todos os dashboards definidos na variável global
     if (typeof dashboards !== 'undefined' && dashboards && dashboards.length > 0) {
-      // Atualizar arquivo do Semana do Pescado dinamicamente
+      // Atualizar arquivo do Semana do Pescado dinamicamente ANTES de renderizar
       await updateSemanaPescadoFile();
+      
+      // Aguardar um pouco para garantir que a atualização foi processada
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       container.style.display = 'grid';
       container.innerHTML = dashboards.map(createDashboardCard).join('');
