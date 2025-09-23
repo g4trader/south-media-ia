@@ -29,9 +29,11 @@
   .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
   .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   @media(max-width:900px){.kpis{grid-template-columns:1fr}}
-  table{width:100%;border-collapse:collapse}
-  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
-  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  table{width:100%;border-collapse:collapse;min-width:800px}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem;white-space:nowrap}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14);white-space:nowrap}
+  tbody tr:nth-child(even) td{background:rgba(255,255,255,0.02)}
+  tbody tr:hover td{background:rgba(255,255,255,0.05)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
   .strategy-card{background:rgba(255,255,255,0.05);padding:16px;border-radius:12px;border-left:4px solid #8B5CF6;margin-bottom:12px}
   .strategy-card h4{color:#8B5CF6;margin-bottom:8px}
@@ -93,8 +95,18 @@
     <div class="metrics" id="metrics-performance"></div>
     
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Performance Diária</h3>
-      <div style="overflow:auto">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+        <h3 style="margin:0">Performance Diária</h3>
+        <div style="display:flex; gap:10px; align-items:center">
+          <span style="color:var(--muted); font-size:0.9rem">
+            Última atualização: <span id="lastUpdatePerformance">—</span>
+          </span>
+          <button onclick="refreshPerformanceData()" style="background:var(--grad); color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.9rem">
+            🔄 Atualizar
+          </button>
+        </div>
+      </div>
+      <div style="overflow:auto; max-height:500px; border:1px solid rgba(148,163,184,0.2); border-radius:8px">
         <table id="performanceTable">
           <thead>
             <tr>
@@ -307,9 +319,16 @@ document.getElementById('metrics-performance').innerHTML = performanceMetrics.ma
 
 // Performance table
 const performanceBody = document.getElementById('performanceBody');
+// Limpar conteúdo anterior
+performanceBody.innerHTML = '';
+
 DAILY.forEach(r=>{
+  // Determinar se a linha tem dados (para destacar)
+  const hasData = r.impressions > 0 || r.starts > 0 || r.spend > 0;
+  const rowClass = hasData ? 'style="background: rgba(16,185,129,0.1); border-left: 3px solid #10B981;"' : '';
+  
   performanceBody.insertAdjacentHTML('beforeend', `
-    <tr>
+    <tr ${rowClass}>
       <td>${r.date||'—'}</td>
       <td>${r.creative||'—'}</td>
       <td>R$ ${fmtBR(r.spend)}</td>
@@ -320,6 +339,100 @@ DAILY.forEach(r=>{
       <td>R$ ${fmtBR(r.cpm)}</td>
     </tr>`);
 });
+
+// Adicionar totalizadores na parte inferior da tabela
+performanceBody.insertAdjacentHTML('beforeend', `
+  <tr style="background: rgba(139,92,246,0.1); border-top: 2px solid #8B5CF6; font-weight: 700;">
+    <td><strong>TOTAL</strong></td>
+    <td>—</td>
+    <td><strong>R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}</strong></td>
+    <td><strong>${fmtInt(CONS["Impressões"])}</strong></td>
+    <td><strong>${fmtInt(CONS["Starts"])}</strong></td>
+    <td><strong>${fmtInt(CONS["Skips"])}</strong></td>
+    <td><strong>${fmtInt(CONS["Complete Views"])}</strong></td>
+    <td><strong>R$ ${fmtBR(CONS["CPM (R$)"])}</strong></td>
+  </tr>`);
+
+// Função para atualizar dados de performance
+function refreshPerformanceData() {
+  console.log('Atualizando dados de performance...');
+  
+  // Atualizar timestamp
+  document.getElementById('lastUpdatePerformance').textContent = new Date().toLocaleString('pt-BR');
+  
+  // Recarregar a tabela de performance
+  loadPerformanceTable();
+  
+  // Mostrar notificação
+  showNotification('Dados de performance atualizados!', 'success');
+}
+
+// Função para carregar tabela de performance
+function loadPerformanceTable() {
+  const performanceBody = document.getElementById('performanceBody');
+  performanceBody.innerHTML = '';
+
+  DAILY.forEach(r=>{
+    const hasData = r.impressions > 0 || r.starts > 0 || r.spend > 0;
+    const rowClass = hasData ? 'style="background: rgba(16,185,129,0.1); border-left: 3px solid #10B981;"' : '';
+    
+    performanceBody.insertAdjacentHTML('beforeend', `
+      <tr ${rowClass}>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.starts)}</td>
+        <td>${fmtInt(r.skips)}</td>
+        <td>${fmtInt(r.complete)}</td>
+        <td>R$ ${fmtBR(r.cpm)}</td>
+      </tr>`);
+  });
+
+  // Adicionar totalizadores
+  performanceBody.insertAdjacentHTML('beforeend', `
+    <tr style="background: rgba(139,92,246,0.1); border-top: 2px solid #8B5CF6; font-weight: 700;">
+      <td><strong>TOTAL</strong></td>
+      <td>—</td>
+      <td><strong>R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}</strong></td>
+      <td><strong>${fmtInt(CONS["Impressões"])}</strong></td>
+      <td><strong>${fmtInt(CONS["Starts"])}</strong></td>
+      <td><strong>${fmtInt(CONS["Skips"])}</strong></td>
+      <td><strong>${fmtInt(CONS["Complete Views"])}</strong></td>
+      <td><strong>R$ ${fmtBR(CONS["CPM (R$)"])}</strong></td>
+    </tr>`);
+}
+
+// Função para mostrar notificações
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'error' ? '#EF4444' : type === 'success' ? '#10B981' : '#3B82F6'};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    font-size: 14px;
+    max-width: 400px;
+    word-wrap: break-word;
+  `;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 3000);
+}
+
+// Atualizar timestamp inicial
+document.getElementById('lastUpdatePerformance').textContent = new Date().toLocaleString('pt-BR');
 
 </script>
 </body>
