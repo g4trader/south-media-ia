@@ -206,6 +206,13 @@ def health_check():
     })
     return add_cors_headers(response)
 
+@app.route('/', methods=['OPTIONS'])
+@app.route('/api/<path:path>', methods=['OPTIONS'])
+def handle_options(path=None):
+    """Manipular requisições OPTIONS para CORS"""
+    response = make_response('', 200)
+    return add_cors_headers(response)
+
 @app.route('/')
 def serve_dashboard():
     """Servir painel de controle principal"""
