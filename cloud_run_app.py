@@ -206,6 +206,21 @@ def health_check():
     })
     return add_cors_headers(response)
 
+@app.route('/')
+def serve_dashboard():
+    """Servir painel de controle principal"""
+    try:
+        index_path = os.path.join(os.getcwd(), 'index.html')
+        if os.path.exists(index_path):
+            response = make_response(send_from_directory(os.getcwd(), 'index.html'))
+            response.headers['Content-Type'] = 'text/html; charset=utf-8'
+            return add_cors_headers(response)
+        else:
+            return jsonify({"error": "Painel de controle não encontrado"}), 404
+    except Exception as e:
+        logger.error(f"Erro ao servir painel de controle: {e}")
+        return jsonify({"error": "Erro interno do servidor"}), 500
+
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Servir arquivos estáticos (dashboards HTML)"""
