@@ -30,7 +30,16 @@ def process_daily_data():
     youtube_df['CPC'] = youtube_df['CPC'].str.replace(',', '.').astype(float)
     youtube_df['Cliques'] = youtube_df['Cliques'].astype(int)
     youtube_df['CTR'] = youtube_df['CTR'].str.replace(',', '.').astype(float)
-    youtube_df['Visualizações'] = youtube_df['Visualizações'].astype(int)
+    
+    # Para YouTube, usar Video Starts como visualizações (se a coluna existir)
+    if 'Video Starts' in youtube_df.columns:
+        youtube_df['Visualizações'] = youtube_df['Video Starts'].astype(int)
+    elif 'Video assistido até 25%' in youtube_df.columns:
+        # Usar o quartil 25% como aproximação das visualizações
+        youtube_df['Visualizações'] = youtube_df['Video assistido até 25%'].astype(int)
+    else:
+        # Se não houver coluna de visualizações, criar uma baseada nos cliques e CTR
+        youtube_df['Visualizações'] = (youtube_df['Cliques'] / (youtube_df['CTR'] / 100)).astype(int)
     
     # Calcular médias diárias do YouTube
     youtube_avg_views = int(youtube_df['Visualizações'].sum() / len(youtube_df))
