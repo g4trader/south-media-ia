@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>South Media - Dashboard Unimed Curitiba - Display</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>* {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 2rem;
+            }
+        }
+        
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+                margin-bottom: 2rem;
+            }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .logo {
+                margin-bottom: 0;
+                justify-content: flex-start;
+                width: auto;
+            }
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-info {
+                text-align: right;
+                width: auto;
+            }
+        }
+        
+        .campaign-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-date {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 640px) {
+            .tabs {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.6);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.2;
+        }
+        
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 1rem;
+                font-size: 0.875rem;
+                min-height: 70px;
+            }
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        /* Correção específica para gráficos no mobile */
+        @media (max-width: 767px) {
+            .chart-container {
+                height: 180px;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .chart-container canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            box-sizing: border-box;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-responsive table {
+            min-width: 100%;
+            font-size: 0.75rem;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        @media (min-width: 768px) {
+            .table-responsive table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.75rem 0.5rem;
+            white-space: nowrap;
+            text-align: left;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .text-green-400 {
+            color: #34D399;
+        }
+        
+        .text-orange-400 {
+            color: #FB923C;
+        }
+        
+        /* Estilo da tabela do quadro de publishers */
+        .top-pubs .table-wrap{width:100%;overflow-x:auto}
+        .top-pubs table{width:100%;border-collapse:collapse;font-size:.9rem}
+        .top-pubs thead th{
+          text-transform:uppercase;
+          font-size:.75rem;
+          letter-spacing:.06em;
+          color:#9CA3AF;
+          text-align:left;
+          padding:.75rem 1rem;
+          border-bottom:1px solid rgba(148,163,184,.15);
+        }
+        .top-pubs tbody td{
+          padding:.85rem 1rem;
+          border-bottom:1px solid rgba(148,163,184,.08);
+          color:#E5E7EB;
+        }
+        .top-pubs tbody tr:hover td{
+          background:rgba(255,255,255,.02);
+        }
+
+        /* Estilo da tabela de Entrega Diária */
+        .daily-table .table-wrap{width:100%;overflow-x:auto}
+        .daily-table table{width:100%;border-collapse:collapse;font-size:.9rem}
+        .daily-table thead th{
+          text-transform:uppercase;
+          font-size:.75rem;
+          letter-spacing:.06em;
+          color:#9CA3AF;
+          text-align:left;
+          padding:.75rem 1rem;
+          border-bottom:1px solid rgba(148,163,184,.15);
+        }
+        .daily-table tbody td{
+          padding:.85rem 1rem;
+          border-bottom:1px solid rgba(148,163,184,.08);
+          color:#E5E7EB;
+          white-space:nowrap;
+        }
+        .daily-table tbody tr:hover td{
+          background:rgba(255,255,255,.02);
+        }
+
+        /* Insights: cards similar to Planejamento */
+        .insights-section h3 { margin: 0 0 .75rem 0; font-size: 1rem; color: #fff; }
+        .insights-grid { display: grid; grid-template-columns: 1fr; gap: .75rem; }
+        .insight-card { 
+          background: rgba(26,26,46,0.7);
+          border: 1px solid rgba(139,92,246,0.35);
+          border-left-width: 4px;
+          border-radius: 12px;
+          padding: 1rem 1rem;
+        }
+        .insight-title { font-weight: 600; margin-bottom: .25rem; color: #fff; }
+        .insight-text { color: #D1D5DB; line-height: 1.45; }
+        .insight-green { border-left-color: #10B981; background: rgba(16,185,129,0.08); }
+        .insight-orange{ border-left-color: #F59E0B; background: rgba(245,158,11,0.08); }
+        .insight-purple{ border-left-color: #8B5CF6; background: rgba(139,92,246,0.08); }
+        .insight-blue  { border-left-color: #3B82F6; background: rgba(59,130,246,0.08); }
+
+        /* CSS de métricas */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 640px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .metric-card {
+            padding: 1.25rem;
+            box-sizing: border-box;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .metric-card {
+                padding: 1.5rem;
+            }
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+
+        @media (min-width: 768px) {
+            .metric-value {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .metric-value {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.3;
+        }
+
+        @media (min-width: 768px) {
+            .metric-label {
+                font-size: 0.875rem;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .metric-label {
+                font-size: 0.7rem !important;
+            }
+        }
+
+        /* Global fix: responsive metric cards across all tabs */
+        .metric-card {
+          padding: 1rem;
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          gap: .35rem;
+          min-height: 86px;
+        }
+        @media (max-width: 639px) {
+          .metric-card { padding: .875rem; min-height: 80px; }
+        }
+        @media (min-width: 1024px) {
+          .metric-card { padding: 1.25rem; min-height: 94px; }
+        }
+        .metric-card .metric-label {
+          font-size: .72rem;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+          color: #9CA3AF;
+          margin: 0;
+          line-height: 1.25;
+        }
+        @media (min-width: 768px) {
+          .metric-card .metric-label { font-size: .78rem; }
+        }
+        .metric-card .metric-value {
+          font-size: 1.25rem;
+          font-weight: 800;
+          line-height: 1.2;
+          margin: 0;
+          word-break: break-word;
+        }
+        @media (min-width: 768px) {
+          .metric-card .metric-value { font-size: 1.6rem; }
+        }
+        .metric-card .text-green,
+        .metric-card .text-orange {
+          font-size: .9rem;
+          font-weight: 600;
+          margin-top: .15rem;
+        }
+        .metric-card * { max-width: 100%; }
+        .metric-card .metric-value.long {
+          white-space: normal;
+          word-break: break-word;
+        }
+
+        /* Global fix: harmonize chart/table cards */
+        .data-card {
+          padding: 1rem;
+          border-radius: 14px;
+          display: flex;
+          flex-direction: column;
+          gap: .75rem;
+        }
+        @media (max-width: 639px) {
+          .data-card { padding: .75rem; }
+        }
+        @media (min-width: 1024px) {
+          .data-card { padding: 1.5rem; }
+        }
+        .data-card h3 {
+          font-size: 1rem;
+          font-weight: 600;
+          margin-bottom: .5rem;
+          color: #E5E7EB;
+        }
+
+        /* Ajustes específicos para mobile mantendo legibilidade */
+        @media (max-width: 767px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
+            .card {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+            
+            /* Padding específico para cards com gráficos */
+            .charts-grid .card {
+                padding: 0.5rem;
+            }
+            
+            h3 {
+                font-size: 1rem !important;
+                margin-bottom: 0.75rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            .tab-button {
+                font-size: 0.7rem;
+                min-height: 55px;
+            }
+            
+            .table-responsive table {
+                font-size: 0.7rem;
+            }
+            
+            .table-responsive th,
+            .table-responsive td {
+                padding: 0.5rem 0.375rem;
+            }
+        }
+        
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 480px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+            
+            .logo-text h1 {
+                font-size: 1.1rem;
+            }
+            
+            .logo-text p {
+                font-size: 0.8rem;
+            }
+            
+            .campaign-title {
+                font-size: 1rem;
+            }
+            
+            .campaign-date {
+                font-size: 0.8rem;
+            }
+            
+            .status-badge {
+                font-size: 0.7rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            /* Ajustes específicos para gráficos em telas muito pequenas */
+            .charts-grid .card {
+                padding: 0.375rem;
+            }
+            
+            .chart-container {
+                height: 160px;
+            }
+        }
+</style></head>
+<body>
+<div class="container">
+<div class="header card">
+<div class="logo">
+<div class="logo-icon">SM</div>
+<div class="logo-text">
+<h1>South Media</h1>
+<p>Dashboard de Campanhas de Display</p>
+</div>
+</div>
+<div style="text-align:right">
+<div class="campaign-title">Unimed Curitiba - Display</div>
+<div class="campaign-date">11/09/2025 até 06/12/2025</div>
+<div class="campaign-date">Atualizado em: 23/09</div>
+<span class="status-badge">EM ANDAMENTO</span>
+</div>
+</div>
+<div class="tabs">
+<button class="tab-button active" onclick="showTab(event,'overview')">🎬<br/>Visão
+Geral</button>
+<button class="tab-button" onclick="showTab(event,'insights')">📊<br/>Análise e
+Insights</button>
+<button class="tab-button" onclick="showTab(event,'daily')">📈<br/>Entrega
+Diária</button>
+<button class="tab-button" onclick="showTab(event,'planning')">📋<br/>Planejamento</button>
+</div>
+<div class="tab-content" id="content-overview">
+<div class="metrics-grid">
+<div class="card metric-card"><div class="metric-label">💰 ORÇAMENTO CONTRATADO</div><div class="metric-value">R$ 16.700,00</div></div>
+<div class="card metric-card"><div class="metric-label">👁️ IMPRESSÕES CONTRATADAS</div><div class="metric-value">1.391.668</div></div>
+<div class="card metric-card"><div class="metric-label">📅 PERÍODO DA CAMPANHA</div><div class="metric-value">11/09 até 06/12</div></div>
+<div class="card metric-card"><div class="metric-label">🎯 OBJETIVO</div><div class="metric-value">Awareness de Marca</div></div>
+</div>
+<div class="metrics-grid" style="margin-top:.5rem">
+<div class="card metric-card"><div class="metric-label">💸 ORÇAMENTO UTILIZADO</div><div class="metric-value">R$ 1.520,36</div><div class="text-green">9.10%</div></div>
+<div class="card metric-card"><div class="metric-label">👁️ IMPRESSÕES ENTREGUES</div><div class="metric-value">126.691</div><div class="text-green">9.10%</div></div>
+<div class="card metric-card"><div class="metric-label">👆 CLIQUES</div><div class="metric-value">1.492</div></div>
+<div class="card metric-card"><div class="metric-label">📉 KPIs MÉDIOS</div><div class="metric-value" style="font-size:1rem">CTR 1.18% • CPM R$ 12,00 • CPC R$ 1,02</div></div>
+</div>
+<div class="charts-grid">
+<div class="card" style="padding: 1.25rem;"><div>
+<h3 style="margin-bottom:.5rem">Distribuição de Impressões por Criativo</h3>
+<div class="chart-container"><canvas id="creativePie"></canvas></div>
+</div></div>
+<div class="card" style="padding: 1.25rem;"><div>
+<h3 style="margin-bottom:.5rem">Impressões vs. Cliques (acumulado)</h3>
+<div class="chart-container"><canvas id="summaryBars"></canvas></div>
+</div></div>
+</div>
+<div class="charts-grid">
+<div class="card" style="padding: 1.25rem;"><div>
+<h3 style="margin-bottom:.5rem">KPIs ao longo do tempo (CTR • CPM • CPC)</h3>
+<div class="chart-container"><canvas id="kpiLine"></canvas></div>
+</div></div>
+<div class="card" style="padding: 1.25rem;"><div>
+<h3 style="margin-bottom:.5rem">Impressões e Investimento por dia</h3>
+<div class="chart-container"><canvas id="impsInvest"></canvas></div>
+</div></div>
+</div><div class="card data-card top-pubs" style="margin-top: 1rem;"><h3>TOP PUBLISHERS PROGRAMÁTICO</h3><div class="table-wrap"><table><thead><tr><th>Publisher</th></tr></thead><tbody><tr><td>bandab.com.br</td></tr><tr><td>revistaquem.globo.com</td></tr><tr><td>oglobo.globo.com</td></tr><tr><td>vogue.globo.com</td></tr><tr><td>revistamarieclaire.globo.com</td></tr><tr><td>extra.globo.com</td></tr><tr><td>valor.globo.com</td></tr><tr><td>gshow.globo.com</td></tr><tr><td>revistamonet.globo.com</td></tr><tr><td>g1.globo.com</td></tr><tr><td>revistacrescer.globo.com</td></tr><tr><td>autoesporte.globo.com</td></tr><tr><td>globo.com</td></tr><tr><td>revistapegn.globo.com</td></tr><tr><td>revistagalileu.globo.com</td></tr></tbody></table></div></div>
+</div>
+<div class="tab-content hidden" id="content-insights">
+<div class="card insights-section" style="padding:1.25rem;margin-top:.75rem;">
+  <h3>🎯 INSIGHTS DE PERFORMANCE</h3>
+  <div class="insights-grid">
+    <div class="insight-card insight-green">
+      <div class="insight-title">Entrega acumulada</div>
+      <div class="insight-text">Entregues <strong>126.691</strong> impressões — <strong>9.10%</strong> da meta de 1.391.668. Média diária: <strong>10.557</strong> imps.</div>
+    </div>
+    <div class="insight-card insight-orange">
+      <div class="insight-title">Eficiência de investimento</div>
+      <div class="insight-text">Orçamento usado: <strong>R$ 1.520,36</strong> (<strong>9.10%</strong>). CPM <strong>R$ 12,00</strong>, CPC <strong>R$ 1,02</strong>, CTR <strong>1.18%</strong>.</div>
+    </div>
+    <div class="insight-card insight-purple">
+      <div class="insight-title">Desempenho por criativo</div>
+      <div class="insight-text">Maior volume: <strong>AF_SOUTH MEDIA_SMARTPHONE BANNER_Estatico Churrasc...</strong> (42.338 imps). Melhor CTR: <strong>AF_SOUTH MEDIA_SMARTPHONE BANNER_Estatico Churrasc...</strong> (1.74%).</div>
+    </div>
+  </div>
+</div>
+
+<div class="card insights-section" style="padding:1.25rem;margin-top:1rem;">
+  <h3>📝 RECOMENDAÇÕES ESTRATÉGICAS</h3>
+  <div class="insights-grid">
+    <div class="insight-card insight-orange">
+      <div class="insight-title">Ajuste de pacing</div>
+      <div class="insight-text">Restam <strong>73</strong> dias até 06/12. Para bater a meta, precisamos ~<strong>17.329</strong> imps/dia (atual: 10.557/dia), ou ~<strong>64%</strong> acima do ritmo.</div>
+    </div>
+    <div class="insight-card insight-green">
+      <div class="insight-title">Alocação por criativo</div>
+      <div class="insight-text">Rebalancear verba para criativos de maior CTR com escala (ex.: <strong>AF_SOUTH MEDIA_SMARTPHONE BANNER_Estatico Churrasc...</strong> e <strong>AF_SOUTH MEDIA_MEDIUM RECTANGLE_Estatico Churrasco...</strong>).</div>
+    </div>
+    <div class="insight-card insight-blue">
+      <div class="insight-title">Janelas de melhor resposta</div>
+      <div class="insight-text">Melhor dia por CTR: <strong>22/09</strong> (CTR 2.55%). Replicar segmentação/posicionamento dessa janela.</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="tab-content hidden" id="content-daily">
+<div class="card data-card daily-table"><h3>📊 Tabela diária</h3><div class="table-responsive"><div class="table-wrap"><table><thead><tr><th>Data</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Investimento</th><th>CPM</th><th>CPC</th></tr></thead><tbody><tr><td>11/09</td><td>2.682</td><td>4</td><td>0.15%</td><td>R$ 32,19</td><td>R$ 12,00</td><td>R$ 8,05</td></tr><tr><td>12/09</td><td>2.779</td><td>12</td><td>0.43%</td><td>R$ 33,36</td><td>R$ 12,00</td><td>R$ 2,78</td></tr><tr><td>13/09</td><td>2.919</td><td>24</td><td>0.82%</td><td>R$ 35,04</td><td>R$ 12,00</td><td>R$ 1,46</td></tr><tr><td>14/09</td><td>4.774</td><td>85</td><td>1.78%</td><td>R$ 57,30</td><td>R$ 12,00</td><td>R$ 0,67</td></tr><tr><td>15/09</td><td>7.573</td><td>147</td><td>1.94%</td><td>R$ 90,88</td><td>R$ 12,00</td><td>R$ 0,62</td></tr><tr><td>16/09</td><td>2.897</td><td>8</td><td>0.28%</td><td>R$ 34,76</td><td>R$ 12,00</td><td>R$ 4,34</td></tr><tr><td>17/09</td><td>14.890</td><td>224</td><td>1.50%</td><td>R$ 178,69</td><td>R$ 12,00</td><td>R$ 0,80</td></tr><tr><td>18/09</td><td>34.131</td><td>232</td><td>0.68%</td><td>R$ 409,57</td><td>R$ 12,00</td><td>R$ 1,77</td></tr><tr><td>19/09</td><td>29.717</td><td>296</td><td>1.00%</td><td>R$ 356,60</td><td>R$ 12,00</td><td>R$ 1,20</td></tr><tr><td>20/09</td><td>8.761</td><td>102</td><td>1.16%</td><td>R$ 105,14</td><td>R$ 12,00</td><td>R$ 1,03</td></tr><tr><td>21/09</td><td>5.047</td><td>90</td><td>1.78%</td><td>R$ 60,59</td><td>R$ 12,00</td><td>R$ 0,67</td></tr><tr><td>22/09</td><td>10.521</td><td>268</td><td>2.55%</td><td>R$ 126,24</td><td>R$ 12,00</td><td>R$ 0,47</td></tr></tbody></table></div></div></div>
+<div class="card data-card daily-table">
+  <h3>📊 Entrega diária por criativo</h3>
+  <div class="table-responsive"><table class="table-wrap table-wrap">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Day</th>
+      <th>Creative</th>
+      <th>Imps</th>
+      <th>Clicks</th>
+      <th>CTR</th>
+      <th>Valor Investido</th>
+      <th>CPM</th>
+      <th>CPC</th>
+    </tr>
+  </thead>
+  <tbody><tr><td>21/09</td><td>AF_SOUTH MEDIA_SMALL RECTANGLE_Estatico Churrasco 120x60.jpg</td><td>28</td><td>0</td><td>0.00%</td><td>R$ 0,34</td><td>R$ 12,00</td><td>R$ 0,00</td></tr><tr><td>21/09</td><td>AF_SOUTH MEDIA_PORTRAIT_Estatico Churrasco 300x1050.jpg</td><td>3</td><td>0</td><td>0.00%</td><td>R$ 0,04</td><td>R$ 12,00</td><td>R$ 0,00</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_SMARTPHONE BANNER_Estatico Churrasco 320x50.j...</td><td>5.621</td><td>132</td><td>2.35%</td><td>R$ 67,45</td><td>R$ 12,00</td><td>R$ 0,51</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_MEDIUM RECTANGLE_Estatico Churrasco 300x250_2...</td><td>1.747</td><td>89</td><td>5.09%</td><td>R$ 20,96</td><td>R$ 12,00</td><td>R$ 0,24</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_MEDIUM RECTANGLE_Estatico Churrasco 300x250_1...</td><td>1.732</td><td>39</td><td>2.25%</td><td>R$ 20,78</td><td>R$ 12,00</td><td>R$ 0,53</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_LEADERBOARD_Estatico Churrasco 728x90.jpg</td><td>501</td><td>1</td><td>0.20%</td><td>R$ 6,01</td><td>R$ 12,00</td><td>R$ 6,01</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_BILLBOARD_Estatico Churrasco 970x250.jpg</td><td>322</td><td>4</td><td>1.24%</td><td>R$ 3,86</td><td>R$ 12,00</td><td>R$ 0,96</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_SUPER LEADERBOARD_Estatico Churrasco 970x90.j...</td><td>278</td><td>2</td><td>0.72%</td><td>R$ 3,34</td><td>R$ 12,00</td><td>R$ 1,67</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_SKYSCRAPER_Estatico Churrasco 160x600.jpg</td><td>275</td><td>1</td><td>0.36%</td><td>R$ 3,30</td><td>R$ 12,00</td><td>R$ 3,30</td></tr><tr><td>22/09</td><td>AF_SOUTH MEDIA_SMALL RECTANGLE_Estatico Churrasco 120x60.jpg</td><td>45</td><td>0</td><td>0.00%</td><td>R$ 0,54</td><td>R$ 12,00</td><td>R$ 0,00</td></tr></tbody>
+</table></div>
+</div>
+
+</div>
+<div class="tab-content hidden" id="content-planning">
+<div class="plan-grid"><div class="plan-card"><h3>SEGMENTAÇÃO DE AUDIÊNCIA (Permutive)</h3><div class="tag-grid"><div class="tag purple"><div class="title">Globo • Interesse • Saúde e Bem-estar • Cuidados Médicos</div><div class="desc">Permutive: Globo | Interesse | Saúde e Bem-estar | Cuidados Médicos</div></div><div class="tag blue"><div class="title">Globo • Persona • Saúde e Bem-estar • Profissionais da Saúde</div><div class="desc">Permutive: Globo | Persona | Saúde e Bem-estar | Profissionais da Saúde</div></div></div><div class="section-note">Bases segmentadas via Permutive; elegíveis para Programática com brand safety.</div></div></div></div>
+</div>
+<script>
+// Data injected from backend (TSV processed)
+const dailyLabels = ['11/09', '12/09', '13/09', '14/09', '15/09', '16/09', '17/09', '18/09', '19/09', '20/09', '21/09', '22/09'];
+const dailyImps = [2682, 2779, 2919, 4774, 7573, 2897, 14890, 34131, 29717, 8761, 5047, 10521];
+const dailyInvest = [32.190000000000005, 33.35999999999999, 35.040000000000006, 57.29999999999999, 90.88, 34.76, 178.69, 409.56999999999994, 356.6, 105.14, 60.59, 126.24000000000001];
+const dailyCtr = [0.14914243102162564, 0.4318100035984167, 0.8221993833504625, 1.7804775869291998, 1.941106562788855, 0.2761477390403866, 1.5043653458697113, 0.679733966189095, 0.9960628596426288, 1.164250656317772, 1.7832375668714089, 2.547286379621709];
+const dailyCpm = [12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0];
+const dailyCpc = [8.047500000000001, 2.7799999999999994, 1.4600000000000002, 0.6741176470588234, 0.6182312925170068, 4.345, 0.7977232142857142, 1.7653879310344824, 1.20472972972973, 1.0307843137254902, 0.6732222222222223, 0.47104477611940304];
+const creativeLabels = ['AF_SOUTH MEDIA_SMARTPHONE BANNER_Estatico Churrasc...', 'AF_SOUTH MEDIA_MEDIUM RECTANGLE_Estatico Churrasco...', 'AF_SOUTH MEDIA_LEADERBOARD_Estatico Churrasco 728x...', 'AF_SOUTH MEDIA_MEDIUM RECTANGLE_Estatico Churrasco...', 'AF_SOUTH MEDIA_BILLBOARD_Estatico Churrasco 970x25...'];
+const creativeImps = [42338, 32128, 19253, 14453, 7098];
+const sumValues = [126691,1492];
+
+// Tab switch
+function showTab(ev, tabName){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('content-'+tabName).classList.remove('hidden');
+  document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
+  ev.target.classList.add('active');
+  if(tabName==='overview'){ setTimeout(initOverview, 60); }
+  if(tabName==='daily'){ setTimeout(initDaily, 60); }
+}
+
+function initOverview(){
+  // Creative Pie
+  const c1 = document.getElementById('creativePie');
+  if(c1 && !c1.dataset.init){
+    new Chart(c1, {
+      type: 'doughnut',
+      data: { labels: creativeLabels, datasets: [{ data: creativeImps, backgroundColor: ['#8B5CF6','#FB923C','#10B981','#3B82F6','#F59E0B','#A855F7'], borderWidth: 0 }]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{color:'#fff'} } } }
+    });
+    c1.dataset.init = '1';
+  }
+  // Summary Bars
+  const c2 = document.getElementById('summaryBars');
+  if(c2 && !c2.dataset.init){
+    new Chart(c2, {
+      type: 'bar',
+      data: { labels: ['Impressões','Cliques'], datasets: [{ data: sumValues, backgroundColor: ['#8B5CF6','#10B981'] }]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ ticks:{color:'#fff'}, grid:{color:'rgba(255,255,255,0.1)'} }, x:{ ticks:{color:'#fff'} } } }
+    });
+    c2.dataset.init = '1';
+  }
+  // KPI Line
+  const kpi = document.getElementById('kpiLine');
+  if(kpi && !kpi.dataset.init){
+    new Chart(kpi, {
+      type: 'line',
+      data: { labels: dailyLabels, datasets: [
+        { label: 'CTR (%)', data: dailyCtr, borderColor:'#10B981', backgroundColor:'rgba(16,185,129,0.15)', tension:0.3, yAxisID:'y', fill:true },
+        { label: 'CPM (R$)', data: dailyCpm, borderColor:'#F59E0B', backgroundColor:'rgba(245,158,11,0.15)', tension:0.3, yAxisID:'y1', fill:true },
+        { label: 'CPC (R$)', data: dailyCpc, borderColor:'#3B82F6', backgroundColor:'rgba(59,130,246,0.15)', tension:0.3, yAxisID:'y1', spanGaps:true, fill:true }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{color:'#fff'} } },
+        scales:{ y:{ position:'left', ticks:{color:'#fff'} }, y1:{ position:'right', ticks:{color:'#fff'}, grid:{ drawOnChartArea:false } },
+                 x:{ ticks:{color:'#fff'}, grid:{color:'rgba(255,255,255,0.1)'} } } }
+    });
+    kpi.dataset.init = '1';
+  }
+  // Imps vs Invest
+  const ii = document.getElementById('impsInvest');
+  if(ii && !ii.dataset.init){
+    new Chart(ii, {
+      type: 'line',
+      data: { labels: dailyLabels, datasets: [
+        { label:'Impressões', data: dailyImps, borderColor:'#8B5CF6', backgroundColor:'rgba(139,92,246,0.15)', tension:0.3, yAxisID:'y', fill:true },
+        { label:'Investimento (R$)', data: dailyInvest, borderColor:'#FB923C', backgroundColor:'rgba(251,146,60,0.15)', tension:0.3, yAxisID:'y1', fill:true }
+      ]},
+      options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ labels:{color:'#fff'} } },
+        scales:{ y:{ position:'left', ticks:{color:'#fff'} }, y1:{ position:'right', ticks:{color:'#fff'}, grid:{ drawOnChartArea:false } },
+                 x:{ ticks:{color:'#fff'}, grid:{color:'rgba(255,255,255,0.1)'} } } }
+    });
+    ii.dataset.init = '1';
+  }
+}
+
+function initDaily(){
+  // Reuse overview charts only
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ initOverview(); });
+</script>
+</body>
+</html>
