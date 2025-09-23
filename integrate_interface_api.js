@@ -4,7 +4,7 @@
  */
 
 // Configuração da API
-const API_BASE_URL = 'http://localhost:8084/api';
+const API_BASE_URL = 'https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/api';
 
 // Substituir função createDashboard no dashboard-builder-user-friendly.html
 function createDashboard() {

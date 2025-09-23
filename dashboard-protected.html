@@ -344,16 +344,29 @@ async function syncDashboard(file) {
   try {
     console.log(`🔄 Iniciando sincronização do ${file}...`);
     
-    // Fazer chamada para o Cloud Run dashboard-automation
-    const response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/trigger', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        test_mode: false
-      })
-    });
+    let response;
+    
+    // Verificar se é o dashboard Semana do Pescado
+    if (file.includes('dash_semana_do_pescado_FINAL_NO_NETFLIX_')) {
+      // Usar endpoint específico para Semana do Pescado
+      response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/api/semana-pescado/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } else {
+      // Usar endpoint padrão para outros dashboards (como Sonho)
+      response = await fetch('https://dashboard-builder-6f3ckz7c7q-uc.a.run.app/trigger', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          test_mode: false
+        })
+      });
+    }
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
