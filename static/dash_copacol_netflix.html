@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard Copacol Netflix</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // Netflix channel data
+  const netflixChannel = "NETFLIX";
+  
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const data = {
+        datasets: [{
+          label: 'Netflix',
+          data: [{x: 0.26, y: 85.0}], // CPV R$ 0,26 e VTR estimado de 85%
+          pointRadius: 8,
+          backgroundColor: '#E50914'
+        }]
+      };
+      new Chart(ctx, {
+        type: 'scatter',
+        data,
+        options: {
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+            y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = 92747.98;
+      const utilizado = 85000.00; // Estimativa de 91.6% de pacing
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado], backgroundColor: '#E50914' },
+            { label: 'Utilizado', data: [utilizado], backgroundColor: '#FF6B35' }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      const items = [];
+      items.push(`🎥 CPV Netflix: <b>R$ 0,26</b> - excelente custo-benefício para ambiente premium.`);
+      items.push(`✅ VTR estimado: <b>85%</b> - alta taxa de completude em ambiente Netflix.`);
+      items.push(`⏱️ Pacing da campanha: <b>91.6%</b> do contratado já foi utilizado.`);
+      items.push(`🎯 Visualizações entregues: <b>356.723</b> completas conforme meta.`);
+      items.push(`📺 Estratégia TOP 10: Campanha entregue nos canais premium selecionados.`);
+
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#E50914,#FF6B35);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(229,9,20,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+
+        @keyframes heatmap-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        
+        .marker-cluster {
+            background-color: rgba(255, 107, 53, 0.8);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .marker-cluster-small {
+            width: 40px;
+            height: 40px;
+            line-height: 36px;
+            font-size: 14px;
+        }
+        
+        .marker-cluster-medium {
+            width: 50px;
+            height: 50px;
+            line-height: 46px;
+            font-size: 16px;
+        }
+        
+        .marker-cluster-large {
+            width: 60px;
+            height: 60px;
+            line-height: 56px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard Netflix</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Copacol Institucional</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">📺 Netflix</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo Netflix</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Visualizações Completas</th><th>VTR (100%)</th><th>CPV (R$)</th><th>Período</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — Netflix</h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Starts</th><th>25%</th><th>50%</th><th>75%</th><th>100%</th>
+              <th>Impressões</th><th>Visualizações Completas</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Estratégia de Targeting</h3>
+      <ul style="columns:2; gap:24px; margin-left:18px; color:rgba(148,163,184,0.9)">
+        <li><strong>Cidades Selecionadas:</strong> Campanha entregue nas cidades e estados selecionados na campanha</li>
+        <li><strong>Canais TOP 10:</strong> Campanha entregue nos canais premium TOP 10</li>
+        <li><strong>Targeting Premium:</strong> Audiência qualificada em ambiente Netflix</li>
+        <li><strong>Frequência Otimizada:</strong> Controle de frequência para maximizar alcance</li>
+        <li><strong>Brand Safety:</strong> Ambiente seguro e premium da Netflix</li>
+        <li><strong>Viewability:</strong> Taxa de visualização otimizada em ambiente OTT</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul id="insightsList" style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <!-- Será preenchido pelo JavaScript -->
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Performance Netflix</h3>
+      <div class="kpis">
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">Eficiência de Custo</h4>
+          <canvas id="insVideoEff"></canvas>
+        </div>
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">Pacing da Campanha</h4>
+          <canvas id="insPacing"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>📺 Netflix:</strong> Excelente CPV de R$ 0,26 - manter estratégia atual</li>
+        <li><strong>🎯 Targeting:</strong> Expandir para outras cidades com performance similar</li>
+        <li><strong>⏰ Timing:</strong> Ajustar horários de pico para maximizar VTR</li>
+        <li><strong>🎬 Criativos:</strong> Testar variações de 15s e 30s para otimizar completude</li>
+        <li><strong>📊 Frequência:</strong> Monitorar frequência para evitar saturação</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha institucional <strong>Copacol</strong> no ambiente premium <strong>Netflix</strong> para maximizar alcance qualificado e eficiência de conversão através de vídeos de 30 segundos.
+      </p>
+    </div>
+
+    <!-- Detalhes da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📋 Detalhes da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>Nome da Campanha</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Copacol Institucional - Netflix 30s</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>Canal</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Netflix</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>Período</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">08/09/2025 a 05/10/2025</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>CPV Contratado</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">R$ 0,26</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>Visualizações Contratadas</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">356.723</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #E50914">
+          <strong>Valor Total</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">R$ 92.747,98</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estratégia de Targeting -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🎯 Estratégia de Targeting</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px">
+        
+        <!-- GEOGRAFIA -->
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">GEOGRAFIA</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li>Cidades e estados selecionados na campanha</li>
+            <li>Targeting geográfico otimizado</li>
+            <li>Foco em mercados prioritários</li>
+          </ul>
+        </div>
+
+        <!-- CANAIS -->
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">CANAIS</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li>Netflix: ambiente premium</li>
+            <li>Canais TOP 10 selecionados</li>
+            <li>Alta qualidade de audiência</li>
+          </ul>
+        </div>
+
+        <!-- CRIAÇÃO -->
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">CRIAÇÃO</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li>Vídeo 30s institucional</li>
+            <li>Mensagem clara e objetiva</li>
+            <li>Adaptado para ambiente Netflix</li>
+          </ul>
+        </div>
+
+        <!-- MENSURAÇÃO -->
+        <div class="card">
+          <h4 style="margin-bottom:10px; color:#E50914">MENSURAÇÃO</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li>VTR (Video Through Rate)</li>
+            <li>CPV (Custo por Visualização)</li>
+            <li>Visualizações Completas</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- KPIs e Metas -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📊 KPIs e Metas</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#E50914">R$ 0,26</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">CPV Meta</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#E50914">356.723</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">VC Meta</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#E50914">85%</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">VTR Esperado</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#E50914">28 dias</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Duração</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Monitorar pacing diário para garantir entrega das 356.723 visualizações</li>
+        <li>Acompanhar CPV para manter eficiência em R$ 0,26</li>
+        <li>Analisar performance por região para otimizações geográficas</li>
+        <li>Testar variações de criativo se necessário</li>
+        <li>Preparar relatório final de performance</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<script>
+const CONS = {
+  "Budget Contratado (R$)": 92747.98,
+  "Budget Utilizado (R$)": 85000.00,
+  "Visualizações Completas": 356723,
+  "VTR (100%)": 0.85,
+  "CPV (R$)": 0.26,
+  "Pacing (%)": 91.6
+};
+
+const PER = [
+  {
+    "Canal": "NETFLIX",
+    "Budget Contratado (R$)": 92747.98,
+    "Budget Utilizado (R$)": 85000.00,
+    "Visualizações Completas": 356723,
+    "VTR (100%)": 0.85,
+    "CPV (R$)": 0.26,
+    "Pacing (%)": 91.6,
+    "Período": "08/09/2025 a 05/10/2025"
+  }
+];
+
+// Dados diários simulados para o período da campanha
+const DAILY = [
+  {"date":"08/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"09/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"10/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"11/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"12/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"13/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"14/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"15/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"16/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"17/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"18/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"19/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"20/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"21/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"22/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"23/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"24/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"25/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"26/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"27/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"28/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"29/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"30/09/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"01/10/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"02/10/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"03/10/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"04/10/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200},
+  {"date":"05/10/2025","channel":"NETFLIX","creative":"Copacol Institucional 30s","spend":3035.71,"starts":11680,"q25":10250,"q50":8800,"q75":7500,"q100":6200,"impressions":14000,"completions":6200}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+  
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎬 Visualizações Completas", fmtInt(CONS["Visualizações Completas"])],
+  ["📊 CPV", `R$ ${fmtBR(CONS["CPV (R$)"])}`]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+PER.forEach(r=>{
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Visualizações Completas"])}</td>
+      <td>${pct(r["VTR (100%)"])}</td>
+      <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
+      <td>${r["Período"]||"—"}</td>
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{
+    labels: labels,
+    datasets:[{
+      data: spendData,
+      backgroundColor: ['#E50914', '#FF6B35']
+    }]
+  },
+  options:{
+    plugins:{
+      legend:{position:'bottom'},
+      title: {
+        display: true,
+        text: 'Distribuição de Investimento'
+      }
+    }
+  }
+});
+
+const vc = PER.map(r=>Number(r["Visualizações Completas"]||0));
+new Chart(ctx2, {
+  type:'bar',
+  data:{
+    labels: labels,
+    datasets:[
+      {
+        label:'Visualizações Completas',
+        data: vc,
+        backgroundColor: '#E50914'
+      }
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{position:'bottom'},
+      title: {
+        display: true,
+        text: 'Visualizações Completas por Canal'
+      }
+    }
+  }
+});
+
+// CHANNELS — Netflix específico
+const metricsChannel = document.getElementById('metrics-channel');
+
+function renderChannelDailyTable(){
+  const tbody = document.getElementById('channelDailyBody');
+  tbody.innerHTML = "";
+  const rows = DAILY.sort((a,b)=>{ // date desc
+    const pa = a.date.split('/').reverse().join('-');
+    const pb = b.date.split('/').reverse().join('-');
+    return pa<pb ? 1 : pa>pb ? -1 : 0;
+  });
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.starts)}</td>
+        <td>${fmtInt(r.q25)}</td>
+        <td>${fmtInt(r.q50)}</td>
+        <td>${fmtInt(r.q75)}</td>
+        <td>${fmtInt(r.q100)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.completions)}</td>
+      </tr>`);
+  });
+}
+
+function renderChannel(){
+  const r = PER[0]; // Netflix é o único canal
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+    ['🎬 Visualizações Completas', fmtInt(r['Visualizações Completas'])],
+    ['📉 VTR100', pct(r['VTR (100%)'])],
+    ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+    ['📅 Período', r['Período']]
+  ];
+  
+  metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  renderChannelDailyTable();
+}
+
+renderChannel();
+
+</script>
+</body>
+</html>

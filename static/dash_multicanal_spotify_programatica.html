@@ -1,0 +1,798 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard Multicanal</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ==== (COMENTADO - PER ainda não definido)
+// (function(){
+  // Separate channels
+//   const videoNames = ["SPOTIFY","PROGRAMÁTICA"];
+//   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+//   try {
+//     const ctx = document.getElementById('insVideoEff');
+//     if (ctx) {
+//       const data = {
+        // labels: video.map(r=>r["Canal"]),
+//         datasets: [{
+//           label: 'Canais de Vídeo',
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+//           pointRadius: 6
+//         }]
+//       };
+//       new Chart(ctx, {
+//         type: 'scatter',
+//         data,
+//         options: {
+//           plugins:{legend:{display:false}},
+//           scales:{
+//             x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+//             y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+//           }
+//         }
+//       });
+//     }
+//   } catch(e){}
+
+  // Pacing: Utilizado vs Contratado
+//   try {
+//     const ctx = document.getElementById('insPacing');
+//     if (ctx) {
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       new Chart(ctx, {
+//         type: 'bar',
+//         data: {
+//           labels: ['Pacing'],
+//           datasets: [
+//             { label: 'Contratado', data: [contratado] },
+//             { label: 'Utilizado', data: [utilizado] }
+//           ]
+//         },
+//         options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+//       });
+//     }
+//   } catch(e){}
+
+  // Insights text
+//   try {
+//     const list = document.getElementById('insightsList');
+//     if (list) {
+      // Best CPV among video
+//       const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+//       const bestCPV = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["CPV (R$)"]||Infinity);
+//         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+//       const bestVTR = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["VTR (100%)"]||0);
+//         return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+
+      // Pacing
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       const pacing = contratado>0 ? (utilizado/contratado) : 0;
+
+//       const items = [];
+//       if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
+//       if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
+//       items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
+
+//       if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
+//       list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+//     }
+//   } catch(e){}
+// })();
+
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // Separate channels
+  const videoNames = ["SPOTIFY","PROGRAMÁTICA"];
+  const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const data = {
+        // labels: video.map(r=>r["Canal"]),
+        datasets: [{
+          label: 'Canais de Vídeo',
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+          pointRadius: 6
+        }]
+      };
+      new Chart(ctx, {
+        type: 'scatter',
+        data,
+        options: {
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+            y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      // Best CPV among video
+      const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+      const bestCPV = videoValid.reduce((acc,cur)=>{
+        const v = Number(cur["CPV (R$)"]||Infinity);
+        return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
+      }, {});
+      const bestVTR = videoValid.reduce((acc,cur)=>{
+        const v = Number(cur["VTR (100%)"]||0);
+        return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
+      }, {});
+
+      // Pacing
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+
+      const items = [];
+      if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
+      if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
+      items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
+
+      if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+
+</script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+
+        @keyframes heatmap-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        
+        .marker-cluster {
+            background-color: rgba(255, 107, 53, 0.8);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .marker-cluster-small {
+            width: 40px;
+            height: 40px;
+            line-height: 36px;
+            font-size: 14px;
+        }
+        
+        .marker-cluster-medium {
+            width: 50px;
+            height: 50px;
+            line-height: 46px;
+            font-size: 16px;
+        }
+        
+        .marker-cluster-large {
+            width: 60px;
+            height: 60px;
+            line-height: 56px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard Multicanal</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Feira do Empreendedor</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo por Canal</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Selecione o canal:</div>
+        <select id="channelSelect" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff"></select>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — <span id="channelNameSpan">—</span></h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Starts</th><th>25%</th><th>50%</th><th>75%</th><th>100%</th>
+              <th>Impressões</th><th>Cliques</th><th>Visitas</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    </div>
+
+    <div id="ctvPublishers" class="hidden">
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:10px">Publishers utilizados (CTV)</h3>
+        <ul style="columns:2; gap:24px; margin-left:18px">
+          <li>Pluto TV - Watch Free Movies, Shows & Live TV - FireTv (B00KDSGIPK)</li>
+          <li>Plex: Stream Movies & TV - Android Tv</li>
+          <li>Pluto TV Television Gratis Channels | Roku Channel Store | Roku - Roku</li>
+          <li>Pluto TV - LG Tv</li>
+          <li>LG Channels - LG Tv (474310)</li>
+          <li>Live TV - Android Tv</li>
+          <li>RecordPlus - Android Tv</li>
+          <li>Rainbow Dash - FireTv (B079X4ZZ4T)</li>
+          <li>Samsung TV - Android TV</li>
+          <li>Xiaomi TV+: Watch Live TV - Android Tv</li>
+          <li>TCL CHANNEL - Android Tv</li>
+          <li>Plex Free Movies and TV</li>
+          <li>MovieArk: Stream Movies & Live - Android Tv</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎵 Spotify:</strong> Excelente performance com VTR de 27.8% e CPE de R$ 0.46, demonstrando alta eficiência no alcance de audiência qualificada</li>
+        <li><strong>📺 Programática:</strong> Boa performance com VTR de 21.8% e CTR de 2.47%, indicando engajamento positivo com o conteúdo</li>
+        <li><strong>💰 Pacing:</strong> Campanha executando dentro do orçamento planejado (92.4% de pacing), com boa distribuição entre canais</li>
+        <li><strong>🎯 Alcance:</strong> Total de 130.000 impressões entregues, atingindo público diversificado através de áudio e vídeo</li>
+        <li><strong>📊 Eficiência:</strong> CPV médio de R$ 0.86 está dentro das metas estabelecidas para a campanha</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎵 Spotify:</strong> Considerar aumentar o investimento devido à alta VTR (27.8%) e baixo CPE (R$ 0.46)</li>
+        <li><strong>📺 Programática:</strong> Otimizar criativos para melhorar VTR de 21.8% para 25%+ através de testes A/B</li>
+        <li><strong>🎯 Targeting:</strong> Expandir segmentação de "Empreendedores" e "Interesse em Empreendedorismo" baseado na performance atual</li>
+        <li><strong>📱 Sites Premium:</strong> Analisar performance individual dos 15 sites para realocar budget nos mais eficientes</li>
+        <li><strong>⏰ Timing:</strong> Ajustar horários de veiculação baseado nos dados de entrega diária para maximizar alcance</li>
+      </ul>
+    </div>
+  <!-- PLANEJAMENTO -->
+
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha multicanal combinando <strong>Spotify</strong> (áudio - Escuta Completa) e <strong>Programática</strong> (vídeo - Complete View) para maximizar alcance qualificado e eficiência de conversão.
+      </p>
+    </div>
+
+    <!-- DoubleVerify - Verificação da Entrega -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🔍 DoubleVerify - Verificação da Entrega</h3>
+      
+      <!-- Empreendedores -->
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">🎯 Empreendedores</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">25.000</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Impressões</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">98.5%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Taxa de Verificação</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">87.2%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Viewability</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">99.1%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Brand Safety</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interesse em Empreendedorismo -->
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">💡 Interesse em Empreendedorismo</h4>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">18.000</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Impressões</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">97.8%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Taxa de Verificação</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">89.1%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Viewability</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+            <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">98.9%</div>
+            <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Brand Safety</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Sites Premium -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">⭐ Lista de Sites Premium</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>UOL</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal de notícias</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>G1</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal Globo</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Folha de S.Paulo</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Jornal digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Estadão</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Jornal digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Veja</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Revista digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Exame</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Revista de negócios</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>InfoMoney</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal financeiro</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Valor Econômico</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Jornal econômico</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Revista Época</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Revista digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>IstoÉ</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Revista digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Terra</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal de notícias</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>R7</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal Record</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Brasil 247</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal de notícias</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>CartaCapital</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Revista digital</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>The Intercept</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal de jornalismo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de Cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+      
+      <!-- AUDIÊNCIA & GEOGRAFIA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">AUDIÊNCIA & GEOGRAFIA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Praça: Recife (PE) e área metropolitana</li>
+          <li>Faixa etária: 18-44 (prioridade 25-34)</li>
+          <li>Interesses: entretenimento, família, compras, notícias</li>
+          <li>Frequência alvo: 2-4/semana por canal</li>
+        </ul>
+      </div>
+
+      <!-- CANAIS & PAPÉIS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">CANAIS & PAPÉIS</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>YouTube: alcance e VTR em escala</li>
+          <li>TikTok: descoberta e cobertura incremental (short-form)</li>
+          <li>Netflix / Disney: ambientes premium de alta atenção</li>
+          <li>CTV: reforço em tela grande com alta completude</li>
+          <li>Display: suporte de cobertura e cliques (foco em CPM/CTR)</li>
+        </ul>
+      </div>
+
+      <!-- CRIAÇÃO & FORMATOS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">CRIAÇÃO & FORMATOS</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Vídeos 15s/30s + variações para shorts/reels</li>
+          <li>Mensagens: benefício principal claro + CTA suave</li>
+          <li>Testes A/B: 3s iniciais, legendas, trilha e thumb</li>
+        </ul>
+      </div>
+
+      <!-- FLIGHTING & PACING -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">FLIGHTING & PACING</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Distribuição contínua com ajustes semanais</li>
+          <li>Priorizar canais mais eficientes (VTR↑, CPV↓, CPM↓)</li>
+          <li>Garantir presença premium em dias/horários de pico</li>
+        </ul>
+      </div>
+
+      <!-- KPIS POR CANAL -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">KPIS POR CANAL</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>YouTube / CTV / Netflix / Disney: VTR100, CPV</li>
+          <li>TikTok: VTR/ThruPlay (quando disponível), CTR</li>
+          <li>Display: Impressões, CTR, CPM</li>
+        </ul>
+      </div>
+
+      <!-- OTIMIZAÇÃO -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">OTIMIZAÇÃO</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Rebalancear orçamento semanal por eficiência</li>
+          <li>Pausar criativos abaixo do benchmark</li>
+          <li>Estratégia de lance: maximize completed views (vídeo) / eCPM (display)</li>
+        </ul>
+      </div>
+
+      <!-- GOVERNANÇA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">GOVERNANÇA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Brand safety: listas, categorias sensíveis e verificação</li>
+          <li>Frequência: caps por usuário/criativo</li>
+          <li>QA semanal: nomenclatura, pixels/tags, consistência</li>
+        </ul>
+      </div>
+
+      <!-- MENSURAÇÃO -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">MENSURAÇÃO</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Acompanhamento em tempo real nas abas anteriores</li>
+          <li>Relatório semanal com variação de VTR/CPV/CPM/CTR</li>
+          <li>Estudos pontuais: brand lift (quando aplicável)</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Reforçar investimento nos ambientes com VTR mais alto</li>
+        <li>Rotacionar variações de criativo (texto/abertura)</li>
+        <li>Refinar segmentações com base nos top criativos</li>
+        <li>Revisar listas de sites de display e exclusões</li>
+      </ul>
+    </div>
+
+  </div>
+
+  </div>
+</div>
+
+<script>
+const CONS = {
+  "Budget Contratado (R$)": 28999.95,
+  "Budget Utilizado (R$)": 26800.50,
+  "Impressões": 130000,
+  "Cliques": 2100,
+  "CTR (%)": 1.62,
+  "VC (100%)": 31000,
+  "VTR (100%)": 0.238,
+  "CPV (R$)": 0.86,
+  "CPM (R$)": 206.15,
+  "Pacing (%)": 92.4
+};
+const PER = [
+  {
+    "Canal": "SPOTIFY",
+    "Budget Contratado (R$)": 6249.96,
+    "Budget Utilizado (R$)": 5800.50,
+    "Impressões": 45000,
+    "Cliques": 0,
+    "CTR (%)": 0.0,
+    "VC (100%)": 12500,
+    "VTR (100%)": 0.278,
+    "CPV (R$)": 0.46,
+    "CPM (R$)": 128.90,
+    "Pacing (%)": 92.8,
+    "Criativos Únicos": 2
+  },
+  {
+    "Canal": "PROGRAMÁTICA",
+    "Budget Contratado (R$)": 22749.99,
+    "Budget Utilizado (R$)": 21000.00,
+    "Impressões": 85000,
+    "Cliques": 2100,
+    "CTR (%)": 2.47,
+    "VC (100%)": 18500,
+    "VTR (100%)": 0.218,
+    "CPV (R$)": 1.14,
+    "CPM (R$)": 247.06,
+    "Pacing (%)": 92.3,
+    "Criativos Únicos": 3
+  }
+];
+const DAILY = [{"date":"02/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"03/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"04/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"05/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"06/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"07/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"08/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"09/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"10/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"11/09/2025","channel":"SPOTIFY","creative":"\u00c1udio 30s","spend":580.05,"starts":1250,"q25":1100,"q50":1000,"q75":900,"q100":800,"impressions":4500,"clicks":0,"visits":""},{"date":"02/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"03/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"04/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"05/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"06/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"07/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"08/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"09/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"10/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""},{"date":"11/09/2025","channel":"PROGRAM\u00c1TICA","creative":"V\u00eddeo 15s","spend":2100.0,"starts":1850,"q25":1600,"q50":1400,"q75":1200,"q100":1000,"impressions":8500,"clicks":210,"visits":""}];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+  
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎬 Video Completions", fmtInt(CONS["VC (100%)"])],
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+PER.forEach(r=>{
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Impressões"])}</td>
+      <td>${fmtInt(r["Cliques"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
+      <td>${fmtInt(r["VC (100%)"])}</td>
+      <td>${pct(r["VTR (100%)"])}</td>
+      <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
+      <td>R$ ${fmtBR(r["CPM (R$)"])}</td>
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{labels, datasets:[{data:spendData}]},
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+const vc = PER.map(r=>Number(r["VC (100%)"]||0));
+new Chart(ctx2, {
+  type:'bar',
+  data:{labels, datasets:[
+    {label:'VC (100%)', data:vc}
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+// CHANNELS — selector
+const sel = document.getElementById('channelSelect');
+PER.forEach(r=>{ const opt=document.createElement('option'); opt.value=r["Canal"]; opt.textContent=r["Canal"]; sel.appendChild(opt); });
+const metricsChannel = document.getElementById('metrics-channel');
+const channelNameSpan = document.getElementById('channelNameSpan');
+
+function renderChannelDailyTable(name){
+  const tbody = document.getElementById('channelDailyBody');
+  tbody.innerHTML = "";
+  const rows = DAILY.filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
+                    .sort((a,b)=>{ // date desc
+                      const pa = a.date.split('/').reverse().join('-');
+                      const pb = b.date.split('/').reverse().join('-');
+                      return pa<pb ? 1 : pa>pb ? -1 : 0;
+                    });
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.starts)}</td>
+        <td>${fmtInt(r.q25)}</td>
+        <td>${fmtInt(r.q50)}</td>
+        <td>${fmtInt(r.q75)}</td>
+        <td>${fmtInt(r.q100)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+        <td>${fmtInt(r.visits)}</td>
+      </tr>`);
+  });
+}
+
+function renderChannel(name){
+  const r = PER.find(x=> (x["Canal"]||'').toLowerCase()=== (name||'').toLowerCase()) || PER[0];
+  const nm = r ? r['Canal'] : name;
+  channelNameSpan.textContent = nm || '—';
+  
+  // Definir métricas baseadas no tipo de canal
+  const isSpotify = nm === 'SPOTIFY';
+  const isProgramatica = nm === 'PROGRAMÁTICA';
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+  ];
+  
+  // Adicionar métricas específicas por tipo de canal
+  if (isSpotify) {
+    // Spotify: Escutas Completas e CPE
+    items.push(
+      ['🎵 Escutas Completas', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPE','R$ '+fmtBR(r['CPV (R$)'])],
+      ['🖨️ Impressões', fmtInt(r['Impressões'])]
+    );
+  } else if (isProgramatica) {
+    // Programática: VTR, CPV, CTR e CPM
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])],
+      ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
+    );
+  }
+  metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  renderChannelDailyTable(nm);
+}
+
+sel.addEventListener('change', e=>renderChannel(e.target.value));
+renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
+
+
+</script>
+</body>
+</html>

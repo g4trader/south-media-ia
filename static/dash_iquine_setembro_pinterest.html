@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>South Media - Dashboard Iquine Setembro - Pinterest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 1200px;
+                padding: 2rem;
+            }
+        }
+        
+        .card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            padding: 1.25rem;
+        }
+        
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .logo {
+                margin-bottom: 0;
+            }
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-right: 12px;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .logo-text p {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+        }
+        
+        @media (min-width: 768px) {
+            .logo-text h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-info {
+                text-align: right;
+                width: auto;
+            }
+        }
+        
+        .campaign-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .campaign-title {
+                font-size: 1.5rem;
+            }
+        }
+        
+        .campaign-date {
+            font-size: 0.875rem;
+            color: #9CA3AF;
+            margin-bottom: 0.75rem;
+        }
+        
+        .status-badge {
+            background: #10B981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .tabs {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.75rem;
+            }
+        }
+        
+        .tab-button {
+            padding: 0.75rem 0.5rem;
+            border: none;
+            border-radius: 10px;
+            background: rgba(26, 26, 46, 0.6);
+            color: #9CA3AF;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.75rem;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @media (min-width: 640px) {
+            .tab-button {
+                padding: 1rem;
+                font-size: 0.875rem;
+                min-height: 70px;
+            }
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 2rem;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .metric-card {
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            min-height: 86px;
+        }
+        
+        .metric-label {
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #9CA3AF;
+            margin: 0;
+            line-height: 1.25;
+        }
+        
+        @media (min-width: 768px) {
+            .metric-label {
+                font-size: 0.78rem;
+            }
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 0;
+        }
+        
+        @media (min-width: 768px) {
+            .metric-value {
+                font-size: 1.6rem;
+            }
+        }
+        
+        .text-green {
+            color: #10B981;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+        
+        .text-orange {
+            color: #FB923C;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .table-responsive table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        
+        @media (min-width: 768px) {
+            .table-responsive table {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .table-responsive th,
+        .table-responsive td {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(148,163,184,0.08);
+        }
+        
+        .table-responsive th {
+            color: #9CA3AF;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.06em;
+        }
+        
+        .table-responsive tbody tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .plan-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            width: 100%;
+        }
+        
+        .plan-card {
+            background: rgba(26,26,46,0.8);
+            border: 1px solid rgba(139,92,246,0.25);
+            border-radius: 14px;
+            padding: 1rem;
+        }
+        
+        .plan-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #E5E7EB;
+        }
+        
+        .tag-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .tag {
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(148,163,184,0.18);
+            background: linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02));
+        }
+        
+        .tag .title {
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        
+        .tag .desc {
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+        
+        .tag.purple {
+            background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(236,72,153,0.15));
+            border-color: rgba(139,92,246,0.45);
+        }
+        
+        .tag.blue {
+            background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(99,102,241,0.15));
+            border-color: rgba(59,130,246,0.45);
+        }
+        
+        .section-note {
+            color: #9CA3AF;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header card">
+        <div class="logo">
+            <div class="logo-icon">SM</div>
+            <div class="logo-text">
+                <h1>South Media</h1>
+                <p>Dashboard de Campanhas de Display</p>
+            </div>
+        </div>
+        <div class="campaign-info">
+            <div class="campaign-title">Iquine Setembro - Pinterest</div>
+            <div class="campaign-date">01/09/2025 até 30/09/2025</div>
+            <div class="campaign-date">Atualizado em: <span id="currentDate"></span></div>
+            <span class="status-badge">EM ANDAMENTO</span>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab-button active" onclick="showTab(event,'overview')">🎬<br/>Visão Geral</button>
+        <button class="tab-button" onclick="showTab(event,'insights')">📊<br/>Análise e Insights</button>
+        <button class="tab-button" onclick="showTab(event,'daily')">📈<br/>Entrega Diária</button>
+        <button class="tab-button" onclick="showTab(event,'planning')">📋<br/>Planejamento</button>
+    </div>
+    
+    <div class="tab-content" id="content-overview">
+        <div class="metrics-grid">
+            <div class="card metric-card">
+                <div class="metric-label">💰 VALOR CONTRATADO</div>
+                <div class="metric-value">R$ 2.666,66</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">👁️ IMPRESSÕES CONTRATADAS</div>
+                <div class="metric-value">222.222</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">📅 PERÍODO DA CAMPANHA</div>
+                <div class="metric-value">01/09 até 30/09</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">🎯 PLATAFORMA</div>
+                <div class="metric-value">Pinterest</div>
+            </div>
+        </div>
+        
+        <div class="metrics-grid" style="margin-top:.5rem">
+            <div class="card metric-card">
+                <div class="metric-label">💸 VALOR UTILIZADO</div>
+                <div class="metric-value" id="totalInvest">R$ 0,00</div>
+                <div class="text-orange" id="investPercent">0%</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">👁️ IMPRESSÕES ENTREGUES</div>
+                <div class="metric-value" id="totalImps">0</div>
+                <div class="text-green" id="impsPercent">0%</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">👆 CLIQUES</div>
+                <div class="metric-value" id="totalClicks">0</div>
+            </div>
+            <div class="card metric-card">
+                <div class="metric-label">📊 KPIs MÉDIOS</div>
+                <div class="metric-value" style="font-size:1rem" id="avgKPIs">CTR 0% • CPM R$ 0,00 • CPC R$ 0,00</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <h3 style="margin-bottom:.5rem">📈 Progresso da Campanha</h3>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom:.5rem">📊 Performance Diária</h3>
+                <div class="chart-container">
+                    <canvas id="dailyPerformance"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="card">
+                <h3 style="margin-bottom:.5rem">💰 Evolução do Investimento</h3>
+                <div class="chart-container">
+                    <canvas id="investmentChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom:.5rem">🎯 KPIs ao Longo do Tempo</h3>
+                <div class="chart-container">
+                    <canvas id="kpiTrend"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content hidden" id="content-insights">
+        <div class="card" style="padding:1.25rem;margin-top:.75rem;">
+            <h3>🎯 INSIGHTS DE PERFORMANCE</h3>
+            <div style="margin-top: 1rem;">
+                <div style="background: rgba(16,185,129,0.08); border-left: 4px solid #10B981; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem; color: #fff;">Status da Campanha</div>
+                    <div style="color: #D1D5DB; line-height: 1.45;">Campanha ainda não iniciada. Período de execução: 01/09/2025 a 30/09/2025. Meta de impressões: 222.222. Orçamento disponível: R$ 2.666,66.</div>
+                </div>
+                <div style="background: rgba(245,158,11,0.08); border-left: 4px solid #F59E0B; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem; color: #fff;">Integração com Google Sheets</div>
+                    <div style="color: #D1D5DB; line-height: 1.45;">Para carregar dados automaticamente: 1) Acesse a planilha, 2) Arquivo > Compartilhar > Publicar na Web, 3) Selecione a aba com dados, 4) Escolha formato CSV, 5) Publique. O dashboard se atualizará automaticamente!</div>
+                </div>
+                <div style="background: rgba(59,130,246,0.08); border-left: 4px solid #3B82F6; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem; color: #fff;">Formato dos Dados</div>
+                    <div style="color: #D1D5DB; line-height: 1.45;">A planilha deve ter colunas: Data (DD/MM), Impressões, Cliques, Investimento. O dashboard processará automaticamente os dados e calculará CTR, CPM e CPC.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content hidden" id="content-daily">
+        <div class="card">
+            <h3>📊 Tabela diária</h3>
+            <div style="margin-bottom: 1rem;">
+                <button onclick="loadGoogleSheetsData()" style="background: linear-gradient(135deg, #8B5CF6, #EC4899); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.875rem;">
+                    🔄 Recarregar Dados da Planilha
+                </button>
+                <span style="margin-left: 1rem; color: #9CA3AF; font-size: 0.875rem;">
+                    Última atualização: <span id="lastUpdate">-</span>
+                </span>
+            </div>
+            <div class="table-responsive">
+                <table id="dailyTable">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Impressões</th>
+                            <th>Cliques</th>
+                            <th>CTR</th>
+                            <th>Investimento</th>
+                            <th>CPM</th>
+                            <th>CPC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyTableBody">
+                        <!-- Dados serão inseridos via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="tab-content hidden" id="content-planning">
+        <div class="plan-grid">
+            <div class="plan-card">
+                <h3>INFORMAÇÕES DA CAMPANHA</h3>
+                <div class="tag-grid">
+                    <div class="tag purple">
+                        <div class="title">Plataforma: Pinterest</div>
+                        <div class="desc">Campanha de display executada na plataforma Pinterest</div>
+                    </div>
+                    <div class="tag blue">
+                        <div class="title">Período: Setembro 2025</div>
+                        <div class="desc">Execução de 01/09/2025 até 30/09/2025</div>
+                    </div>
+                    <div class="tag purple">
+                        <div class="title">Meta de Impressões: 222.222</div>
+                        <div class="desc">Objetivo de entrega de impressões durante o período</div>
+                    </div>
+                    <div class="tag blue">
+                        <div class="title">Orçamento: R$ 2.666,66</div>
+                        <div class="desc">Valor total contratado para a campanha</div>
+                    </div>
+                </div>
+                <div class="section-note">Dados atualizados automaticamente via integração com Google Sheets</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configuração da data atual
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('pt-BR');
+
+// ========================================
+// INSTRUÇÕES PARA INSERIR DADOS DA PLANILHA
+// ========================================
+// 
+// Para inserir os dados reais da planilha Google Sheets:
+// 1. Acesse a planilha: https://docs.google.com/spreadsheets/d/1F9sQvuc0PiXPhrleQoylIG2Hp7Gxa6x0yK2qj79vn0s/edit?gid=886087812#gid=886087812
+// 2. Copie os dados de entrega diária (impressões, cliques, investimento)
+// 3. Substitua os arrays abaixo pelos dados reais
+// 4. Descomente as linhas na função loadGoogleSheetsData()
+//
+// ========================================
+
+// Dados da campanha - INSERIR DADOS DA PLANILHA AQUI
+const campaignData = {
+    // Dados diários - substitua pelos dados reais da planilha
+    dailyLabels: [
+        "01/09", "02/09", "03/09", "04/09", "05/09", "06/09", "07/09", "08/09", 
+        "09/09", "10/09", "11/09", "12/09", "13/09", "14/09", "15/09", "16/09",
+        "17/09", "18/09", "19/09", "20/09", "21/09", "22/09", "23/09", "24/09",
+        "25/09", "26/09", "27/09", "28/09", "29/09", "30/09"
+    ],
+    dailyImps: [
+        // INSERIR IMPRESSÕES DIÁRIAS AQUI - exemplo: 7500, 8200, 9100, etc.
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    dailyClicks: [
+        // INSERIR CLIQUES DIÁRIOS AQUI - exemplo: 45, 52, 61, etc.
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    dailyInvest: [
+        // INSERIR INVESTIMENTO DIÁRIO AQUI - exemplo: 45.00, 49.20, 54.60, etc.
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    dailyCtr: [
+        // CTR será calculado automaticamente: (cliques/impressões)*100
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    dailyCpm: [
+        // CPM será calculado automaticamente: (investimento/impressões)*1000
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    dailyCpc: [
+        // CPC será calculado automaticamente: investimento/cliques
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    ],
+    creativeLabels: [
+        // INSERIR NOMES DOS CRIATIVOS AQUI
+        "Aguardando dados dos criativos"
+    ],
+    creativeImps: [
+        // INSERIR IMPRESSÕES POR CRIATIVO AQUI
+        0
+    ],
+    sumValues: [0, 0] // Total de impressões e cliques
+};
+
+// Tab switch
+function showTab(ev, tabName){
+    document.querySelectorAll('.tab-content').forEach(el=>el.classList.add('hidden'));
+    document.getElementById('content-'+tabName).classList.remove('hidden');
+    document.querySelectorAll('.tab-button').forEach(b=>b.classList.remove('active'));
+    ev.target.classList.add('active');
+    if(tabName==='overview'){ setTimeout(initOverview, 60); }
+}
+
+function initOverview(){
+    // Gráfico de Progresso da Campanha
+    const progressChart = document.getElementById('progressChart');
+    if(progressChart && !progressChart.dataset.init){
+        const totalImps = campaignData.dailyImps.reduce((sum, val) => sum + val, 0);
+        const totalInvest = campaignData.dailyInvest.reduce((sum, val) => sum + val, 0);
+        const impsPercent = (totalImps / 222222) * 100;
+        const investPercent = (totalInvest / 2666.66) * 100;
+        
+        new Chart(progressChart, {
+            type: 'doughnut',
+            data: { 
+                labels: ['Impressões Entregues', 'Impressões Restantes'], 
+                datasets: [{ 
+                    data: [impsPercent, 100 - impsPercent], 
+                    backgroundColor: ['#10B981', 'rgba(156, 163, 175, 0.3)'], 
+                    borderWidth: 0 
+                }]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { color: '#fff' } 
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                } 
+            }
+        });
+        progressChart.dataset.init = '1';
+    }
+    
+    // Gráfico de Performance Diária
+    const dailyPerformance = document.getElementById('dailyPerformance');
+    if(dailyPerformance && !dailyPerformance.dataset.init){
+        // Filtrar apenas dias com dados
+        const activeDays = campaignData.dailyLabels.filter((_, i) => campaignData.dailyImps[i] > 0);
+        const activeImps = campaignData.dailyImps.filter(imps => imps > 0);
+        const activeClicks = campaignData.dailyClicks.filter((_, i) => campaignData.dailyImps[i] > 0);
+        
+        new Chart(dailyPerformance, {
+            type: 'bar',
+            data: { 
+                labels: activeDays.length > 0 ? activeDays : ['Sem dados'], 
+                datasets: [
+                    { 
+                        label: 'Impressões', 
+                        data: activeImps.length > 0 ? activeImps : [0], 
+                        backgroundColor: '#8B5CF6',
+                        yAxisID: 'y'
+                    },
+                    { 
+                        label: 'Cliques', 
+                        data: activeClicks.length > 0 ? activeClicks : [0], 
+                        backgroundColor: '#10B981',
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { labels: { color: '#fff' } } }, 
+                scales: { 
+                    y: { 
+                        position: 'left', 
+                        ticks: { color: '#fff' }, 
+                        grid: { color: 'rgba(255,255,255,0.1)' } 
+                    }, 
+                    y1: { 
+                        position: 'right', 
+                        ticks: { color: '#fff' }, 
+                        grid: { drawOnChartArea: false } 
+                    },
+                    x: { ticks: { color: '#fff' } } 
+                } 
+            }
+        });
+        dailyPerformance.dataset.init = '1';
+    }
+    
+    // Gráfico de Evolução do Investimento
+    const investmentChart = document.getElementById('investmentChart');
+    if(investmentChart && !investmentChart.dataset.init){
+        const activeDays = campaignData.dailyLabels.filter((_, i) => campaignData.dailyInvest[i] > 0);
+        const activeInvest = campaignData.dailyInvest.filter(inv => inv > 0);
+        const cumulativeInvest = activeInvest.reduce((acc, curr, i) => {
+            acc.push((acc[i-1] || 0) + curr);
+            return acc;
+        }, []);
+        
+        new Chart(investmentChart, {
+            type: 'line',
+            data: { 
+                labels: activeDays.length > 0 ? activeDays : ['Sem dados'], 
+                datasets: [
+                    { 
+                        label: 'Investimento Diário (R$)', 
+                        data: activeInvest.length > 0 ? activeInvest : [0], 
+                        borderColor: '#FB923C', 
+                        backgroundColor: 'rgba(251,146,60,0.15)', 
+                        tension: 0.3, 
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    { 
+                        label: 'Investimento Acumulado (R$)', 
+                        data: cumulativeInvest.length > 0 ? cumulativeInvest : [0], 
+                        borderColor: '#8B5CF6', 
+                        backgroundColor: 'rgba(139,92,246,0.15)', 
+                        tension: 0.3, 
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: { 
+                    y: { position: 'left', ticks: { color: '#fff' } }, 
+                    y1: { position: 'right', ticks: { color: '#fff' }, grid: { drawOnChartArea: false } },
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } } 
+                } 
+            }
+        });
+        investmentChart.dataset.init = '1';
+    }
+    
+    // Gráfico de KPIs ao Longo do Tempo
+    const kpiTrend = document.getElementById('kpiTrend');
+    if(kpiTrend && !kpiTrend.dataset.init){
+        const activeDays = campaignData.dailyLabels.filter((_, i) => campaignData.dailyImps[i] > 0);
+        const activeCtr = campaignData.dailyCtr.filter((_, i) => campaignData.dailyImps[i] > 0);
+        const activeCpm = campaignData.dailyCpm.filter((_, i) => campaignData.dailyImps[i] > 0);
+        const activeCpc = campaignData.dailyCpc.filter((_, i) => campaignData.dailyImps[i] > 0);
+        
+        new Chart(kpiTrend, {
+            type: 'line',
+            data: { 
+                labels: activeDays.length > 0 ? activeDays : ['Sem dados'], 
+                datasets: [
+                    { 
+                        label: 'CTR (%)', 
+                        data: activeCtr.length > 0 ? activeCtr : [0], 
+                        borderColor: '#10B981', 
+                        backgroundColor: 'rgba(16,185,129,0.15)', 
+                        tension: 0.3, 
+                        yAxisID: 'y', 
+                        fill: true 
+                    },
+                    { 
+                        label: 'CPM (R$)', 
+                        data: activeCpm.length > 0 ? activeCpm : [0], 
+                        borderColor: '#F59E0B', 
+                        backgroundColor: 'rgba(245,158,11,0.15)', 
+                        tension: 0.3, 
+                        yAxisID: 'y1', 
+                        fill: true 
+                    },
+                    { 
+                        label: 'CPC (R$)', 
+                        data: activeCpc.length > 0 ? activeCpc : [0], 
+                        borderColor: '#3B82F6', 
+                        backgroundColor: 'rgba(59,130,246,0.15)', 
+                        tension: 0.3, 
+                        yAxisID: 'y1', 
+                        fill: true 
+                    }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: { 
+                    y: { position: 'left', ticks: { color: '#fff' } }, 
+                    y1: { position: 'right', ticks: { color: '#fff' }, grid: { drawOnChartArea: false } },
+                    x: { ticks: { color: '#fff' }, grid: { color: 'rgba(255,255,255,0.1)' } } 
+                } 
+            }
+        });
+        kpiTrend.dataset.init = '1';
+    }
+}
+
+// Função para calcular KPIs automaticamente
+function calculateKPIs() {
+    for (let i = 0; i < campaignData.dailyLabels.length; i++) {
+        const imps = campaignData.dailyImps[i];
+        const clicks = campaignData.dailyClicks[i];
+        const invest = campaignData.dailyInvest[i];
+        
+        // Calcular CTR: (cliques/impressões)*100
+        campaignData.dailyCtr[i] = imps > 0 ? ((clicks / imps) * 100).toFixed(2) : 0;
+        
+        // Calcular CPM: (investimento/impressões)*1000
+        campaignData.dailyCpm[i] = imps > 0 ? ((invest / imps) * 1000).toFixed(2) : 0;
+        
+        // Calcular CPC: investimento/cliques
+        campaignData.dailyCpc[i] = clicks > 0 ? (invest / clicks).toFixed(3) : 0;
+    }
+    
+    // Calcular totais
+    const totalImps = campaignData.dailyImps.reduce((sum, val) => sum + val, 0);
+    const totalClicks = campaignData.dailyClicks.reduce((sum, val) => sum + val, 0);
+    const totalInvest = campaignData.dailyInvest.reduce((sum, val) => sum + val, 0);
+    
+    campaignData.sumValues = [totalImps, totalClicks];
+    
+    // Atualizar métricas no dashboard
+    updateMetrics(totalImps, totalClicks, totalInvest);
+}
+
+// Função para atualizar as métricas no dashboard
+function updateMetrics(totalImps, totalClicks, totalInvest) {
+    console.log('Atualizando métricas:', { totalImps, totalClicks, totalInvest });
+    
+    // Atualizar impressões entregues
+    const impsElement = document.getElementById('totalImps');
+    if (impsElement) {
+        impsElement.textContent = totalImps.toLocaleString('pt-BR');
+    }
+    
+    // Atualizar percentual de impressões
+    const impsPercent = document.getElementById('impsPercent');
+    if (impsPercent) {
+        const percent = ((totalImps / 222222) * 100).toFixed(2);
+        impsPercent.textContent = percent + '%';
+        impsPercent.className = percent >= 100 ? 'text-green' : 'text-orange';
+    }
+    
+    // Atualizar valor utilizado
+    const investElement = document.getElementById('totalInvest');
+    if (investElement) {
+        investElement.textContent = 'R$ ' + totalInvest.toFixed(2).replace('.', ',');
+    }
+    
+    // Atualizar percentual de investimento
+    const investPercent = document.getElementById('investPercent');
+    if (investPercent) {
+        const percent = ((totalInvest / 2666.66) * 100).toFixed(2);
+        investPercent.textContent = percent + '%';
+        investPercent.className = percent >= 100 ? 'text-green' : 'text-orange';
+    }
+    
+    // Atualizar cliques
+    const clicksElement = document.getElementById('totalClicks');
+    if (clicksElement) {
+        clicksElement.textContent = totalClicks.toLocaleString('pt-BR');
+    }
+    
+    // Atualizar KPIs médios
+    const avgCtr = totalImps > 0 ? ((totalClicks / totalImps) * 100).toFixed(2) : 0;
+    const avgCpm = totalImps > 0 ? ((totalInvest / totalImps) * 1000).toFixed(2) : 0;
+    const avgCpc = totalClicks > 0 ? (totalInvest / totalClicks).toFixed(3) : 0;
+    
+    const kpisElement = document.getElementById('avgKPIs');
+    if (kpisElement) {
+        kpisElement.textContent = `CTR ${avgCtr}% • CPM R$ ${avgCpm} • CPC R$ ${avgCpc}`;
+    }
+}
+
+// Função para atualizar a tabela diária
+function updateDailyTable() {
+    const tbody = document.getElementById('dailyTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    for (let i = 0; i < campaignData.dailyLabels.length; i++) {
+        const row = document.createElement('tr');
+        
+        // Verificar se há dados para este dia
+        const hasData = campaignData.dailyImps[i] > 0 || campaignData.dailyClicks[i] > 0 || campaignData.dailyInvest[i] > 0;
+        
+        if (hasData) {
+            row.innerHTML = `
+                <td>${campaignData.dailyLabels[i]}</td>
+                <td>${campaignData.dailyImps[i].toLocaleString()}</td>
+                <td>${campaignData.dailyClicks[i].toLocaleString()}</td>
+                <td>${campaignData.dailyCtr[i]}%</td>
+                <td>R$ ${parseFloat(campaignData.dailyInvest[i]).toFixed(2).replace('.', ',')}</td>
+                <td>R$ ${parseFloat(campaignData.dailyCpm[i]).toFixed(2).replace('.', ',')}</td>
+                <td>R$ ${parseFloat(campaignData.dailyCpc[i]).toFixed(3).replace('.', ',')}</td>
+            `;
+        } else {
+            row.innerHTML = `
+                <td>${campaignData.dailyLabels[i]}</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+            `;
+        }
+        
+        tbody.appendChild(row);
+    }
+}
+
+// Função para carregar dados do Google Sheets automaticamente
+async function loadGoogleSheetsData() {
+    console.log('Carregando dados do Google Sheets...');
+    
+    // URL pública da planilha (você precisa publicar a planilha primeiro)
+    // Para publicar: Arquivo > Compartilhar > Publicar na Web > CSV
+    const sheetId = '1F9sQvuc0PiXPhrleQoylIG2Hp7Gxa6x0yK2qj79vn0s';
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=886087812`;
+    
+    try {
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+            throw new Error('Planilha não está publicada ou não é acessível');
+        }
+        
+        const csvText = await response.text();
+        console.log('Dados CSV recebidos:', csvText);
+        
+        // Processar dados CSV
+        processCSVData(csvText);
+        
+        // Atualizar timestamp
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleString('pt-BR');
+        
+    } catch (error) {
+        console.error('Erro ao carregar dados da planilha:', error);
+        console.log('Usando dados de exemplo...');
+        loadExampleData();
+    }
+}
+
+// Função para processar dados CSV
+function processCSVData(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    console.log('Linhas CSV:', lines);
+    
+    // Resetar dados
+    campaignData.dailyImps = new Array(30).fill(0);
+    campaignData.dailyClicks = new Array(30).fill(0);
+    campaignData.dailyInvest = new Array(30).fill(0);
+    
+    // Processar cada linha (pular cabeçalho se existir)
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        const columns = line.split(',').map(col => col.trim().replace(/"/g, ''));
+        console.log('Processando linha:', columns);
+        
+        // Assumir formato: Data, Impressões, Cliques, Investimento
+        if (columns.length >= 4) {
+            const dateStr = columns[0];
+            const imps = parseInt(columns[1]) || 0;
+            const clicks = parseInt(columns[2]) || 0;
+            const invest = parseFloat(columns[3]) || 0;
+            
+            // Encontrar índice do dia
+            const dayIndex = getDayIndex(dateStr);
+            if (dayIndex >= 0 && dayIndex < 30) {
+                campaignData.dailyImps[dayIndex] = imps;
+                campaignData.dailyClicks[dayIndex] = clicks;
+                campaignData.dailyInvest[dayIndex] = invest;
+            }
+        }
+    }
+    
+    console.log('Dados processados:', campaignData);
+    
+    // Recalcular KPIs e atualizar interface
+    calculateKPIs();
+    updateDailyTable();
+    updateCharts();
+}
+
+// Função para converter data em índice do dia
+function getDayIndex(dateStr) {
+    // Tentar diferentes formatos de data
+    const dateFormats = [
+        /(\d{1,2})\/(\d{1,2})/, // DD/MM
+        /(\d{1,2})-(\d{1,2})/,  // DD-MM
+        /(\d{1,2})\.(\d{1,2})/  // DD.MM
+    ];
+    
+    for (const format of dateFormats) {
+        const match = dateStr.match(format);
+        if (match) {
+            const day = parseInt(match[1]);
+            const month = parseInt(match[2]);
+            
+            // Verificar se é setembro (mês 9)
+            if (month === 9 && day >= 1 && day <= 30) {
+                return day - 1; // Índice baseado em 0
+            }
+        }
+    }
+    
+    return -1; // Data não encontrada
+}
+
+// Função para carregar dados de exemplo (caso a planilha não esteja acessível)
+function loadExampleData() {
+    console.log('Carregando dados de exemplo...');
+    
+    campaignData.dailyImps = [
+        7500, 8200, 9100, 8500, 7800, 9200, 8800, 9600, 8900, 8700,
+        9400, 9100, 8600, 9300, 9000, 8800, 9200, 8900, 9500, 8700,
+        9100, 8800, 9300, 9000, 8600, 9200, 8900, 9400, 8800, 9100
+    ];
+    
+    campaignData.dailyClicks = [
+        45, 52, 61, 51, 47, 55, 53, 58, 54, 52,
+        56, 55, 52, 56, 54, 53, 55, 54, 57, 52,
+        55, 53, 56, 54, 52, 55, 54, 56, 53, 55
+    ];
+    
+    campaignData.dailyInvest = [
+        45.00, 49.20, 54.60, 51.00, 46.80, 55.20, 52.80, 57.60, 53.40, 52.20,
+        56.40, 54.60, 51.60, 55.80, 54.00, 52.80, 55.20, 53.40, 57.00, 52.20,
+        54.60, 52.80, 55.80, 54.00, 51.60, 55.20, 53.40, 56.40, 52.80, 54.60
+    ];
+    
+    // Recalcular KPIs após inserir dados
+    calculateKPIs();
+    updateDailyTable();
+    updateCharts();
+}
+
+// Função para atualizar gráficos com novos dados
+function updateCharts() {
+    // Destruir gráficos existentes
+    const chartIds = ['progressChart', 'dailyPerformance', 'investmentChart', 'kpiTrend'];
+    chartIds.forEach(id => {
+        const chartElement = document.getElementById(id);
+        if (chartElement && chartElement.dataset.init) {
+            delete chartElement.dataset.init;
+        }
+    });
+    
+    // Reinicializar gráficos
+    setTimeout(() => {
+        initOverview();
+    }, 100);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ 
+    initOverview();
+    // Carregar dados do Google Sheets
+    loadGoogleSheetsData();
+    // Inicializar tabela diária
+    updateDailyTable();
+});
+</script>
+</body>
+</html>
