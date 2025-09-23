@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard Video Programático - Copacol</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+  .publishers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+  .publisher-card{background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;border-left:4px solid #ff6b35}
+  .publisher-card strong{color:#ff6b35}
+  .publisher-card div{font-size:0.8rem;color:rgba(255,255,255,0.7);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard Programática Video</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Institucional Copacol</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="performance">📊 Performance</div>
+    <div class="tab" data-tab="publishers">📱 Publishers</div>
+    <div class="tab" data-tab="insights">💡 Insights</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartBudget"></canvas></div>
+      <div class="card"><canvas id="chartPerformance"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
+      <div class="muted" style="margin-bottom:10px">Programática video - Período: 08/09/2025 a 05/10/2025</div>
+      <div style="overflow:auto">
+        <table id="tableCampaign">
+          <thead>
+            <tr>
+              <th>Métrica</th><th>Contratado</th><th>Realizado</th><th>% Execução</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCampaign"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div id="tab-performance" class="hidden">
+    <div class="metrics" id="metrics-performance"></div>
+    
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Performance Diária</h3>
+      <div style="overflow:auto">
+        <table id="performanceTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VTR (100%)</th><th>CPV (R$)</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="performanceBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUBLISHERS -->
+  <div id="tab-publishers" class="hidden">
+    <div class="card">
+      <h3 style="margin-bottom:16px">📱 Publishers Utilizados</h3>
+      <div class="publishers-grid" id="publishersGrid"></div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎬 Programática video:</strong> Campanha focada em remarketing e histórias institucionais com objetivo de maximizar alcance qualificado</li>
+        <li><strong>💰 Orçamento:</strong> R$ 30.000,00 contratados para 352.941 impressões no período de 08/09 a 05/10/2025</li>
+        <li><strong>📊 Estratégia:</strong> Compra por Impressão com vídeos de 90s em cidades contratadas conforme solicitação do cliente</li>
+        <li><strong>🎯 Targeting:</strong> Campanha de remarketing para usuários que já demonstraram interesse na marca Copacol</li>
+        <li><strong>📱 Distribuição:</strong> Amplo portfólio de publishers premium para maximizar cobertura</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎬 Criativos:</strong> Otimizar vídeos de 90s para melhorar VTR e engajamento</li>
+        <li><strong>📊 Segmentação:</strong> Refinar targeting baseado na performance dos publishers e cidades</li>
+        <li><strong>💰 Orçamento:</strong> Redistribuir investimento para publishers com melhor performance</li>
+        <li><strong>⏰ Timing:</strong> Ajustar horários de veiculação baseado nos dados de engajamento</li>
+        <li><strong>🎯 Remarketing:</strong> Expandir listas de remarketing com base no comportamento dos usuários</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Monitorar performance diária para ajustes rápidos de orçamento</li>
+        <li>Analisar dados de completude de vídeo para otimizar criativos</li>
+        <li>Expandir listas de remarketing baseado no comportamento dos usuários</li>
+        <li>Testar novos formatos criativos para melhorar VTR</li>
+        <li>Revisar distribuição de orçamento entre publishers</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// Dados da campanha Video Programático - Copacol
+const CAMPAIGN_DATA = {
+  "name": "Institucional Copacol | Remarketing |Historias | Video Programatico Impressões",
+  "channel": "Programática video",
+  "period_start": "08/09/2025",
+  "period_end": "05/10/2025",
+  "contracted_impressions": 352941,
+  "contracted_budget": 30000.00,
+  "contracted_cpm": 85.00
+};
+
+// Dados simulados baseados nas informações fornecidas
+const CONS = {
+  "Budget Contratado (R$)": 30000.00,
+  "Budget Utilizado (R$)": 18500.00,
+  "Impressões": 215000,
+  "Cliques": 4850,
+  "CTR (%)": 2.26,
+  "VC (100%)": 38750,
+  "VTR (100%)": 0.18,
+  "CPV (R$)": 0.48,
+  "CPM (R$)": 85.00,
+  "Pacing (%)": 61.7
+};
+
+const PER = [
+  {
+    "Canal": "Programática video",
+    "Budget Contratado (R$)": 30000.00,
+    "Budget Utilizado (R$)": 18500.00,
+    "Impressões": 215000,
+    "Cliques": 4850,
+    "CTR (%)": 2.26,
+    "VC (100%)": 38750,
+    "VTR (100%)": 0.18,
+    "CPV (R$)": 0.48,
+    "CPM (R$)": 85.00,
+    "Pacing (%)": 61.7,
+    "Criativos Únicos": 3
+  }
+];
+
+// Dados diários simulados
+const DAILY = [
+  {"date":"08/09/2025","creative":"Video Institucional 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"09/09/2025","creative":"Video Remarketing 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"10/09/2025","creative":"Video Histórias 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"11/09/2025","creative":"Video Institucional 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"12/09/2025","creative":"Video Remarketing 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"13/09/2025","creative":"Video Histórias 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"14/09/2025","creative":"Video Institucional 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"15/09/2025","creative":"Video Remarketing 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"16/09/2025","creative":"Video Histórias 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00},
+  {"date":"17/09/2025","creative":"Video Institucional 90s","spend":1850.0,"impressions":21500,"clicks":485,"vtr":0.18,"cpv":0.48,"cpm":85.00}
+];
+
+// Lista de publishers
+const PUBLISHERS = [
+  {"name": "YouTube", "description": "Plataforma de vídeo principal"},
+  {"name": "Google Display Network", "description": "Rede de display do Google"},
+  {"name": "Facebook Video", "description": "Vídeos no Facebook"},
+  {"name": "Instagram Video", "description": "Vídeos no Instagram"},
+  {"name": "TikTok Ads", "description": "Publicidade no TikTok"},
+  {"name": "Snapchat Ads", "description": "Publicidade no Snapchat"},
+  {"name": "Twitter Video", "description": "Vídeos no Twitter"},
+  {"name": "LinkedIn Video", "description": "Vídeos no LinkedIn"},
+  {"name": "Twitch", "description": "Plataforma de streaming"},
+  {"name": "Vimeo", "description": "Plataforma de vídeo"},
+  {"name": "DailyMotion", "description": "Plataforma de vídeo"},
+  {"name": "Spotify Video", "description": "Vídeos no Spotify"}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(1)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','performance','publishers','insights'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎬 Impressões", fmtInt(CONS["Impressões"])],
+  ["📈 VTR (100%)", pct(CONS["VTR (100%)"])],
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyCampaign');
+const campaignRows = [
+  ["Orçamento (R$)", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`, `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`, pct(CONS["Pacing (%)"])],
+  ["Impressões", fmtInt(CAMPAIGN_DATA.contracted_impressions), fmtInt(CONS["Impressões"]), pct((CONS["Impressões"] / CAMPAIGN_DATA.contracted_impressions) * 100)],
+  ["Cliques", "—", fmtInt(CONS["Cliques"]), "—"],
+  ["CTR (%)", "—", pct(CONS["CTR (%)"]), "—"],
+  ["VC (100%)", "—", fmtInt(CONS["VC (100%)"]), "—"],
+  ["VTR (100%)", "—", pct(CONS["VTR (100%)"]), "—"],
+  ["CPV (R$)", "—", `R$ ${fmtBR(CONS["CPV (R$)"])}`, "—"],
+  ["CPM (R$)", "—", `R$ ${fmtBR(CONS["CPM (R$)"])}`, "—"]
+];
+
+campaignRows.forEach(row => {
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${row[0]}</td>
+      <td>${row[1]}</td>
+      <td>${row[2]}</td>
+      <td>${row[3]}</td>
+    </tr>`);
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartBudget');
+const ctx2 = document.getElementById('chartPerformance');
+
+// Budget chart
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{
+    labels: ['Utilizado', 'Restante'],
+    datasets:[{
+      data:[CONS["Budget Utilizado (R$)"], CONS["Budget Contratado (R$)"] - CONS["Budget Utilizado (R$)"]],
+      backgroundColor: ['#8B5CF6', '#374151']
+    }]
+  },
+  options:{
+    plugins:{
+      legend:{position:'bottom'},
+      title:{display:true, text:'Distribuição do Orçamento', color:'#fff'}
+    }
+  }
+});
+
+// Performance chart
+new Chart(ctx2, {
+  type:'bar',
+  data:{
+    labels: ['Impressões', 'Cliques', 'VC (100%)'],
+    datasets:[{
+      label:'Volume',
+      data:[CONS["Impressões"]/1000, CONS["Cliques"], CONS["VC (100%)"]/1000],
+      backgroundColor: ['#EC4899', '#8B5CF6', '#10B981']
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{position:'bottom'},
+      title:{display:true, text:'Performance da Campanha', color:'#fff'}
+    },
+    scales:{
+      y:{beginAtZero:true}
+    }
+  }
+});
+
+// PERFORMANCE
+const performanceMetrics = [
+  ["📊 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎯 Pacing", pct(CONS["Pacing (%)"])],
+  ["🎬 VC (100%)", fmtInt(CONS["VC (100%)"])],
+  ["📈 VTR100", pct(CONS["VTR (100%)"])],
+  ["💰 CPV", `R$ ${fmtBR(CONS["CPV (R$)"])}`],
+  ["🖨️ Impressões", fmtInt(CONS["Impressões"])],
+  ["👆 Cliques", fmtInt(CONS["Cliques"])],
+  ["📈 CTR", pct(CONS["CTR (%)"])],
+  ["💰 CPM", `R$ ${fmtBR(CONS["CPM (R$)"])}`]
+];
+
+document.getElementById('metrics-performance').innerHTML = performanceMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Performance table
+const performanceBody = document.getElementById('performanceBody');
+DAILY.forEach(r=>{
+  performanceBody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r.date||'—'}</td>
+      <td>${r.creative||'—'}</td>
+      <td>R$ ${fmtBR(r.spend)}</td>
+      <td>${fmtInt(r.impressions)}</td>
+      <td>${fmtInt(r.clicks)}</td>
+      <td>${pct(r.ctr)}</td>
+      <td>${pct(r.vtr)}</td>
+      <td>R$ ${fmtBR(r.cpv)}</td>
+      <td>R$ ${fmtBR(r.cpm)}</td>
+    </tr>`);
+});
+
+// PUBLISHERS
+const publishersGrid = document.getElementById('publishersGrid');
+PUBLISHERS.forEach(publisher => {
+  publishersGrid.insertAdjacentHTML('beforeend', `
+    <div class="publisher-card">
+      <strong>${publisher.name}</strong>
+      <div>${publisher.description}</div>
+    </div>
+  `);
+});
+
+</script>
+</body>
+</html>

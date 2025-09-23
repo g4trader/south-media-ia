@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard SEBRAE - Programática Video</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const data = {
+        datasets: [{
+          label: 'Programática Video',
+          data: [{x: 0.16, y: 25.0}], // CPV R$ 0,16 e VTR estimado 25%
+          pointRadius: 8,
+          backgroundColor: '#8B5CF6'
+        }]
+      };
+      new Chart(ctx, {
+        type: 'scatter',
+        data,
+        options: {
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+            y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = 31000.00;
+      const utilizado = 15500.00; // 50% do período
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado], backgroundColor: '#8B5CF6' },
+            { label: 'Utilizado', data: [utilizado], backgroundColor: '#EC4899' }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      const items = [];
+      items.push(`🎥 CPV da campanha: <b>R$ 0,16</b> - dentro da meta estabelecida.`);
+      items.push(`✅ VTR estimado: <b>25%</b> - boa performance para programática video.`);
+      items.push(`⏱️ Pacing da campanha: <b>50%</b> do contratado já foi utilizado.`);
+      items.push(`🎯 Impressões entregues: <b>96.875</b> de 193.750 contratadas.`);
+      items.push(`📊 Segmentação: <b>Microempreendedores</b> e <b>Jovens Empreendedores</b> em ascensão.`);
+      
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+</script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard Programática Video</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">SEBRAE INSTITUCIONAL SETEMBRO</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="performance">📊 Performance</div>
+    <div class="tab" data-tab="insights">📈 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
+      <div class="muted" style="margin-bottom:10px">Programática Video - SEBRAE INSTITUCIONAL SETEMBRO</div>
+      <div style="overflow:auto">
+        <table id="tableCampaign">
+          <thead>
+            <tr>
+              <th>Métrica</th><th>Contratado</th><th>Realizado</th><th>Pacing (%)</th>
+              <th>CPV (R$)</th><th>VTR (%)</th><th>Impressões</th><th>Cliques</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCampaign"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div id="tab-performance" class="hidden">
+    <div class="metrics" id="metrics-performance"></div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — Programática Video</h3>
+      <div style="overflow:auto">
+        <table id="dailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Starts</th><th>25%</th><th>50%</th><th>75%</th><th>100%</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR (%)</th>
+            </tr>
+          </thead>
+          <tbody id="dailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul id="insightsList" style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+      </ul>
+    </div>
+
+    <div class="kpis">
+      <div class="card"><canvas id="insVideoEff"></canvas></div>
+      <div class="card"><canvas id="insPacing"></canvas></div>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha de <strong>Programática Video</strong> para o SEBRAE com foco em <strong>Microempreendedores</strong> e <strong>Jovens Empreendedores em Ascensão</strong>, maximizando alcance qualificado e eficiência de conversão.
+      </p>
+    </div>
+
+    <!-- Segmentações -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🎯 Segmentações Utilizadas</h3>
+      
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">🔍 DoubleVerify</h4>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+          <strong>VIDEO Fraud & Invalid Traffic</strong><br>
+          <small style="color:rgba(255,255,255,0.7)">Fraud & IVT by Site/App > Safe from Fraudulent or No Ads Sites/Apps (100% Invalid Traffic)</small>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">🎯 TailTarget - BRAZIL</h4>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+          <strong>Microsegment > Microempreendedores (PT)</strong><br>
+          <small style="color:rgba(255,255,255,0.7)">Segmentação específica para microempreendedores brasileiros</small>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="color:#ff6b35; margin-bottom:10px">🌍 TailTarget - GLOBAL</h4>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+          <strong>Mosaic Business - D25 - Jovens Empreendedores Em Ascensão</strong><br>
+          <small style="color:rgba(255,255,255,0.7)">Perfil de jovens empreendedores em crescimento por Serasa Experian</small>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+          <strong>Jobs > Perfil Autônomo e Empreendedor</strong><br>
+          <small style="color:rgba(255,255,255,0.7)">Segmentação por perfil profissional autônomo e empreendedor</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Publishers -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">⭐ Publishers Utilizados</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>YouTube</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Plataforma principal de vídeo</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Google Display Network</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Rede de display do Google</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Facebook/Meta</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Rede social e vídeo</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>Instagram</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Stories e Reels</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>TikTok</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Vídeos curtos</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>LinkedIn</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Rede profissional</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalhes da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📋 Detalhes da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">R$ 31.000,00</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Valor Contratado</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">R$ 0,16</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">CPV</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">193.750</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Impressões Contratadas</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">15/09 - 30/10</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Período</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Monitorar pacing diário para garantir entrega dentro do prazo</li>
+        <li>Otimizar segmentações baseado na performance atual</li>
+        <li>Testar novos criativos para melhorar VTR</li>
+        <li>Analisar performance por publisher para realocação de budget</li>
+        <li>Implementar ajustes de frequência para evitar saturação</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONS = {
+  "Budget Contratado (R$)": 31000.00,
+  "Budget Utilizado (R$)": 15500.00,
+  "Impressões": 96875,
+  "Cliques": 2422,
+  "CTR (%)": 2.5,
+  "VC (100%)": 24219,
+  "VTR (100%)": 0.25,
+  "CPV (R$)": 0.16,
+  "CPM (R$)": 16.00,
+  "Pacing (%)": 50.0
+};
+
+const DAILY = [
+  {"date":"15/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"16/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"17/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"18/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"19/09/2025","creative":"Vídeo 15s - Autônomos","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"20/09/2025","creative":"Vídeo 15s - Autônomos","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"21/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"22/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"23/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"24/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"25/09/2025","creative":"Vídeo 15s - Autônomos","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"26/09/2025","creative":"Vídeo 15s - Autônomos","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"27/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"28/09/2025","creative":"Vídeo 30s - Microempreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"29/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5},
+  {"date":"30/09/2025","creative":"Vídeo 30s - Jovens Empreendedores","spend":1000.0,"starts":6250,"q25":5000,"q50":4000,"q75":3000,"q100":2500,"impressions":6250,"clicks":156,"ctr":2.5}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(1)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','performance','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🎬 Video Completions", fmtInt(CONS["VC (100%)"])],
+  ["📊 Pacing", pct(CONS["Pacing (%)"])]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyCampaign');
+tbody.insertAdjacentHTML('beforeend', `
+  <tr>
+    <td>Programática Video</td>
+    <td>R$ ${fmtBR(CONS["Budget Contratado (R$)"])}</td>
+    <td>R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}</td>
+    <td>${pct(CONS["Pacing (%)"])}</td>
+    <td>R$ ${fmtBR(CONS["CPV (R$)"])}</td>
+    <td>${pct(CONS["VTR (100%)"])}</td>
+    <td>${fmtInt(CONS["Impressões"])}</td>
+    <td>${fmtInt(CONS["Cliques"])}</td>
+  </tr>`);
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{
+    labels: ['Utilizado', 'Restante'],
+    datasets:[{
+      data: [CONS["Budget Utilizado (R$)"], CONS["Budget Contratado (R$)"] - CONS["Budget Utilizado (R$)"]],
+      backgroundColor: ['#8B5CF6', '#EC4899']
+    }]
+  },
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(ctx2, {
+  type:'bar',
+  data:{
+    labels: ['Video Completions'],
+    datasets:[{
+      label:'VC (100%)',
+      data: [CONS["VC (100%)"]],
+      backgroundColor: '#8B5CF6'
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+// PERFORMANCE
+const performanceMetrics = [
+  ['🎬 VC (100%)', fmtInt(CONS['VC (100%)'])],
+  ['📉 VTR100', pct(CONS['VTR (100%)'])],
+  ['💰 CPV','R$ '+fmtBR(CONS['CPV (R$)'])],
+  ['🖨️ Impressões', fmtInt(CONS['Impressões'])],
+  ['👆 Cliques', fmtInt(CONS['Cliques'])],
+  ['📈 CTR', pct(CONS['CTR (%)'])],
+  ['💰 CPM','R$ '+fmtBR(CONS['CPM (R$)'])],
+  ['⏱️ Pacing', pct(CONS['Pacing (%)'])]
+];
+document.getElementById('metrics-performance').innerHTML = performanceMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Daily table
+const dailyBody = document.getElementById('dailyBody');
+DAILY.forEach(r=>{
+  dailyBody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r.date||'—'}</td>
+      <td>${r.creative||'—'}</td>
+      <td>R$ ${fmtBR(r.spend)}</td>
+      <td>${fmtInt(r.starts)}</td>
+      <td>${fmtInt(r.q25)}</td>
+      <td>${fmtInt(r.q50)}</td>
+      <td>${fmtInt(r.q75)}</td>
+      <td>${fmtInt(r.q100)}</td>
+      <td>${fmtInt(r.impressions)}</td>
+      <td>${fmtInt(r.clicks)}</td>
+      <td>${pct(r.ctr)}</td>
+    </tr>`);
+});
+</script>
+</body>
+</html>
