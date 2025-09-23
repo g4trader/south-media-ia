@@ -402,6 +402,15 @@ const dashboards = [
     category: 'Saúde',
     lastUpdate: '1 semana',
     icon: '🏥'
+  },
+  {
+    file: 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html',
+    name: 'Semana Do Pescado',
+    description: 'Dashboard Semana Do Pescado - Relatório analítico completo',
+    status: 'active',
+    category: 'Campanha',
+    lastUpdate: 'Hoje',
+    icon: '🐟'
   }
 ];
 
@@ -410,15 +419,17 @@ function createDashboardCard(dashboard) {
   const statusClass = dashboard.status === 'active' ? 'status-active' : '';
   const statusText = dashboard.status === 'active' ? '🟢 Ativo' : '🔴 Inativo';
   
-  // Verificar se é o Dashboard Sonho para adicionar botão de sync
+  // Verificar se é o Dashboard Sonho ou Semana do Pescado para adicionar botão de sync
   const isSonhoDashboard = dashboard.file === 'dash_sonho.html';
+  const isSemanaPescadoDashboard = dashboard.file === 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html';
+  const hasSyncButton = isSonhoDashboard || isSemanaPescadoDashboard;
   
   // Verificar se é dashboard dinâmico
   const isDynamicDashboard = dashboard.isDynamic;
   
   let actionsHtml = '';
   
-  if (isSonhoDashboard) {
+  if (hasSyncButton) {
     actionsHtml = `
       <div class="card-actions">
         <a href="/static/${dashboard.file}" class="card-link" target="_blank">
@@ -1020,18 +1031,31 @@ async function syncDashboard(file) {
   try {
     console.log(`🔄 Iniciando sincronização do ${file}...`);
     
-    // Fazer chamada para o Cloud Run dashboard-automation
-    const response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/trigger', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Nota: Em produção, você precisaria de autenticação adequada
-        // 'Authorization': 'Bearer YOUR_TOKEN'
-      },
-      body: JSON.stringify({
-        test_mode: false
-      })
-    });
+    let response;
+    
+    // Verificar se é o dashboard Semana do Pescado
+    if (file === 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html') {
+      // Usar endpoint específico para Semana do Pescado
+      response = await fetch('/api/semana-pescado/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    } else {
+      // Usar endpoint padrão para outros dashboards (como Sonho)
+      response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/trigger', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Nota: Em produção, você precisaria de autenticação adequada
+          // 'Authorization': 'Bearer YOUR_TOKEN'
+        },
+        body: JSON.stringify({
+          test_mode: false
+        })
+      });
+    }
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
