@@ -137,6 +137,80 @@ def get_campaign_data(campaign_id):
             "message": f"Erro ao buscar dados: {str(e)}"
         }), 500
 
+@app.route('/api/semana-pescado/sync', methods=['POST'])
+def sync_semana_pescado():
+    """Sincronizar dados específicos da campanha Semana do Pescado"""
+    try:
+        import subprocess
+        import sys
+        from pathlib import Path
+        
+        # Executar scripts de processamento específicos para Semana do Pescado
+        scripts_to_run = [
+            'google_sheets_processor.py',
+            'process_daily_data.py',
+            'generate_dashboard_final_no_netflix.py'
+        ]
+        
+        results = []
+        base_path = Path(__file__).parent
+        
+        for script in scripts_to_run:
+            try:
+                script_path = base_path / script
+                if script_path.exists():
+                    result = subprocess.run([
+                        sys.executable, str(script_path)
+                    ], capture_output=True, text=True, timeout=60)
+                    
+                    results.append({
+                        'script': script,
+                        'success': result.returncode == 0,
+                        'output': result.stdout,
+                        'error': result.stderr if result.returncode != 0 else None
+                    })
+                else:
+                    results.append({
+                        'script': script,
+                        'success': False,
+                        'error': f'Arquivo {script} não encontrado'
+                    })
+            except subprocess.TimeoutExpired:
+                results.append({
+                    'script': script,
+                    'success': False,
+                    'error': 'Timeout - script demorou mais de 60 segundos'
+                })
+            except Exception as e:
+                results.append({
+                    'script': script,
+                    'success': False,
+                    'error': str(e)
+                })
+        
+        # Verificar se todos os scripts executaram com sucesso
+        all_success = all(result['success'] for result in results)
+        
+        # Buscar o arquivo de dashboard mais recente
+        dashboard_files = list(base_path.glob('static/dash_semana_do_pescado_FINAL_NO_NETFLIX_*.html'))
+        latest_dashboard = max(dashboard_files, key=lambda x: x.stat().st_mtime) if dashboard_files else None
+        
+        return jsonify({
+            "success": all_success,
+            "message": "Sincronização da Semana do Pescado concluída" if all_success else "Sincronização parcialmente concluída",
+            "timestamp": datetime.now().isoformat(),
+            "scripts_results": results,
+            "dashboard_file": latest_dashboard.name if latest_dashboard else None,
+            "dashboard_path": str(latest_dashboard) if latest_dashboard else None
+        }), 200 if all_success else 207  # 207 = Multi-Status
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erro na sincronização: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 @app.route('/api/campaigns/<campaign_id>/update', methods=['POST'])
 def update_campaign_dashboard(campaign_id):
     """Atualizar dashboard com dados mais recentes"""

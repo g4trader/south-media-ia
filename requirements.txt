@@ -18,6 +18,7 @@ numpy==1.25.2
 python-dotenv==1.0.0
 requests==2.31.0
 python-dateutil==2.8.2
+schedule==1.2.0
 
 # Production
 psycopg2-binary==2.9.9  # Para PostgreSQL se necessário

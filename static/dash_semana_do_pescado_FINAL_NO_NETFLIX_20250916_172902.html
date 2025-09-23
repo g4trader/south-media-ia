@@ -163,6 +163,53 @@
             display: inline-block;
         }
         
+        .sync-button {
+            background: #10B981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            margin-left: 1rem;
+        }
+        
+        .sync-button:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        
+        .sync-button:active {
+            transform: translateY(0);
+        }
+        
+        .sync-icon {
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .sync-button.syncing .sync-icon {
+            animation: spin 1s linear infinite;
+        }
+        
+        .sync-button:not(.syncing) .sync-icon {
+            animation: none;
+        }
+        
         .tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -599,7 +646,13 @@
 <div class="campaign-info">
 <div class="campaign-title">Semana do Pescado</div>
 <div class="campaign-date">01/09/25 até 30/09/25</div>
+<div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
 <span class="status-badge">Ativa</span>
+<button class="sync-button" onclick="syncData()" id="syncButton">
+<div class="sync-icon"></div>
+Sync
+</button>
+</div>
 </div>
 </div>
 <!-- Tabs -->
@@ -1474,6 +1527,115 @@
             endDate: "30/09/25",
             status: "Ativa"
         };
+        
+        // Função para sincronizar dados
+        async function syncData() {
+            const syncButton = document.getElementById('syncButton');
+            const syncIcon = syncButton.querySelector('.sync-icon');
+            
+            // Adicionar classe de sincronização
+            syncButton.classList.add('syncing');
+            syncButton.disabled = true;
+            syncButton.innerHTML = '<div class="sync-icon"></div>Sincronizando...';
+            
+            try {
+                // Chamar API de sincronização específica para Semana do Pescado
+                const response = await fetch('/api/semana-pescado/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Sincronização bem-sucedida
+                    showSyncMessage('Dados sincronizados com sucesso!', 'success');
+                    
+                    // Recarregar a página para mostrar os dados atualizados
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    // Sincronização com problemas
+                    showSyncMessage(`Sincronização parcial: ${result.message}`, 'warning');
+                    
+                    // Ainda assim recarregar os gráficos
+                    if (typeof initDailyCharts === 'function') {
+                        initDailyCharts();
+                    }
+                    if (typeof initCompletionChart === 'function') {
+                        initCompletionChart();
+                    }
+                }
+                
+            } catch (error) {
+                // Erro na requisição
+                console.error('Erro na sincronização:', error);
+                showSyncMessage('Erro na sincronização. Tente novamente.', 'error');
+            } finally {
+                // Remover classe de sincronização
+                syncButton.classList.remove('syncing');
+                syncButton.disabled = false;
+                syncButton.innerHTML = '<div class="sync-icon"></div>Sync';
+            }
+        }
+        
+        // Função para mostrar mensagem de sincronização
+        function showSyncMessage(message, type) {
+            // Definir cores baseadas no tipo
+            let backgroundColor;
+            switch(type) {
+                case 'success':
+                    backgroundColor = '#10B981';
+                    break;
+                case 'warning':
+                    backgroundColor = '#F59E0B';
+                    break;
+                case 'error':
+                    backgroundColor = '#EF4444';
+                    break;
+                default:
+                    backgroundColor = '#6B7280';
+            }
+            
+            // Criar elemento de notificação
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${backgroundColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                max-width: 300px;
+                word-wrap: break-word;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animar entrada
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remover após 3 segundos
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
         
         // Log para debug
         console.log('Dashboard carregado:', campaignConfig);
