@@ -571,6 +571,46 @@ def start_scheduled_automation():
     except Exception as e:
         logger.error(f"❌ Erro ao iniciar automação agendada: {e}")
 
+@app.route('/api/semana-pescado/latest-file', methods=['GET'])
+def get_latest_semana_pescado_file():
+    """Retornar o arquivo mais recente do dashboard Semana do Pescado"""
+    try:
+        import glob
+        import os
+        
+        # Procurar pelo arquivo mais recente
+        pattern = '/app/static/dash_semana_do_pescado_FINAL_NO_NETFLIX_*.html'
+        files = glob.glob(pattern)
+        
+        if files:
+            # Encontrar o arquivo mais recente
+            latest_file = max(files, key=os.path.getmtime)
+            filename = os.path.basename(latest_file)
+            
+            logger.info(f"📁 Arquivo mais recente encontrado: {filename}")
+            
+            return jsonify({
+                "success": True,
+                "latest_file": filename,
+                "file_path": latest_file,
+                "timestamp": datetime.now().isoformat()
+            }), 200
+        else:
+            logger.warning("❌ Nenhum arquivo do Semana do Pescado encontrado")
+            return jsonify({
+                "success": False,
+                "message": "Nenhum arquivo do Semana do Pescado encontrado",
+                "timestamp": datetime.now().isoformat()
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao buscar arquivo mais recente: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro ao buscar arquivo: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 @app.route('/api/semana-pescado/sync', methods=['POST'])
 def sync_semana_pescado():
     """Sincronizar dados específicos da campanha Semana do Pescado"""
