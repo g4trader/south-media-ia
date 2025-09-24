@@ -168,7 +168,7 @@
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-container">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Carregando Dashboard SEBRAE</div>
+        <div class="loading-text">Carregando Dashboard Copacol</div>
         <div class="loading-subtext">
             Conectando com Google Sheets e processando dados...
         </div>
@@ -229,7 +229,7 @@
                 </div>
                 <div class="card" style="margin-top: 24px;">
                     <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-                    <div class="muted" style="margin-bottom:10px">Programática Video - SEBRAE INSTITUCIONAL SETEMBRO</div>
+                    <div class="muted" style="margin-bottom:10px">Programática Video - Carregando...</div>
                     <div style="overflow:auto">
                         <table id="tableCampaign">
                             <thead>
@@ -284,7 +284,7 @@
                 <div class="card" style="margin-bottom:16px">
                     <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
                     <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
-                        Campanha de <strong>Programática Video</strong> para o SEBRAE com foco em <strong>Microempreendedores</strong> e <strong>Jovens Empreendedores em Ascensão</strong>, maximizando alcance qualificado e eficiência de conversão.
+                        Campanha de <strong>Programática Video</strong> com foco em <strong>Segmentação A</strong> e <strong>Segmentação B</strong>, maximizando alcance qualificado e eficiência de conversão.
                     </p>
                 </div>
 
@@ -395,7 +395,7 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
-        this.apiEndpoint = `https://api.iasouth.tech/api/${campaignKey}/data`;
+        this.apiEndpoint = `https://south-media-ia-609095880025.us-central1.run.app/api/${campaignKey}/data`;
         this.loadingSteps = [
             { text: "Inicializando...", progress: 10 },
             { text: "Conectando com Google Sheets...", progress: 30 },
@@ -490,7 +490,7 @@ class DashboardLoader {
         // Atualizar nome da campanha no cabeçalho
         const campaignElement = document.getElementById('campaignName');
         if (campaignElement && data.contract) {
-            const client = data.contract.client || 'SEBRAE PR';
+            const client = data.contract.client || 'Copacol';
             const campaign = data.contract.campaign || 'Institucional Setembro';
             campaignElement.textContent = `${client} ${campaign.toUpperCase()}`;
         }
@@ -853,7 +853,7 @@ class DashboardLoader {
         const objectiveText = document.querySelector('#tab-planning .card p');
         if (objectiveText) {
             objectiveText.innerHTML = `
-                Campanha <strong>${data.contract?.campaign || 'Institucional Setembro'}</strong> de <strong>${data.channel || 'Prográmatica'}</strong> para <strong>${data.contract?.client || 'SEBRAE PR'}</strong> com foco em 
+                Campanha <strong>${data.contract?.campaign || 'Institucional 30s'}</strong> de <strong>${data.channel || 'Prográmatica'}</strong> para <strong>${data.contract?.client || 'Copacol'}</strong> com foco em 
                 <strong>${(strategies.segmentation || ['Microempreendedores', 'Jovens Empreendedores']).join('</strong> e <strong>')}</strong>, 
                 ${objectives.join(', ')}.
             `;
