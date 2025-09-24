@@ -600,7 +600,7 @@ class DashboardLoader {
         this.renderMetrics(data.metrics, data);
         
         // Renderizar dados diários
-        this.renderDailyData(data.daily_data);
+        this.renderDailyData(data.daily_data, data);
         
         // Renderizar dados por criativo
         this.renderPerData(data.per_data);
@@ -657,14 +657,14 @@ class DashboardLoader {
         document.getElementById('impressionsContracted').textContent = this.formatInt(contract.complete_views_contracted || metrics.impressions_contracted || 0);
     }
 
-    renderDailyData(dailyData) {
+    renderDailyData(dailyData, data = null) {
         // Atualizar tabela overview
         const tbody = document.getElementById('tbodyCampaign');
         tbody.innerHTML = '';
         
         if (dailyData && dailyData.length > 0) {
             const metrics = this.calculateTotals(dailyData);
-            const vcContracted = data.contract?.complete_views_contracted || 0;
+            const vcContracted = data?.contract?.complete_views_contracted || 0;
             const vcPacing = vcContracted > 0 ? (metrics.q100 / vcContracted) * 100 : 0;
             
             tbody.insertAdjacentHTML('beforeend', `
