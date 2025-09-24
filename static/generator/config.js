@@ -9,7 +9,7 @@ const CONFIG = {
     VERCEL_URL: window.location.origin,
     
     // Detectar ambiente
-    isVercel: () => window.location.hostname.includes('vercel.app'),
+    isVercel: () => window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dash.iasouth.tech'),
     isCloudRun: () => window.location.hostname.includes('run.app'),
     isLocal: () => window.location.hostname.includes('localhost'),
     
