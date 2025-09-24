@@ -315,8 +315,8 @@
                             <small style="color:rgba(255,255,255,0.7)">Segmentação secundária</small>
                         </div>
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Jobs > Perfil Autônomo e Empreendedor</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Segmentação por perfil profissional autônomo e empreendedor</small>
+                            <strong>Segmentação C</strong><br>
+                            <small style="color:rgba(255,255,255,0.7)">Segmentação adicional</small>
                         </div>
                     </div>
                 </div>
@@ -619,9 +619,8 @@ class DashboardLoader {
     }
 
     renderMetrics(metrics, data = null) {
-        // Calcular VC contratado baseado no orçamento e CPV
-        const vcContracted = metrics.budget_contracted && metrics.cpv ? 
-            Math.floor(metrics.budget_contracted / metrics.cpv) : 0;
+        // VC contratado vem diretamente da planilha
+        const vcContracted = data.contract?.complete_views_contracted || 0;
         const vcDelivered = metrics.q100 || 0;
         const vcPacing = vcContracted > 0 ? (vcDelivered / vcContracted) * 100 : 0;
 
@@ -665,8 +664,7 @@ class DashboardLoader {
         
         if (dailyData && dailyData.length > 0) {
             const metrics = this.calculateTotals(dailyData);
-            const vcContracted = metrics.budget_contracted && metrics.cpv ? 
-                Math.floor(metrics.budget_contracted / metrics.cpv) : 0;
+            const vcContracted = data.contract?.complete_views_contracted || 0;
             const vcPacing = vcContracted > 0 ? (metrics.q100 / vcContracted) * 100 : 0;
             
             tbody.insertAdjacentHTML('beforeend', `
@@ -721,9 +719,8 @@ class DashboardLoader {
     renderCharts(data) {
         const metrics = data.metrics;
         
-        // Calcular VC contratado
-        const vcContracted = metrics.budget_contracted && metrics.cpv ? 
-            Math.floor(metrics.budget_contracted / metrics.cpv) : 0;
+        // VC contratado vem diretamente da planilha
+        const vcContracted = data.contract?.complete_views_contracted || 0;
         const vcDelivered = metrics.q100 || 0;
         
         // Gráfico de distribuição de orçamento
@@ -829,9 +826,8 @@ class DashboardLoader {
         const metrics = data.metrics;
         const insightsList = document.getElementById('insightsList');
         
-        // Calcular métricas de VC
-        const vcContracted = metrics.budget_contracted && metrics.cpv ? 
-            Math.floor(metrics.budget_contracted / metrics.cpv) : 0;
+        // VC contratado vem diretamente da planilha
+        const vcContracted = data.contract?.complete_views_contracted || 0;
         const vcDelivered = metrics.q100 || 0;
         const vcPacing = vcContracted > 0 ? (vcDelivered / vcContracted) * 100 : 0;
         const vcRemaining = vcContracted - vcDelivered;
