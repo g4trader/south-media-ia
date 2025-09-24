@@ -388,6 +388,53 @@ def list_campaigns():
             "message": f"Erro interno: {str(e)}"
         }), 500
 
+@app.route('/api/commit-dashboard', methods=['POST', 'OPTIONS'])
+def commit_dashboard():
+    """Fazer commit e push de um dashboard específico"""
+    if request.method == 'OPTIONS':
+        return '', 200
+    
+    try:
+        data = request.get_json()
+        dashboard_filename = data.get('filename')
+        
+        if not dashboard_filename:
+            return jsonify({
+                "success": False,
+                "message": "Nome do arquivo não fornecido"
+            }), 400
+        
+        # Verificar se o arquivo existe
+        filepath = os.path.join('static', dashboard_filename)
+        if not os.path.exists(filepath):
+            return jsonify({
+                "success": False,
+                "message": f"Arquivo não encontrado: {dashboard_filename}"
+            }), 404
+        
+        # Fazer commit e push
+        dashboard_name = dashboard_filename.replace('dash_', '').replace('.html', '').replace('_', ' ').title()
+        git_success = commit_and_push_dashboard(filepath, dashboard_name)
+        
+        if git_success:
+            return jsonify({
+                "success": True,
+                "message": f"Dashboard {dashboard_name} commitado e enviado para o Git com sucesso!",
+                "dashboard_url": f"https://dash.iasouth.tech/static/{dashboard_filename}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "Erro ao fazer commit/push do dashboard"
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao fazer commit do dashboard: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500
+
 @app.route('/api/generate-dashboard', methods=['POST', 'OPTIONS'])
 def generate_dashboard():
     # Handle preflight OPTIONS request
@@ -840,13 +887,10 @@ def create_dashboard():
                 else:
                     logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
                 
-                # Tentar fazer commit e push para o Git (para deploy automático no Vercel)
-                git_success = commit_and_push_dashboard(filepath, data.get('campaign', 'Campaign'))
-                
-                # Atualizar lista de dashboards no frontend
+                # Nota: Commit/push será feito localmente pelo usuário
+                # O Cloud Run não tem acesso ao Git para fazer commit/push automático
+                git_success = False  # Será feito manualmente
                 list_updated = False
-                if git_success:
-                    list_updated = update_dashboard_list(filename)
                 
                 result = {
                     "success": True,
