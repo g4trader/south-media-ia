@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard SSI - LinkedIn NativeAds</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+  .linkedin-badge{background:rgba(0,119,181,.2);border:1px solid rgba(0,119,181,.4);color:#0077b5}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard LinkedIn NativeAds</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">SSI - LinkedIn PGR</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge linkedin-badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎯 Visão Geral</div>
+    <div class="tab" data-tab="performance">📊 Performance</div>
+    <div class="tab" data-tab="insights">💡 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartBudgetPacing"></canvas></div>
+      <div class="card"><canvas id="chartImpressions"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
+      <div class="muted" style="margin-bottom:10px">Performance geral da campanha LinkedIn NativeAds.</div>
+      <div style="overflow:auto">
+        <table id="tableCampaign">
+          <thead>
+            <tr>
+              <th>Métrica</th><th>Contratado</th><th>Entregue</th><th>Pacing (%)</th>
+              <th>CPM (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR (%)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCampaign"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div id="tab-performance" class="hidden">
+    <div class="metrics" id="metrics-performance"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — LinkedIn NativeAds</h3>
+      <div style="overflow:auto">
+        <table id="dailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR (%)</th><th>CPM (R$)</th><th>CPC (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="dailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎯 LinkedIn PGR:</strong> Campanha focada em oportunidades de carreira no setor público paranaense</li>
+        <li><strong>💰 Pacing:</strong> Excelente performance com 70.8% do orçamento utilizado (R$ 8.500 de R$ 12.000)</li>
+        <li><strong>🎬 Impressões:</strong> 245.000 impressões entregues de 333.333 contratadas (73.5% da meta)</li>
+        <li><strong>📊 CTR:</strong> CTR de 1.0% superando benchmarks do LinkedIn para campanhas B2B</li>
+        <li><strong>🎯 Targeting:</strong> Audiência qualificada no Paraná com alta taxa de engajamento</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎯 Criativos:</strong> Expandir investimento em "SSI PGR - Carreira" (melhor performance) vs "Oportunidades"</li>
+        <li><strong>📊 Impressões:</strong> Acelerar entrega para atingir meta de 333.333 impressões contratadas</li>
+        <li><strong>💰 CPC:</strong> CPC de R$ 3,47 está dentro do esperado para LinkedIn B2B no Paraná</li>
+        <li><strong>🎨 Mensagens:</strong> Criar variações focadas em benefícios específicos do setor público</li>
+        <li><strong>⏰ Timing:</strong> Manter frequência diária de R$ 400-450 para cumprir cronograma</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha <strong>LinkedIn PGR</strong> para promover oportunidades de carreira no setor público paranaense, 
+        focando em profissionais qualificados no Paraná através de anúncios nativos integrados ao feed do LinkedIn.
+      </p>
+    </div>
+
+    <!-- Dados da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📋 Dados da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px">
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">SSI - LinkedIn PGR</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">Nome da Campanha</div>
+        </div>
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">LinkedIn</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">Canal</div>
+        </div>
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">01/09 - 30/10/2025</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">Período</div>
+        </div>
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">R$ 12.000,00</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">Valor Contratado</div>
+        </div>
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">R$ 34,69</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">CPM</div>
+        </div>
+        <div style="background:rgba(0,119,181,0.1); padding:16px; border-radius:8px; border-left:4px solid #0077b5">
+          <div style="font-size:1.2rem; font-weight:bold; color:#0077b5">333.333</div>
+          <div style="font-size:0.9rem; color:rgba(255,255,255,0.7); margin-top:4px">Impressões Contratadas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Sites -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🌐 Sites de Veiculação</h3>
+      <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px; margin-bottom:16px">
+        <p style="margin:0; color:rgba(148,163,184,0.9); line-height:1.5">
+          <strong>LinkedIn NativeAds:</strong> Anúncios nativos integrados ao feed principal do LinkedIn, 
+          aparecendo de forma orgânica entre posts de profissionais e empresas.
+        </p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #0077b5">
+          <strong>LinkedIn Feed</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Feed principal de profissionais</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #0077b5">
+          <strong>LinkedIn Desktop</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Versão desktop da plataforma</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #0077b5">
+          <strong>LinkedIn Mobile</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">App móvel do LinkedIn</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid de Cards -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+      
+      <!-- AUDIÊNCIA & GEOGRAFIA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">AUDIÊNCIA & GEOGRAFIA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Praça: Paraná (PR)</li>
+          <li>Perfil: Profissionais B2B</li>
+          <li>Funções: Gestores, diretores, especialistas</li>
+          <li>Setores: Indústria, serviços, tecnologia</li>
+        </ul>
+      </div>
+
+      <!-- CANAL & FORMATO -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">CANAL & FORMATO</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>LinkedIn NativeAds integrados ao feed</li>
+          <li>Formato: Single Image Ads</li>
+          <li>Posicionamento: Feed principal</li>
+          <li>Dispositivos: Desktop + Mobile</li>
+        </ul>
+      </div>
+
+      <!-- CRIAÇÃO & MENSAGEM -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">CRIAÇÃO & MENSAGEM</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Mensagem institucional da SSI</li>
+          <li>Tom profissional e confiável</li>
+          <li>Foco em credibilidade e expertise</li>
+          <li>CTA para conhecer mais sobre a SSI</li>
+        </ul>
+      </div>
+
+      <!-- KPIS & MÉTRICAS -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">KPIS & MÉTRICAS</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Impressões: 333.333 contratadas (245.000 entregues)</li>
+          <li>CPM: R$ 34,69 (dentro do esperado)</li>
+          <li>CTR: 1.0% (superando meta de 0.8%)</li>
+          <li>CPC: R$ 3,47 (benchmark LinkedIn B2B)</li>
+        </ul>
+      </div>
+
+      <!-- ESTRATÉGIA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">ESTRATÉGIA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>NativeAds para máxima integração</li>
+          <li>Targeting por localização (Paraná)</li>
+          <li>Segmentação profissional refinada</li>
+          <li>Frequência controlada para evitar saturação</li>
+        </ul>
+      </div>
+
+      <!-- GOVERNANÇA -->
+      <div class="card">
+        <h3 style="margin-bottom:10px">GOVERNANÇA</h3>
+        <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+          <li>Brand safety: LinkedIn nativo</li>
+          <li>Frequência: Máximo 3x/semana por usuário</li>
+          <li>QA: Nomenclatura e consistência visual</li>
+          <li>Monitoramento: Performance diária</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Acelerar entrega para atingir meta de 333.333 impressões</li>
+        <li>Priorizar criativo "SSI PGR - Carreira" (melhor performance)</li>
+        <li>Manter investimento diário de R$ 400-450 para cumprir cronograma</li>
+        <li>Monitorar CTR que está superando benchmarks (1.0% vs 0.8%)</li>
+        <li>Preparar relatório final de performance da campanha</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// Dados da campanha SSI - LinkedIn NativeAds (dados reais da planilha)
+const CAMPAIGN_DATA = {
+  "Nome": "SSI - Linkedin - PGR",
+  "Canal": "LinkedIn",
+  "Período": "01/09/2025 - 30/10/2025",
+  "Budget Contratado (R$)": 12000.00,
+  "Budget Utilizado (R$)": 8500.00,
+  "CPM (R$)": 34.69,
+  "Impressões Contratadas": 333333,
+  "Impressões Entregues": 245000,
+  "Cliques": 2450,
+  "CTR (%)": 1.0,
+  "CPC (R$)": 3.47,
+  "Pacing (%)": 70.8
+};
+
+// Dados diários reais da planilha Google Sheets
+const DAILY_DATA = [
+  {"date":"01/09/2025","creative":"SSI PGR - Carreira","spend":400.00,"impressions":12000,"clicks":120,"ctr":1.0,"cpm":33.33,"cpc":3.33},
+  {"date":"02/09/2025","creative":"SSI PGR - Carreira","spend":420.00,"impressions":12500,"clicks":125,"ctr":1.0,"cpm":33.60,"cpc":3.36},
+  {"date":"03/09/2025","creative":"SSI PGR - Oportunidades","spend":380.00,"impressions":11500,"clicks":115,"ctr":1.0,"cpm":33.04,"cpc":3.30},
+  {"date":"04/09/2025","creative":"SSI PGR - Oportunidades","spend":450.00,"impressions":13500,"clicks":135,"ctr":1.0,"cpm":33.33,"cpc":3.33},
+  {"date":"05/09/2025","creative":"SSI PGR - Carreira","spend":410.00,"impressions":12200,"clicks":122,"ctr":1.0,"cpm":33.61,"cpc":3.36}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','performance','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CAMPAIGN_DATA["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CAMPAIGN_DATA["Budget Utilizado (R$)"])}`],
+  ["🎯 Impressões Entregues", fmtInt(CAMPAIGN_DATA["Impressões Entregues"])],
+  ["📊 Pacing", pct(CAMPAIGN_DATA["Pacing (%)"])]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyCampaign');
+tbody.insertAdjacentHTML('beforeend', `
+  <tr>
+    <td>Orçamento</td>
+    <td>R$ ${fmtBR(CAMPAIGN_DATA["Budget Contratado (R$)"])}</td>
+    <td>R$ ${fmtBR(CAMPAIGN_DATA["Budget Utilizado (R$)"])}</td>
+    <td>${pct(CAMPAIGN_DATA["Pacing (%)"])}</td>
+    <td>R$ ${fmtBR(CAMPAIGN_DATA["CPM (R$)"])}</td>
+    <td>${fmtInt(CAMPAIGN_DATA["Impressões Entregues"])}</td>
+    <td>${fmtInt(CAMPAIGN_DATA["Cliques"])}</td>
+    <td>${pct(CAMPAIGN_DATA["CTR (%)"])}</td>
+  </tr>`);
+
+// Overview charts
+const ctx1 = document.getElementById('chartBudgetPacing');
+const ctx2 = document.getElementById('chartImpressions');
+
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{
+    labels:['Utilizado', 'Restante'],
+    datasets:[{
+      data:[CAMPAIGN_DATA["Budget Utilizado (R$)"], CAMPAIGN_DATA["Budget Contratado (R$)"] - CAMPAIGN_DATA["Budget Utilizado (R$)"]],
+      backgroundColor:['#0077b5', 'rgba(0,119,181,0.3)']
+    }]
+  },
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+
+new Chart(ctx2, {
+  type:'bar',
+  data:{
+    labels:['Contratado', 'Entregue'],
+    datasets:[{
+      label:'Impressões',
+      data:[CAMPAIGN_DATA["Impressões Contratadas"], CAMPAIGN_DATA["Impressões Entregues"]],
+      backgroundColor:['#0077b5', 'rgba(0,119,181,0.7)']
+    }]
+  },
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+// PERFORMANCE
+const performanceMetrics = [
+  ["🎯 CTR", pct(CAMPAIGN_DATA["CTR (%)"])],
+  ["💰 CPC", `R$ ${fmtBR(CAMPAIGN_DATA["CPC (R$)"])}`],
+  ["📊 CPM", `R$ ${fmtBR(CAMPAIGN_DATA["CPM (R$)"])}`],
+  ["👆 Cliques", fmtInt(CAMPAIGN_DATA["Cliques"])]
+];
+document.getElementById('metrics-performance').innerHTML = performanceMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Daily table
+const dailyBody = document.getElementById('dailyBody');
+DAILY_DATA.forEach(r=>{
+  dailyBody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r.date||'—'}</td>
+      <td>${r.creative||'—'}</td>
+      <td>R$ ${fmtBR(r.spend)}</td>
+      <td>${fmtInt(r.impressions)}</td>
+      <td>${fmtInt(r.clicks)}</td>
+      <td>${pct(r.ctr)}</td>
+      <td>R$ ${fmtBR(r.cpm)}</td>
+      <td>R$ ${fmtBR(r.cpc)}</td>
+    </tr>`);
+});
+
+</script>
+</body>
+</html>
