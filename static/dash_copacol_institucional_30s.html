@@ -395,7 +395,7 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
-        this.apiEndpoint = `/api/${campaignKey}/data`;
+        this.apiEndpoint = `https://south-media-ia-609095880025.us-central1.run.app/api/${campaignKey}/data`;
         this.loadingSteps = [
             { text: "Inicializando...", progress: 10 },
             { text: "Conectando com Google Sheets...", progress: 30 },
