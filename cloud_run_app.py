@@ -306,6 +306,7 @@ def get_campaign_data(campaign_key):
         # Se não conseguiu dados reais, usar dados de teste
         if not data:
             logger.info("🔄 Usando dados de teste baseados na planilha real...")
+            from static.generator.processors.test_video_campaign_data import create_test_data
             data = create_test_data(config)
         
         if data:
