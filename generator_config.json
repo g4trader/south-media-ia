@@ -20,5 +20,16 @@
       "strategies": "333333333",
       "publishers": "444444444"
     }
+  },
+  "copacol_institucional_30s": {
+    "client": "Copacol",
+    "campaign": "Institucional 30s",
+    "sheet_id": "1IUUSXaN0Drrdt-7B0IUiMRQK2gT-JtzhCFZvV7e5-V8",
+    "tabs": {
+      "daily_data": "668487440",
+      "contract": "719245615",
+      "strategies": "511331032",
+      "publishers": "531141406"
+    }
   }
 }
