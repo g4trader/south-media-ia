@@ -6,7 +6,13 @@ Substitui os extratores específicos por cliente
 
 import json
 import pandas as pd
+import sys
+import os
 from typing import Dict, List, Optional, Any
+
+# Adicionar diretório raiz ao path para importar google_sheets_service
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
 from google_sheets_service import GoogleSheetsService
 from campaign_config import CampaignConfig, DEFAULT_COLUMN_MAPPING, DEFAULT_CONTRACT_MAPPING
 
