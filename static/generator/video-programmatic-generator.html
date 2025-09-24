@@ -452,7 +452,7 @@
                 };
                 
                 // Enviar para API (versão simplificada)
-                const apiUrl = window.location.hostname.includes('vercel.app') 
+                const apiUrl = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dash.iasouth.tech')
                     ? 'https://south-media-ia-6f3ckz7c7q-uc.a.run.app/api/generate-dashboard'
                     : '/api/generate-dashboard';
                 
@@ -479,7 +479,7 @@
                 
                 if (result.success) {
                     // URL do dashboard
-                    const dashboardUrl = window.location.hostname.includes('vercel.app') 
+                    const dashboardUrl = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dash.iasouth.tech')
                         ? `https://south-media-ia-6f3ckz7c7q-uc.a.run.app${result.dashboard_url}`
                         : result.dashboard_url;
                     
