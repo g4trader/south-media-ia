@@ -58,13 +58,13 @@ DEFAULT_COLUMN_MAPPING = {
 
 # Mapeamento padrão de contrato
 DEFAULT_CONTRACT_MAPPING = {
-    'client': 'Cliente',
     'campaign': 'Campanha',
+    'channel': 'Canal',
+    'creative_type': 'Tipo de criativo',
     'investment': 'Investimento',
-    'cpv_contracted': 'CPV Contratado',
-    'complete_views_contracted': 'Views Completas Contratadas',
-    'period_start': 'Início',
-    'period_end': 'Fim'
+    'cpv_contracted': 'CPV contratado',
+    'complete_views_contracted': 'Complete Views Contrado',
+    'period': 'Periodo de veiculação'
 }
 
 class VideoCampaignDataExtractor:
@@ -184,39 +184,41 @@ class VideoCampaignDataExtractor:
         
         # Processar dados de contratação da planilha
         for _, row in df.iterrows():
-            row_values = [str(val).strip() for val in row if str(val).strip() and str(val).strip() != 'nan']
-            if len(row_values) >= 2:
-                key = row_values[0].lower()
-                value = row_values[1]
+            # A planilha tem estrutura: {'Cliente': 'Campo', 'COPACOL': 'Valor'}
+            if 'Cliente' in row and 'COPACOL' in row:
+                field_name = str(row['Cliente']).strip()
+                field_value = str(row['COPACOL']).strip()
                 
-                # Mapear campos usando configuração padrão
-                for planilha_key, data_key in DEFAULT_CONTRACT_MAPPING.items():
-                    if planilha_key in key:
-                        if data_key == 'investment':
-                            numeric_value = float(pd.to_numeric(
-                                value.replace('R$ ', '').replace('.', '').replace(',', '.')
-                                .replace(r'[^\d.]', ''), 
-                                errors='coerce'
-                            ) or 0)
-                            contract_data[data_key] = numeric_value
-                        elif data_key == 'cpv_contracted':
-                            numeric_value = float(pd.to_numeric(
-                                value.replace('R$ ', '').replace(',', '.')
-                                .replace(r'[^\d.]', ''), 
-                                errors='coerce'
-                            ) or 0)
-                            contract_data[data_key] = numeric_value
-                        elif data_key == 'complete_views_contracted':
-                            numeric_value = int(pd.to_numeric(
-                                value.replace(r'[^\d]', ''), 
-                                errors='coerce'
-                            ) or 0)
-                            contract_data[data_key] = numeric_value
-                        elif data_key == 'period' and len(row_values) >= 3:
-                            contract_data["period_start"] = row_values[1]
-                            contract_data["period_end"] = row_values[2]
-                        else:
-                            contract_data[data_key] = value
+                if field_name and field_value and field_value != 'nan':
+                    # Mapear campos usando configuração padrão
+                    for planilha_key, data_key in DEFAULT_CONTRACT_MAPPING.items():
+                        if planilha_key.lower() in field_name.lower():
+                            if data_key == 'investment':
+                                numeric_value = float(pd.to_numeric(
+                                    field_value.replace('R$ ', '').replace('.', '').replace(',', '.')
+                                    .replace(r'[^\d.]', ''), 
+                                    errors='coerce'
+                                ) or 0)
+                                contract_data[data_key] = numeric_value
+                            elif data_key == 'cpv_contracted':
+                                numeric_value = float(pd.to_numeric(
+                                    field_value.replace('R$ ', '').replace(',', '.')
+                                    .replace(r'[^\d.]', ''), 
+                                    errors='coerce'
+                                ) or 0)
+                                contract_data[data_key] = numeric_value
+                            elif data_key == 'complete_views_contracted':
+                                numeric_value = int(pd.to_numeric(
+                                    field_value.replace(r'[^\d]', ''), 
+                                    errors='coerce'
+                                ) or 0)
+                                contract_data[data_key] = numeric_value
+                            elif data_key == 'period':
+                                # Para período, assumir que é a data de início
+                                contract_data["period_start"] = field_value
+                                contract_data["period_end"] = field_value  # Mesma data por enquanto
+                            else:
+                                contract_data[data_key] = field_value
         
         return contract_data
     
