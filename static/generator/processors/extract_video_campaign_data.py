@@ -362,7 +362,10 @@ class VideoCampaignDataExtractor:
                 "q100": safe_int_convert(row.get(available_columns.get('q100', 0), 0)),
                 "ctr": float(pd.to_numeric(row.get(available_columns.get('ctr', 0), 0), errors='coerce') or 0),
                 "vtr": float(pd.to_numeric(row.get(available_columns.get('vtr', 0), 0), errors='coerce') or 0),
-                "cpv": float(pd.to_numeric(row.get(available_columns.get('cpv', 0), 0), errors='coerce') or 0)
+                "cpv": float(pd.to_numeric(
+                    str(row.get(available_columns.get('cpv', 0), 0)).replace('R$ ', '').replace(',', '.').replace(r'[^\d.]', ''), 
+                    errors='coerce'
+                ) or 0)
             }
             daily_data.append(daily_row)
         
