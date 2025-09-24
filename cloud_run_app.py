@@ -19,13 +19,9 @@ import time
 sys.path.append('static/generator/processors')
 sys.path.append('static/generator/config')
 
-# Importar extrator de dados
-try:
-    from extract_video_campaign_data import VideoCampaignDataExtractor
-    logger.info("✅ VideoCampaignDataExtractor importado com sucesso")
-except ImportError as e:
-    logger.error(f"❌ Erro ao importar VideoCampaignDataExtractor: {e}")
-    VideoCampaignDataExtractor = None
+# Importar extrator de dados (temporariamente desabilitado para debug)
+VideoCampaignDataExtractor = None
+logger.info("⚠️ VideoCampaignDataExtractor temporariamente desabilitado para debug")
 
 # Configurar logging
 logging.basicConfig(
