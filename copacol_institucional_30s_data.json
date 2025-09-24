@@ -1,0 +1,260 @@
+{
+  "campaign_name": "Copacol - Institucional 30s",
+  "dashboard_title": "Dashboard Copacol - Institucional 30s",
+  "channel": "Prográmatica",
+  "creative_type": "Video",
+  "period": "15/09/2025 - 30/09/2025",
+  "contract": {
+    "client": "Copacol",
+    "campaign": "Institucional 30s",
+    "channel": "Prográmatica",
+    "creative_type": "Video",
+    "investment": 46373.0,
+    "cpv_contracted": 0.23,
+    "complete_views_contracted": 201625,
+    "period_start": "15/09/2025",
+    "period_end": "30/09/2025",
+    "period": "08/09/2025"
+  },
+  "strategies": {
+    "segmentation": [],
+    "objectives": []
+  },
+  "publishers": [
+    {
+      "name": "tudogostoso.com.br",
+      "type": "Site: tudogostoso.com.br"
+    },
+    {
+      "name": "ndmais.com.br",
+      "type": "Site: ndmais.com.br"
+    },
+    {
+      "name": "receitas.globo.com",
+      "type": "Site: receitas.globo.com"
+    },
+    {
+      "name": "globo.com",
+      "type": "Site: globo.com"
+    },
+    {
+      "name": "tuasaude.com",
+      "type": "Site: tuasaude.com"
+    },
+    {
+      "name": "r7.com",
+      "type": "Site: r7.com"
+    },
+    {
+      "name": "terra.com.br",
+      "type": "Site: terra.com.br"
+    },
+    {
+      "name": "uol.com.br",
+      "type": "Site: uol.com.br"
+    },
+    {
+      "name": "receiteria.com.br",
+      "type": "Site: receiteria.com.br"
+    },
+    {
+      "name": "glance.com",
+      "type": "Site: glance.com"
+    },
+    {
+      "name": "metropoles.com",
+      "type": "Site: metropoles.com"
+    },
+    {
+      "name": "revistaoeste.com",
+      "type": "Site: revistaoeste.com"
+    },
+    {
+      "name": "clickpetroleoegas.com.br",
+      "type": "Site: clickpetroleoegas.com.br"
+    },
+    {
+      "name": "diariodolitoral.com.br",
+      "type": "Site: diariodolitoral.com.br"
+    },
+    {
+      "name": "revistacasaejardim.globo.com",
+      "type": "Site: revistacasaejardim.globo.com"
+    },
+    {
+      "name": "tnh1.com.br",
+      "type": "Site: tnh1.com.br"
+    },
+    {
+      "name": "acordacidade.com.br",
+      "type": "Site: acordacidade.com.br"
+    },
+    {
+      "name": "nsctotal.com.br",
+      "type": "Site: nsctotal.com.br"
+    },
+    {
+      "name": "casadosdados.com.br",
+      "type": "Site: casadosdados.com.br"
+    },
+    {
+      "name": "correiodointerior.com.br",
+      "type": "Site: correiodointerior.com.br"
+    },
+    {
+      "name": "amomeupet.org",
+      "type": "Site: amomeupet.org"
+    },
+    {
+      "name": "veja.abril.com.br",
+      "type": "Site: veja.abril.com.br"
+    },
+    {
+      "name": "em.com.br",
+      "type": "Site: em.com.br"
+    },
+    {
+      "name": "ig.com.br",
+      "type": "Site: ig.com.br"
+    },
+    {
+      "name": "hometalk.com",
+      "type": "Site: hometalk.com"
+    },
+    {
+      "name": "otempo.com.br",
+      "type": "Site: otempo.com.br"
+    },
+    {
+      "name": "tupi.fm",
+      "type": "Site: tupi.fm"
+    },
+    {
+      "name": "pt.scribd.com",
+      "type": "Site: pt.scribd.com"
+    },
+    {
+      "name": "saopaulosecreto.com",
+      "type": "Site: saopaulosecreto.com"
+    },
+    {
+      "name": "guiadasemana.com.br",
+      "type": "Site: guiadasemana.com.br"
+    },
+    {
+      "name": "dicasparanossacasa.com",
+      "type": "Site: dicasparanossacasa.com"
+    },
+    {
+      "name": "folhavitoria.com.br",
+      "type": "Site: folhavitoria.com.br"
+    },
+    {
+      "name": "noticias.r7.com",
+      "type": "Site: noticias.r7.com"
+    },
+    {
+      "name": "techtudo.com.br",
+      "type": "Site: techtudo.com.br"
+    },
+    {
+      "name": "noticiasagricolas.com.br",
+      "type": "Site: noticiasagricolas.com.br"
+    },
+    {
+      "name": "diariodorio.com",
+      "type": "Site: diariodorio.com"
+    },
+    {
+      "name": "claudia.abril.com.br",
+      "type": "Site: claudia.abril.com.br"
+    },
+    {
+      "name": "gaz.com.br",
+      "type": "Site: gaz.com.br"
+    },
+    {
+      "name": "canaltech.com.br",
+      "type": "Site: canaltech.com.br"
+    },
+    {
+      "name": "horadoempregodf.com.br",
+      "type": "Site: horadoempregodf.com.br"
+    },
+    {
+      "name": "riovagas.com.br",
+      "type": "Site: riovagas.com.br"
+    },
+    {
+      "name": "estadao.com.br",
+      "type": "Site: estadao.com.br"
+    },
+    {
+      "name": "tribunadonorte.com.br",
+      "type": "Site: tribunadonorte.com.br"
+    },
+    {
+      "name": "tribunapr.com.br",
+      "type": "Site: tribunapr.com.br"
+    },
+    {
+      "name": "casavogue.globo.com",
+      "type": "Site: casavogue.globo.com"
+    },
+    {
+      "name": "oimparcial.com.br",
+      "type": "Site: oimparcial.com.br"
+    },
+    {
+      "name": "comprerural.com",
+      "type": "Site: comprerural.com"
+    },
+    {
+      "name": "confeitariasdesucesso.com",
+      "type": "Site: confeitariasdesucesso.com"
+    },
+    {
+      "name": "sonoticiaboa.com.br",
+      "type": "Site: sonoticiaboa.com.br"
+    },
+    {
+      "name": "verdesmares.com.br",
+      "type": "Site: verdesmares.com.br"
+    },
+    {
+      "name": "mundoboaforma.com.br",
+      "type": "Site: mundoboaforma.com.br"
+    },
+    {
+      "name": "pngegg.com",
+      "type": "Site: pngegg.com"
+    },
+    {
+      "name": "fdr.com.br",
+      "type": "Site: fdr.com.br"
+    },
+    {
+      "name": "saopauloparacriancas.com.br",
+      "type": "Site: saopauloparacriancas.com.br"
+    },
+    {
+      "name": "proteste.org.br",
+      "type": "Site: proteste.org.br"
+    },
+    {
+      "name": "gartic.io",
+      "type": "Site: gartic.io"
+    },
+    {
+      "name": "msn.com",
+      "type": "Site: msn.com"
+    }
+  ],
+  "metrics": {
+    "pacing": 0.0
+  },
+  "daily_data": [],
+  "per_data": [],
+  "budget_contracted": 46373.0,
+  "vc_contracted": 201625
+}
