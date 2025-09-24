@@ -453,7 +453,7 @@
                 
                 // Enviar para API (versão simplificada)
                 const apiUrl = window.location.hostname.includes('vercel.app') 
-                    ? 'https://south-media-ia-609095880025.us-central1.run.app/api/generate-dashboard'
+                    ? 'https://south-media-ia-6f3ckz7c7q-uc.a.run.app/api/generate-dashboard'
                     : '/api/generate-dashboard';
                 
                 console.log('🔗 Enviando para API:', apiUrl);
@@ -480,7 +480,7 @@
                 if (result.success) {
                     // URL do dashboard
                     const dashboardUrl = window.location.hostname.includes('vercel.app') 
-                        ? `https://south-media-ia-609095880025.us-central1.run.app${result.dashboard_url}`
+                        ? `https://south-media-ia-6f3ckz7c7q-uc.a.run.app${result.dashboard_url}`
                         : result.dashboard_url;
                     
                     showStatus(`✅ Dashboard gerado com sucesso!<br>
