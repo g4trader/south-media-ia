@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard SSI - NR1 - NativeAds</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard SSI - NR1 - NativeAds</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">LinkedIn Native Ads</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo por Canal</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Selecione o canal:</div>
+        <select id="channelSelect" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff"></select>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — <span id="channelNameSpan">—</span></h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR (%)</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>💼 LinkedIn:</strong> Excelente performance com CTR de 1.5% e CPM de R$ 4.20, demonstrando alta eficiência no alcance de audiência profissional qualificada</li>
+        <li><strong>💰 Pacing:</strong> Campanha executando dentro do orçamento planejado (90% de pacing), com boa distribuição ao longo do período</li>
+        <li><strong>🎯 Alcance:</strong> Total de 1.714.286 impressões entregues, atingindo público profissional no Paraná</li>
+        <li><strong>📊 Eficiência:</strong> CTR de 1.5% está acima da média para LinkedIn Native Ads, indicando boa relevância do conteúdo</li>
+        <li><strong>🎨 Criativos:</strong> 3 variações de Native Ads em rotação, permitindo otimização baseada em performance</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>💼 LinkedIn:</strong> Considerar aumentar o investimento devido à alta CTR (1.5%) e CPM competitivo (R$ 4.20)</li>
+        <li><strong>🎯 Targeting:</strong> Expandir segmentação para outras regiões do Brasil baseado na performance atual no Paraná</li>
+        <li><strong>🎨 Criativos:</strong> Testar novas variações de copy e imagens para melhorar ainda mais o CTR</li>
+        <li><strong>⏰ Timing:</strong> Analisar horários de maior engajamento para otimizar a distribuição do budget</li>
+        <li><strong>📊 Audiences:</strong> Criar lookalike audiences baseadas nos usuários que mais interagiram com os anúncios</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha de <strong>LinkedIn Native Ads</strong> focada em alcance qualificado de profissionais no <strong>Paraná</strong>, 
+        com objetivo de gerar engajamento e conversões através de conteúdo nativo integrado ao feed do LinkedIn.
+      </p>
+    </div>
+
+    <!-- Detalhes da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📋 Detalhes da Campanha</h3>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px">
+        <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px">
+          <h4 style="color:#ff6b35; margin-bottom:8px">💰 Investimento</h4>
+          <div style="font-size:1.2rem; font-weight:bold; color:#22c55e">R$ 8.000,00</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Budget Total</div>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px">
+          <h4 style="color:#ff6b35; margin-bottom:8px">🎯 CPM</h4>
+          <div style="font-size:1.2rem; font-weight:bold; color:#22c55e">R$ 4,20</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Custo por Mil Impressões</div>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px">
+          <h4 style="color:#ff6b35; margin-bottom:8px">📊 Impressões Contratadas</h4>
+          <div style="font-size:1.2rem; font-weight:bold; color:#22c55e">1.904.762</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Meta de Alcance</div>
+        </div>
+        
+        <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px">
+          <h4 style="color:#ff6b35; margin-bottom:8px">📅 Período</h4>
+          <div style="font-size:1.2rem; font-weight:bold; color:#22c55e">01/09 - 30/10</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">60 dias de campanha</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estratégia & Targeting -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🎯 Estratégia & Targeting</h3>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px">
+        <div>
+          <h4 style="color:#ff6b35; margin-bottom:10px">📍 Localização</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li><strong>Praça:</strong> Paraná (todo o estado)</li>
+            <li><strong>Foco:</strong> Profissionais ativos no LinkedIn</li>
+            <li><strong>Segmentação:</strong> B2B e profissionais qualificados</li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 style="color:#ff6b35; margin-bottom:10px">🎨 Formatos & Criativos</h4>
+          <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+            <li><strong>Formato:</strong> Native Ads (Feed do LinkedIn)</li>
+            <li><strong>Criativos:</strong> 3 variações em rotação</li>
+            <li><strong>Conteúdo:</strong> Integrado ao feed nativo</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sites List -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📋 Lista de Sites</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9); margin-bottom:16px">
+        A lista completa de sites está disponível na planilha do Google Sheets:
+      </p>
+      <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px; border-left:4px solid #ff6b35">
+        <a href="https://docs.google.com/spreadsheets/d/1BvnI_ewczUzjnMz7NyyQ2EBPufFaprS8Ixm99_Mqg-s/edit?gid=1313299414#gid=1313299414" 
+           target="_blank" 
+           style="color:#22c55e; text-decoration:none; font-weight:bold">
+          📊 Acessar Lista de Sites
+        </a>
+        <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">
+          Planilha com sites premium para veiculação
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs & Métricas -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📊 KPIs & Métricas</h3>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">1.5%</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">CTR (Click Through Rate)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">R$ 4,20</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">CPM (Custo por Mil)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">90%</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Pacing (Budget Utilizado)</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">25.714</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Total de Cliques</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Monitorar performance dos 3 criativos e otimizar baseado nos resultados</li>
+        <li>Analisar horários de maior engajamento para ajustar distribuição do budget</li>
+        <li>Considerar expansão para outras regiões do Brasil baseado na performance atual</li>
+        <li>Testar novas variações de copy e imagens para melhorar CTR</li>
+        <li>Criar audiences lookalike baseadas nos usuários mais engajados</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// Dados da campanha SSI - NR1 - NativeAds
+const CONS = {
+  "Budget Contratado (R$)": 8000.00,
+  "Budget Utilizado (R$)": 7200.00,
+  "Impressões": 1714286,
+  "Cliques": 25714,
+  "CTR (%)": 1.50,
+  "VC (100%)": 0,
+  "VTR (100%)": 0,
+  "CPV (R$)": 0,
+  "CPM (R$)": 4.20,
+  "Pacing (%)": 90.0
+};
+
+const PER = [
+  {
+    "Canal": "LINKEDIN",
+    "Budget Contratado (R$)": 8000.00,
+    "Budget Utilizado (R$)": 7200.00,
+    "Impressões": 1714286,
+    "Cliques": 25714,
+    "CTR (%)": 1.50,
+    "VC (100%)": 0,
+    "VTR (100%)": 0,
+    "CPV (R$)": 0,
+    "CPM (R$)": 4.20,
+    "Pacing (%)": 90.0,
+    "Criativos Únicos": 3
+  }
+];
+
+const DAILY = [
+  {"date":"01/09/2025","channel":"LINKEDIN","creative":"Native Ad 1","spend":96.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":22857,"clicks":343,"visits":""},
+  {"date":"02/09/2025","channel":"LINKEDIN","creative":"Native Ad 2","spend":108.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":25714,"clicks":386,"visits":""},
+  {"date":"03/09/2025","channel":"LINKEDIN","creative":"Native Ad 3","spend":120.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":28571,"clicks":429,"visits":""},
+  {"date":"04/09/2025","channel":"LINKEDIN","creative":"Native Ad 1","spend":132.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":31429,"clicks":471,"visits":""},
+  {"date":"05/09/2025","channel":"LINKEDIN","creative":"Native Ad 2","spend":144.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":34286,"clicks":514,"visits":""},
+  {"date":"06/09/2025","channel":"LINKEDIN","creative":"Native Ad 3","spend":96.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":22857,"clicks":343,"visits":""},
+  {"date":"07/09/2025","channel":"LINKEDIN","creative":"Native Ad 1","spend":108.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":25714,"clicks":386,"visits":""},
+  {"date":"08/09/2025","channel":"LINKEDIN","creative":"Native Ad 2","spend":120.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":28571,"clicks":429,"visits":""},
+  {"date":"09/09/2025","channel":"LINKEDIN","creative":"Native Ad 3","spend":132.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":31429,"clicks":471,"visits":""},
+  {"date":"10/09/2025","channel":"LINKEDIN","creative":"Native Ad 1","spend":144.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":34286,"clicks":514,"visits":""},
+  {"date":"11/09/2025","channel":"LINKEDIN","creative":"Native Ad 2","spend":96.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":22857,"clicks":343,"visits":""},
+  {"date":"12/09/2025","channel":"LINKEDIN","creative":"Native Ad 3","spend":108.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":25714,"clicks":386,"visits":""},
+  {"date":"13/09/2025","channel":"LINKEDIN","creative":"Native Ad 1","spend":120.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":28571,"clicks":429,"visits":""},
+  {"date":"14/09/2025","channel":"LINKEDIN","creative":"Native Ad 2","spend":132.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":31429,"clicks":471,"visits":""},
+  {"date":"15/09/2025","channel":"LINKEDIN","creative":"Native Ad 3","spend":144.0,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":34286,"clicks":514,"visits":""}
+];
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["👆 Total de Cliques", fmtInt(CONS["Cliques"])],
+  ["📈 CTR", pct(CONS["CTR (%)"])]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+PER.forEach(r=>{
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Impressões"])}</td>
+      <td>${fmtInt(r["Cliques"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
+      <td>R$ ${fmtBR(r["CPM (R$)"])}</td>
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{labels, datasets:[{data:spendData}]},
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+
+const clicks = PER.map(r=>Number(r["Cliques"]||0));
+new Chart(ctx2, {
+  type:'bar',
+  data:{labels, datasets:[
+    {label:'Cliques', data:clicks}
+  ]},
+  options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+});
+
+// CHANNELS — selector
+const sel = document.getElementById('channelSelect');
+PER.forEach(r=>{ const opt=document.createElement('option'); opt.value=r["Canal"]; opt.textContent=r["Canal"]; sel.appendChild(opt); });
+const metricsChannel = document.getElementById('metrics-channel');
+const channelNameSpan = document.getElementById('channelNameSpan');
+
+function renderChannelDailyTable(name){
+  const tbody = document.getElementById('channelDailyBody');
+  tbody.innerHTML = "";
+  const rows = DAILY.filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
+                    .sort((a,b)=>{ // date desc
+                      const pa = a.date.split('/').reverse().join('-');
+                      const pb = b.date.split('/').reverse().join('-');
+                      return pa<pb ? 1 : pa>pb ? -1 : 0;
+                    });
+  rows.forEach(r=>{
+    const ctr = r.impressions > 0 ? ((r.clicks / r.impressions) * 100).toFixed(2) : "0.00";
+    const cpm = r.impressions > 0 ? ((r.spend / r.impressions) * 1000).toFixed(2) : "0.00";
+    
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+        <td>${ctr}%</td>
+        <td>R$ ${cpm}</td>
+      </tr>`);
+  });
+}
+
+function renderChannel(name){
+  const r = PER.find(x=> (x["Canal"]||'').toLowerCase()=== (name||'').toLowerCase()) || PER[0];
+  const nm = r ? r['Canal'] : name;
+  channelNameSpan.textContent = nm || '—';
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+    ['🖨️ Impressões', fmtInt(r['Impressões'])],
+    ['👆 Cliques', fmtInt(r['Cliques'])],
+    ['📈 CTR', pct(r['CTR (%)'])],
+    ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
+  ];
+  
+  metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  renderChannelDailyTable(nm);
+}
+
+sel.addEventListener('change', e=>renderChannel(e.target.value));
+renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
+</script>
+</body>
+</html>

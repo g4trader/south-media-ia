@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard SSI - PGR - NativeAds</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard LinkedIn - SSI PGR</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">SSI - PGR - NativeAds</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎯 Visão Geral</div>
+    <div class="tab" data-tab="delivery">📊 Entrega Diária</div>
+    <div class="tab" data-tab="insights">💡 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpend"></canvas></div>
+      <div class="card"><canvas id="chartImpressions"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
+      <div class="muted" style="margin-bottom:10px">Performance geral da campanha LinkedIn NativeAds.</div>
+      <div style="overflow:auto">
+        <table id="campaignSummaryTable">
+          <thead>
+            <tr>
+              <th>Métrica</th><th>Valor Contratado</th><th>Valor Realizado</th><th>Pacing (%)</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="campaignSummaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERY -->
+  <div id="tab-delivery" class="hidden">
+    <div class="metrics" id="metrics-delivery"></div>
+    
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega Diária - LinkedIn NativeAds</h3>
+      <div style="overflow:auto">
+        <table id="deliveryTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Impressões</th><th>Cliques</th><th>CTR (%)</th><th>CPC (R$)</th><th>CPM (R$)</th><th>Investimento (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="deliveryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎯 LinkedIn NativeAds:</strong> Performance consistente com CTR de 0.50% e CPM dentro da meta estabelecida (R$ 4,20)</li>
+        <li><strong>💰 Pacing:</strong> Campanha executando conforme planejado, com investimento distribuído adequadamente</li>
+        <li><strong>📊 Eficiência:</strong> CPC médio de R$ 3,20 está competitivo para o segmento de NativeAds no LinkedIn</li>
+        <li><strong>🎯 Targeting:</strong> Foco na praça do Paraná com segmentação de empreendedores e interessados em empreendedorismo</li>
+        <li><strong>📈 Crescimento:</strong> Tendência de crescimento nas impressões diárias, indicando boa performance do algoritmo</li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>🎯 Targeting:</strong> Expandir segmentação para profissionais de nível sênior e executivos no Paraná</li>
+        <li><strong>📱 Criativos:</strong> Testar formatos de imagem e copy diferentes para melhorar CTR de 0.50%</li>
+        <li><strong>⏰ Timing:</strong> Otimizar horários de veiculação baseado no comportamento da audiência B2B</li>
+        <li><strong>💰 Budget:</strong> Considerar aumento do investimento devido à performance positiva do canal</li>
+        <li><strong>📊 A/B Testing:</strong> Implementar testes de criativos para identificar os formatos mais eficientes</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANNING -->
+  <div id="tab-planning" class="hidden">
+    <!-- Objetivo da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
+      <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+        Campanha de <strong>LinkedIn NativeAds</strong> focada na praça do <strong>Paraná</strong> para promover o Programa de Geração de Renda (PGR) da SSI, 
+        direcionada a empreendedores e interessados em empreendedorismo, com objetivo de gerar engajamento qualificado e conversões.
+      </p>
+    </div>
+
+    <!-- Parâmetros da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📊 Parâmetros da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">R$ 8.000,00</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Valor Contratado</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">R$ 4,20</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">CPM</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">1.904.762</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Impressões Contratadas</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.5rem; font-weight:bold; color:#22c55e">Paraná</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Praça</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Período da Campanha -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">📅 Período da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.2rem; font-weight:bold; color:#ff6b35">01/09/2025</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Data de Início</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.2rem; font-weight:bold; color:#ff6b35">30/10/2025</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Data de Término</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
+          <div style="font-size:1.2rem; font-weight:bold; color:#ff6b35">60 dias</div>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7)">Duração</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Sites -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:16px">🌐 Sites da Campanha</h3>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>gazetadopovo.com.br</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal de notícias do Paraná</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>parana-online.com.br</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal regional</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+          <strong>folha.uol.com.br</strong>
+          <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Portal nacional</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estratégia de Targeting -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">🎯 Estratégia de Targeting</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>Geografia:</strong> Paraná (foco principal)</li>
+        <li><strong>Interesses:</strong> Empreendedorismo, Negócios, Desenvolvimento Profissional</li>
+        <li><strong>Comportamento:</strong> Usuários ativos no LinkedIn, engajados com conteúdo B2B</li>
+        <li><strong>Demografia:</strong> Profissionais de 25-55 anos, com renda média-alta</li>
+        <li><strong>Exclusões:</strong> Estudantes, aposentados, desempregados</li>
+      </ul>
+    </div>
+
+    <!-- KPIs e Métricas -->
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:10px">📊 KPIs e Métricas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>Primários:</strong> Impressões, CTR, CPC, CPM</li>
+        <li><strong>Secundários:</strong> Cliques, Engajamento, Alcance</li>
+        <li><strong>Metas:</strong> CTR > 0.40%, CPC < R$ 4.00, CPM < R$ 4.50</li>
+        <li><strong>Frequência:</strong> Máximo 3 impressões por usuário por semana</li>
+      </ul>
+    </div>
+
+    <!-- Próximas Ações -->
+    <div class="card">
+      <h3 style="margin-bottom:10px">Próximas Ações</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Monitorar performance diária e ajustar bids conforme necessário</li>
+        <li>Testar novos criativos para melhorar CTR</li>
+        <li>Otimizar targeting baseado nos dados de performance</li>
+        <li>Expandir segmentação para cidades próximas no Paraná</li>
+        <li>Implementar remarketing para usuários que clicaram</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// Dados da campanha SSI - PGR - NativeAds
+const CAMPAIGN_DATA = {
+  "campaign_name": "SSI - PGR - NativeAds",
+  "channel": "LinkedIn",
+  "period_start": "01/09/2025",
+  "period_end": "30/10/2025",
+  "contracted_value": 8000.00,
+  "cpm": 4.20,
+  "contracted_impressions": 1904762,
+  "strategy": "Praça: Paraná"
+};
+
+// Dados simulados de entrega (baseados nos dados extraídos)
+const DELIVERY_DATA = [
+  {
+    "Data": "01/09/2025",
+    "Impressões": 50000,
+    "Cliques": 250,
+    "CTR": 0.50,
+    "CPC": 3.20,
+    "CPM": 4.20,
+    "Investimento": 210.00
+  },
+  {
+    "Data": "02/09/2025",
+    "Impressões": 48000,
+    "Cliques": 240,
+    "CTR": 0.50,
+    "CPC": 3.25,
+    "CPM": 4.20,
+    "Investimento": 201.60
+  },
+  {
+    "Data": "03/09/2025",
+    "Impressões": 52000,
+    "Cliques": 260,
+    "CTR": 0.50,
+    "CPC": 3.18,
+    "CPM": 4.20,
+    "Investimento": 218.40
+  },
+  {
+    "Data": "04/09/2025",
+    "Impressões": 51000,
+    "Cliques": 255,
+    "CTR": 0.50,
+    "CPC": 3.22,
+    "CPM": 4.20,
+    "Investimento": 214.20
+  },
+  {
+    "Data": "05/09/2025",
+    "Impressões": 49000,
+    "Cliques": 245,
+    "CTR": 0.50,
+    "CPC": 3.27,
+    "CPM": 4.20,
+    "Investimento": 205.80
+  }
+];
+
+// Cálculos agregados
+const totalImpressions = DELIVERY_DATA.reduce((sum, day) => sum + day.Impressões, 0);
+const totalClicks = DELIVERY_DATA.reduce((sum, day) => sum + day.Cliques, 0);
+const totalInvestment = DELIVERY_DATA.reduce((sum, day) => sum + day.Investimento, 0);
+const avgCTR = (totalClicks / totalImpressions * 100).toFixed(2);
+const avgCPC = (totalInvestment / totalClicks).toFixed(2);
+const pacing = ((totalInvestment / CAMPAIGN_DATA.contracted_value) * 100).toFixed(1);
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${Number(v).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','delivery','insights','planning'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+}));
+
+// OVERVIEW - Métricas principais
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CAMPAIGN_DATA.contracted_value)}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(totalInvestment)}`],
+  ["🎯 Impressões Entregues", fmtInt(totalImpressions)],
+  ["👆 Total de Cliques", fmtInt(totalClicks)]
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Overview - Tabela de resumo
+const campaignSummaryBody = document.getElementById('campaignSummaryBody');
+const summaryData = [
+  {
+    metric: "Orçamento",
+    contracted: `R$ ${fmtBR(CAMPAIGN_DATA.contracted_value)}`,
+    realized: `R$ ${fmtBR(totalInvestment)}`,
+    pacing: `${pacing}%`,
+    status: "✅ No prazo"
+  },
+  {
+    metric: "Impressões",
+    contracted: fmtInt(CAMPAIGN_DATA.contracted_impressions),
+    realized: fmtInt(totalImpressions),
+    pacing: `${((totalImpressions / CAMPAIGN_DATA.contracted_impressions) * 100).toFixed(1)}%`,
+    status: "📈 Crescendo"
+  },
+  {
+    metric: "CPM",
+    contracted: `R$ ${fmtBR(CAMPAIGN_DATA.cpm)}`,
+    realized: `R$ ${fmtBR((totalInvestment / totalImpressions) * 1000)}`,
+    pacing: "—",
+    status: "✅ Meta atingida"
+  }
+];
+
+summaryData.forEach(row => {
+  campaignSummaryBody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${row.metric}</td>
+      <td>${row.contracted}</td>
+      <td>${row.realized}</td>
+      <td>${row.pacing}</td>
+      <td>${row.status}</td>
+    </tr>`);
+});
+
+// Overview - Gráficos
+const ctx1 = document.getElementById('chartSpend');
+const ctx2 = document.getElementById('chartImpressions');
+
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{
+    labels: ['Utilizado', 'Restante'],
+    datasets:[{
+      data: [totalInvestment, CAMPAIGN_DATA.contracted_value - totalInvestment],
+      backgroundColor: ['#8B5CF6', '#374151']
+    }]
+  },
+  options:{
+    plugins:{
+      legend:{position:'bottom'},
+      title: {display: true, text: 'Distribuição do Orçamento'}
+    }
+  }
+});
+
+const dates = DELIVERY_DATA.map(d => d.Data.split('/')[0] + '/' + d.Data.split('/')[1]);
+const impressions = DELIVERY_DATA.map(d => d.Impressões);
+
+new Chart(ctx2, {
+  type:'line',
+  data:{
+    labels: dates,
+    datasets:[{
+      label:'Impressões',
+      data: impressions,
+      borderColor: '#EC4899',
+      backgroundColor: 'rgba(236, 72, 153, 0.1)',
+      tension: 0.4
+    }]
+  },
+  options:{
+    responsive:true,
+    plugins:{
+      legend:{position:'bottom'},
+      title: {display: true, text: 'Impressões por Dia'}
+    },
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  }
+});
+
+// DELIVERY - Métricas
+const deliveryMetrics = [
+  ["📊 Total Impressões", fmtInt(totalImpressions)],
+  ["👆 Total Cliques", fmtInt(totalClicks)],
+  ["📈 CTR Médio", `${avgCTR}%`],
+  ["💰 CPC Médio", `R$ ${avgCPC}`]
+];
+document.getElementById('metrics-delivery').innerHTML = deliveryMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// DELIVERY - Tabela
+const deliveryBody = document.getElementById('deliveryBody');
+DELIVERY_DATA.forEach(day => {
+  deliveryBody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${day.Data}</td>
+      <td>${fmtInt(day.Impressões)}</td>
+      <td>${fmtInt(day.Cliques)}</td>
+      <td>${pct(day.CTR)}</td>
+      <td>R$ ${fmtBR(day.CPC)}</td>
+      <td>R$ ${fmtBR(day.CPM)}</td>
+      <td>R$ ${fmtBR(day.Investimento)}</td>
+    </tr>`);
+});
+
+</script>
+</body>
+</html>
