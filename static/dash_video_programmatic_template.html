@@ -477,11 +477,11 @@ class DashboardLoader {
         }
         
         // Atualizar subtítulo da campanha
-        const subtitleElement = document.getElementById('campaignSubtitle');
-        if (subtitleElement && data.contract) {
+        const campaignSubtitleElement = document.getElementById('campaignSubtitle');
+        if (campaignSubtitleElement && data.contract) {
             const channel = data.contract.channel || 'Programática';
             const campaign = data.contract.campaign || 'Campanha';
-            subtitleElement.textContent = `${channel} - ${campaign}`;
+            campaignSubtitleElement.textContent = `${channel} - ${campaign}`;
         }
         
         // Atualizar status da campanha
