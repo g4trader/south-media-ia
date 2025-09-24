@@ -322,10 +322,13 @@ def get_campaign_data(campaign_key):
         
         # Se não conseguiu dados reais, usar dados de teste
         if not data:
-            logger.info("🔄 Usando dados de teste baseados na planilha real...")
+            logger.info("🔄 Usando dados de teste - Google Sheets não acessível (credenciais não configuradas)")
             try:
                 from static.generator.processors.test_video_campaign_data import create_test_data
                 data = create_test_data(config)
+                # Adicionar flag indicando que são dados de teste
+                data["test_mode"] = True
+                data["test_message"] = "Dados de demonstração - Configure credenciais do Google Sheets para dados reais"
             except ImportError as e:
                 logger.error(f"❌ Erro ao importar create_test_data: {e}")
                 # Usar dados básicos como fallback
@@ -343,7 +346,9 @@ def get_campaign_data(campaign_key):
                     "publishers": [
                         {"name": "Publisher A", "type": "Site: publisher-a.com"},
                         {"name": "Publisher B", "type": "Site: publisher-b.com"}
-                    ]
+                    ],
+                    "test_mode": True,
+                    "test_message": "Dados de demonstração - Configure credenciais do Google Sheets para dados reais"
                 }
         
         if data:
