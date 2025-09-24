@@ -309,6 +309,14 @@ class VideoCampaignDataExtractor:
                         .str.replace(r'[^\d.]', ''), 
                         errors='coerce'
                     )
+                elif metric == 'cpv':
+                    # CPV deve ser a média, não a soma
+                    numeric_values = pd.to_numeric(
+                        df[column].astype(str).str.replace('R$ ', '').replace(',', '.').replace(r'[^\d.]', ''), 
+                        errors='coerce'
+                    )
+                    total_metrics[metric] = float(numeric_values.mean() or 0)
+                    continue
                 else:
                     numeric_values = pd.to_numeric(
                         df[column].astype(str).str.replace(r'[^\d.,]', '')
