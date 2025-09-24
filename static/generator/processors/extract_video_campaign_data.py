@@ -8,18 +8,43 @@ import json
 import pandas as pd
 import sys
 import os
+import math
 from typing import Dict, List, Optional, Any
 
 # Adicionar diretório raiz ao path para importar google_sheets_service
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from google_sheets_service import GoogleSheetsService
-from campaign_config import CampaignConfig, DEFAULT_COLUMN_MAPPING, DEFAULT_CONTRACT_MAPPING
+
+# Mapeamento padrão de colunas
+DEFAULT_COLUMN_MAPPING = {
+    'date': 'Day',
+    'creative': 'Creative',
+    'impressions': 'Imps',
+    'clicks': 'Clicks',
+    'ctr': 'CTR %',
+    'vtr': 'Video Completion Rate %',
+    'starts': 'Video Starts',
+    'spend': 'Valor investido',
+    'cpv': 'CPV',
+    'cpc': 'CPC'
+}
+
+# Mapeamento padrão de contrato
+DEFAULT_CONTRACT_MAPPING = {
+    'client': 'Cliente',
+    'campaign': 'Campanha',
+    'investment': 'Investimento',
+    'cpv_contracted': 'CPV Contratado',
+    'complete_views_contracted': 'Views Completas Contratadas',
+    'period_start': 'Início',
+    'period_end': 'Fim'
+}
 
 class VideoCampaignDataExtractor:
     """Extrator genérico para campanhas de vídeo programática"""
     
-    def __init__(self, campaign_config: CampaignConfig):
+    def __init__(self, campaign_config):
         self.config = campaign_config
         self.sheets_service = GoogleSheetsService()
         
@@ -64,10 +89,10 @@ class VideoCampaignDataExtractor:
     def _get_sheet_name(self, tab_name: str) -> str:
         """Mapear nome interno da aba para nome real na planilha"""
         sheet_name_mapping = {
-            "daily_data": "Report ",
-            "contract": "Informações de Contrato",
+            "daily_data": "Report",
+            "contract": "Informações de contrato",
             "strategies": "Estratégias",
-            "publishers": "Lista de Publishers"
+            "publishers": "Lista de publishers"
         }
         return sheet_name_mapping.get(tab_name, tab_name)
     
@@ -141,20 +166,20 @@ class VideoCampaignDataExtractor:
                         if data_key == 'investment':
                             numeric_value = float(pd.to_numeric(
                                 value.replace('R$ ', '').replace('.', '').replace(',', '.')
-                                .replace(r'[^\d.]', '', regex=True), 
+                                .replace(r'[^\d.]', ''), 
                                 errors='coerce'
                             ) or 0)
                             contract_data[data_key] = numeric_value
                         elif data_key == 'cpv_contracted':
                             numeric_value = float(pd.to_numeric(
                                 value.replace('R$ ', '').replace(',', '.')
-                                .replace(r'[^\d.]', '', regex=True), 
+                                .replace(r'[^\d.]', ''), 
                                 errors='coerce'
                             ) or 0)
                             contract_data[data_key] = numeric_value
                         elif data_key == 'complete_views_contracted':
                             numeric_value = int(pd.to_numeric(
-                                value.replace(r'[^\d]', '', regex=True), 
+                                value.replace(r'[^\d]', ''), 
                                 errors='coerce'
                             ) or 0)
                             contract_data[data_key] = numeric_value
@@ -247,16 +272,16 @@ class VideoCampaignDataExtractor:
                 if metric == 'spend':
                     # Remover "R$ " e converter vírgula para ponto
                     numeric_values = pd.to_numeric(
-                        df[column].astype(str).str.replace('R$ ', '', regex=False)
-                        .str.replace('.', '', regex=False)
-                        .str.replace(',', '.', regex=False)
-                        .str.replace(r'[^\d.]', '', regex=True), 
+                        df[column].astype(str).str.replace('R$ ', '')
+                        .str.replace('.', '')
+                        .str.replace(',', '.')
+                        .str.replace(r'[^\d.]', ''), 
                         errors='coerce'
                     )
                 else:
                     numeric_values = pd.to_numeric(
-                        df[column].astype(str).str.replace(r'[^\d.,]', '', regex=True)
-                        .str.replace(',', '.', regex=True), 
+                        df[column].astype(str).str.replace(r'[^\d.,]', '')
+                        .str.replace(',', '.'), 
                         errors='coerce'
                     )
                 total_metrics[metric] = int(numeric_values.sum())
