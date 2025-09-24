@@ -22,6 +22,17 @@ def safe_int_convert(value, default=0):
     except:
         return default
 
+def convert_nan_to_null(obj):
+    """Converter NaN para null para compatibilidade com JSON"""
+    if isinstance(obj, dict):
+        return {key: convert_nan_to_null(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_nan_to_null(item) for item in obj]
+    elif isinstance(obj, float) and np.isnan(obj):
+        return None
+    else:
+        return obj
+
 # Adicionar diretório raiz ao path para importar google_sheets_service
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
@@ -95,6 +106,9 @@ class VideoCampaignDataExtractor:
                 json.dump(campaign_data, f, indent=2, ensure_ascii=False)
             
             print(f"✅ Dados salvos em {output_file}")
+            
+            # Converter NaN para null para compatibilidade com JSON
+            campaign_data = convert_nan_to_null(campaign_data)
             return campaign_data
             
         except Exception as e:
