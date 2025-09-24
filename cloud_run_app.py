@@ -58,34 +58,45 @@ def commit_and_push_dashboard(file_path, dashboard_name):
         subprocess.run(['git', 'config', '--global', 'user.name', 'Dashboard Bot'], 
                       capture_output=True, text=True)
         
+        # Obter diretório de trabalho atual
+        import os
+        current_dir = os.getcwd()
+        logger.info(f"📁 Diretório de trabalho: {current_dir}")
+        
         # Verificar se é um repositório Git
         result = subprocess.run(['git', 'status'], 
-                               capture_output=True, text=True, cwd='/app')
+                               capture_output=True, text=True, cwd=current_dir)
         if result.returncode != 0:
             logger.warning(f"❌ Não é um repositório Git: {result.stderr}")
             return False
         
         # Adicionar arquivo ao Git
+        logger.info(f"📝 Adicionando arquivo ao Git: {file_path}")
         result = subprocess.run(['git', 'add', file_path], 
-                               capture_output=True, text=True, cwd='/app')
+                               capture_output=True, text=True, cwd=current_dir)
         if result.returncode != 0:
-            logger.warning(f"Erro ao adicionar arquivo ao Git: {result.stderr}")
+            logger.warning(f"❌ Erro ao adicionar arquivo ao Git: {result.stderr}")
             return False
+        logger.info(f"✅ Arquivo adicionado ao Git: {result.stdout}")
         
         # Fazer commit
         commit_message = f"Add dashboard: {dashboard_name}"
+        logger.info(f"📝 Fazendo commit: {commit_message}")
         result = subprocess.run(['git', 'commit', '-m', commit_message], 
-                               capture_output=True, text=True, cwd='/app')
+                               capture_output=True, text=True, cwd=current_dir)
         if result.returncode != 0:
-            logger.warning(f"Erro ao fazer commit: {result.stderr}")
+            logger.warning(f"❌ Erro ao fazer commit: {result.stderr}")
             return False
+        logger.info(f"✅ Commit realizado: {result.stdout}")
         
         # Fazer push
+        logger.info(f"📤 Fazendo push para origin main...")
         result = subprocess.run(['git', 'push', 'origin', 'main'], 
-                               capture_output=True, text=True, cwd='/app')
+                               capture_output=True, text=True, cwd=current_dir)
         if result.returncode != 0:
-            logger.warning(f"Erro ao fazer push: {result.stderr}")
+            logger.warning(f"❌ Erro ao fazer push: {result.stderr}")
             return False
+        logger.info(f"✅ Push realizado: {result.stdout}")
         
         logger.info(f"✅ Dashboard {dashboard_name} commitado e enviado para o Git")
         return True
@@ -776,22 +787,61 @@ def create_dashboard():
                 'channels': processed_channels
             }
             
-            # Gerar HTML do dashboard
+            # Gerar HTML do dashboard usando o sistema de geração de dashboards
             try:
-                html_content = builder.generate_dashboard_html(dashboard_data)
+                import shutil
                 
-                # Salvar arquivo HTML na pasta static
-                import os
-                os.makedirs('static', exist_ok=True)
+                # Copiar template genérico
+                template_path = "static/dash_video_programmatic_template.html"
+                if not os.path.exists(template_path):
+                    return jsonify({
+                        "success": False,
+                        "message": "Template genérico não encontrado"
+                    }), 500
+                
+                # Criar arquivo do dashboard
                 filepath = os.path.join('static', filename)
+                shutil.copy2(template_path, filepath)
+                logger.info(f"✅ Template copiado para: {filepath}")
                 
+                # Personalizar o arquivo para a campanha específica
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Substituir campaign_key genérico pelo específico
+                content = content.replace(
+                    'let campaignKey = urlParams.get(\'campaign\') || \'sebrae_pr\';',
+                    f'let campaignKey = \'{data["campaign_key"]}\'; // Definido para {data["client"]}'
+                )
+                
+                # Substituir título da página
+                content = content.replace(
+                    'Carregando Dashboard...',
+                    f'Dashboard {data["client"]} - {data["campaign"]}'
+                )
+                
+                # Salvar arquivo personalizado
                 with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(html_content)
+                    f.write(content)
                 
-                logger.info(f"✅ Dashboard HTML salvo em: {filepath}")
+                logger.info(f"✅ Dashboard personalizado salvo em: {filepath}")
+                
+                # Salvar campanha na configuração
+                from generator_config import save_campaign
+                config = CampaignConfig(
+                    client=data['client'],
+                    campaign=data['campaign'],
+                    sheet_id=data['sheet_id'],
+                    tabs=data['tabs']
+                )
+                
+                if save_campaign(data['campaign_key'], config):
+                    logger.info(f"✅ Campanha {data['campaign_key']} salva na configuração")
+                else:
+                    logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
                 
                 # Tentar fazer commit e push para o Git (para deploy automático no Vercel)
-                git_success = commit_and_push_dashboard(filepath, data.get('campaignName', 'Campaign'))
+                git_success = commit_and_push_dashboard(filepath, data.get('campaign', 'Campaign'))
                 
                 # Atualizar lista de dashboards no frontend
                 list_updated = False
@@ -800,17 +850,14 @@ def create_dashboard():
                 
                 result = {
                     "success": True,
-                    "dashboard": {
-                        "id": dashboard_id,
-                        "name": data.get('campaignName', 'Campaign'),
-                        "status": "created",
-                        "html_file": filename,
-                        "html_path": filepath,
-                        "html_content": html_content,  # Incluir conteúdo HTML na resposta
-                        "channels": processed_channels,
-                        "git_pushed": git_success,
-                        "list_updated": list_updated
-                    }
+                    "message": f"Dashboard gerado com sucesso para {data['client']} - {data['campaign']}",
+                    "dashboard_url": f"/static/{filename}",
+                    "api_endpoint": f"/api/{data['campaign_key']}/data",
+                    "campaign_key": data['campaign_key'],
+                    "client": data['client'],
+                    "campaign": data['campaign'],
+                    "git_committed": git_success,
+                    "list_updated": list_updated
                 }
                 
             except Exception as e:
