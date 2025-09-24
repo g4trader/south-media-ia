@@ -156,10 +156,14 @@ class VideoCampaignDataExtractor:
         campaign_data["budget_contracted"] = contract_data.get("investment", 0)
         campaign_data["vc_contracted"] = contract_data.get("complete_views_contracted", 0)
         
+        # CPV deve vir da planilha de contrato, não ser calculado
+        campaign_data["cpv_contracted"] = contract_data.get("cpv_contracted", 0)
+        
         # Processar dados diários
         df = all_data.get("daily_data")
         if df is not None:
-            campaign_data.update(self._process_daily_data(df))
+            cpv_contracted = contract_data.get("cpv_contracted", 0)
+            campaign_data.update(self._process_daily_data(df, cpv_contracted))
         
         return campaign_data
     
@@ -285,7 +289,7 @@ class VideoCampaignDataExtractor:
         
         return publishers_data
     
-    def _process_daily_data(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def _process_daily_data(self, df: pd.DataFrame, cpv_contracted: float = 0) -> Dict[str, Any]:
         """Processar dados diários e calcular métricas"""
         
         # Mapear colunas
@@ -376,6 +380,9 @@ class VideoCampaignDataExtractor:
                 ) or 0)
             }
             daily_data.append(daily_row)
+        
+        # Usar CPV contratado da planilha em vez do calculado
+        total_metrics["cpv"] = cpv_contracted
         
         return {
             "metrics": total_metrics,
