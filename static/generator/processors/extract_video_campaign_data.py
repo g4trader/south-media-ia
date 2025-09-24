@@ -191,7 +191,7 @@ class VideoCampaignDataExtractor:
                 
                 if field_name and field_value and field_value != 'nan':
                     # Mapear campos usando configuração padrão
-                    for planilha_key, data_key in DEFAULT_CONTRACT_MAPPING.items():
+                    for data_key, planilha_key in DEFAULT_CONTRACT_MAPPING.items():
                         if planilha_key.lower() in field_name.lower():
                             if data_key == 'investment':
                                 numeric_value = float(pd.to_numeric(
