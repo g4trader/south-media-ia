@@ -429,15 +429,17 @@ const AVAILABLE_DASHBOARDS = [
 // Obter dashboards do sistema multi-tenant
 async function getDashboards() {
   try {
-    // Tentar obter dashboards do sistema multi-tenant primeiro
+    // Sempre usar a lista estática atualizada primeiro
+    console.log('Usando lista estática atualizada de dashboards da pasta /static');
+    return AVAILABLE_DASHBOARDS;
+    
+    // Código comentado para usar sistema multi-tenant no futuro se necessário
+    /*
     const systemDashboards = await window.authSystem.getDashboardsForUser();
     if (systemDashboards && systemDashboards.length > 0) {
       return systemDashboards;
     }
-    
-    // Fallback para lista estática se sistema multi-tenant não retornar dados
-    console.log('Usando lista estática de dashboards da pasta /static');
-    return AVAILABLE_DASHBOARDS;
+    */
   } catch (error) {
     console.error('Erro ao obter dashboards do sistema, usando lista estática:', error);
     return AVAILABLE_DASHBOARDS;
