@@ -395,7 +395,8 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
-        this.apiEndpoint = `/api/${campaignKey}/data`;
+        // Usar domínio personalizado se disponível, senão usar Cloud Run direto
+        this.apiEndpoint = `https://api.iasouth.tech/api/${campaignKey}/data`;
         this.loadingSteps = [
             { text: "Inicializando...", progress: 10 },
             { text: "Conectando com Google Sheets...", progress: 30 },
