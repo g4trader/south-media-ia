@@ -451,10 +451,14 @@
                     description: campaignData.description || ''
                 };
                 
-                // Enviar para API usando configuração
-                const apiUrl = CONFIG.getApiUrl(CONFIG.ENDPOINTS.GENERATE_DASHBOARD);
+                // Enviar para API (versão simplificada)
+                const apiUrl = window.location.hostname.includes('vercel.app') 
+                    ? 'https://south-media-ia-609095880025.us-central1.run.app/api/generate-dashboard'
+                    : '/api/generate-dashboard';
                 
-                const response = await apiRequest(apiUrl, {
+                console.log('🔗 Enviando para API:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -462,11 +466,22 @@
                     body: JSON.stringify(payload)
                 });
                 
-                const result = await processJsonResponse(response);
+                console.log('📥 Response status:', response.status);
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.error('❌ Erro ao processar JSON:', jsonError);
+                    showStatus(`❌ Erro de comunicação: Resposta inválida do servidor (${response.status})`, 'error');
+                    return;
+                }
                 
                 if (result.success) {
-                    // Usar configuração para URL do dashboard
-                    const dashboardUrl = CONFIG.getDashboardUrl(result.dashboard_url);
+                    // URL do dashboard
+                    const dashboardUrl = window.location.hostname.includes('vercel.app') 
+                        ? `https://south-media-ia-609095880025.us-central1.run.app${result.dashboard_url}`
+                        : result.dashboard_url;
                     
                     showStatus(`✅ Dashboard gerado com sucesso!<br>
                         <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
