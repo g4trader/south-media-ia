@@ -229,7 +229,7 @@
                 </div>
                 <div class="card" style="margin-top: 24px;">
                     <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-                    <div class="muted" style="margin-bottom:10px">Programática Video - Carregando...</div>
+                    <div class="muted" style="margin-bottom:10px" id="campaignSubtitle">Programática Video - Carregando...</div>
                     <div style="overflow:auto">
                         <table id="tableCampaign">
                             <thead>
@@ -291,32 +291,11 @@
                 <!-- Segmentações -->
                 <div class="card" style="margin-bottom:16px">
                     <h3 style="margin-bottom:16px">🎯 Segmentações Utilizadas</h3>
-                    
-                    <div style="margin-bottom:20px">
-                        <h4 style="color:#ff6b35; margin-bottom:10px">🔍 DoubleVerify</h4>
+                    <div id="segmentationsContainer">
+                        <!-- Segmentações serão carregadas dinamicamente -->
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>VIDEO Fraud & Invalid Traffic</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Fraud & IVT by Site/App > Safe from Fraudulent or No Ads Sites/Apps (100% Invalid Traffic)</small>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom:20px">
-                        <h4 style="color:#ff6b35; margin-bottom:10px">🎯 TailTarget - BRAZIL</h4>
-                        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Segmentação A</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Segmentação primária</small>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom:20px">
-                        <h4 style="color:#ff6b35; margin-bottom:10px">🌍 TailTarget - GLOBAL</h4>
-                        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Segmentação B</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Segmentação secundária</small>
-                        </div>
-                        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Segmentação C</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Segmentação adicional</small>
+                            <strong>Carregando segmentações...</strong><br>
+                            <small style="color:rgba(255,255,255,0.7)">Aguarde os dados da planilha</small>
                         </div>
                     </div>
                 </div>
@@ -324,7 +303,7 @@
                 <!-- Lista de Publishers -->
                 <div class="card" style="margin-bottom:16px">
                     <h3 style="margin-bottom:16px">⭐ Publishers Utilizados</h3>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px" id="publishersContainer">
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
                             <strong>YouTube</strong>
                             <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Plataforma principal de vídeo</div>
@@ -495,6 +474,14 @@ class DashboardLoader {
             const client = data.contract.client || 'Cliente';
             const campaign = data.contract.campaign || 'Campanha';
             campaignElement.textContent = `${client} ${campaign.toUpperCase()}`;
+        }
+        
+        // Atualizar subtítulo da campanha
+        const subtitleElement = document.getElementById('campaignSubtitle');
+        if (subtitleElement && data.contract) {
+            const channel = data.contract.channel || 'Programática';
+            const campaign = data.contract.campaign || 'Campanha';
+            subtitleElement.textContent = `${channel} - ${campaign}`;
         }
         
         // Atualizar status da campanha
@@ -857,16 +844,49 @@ class DashboardLoader {
             `;
         }
         
+        // Atualizar segmentações
+        const segmentations = strategies.segmentation || [];
+        const segmentationsContainer = document.getElementById('segmentationsContainer');
+        if (segmentationsContainer) {
+            if (segmentations.length > 0) {
+                segmentationsContainer.innerHTML = segmentations.map((seg, index) => `
+                    <div style="margin-bottom:20px">
+                        <h4 style="color:#ff6b35; margin-bottom:10px">🎯 Segmentação ${index + 1}</h4>
+                        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+                            <strong>${seg}</strong><br>
+                            <small style="color:rgba(255,255,255,0.7)">Segmentação da planilha</small>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                segmentationsContainer.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
+                        <strong>Nenhuma segmentação encontrada</strong><br>
+                        <small style="color:rgba(255,255,255,0.7)">Verifique a aba Estratégias na planilha</small>
+                    </div>
+                `;
+            }
+        }
+        
         // Atualizar lista de publishers
         const publishers = data.publishers || [];
-        const publishersContainer = document.querySelector('#tab-planning .card:nth-child(3) div[style*="grid-template-columns"]');
-        if (publishersContainer && publishers.length > 0) {
-            publishersContainer.innerHTML = publishers.map(publisher => `
-                <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
-                    <strong>${publisher.name}</strong>
-                    <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">${publisher.type}</div>
-                </div>
-            `).join('');
+        const publishersContainer = document.getElementById('publishersContainer');
+        if (publishersContainer) {
+            if (publishers.length > 0) {
+                publishersContainer.innerHTML = publishers.map(publisher => `
+                    <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+                        <strong>${publisher.name}</strong>
+                        <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">${publisher.type}</div>
+                    </div>
+                `).join('');
+            } else {
+                publishersContainer.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; border-left:4px solid #ff6b35">
+                        <strong>Nenhum publisher encontrado</strong>
+                        <div style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:4px">Verifique a aba Publishers na planilha</div>
+                    </div>
+                `;
+            }
         }
         
         // Atualizar detalhes da campanha com dados de contratação
