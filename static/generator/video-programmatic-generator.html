@@ -486,20 +486,19 @@
                     // Extrair nome do arquivo do dashboard_url
                     const filename = result.dashboard_url.split('/').pop();
                     
-                    let message = `✅ Dashboard gerado com sucesso!<br>
-                        <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
-                        <strong>API:</strong> ${result.api_endpoint}`;
-                    
                     if (result.git_committed) {
-                        message += `<br><br>🚀 <strong>Dashboard commitado e enviado para o Git!</strong><br>
-                            <em>O deploy no Vercel será feito automaticamente em alguns minutos.</em>`;
+                        // Iniciar processo de aguardar deploy
+                        showDeployProgress(dashboardUrl, result);
                     } else {
-                        message += `<br><br>⚠️ <strong>Dashboard criado, mas não foi possível fazer commit automático.</strong><br>
+                        let message = `✅ Dashboard gerado com sucesso!<br>
+                            <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
+                            <strong>API:</strong> ${result.api_endpoint}<br><br>
+                            ⚠️ <strong>Dashboard criado, mas não foi possível fazer commit automático.</strong><br>
                             <em>O arquivo está disponível no Cloud Run.</em>`;
+                        
+                        showStatus(message, 'success');
+                        resetForm();
                     }
-                    
-                    showStatus(message, 'success');
-                    resetForm();
                 } else {
                     showStatus(`❌ Erro ao gerar dashboard: ${result.message}`, 'error');
                 }
@@ -535,6 +534,115 @@
             document.getElementById('campaignForm').reset();
             document.getElementById('preview').style.display = 'none';
             hideStatus();
+        }
+
+        // Função para mostrar progresso de deploy
+        async function showDeployProgress(dashboardUrl, result) {
+            let attempt = 0;
+            const maxAttempts = 30; // 5 minutos (10s * 30)
+            
+            const statusContainer = document.getElementById('status');
+            statusContainer.innerHTML = `
+                <div class="status success" style="text-align: center;">
+                    <div style="margin-bottom: 20px;">
+                        <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
+                        <h3 style="color: #10B981; margin-bottom: 10px;">🚀 Dashboard Gerado com Sucesso!</h3>
+                        <p style="color: #6B7280; margin-bottom: 15px;">Commit realizado no Git. Aguardando deploy no Vercel...</p>
+                    </div>
+                    
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                        <div style="font-weight: 600; color: #10B981; margin-bottom: 5px;">📊 Dashboard: ${result.client} - ${result.campaign}</div>
+                        <div style="font-size: 0.9rem; color: #6B7280;">🔗 <strong>URL:</strong> ${dashboardUrl}</div>
+                        <div style="font-size: 0.9rem; color: #6B7280;">🔌 <strong>API:</strong> ${result.api_endpoint}</div>
+                    </div>
+                    
+                    <div id="deployStatus" style="color: #6B7280; font-size: 0.9rem;">
+                        ⏳ Verificando disponibilidade... (Tentativa ${attempt + 1}/${maxAttempts})
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button onclick="window.open('${dashboardUrl}', '_blank')" style="
+                            background: #8B5CF6; 
+                            color: white; 
+                            border: none; 
+                            padding: 10px 20px; 
+                            border-radius: 6px; 
+                            cursor: pointer; 
+                            font-weight: bold;
+                            margin-right: 10px;
+                        ">🔗 Abrir Dashboard</button>
+                        
+                        <button onclick="resetForm()" style="
+                            background: #6B7280; 
+                            color: white; 
+                            border: none; 
+                            padding: 10px 20px; 
+                            border-radius: 6px; 
+                            cursor: pointer; 
+                            font-weight: bold;
+                        ">📝 Criar Outro</button>
+                    </div>
+                </div>
+            `;
+            statusContainer.style.display = 'block';
+            
+            // Função para verificar se o dashboard está disponível
+            const checkDashboard = async () => {
+                attempt++;
+                const statusElement = document.getElementById('deployStatus');
+                
+                try {
+                    const response = await fetch(dashboardUrl, { method: 'HEAD' });
+                    
+                    if (response.ok) {
+                        // Dashboard disponível!
+                        statusElement.innerHTML = `
+                            <div style="color: #10B981; font-weight: 600; margin-bottom: 10px;">
+                                ✅ Dashboard disponível no Vercel!
+                            </div>
+                            <div style="color: #6B7280; font-size: 0.8rem;">
+                                Deploy concluído com sucesso em ${Math.round(attempt * 10 / 60)} minutos.
+                            </div>
+                        `;
+                        
+                        // Redirecionar automaticamente após 2 segundos
+                        setTimeout(() => {
+                            window.open(dashboardUrl, '_blank');
+                        }, 2000);
+                        
+                        return true;
+                    } else {
+                        statusElement.innerHTML = `⏳ Verificando disponibilidade... (Tentativa ${attempt}/${maxAttempts})`;
+                        return false;
+                    }
+                } catch (error) {
+                    statusElement.innerHTML = `⏳ Verificando disponibilidade... (Tentativa ${attempt}/${maxAttempts})`;
+                    return false;
+                }
+            };
+            
+            // Polling a cada 10 segundos
+            const pollInterval = setInterval(async () => {
+                const isAvailable = await checkDashboard();
+                
+                if (isAvailable || attempt >= maxAttempts) {
+                    clearInterval(pollInterval);
+                    
+                    if (!isAvailable) {
+                        document.getElementById('deployStatus').innerHTML = `
+                            <div style="color: #F59E0B; font-weight: 600;">
+                                ⚠️ Deploy está demorando mais que o esperado
+                            </div>
+                            <div style="color: #6B7280; font-size: 0.8rem;">
+                                O dashboard pode estar disponível em alguns minutos.
+                            </div>
+                        `;
+                    }
+                }
+            }, 10000); // 10 segundos
+            
+            // Primeira verificação imediata
+            await checkDashboard();
         }
 
     </script>
