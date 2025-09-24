@@ -395,8 +395,9 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
-        // Usar domínio personalizado se disponível, senão usar Cloud Run direto
-        this.apiEndpoint = `https://api.iasouth.tech/api/${campaignKey}/data`;
+        // Tentar domínio personalizado primeiro, com fallback para Cloud Run
+        this.apiEndpoint = `https://south-media-ia-609095880025.us-central1.run.app/api/${campaignKey}/data`;
+        this.customDomainEndpoint = `https://api.iasouth.tech/api/${campaignKey}/data`;
         this.loadingSteps = [
             { text: "Inicializando...", progress: 10 },
             { text: "Conectando com Google Sheets...", progress: 30 },
@@ -417,7 +418,7 @@ class DashboardLoader {
             this.simulateProgress();
             
             // Carregar dados reais
-            const response = await fetch('/api/sebrae/data', {
+            const response = await fetch(this.apiEndpoint, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
