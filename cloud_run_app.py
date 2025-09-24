@@ -377,8 +377,11 @@ def list_campaigns():
             "message": f"Erro interno: {str(e)}"
         }), 500
 
-@app.route('/api/generate-dashboard', methods=['POST'])
+@app.route('/api/generate-dashboard', methods=['POST', 'OPTIONS'])
 def generate_dashboard():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        return '', 200
     """Gerar novo dashboard de campanha"""
     try:
         import os
