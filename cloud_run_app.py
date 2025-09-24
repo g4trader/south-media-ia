@@ -19,16 +19,16 @@ import time
 sys.path.append('static/generator/processors')
 sys.path.append('static/generator/config')
 
-# Importar extrator de dados (temporariamente desabilitado para debug)
-VideoCampaignDataExtractor = None
-logger.info("⚠️ VideoCampaignDataExtractor temporariamente desabilitado para debug")
-
-# Configurar logging
+# Configurar logging primeiro
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Importar extrator de dados (temporariamente desabilitado para debug)
+VideoCampaignDataExtractor = None
+logger.info("⚠️ VideoCampaignDataExtractor temporariamente desabilitado para debug")
 
 app = Flask(__name__)
 
