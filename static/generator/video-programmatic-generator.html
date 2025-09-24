@@ -486,19 +486,19 @@
                     // Extrair nome do arquivo do dashboard_url
                     const filename = result.dashboard_url.split('/').pop();
                     
-                    showStatus(`✅ Dashboard gerado com sucesso!<br>
+                    let message = `✅ Dashboard gerado com sucesso!<br>
                         <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
-                        <strong>API:</strong> ${result.api_endpoint}<br><br>
-                        <button onclick="commitDashboard('${filename}')" style="
-                            background: #10B981; 
-                            color: white; 
-                            border: none; 
-                            padding: 10px 20px; 
-                            border-radius: 6px; 
-                            cursor: pointer; 
-                            font-weight: bold;
-                            margin-top: 10px;
-                        ">🚀 Fazer Deploy no Vercel</button>`, 'success');
+                        <strong>API:</strong> ${result.api_endpoint}`;
+                    
+                    if (result.git_committed) {
+                        message += `<br><br>🚀 <strong>Dashboard commitado e enviado para o Git!</strong><br>
+                            <em>O deploy no Vercel será feito automaticamente em alguns minutos.</em>`;
+                    } else {
+                        message += `<br><br>⚠️ <strong>Dashboard criado, mas não foi possível fazer commit automático.</strong><br>
+                            <em>O arquivo está disponível no Cloud Run.</em>`;
+                    }
+                    
+                    showStatus(message, 'success');
                     resetForm();
                 } else {
                     showStatus(`❌ Erro ao gerar dashboard: ${result.message}`, 'error');
@@ -537,44 +537,6 @@
             hideStatus();
         }
 
-        // Função para fazer commit e push do dashboard
-        async function commitDashboard(filename) {
-            try {
-                showStatus('🔄 Fazendo commit e push do dashboard...', 'info');
-                
-                const apiUrl = window.location.hostname.includes('vercel.app') || window.location.hostname.includes('dash.iasouth.tech')
-                    ? 'https://south-media-ia-6f3ckz7c7q-uc.a.run.app/api/commit-dashboard'
-                    : '/api/commit-dashboard';
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        filename: filename
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    showStatus(`🎉 ${result.message}<br>
-                        <strong>Dashboard disponível em:</strong> <a href="${result.dashboard_url}" target="_blank" style="color: #8B5CF6;">${result.dashboard_url}</a><br>
-                        <em>O deploy no Vercel pode levar alguns minutos para ser concluído.</em>`, 'success');
-                } else {
-                    showStatus(`❌ Erro ao fazer deploy: ${result.message}`, 'error');
-                }
-                
-            } catch (error) {
-                console.error('❌ Erro ao fazer commit:', error);
-                showStatus(`❌ Erro ao fazer deploy: ${error.message}`, 'error');
-            }
-        }
     </script>
 </body>
 </html>
