@@ -448,8 +448,12 @@
                     description: campaignData.description || ''
                 };
                 
-                // Enviar para API
-                const response = await fetch('/api/generate-dashboard', {
+                // Enviar para API (usar Cloud Run em produção)
+                const apiUrl = window.location.hostname.includes('vercel.app') 
+                    ? 'https://south-media-ia-609095880025.us-central1.run.app/api/generate-dashboard'
+                    : '/api/generate-dashboard';
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -457,11 +461,23 @@
                     body: JSON.stringify(payload)
                 });
                 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    console.error('Erro ao processar resposta JSON:', jsonError);
+                    showStatus(`❌ Erro de comunicação: Resposta inválida do servidor (${response.status})`, 'error');
+                    return;
+                }
                 
                 if (result.success) {
+                    // Ajustar URL do dashboard para Cloud Run se estiver no Vercel
+                    const dashboardUrl = window.location.hostname.includes('vercel.app') 
+                        ? `https://south-media-ia-609095880025.us-central1.run.app${result.dashboard_url}`
+                        : result.dashboard_url;
+                    
                     showStatus(`✅ Dashboard gerado com sucesso!<br>
-                        <strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank" style="color: #8B5CF6;">${result.dashboard_url}</a><br>
+                        <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
                         <strong>API:</strong> ${result.api_endpoint}`, 'success');
                     resetForm();
                 } else {
