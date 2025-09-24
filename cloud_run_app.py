@@ -306,8 +306,28 @@ def get_campaign_data(campaign_key):
         # Se não conseguiu dados reais, usar dados de teste
         if not data:
             logger.info("🔄 Usando dados de teste baseados na planilha real...")
-            from static.generator.processors.test_video_campaign_data import create_test_data
-            data = create_test_data(config)
+            try:
+                from static.generator.processors.test_video_campaign_data import create_test_data
+                data = create_test_data(config)
+            except ImportError as e:
+                logger.error(f"❌ Erro ao importar create_test_data: {e}")
+                # Usar dados básicos como fallback
+                data = {
+                    "contract": {
+                        "client": config.client,
+                        "campaign": config.campaign,
+                        "status": "Em andamento"
+                    },
+                    "daily_data": [],
+                    "strategies": {
+                        "segmentation": ["Segmentação A", "Segmentação B"],
+                        "objectives": ["Objetivo 1", "Objetivo 2"]
+                    },
+                    "publishers": [
+                        {"name": "Publisher A", "type": "Site: publisher-a.com"},
+                        {"name": "Publisher B", "type": "Site: publisher-b.com"}
+                    ]
+                }
         
         if data:
             return jsonify({
