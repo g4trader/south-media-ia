@@ -657,7 +657,7 @@ class DashboardLoader {
             tbody.insertAdjacentHTML('beforeend', `
                 <tr>
                     <td>Programática Video</td>
-                    <td>R$ ${this.formatBR(metrics.budget_contracted || 31000)}</td>
+                    <td>R$ ${this.formatBR(data?.contract?.investment || metrics.budget_contracted || 31000)}</td>
                     <td>R$ ${this.formatBR(metrics.spend || 0)}</td>
                     <td>${(metrics.pacing || 0).toFixed(1)}%</td>
                     <td>R$ ${this.formatBR(metrics.cpv || 0)}</td>
