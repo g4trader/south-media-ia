@@ -5,7 +5,7 @@
 
 const CONFIG = {
     // URLs dos serviços
-    CLOUD_RUN_URL: 'https://south-media-ia-6f3ckz7c7q-uc.a.run.app',
+    CLOUD_RUN_URL: 'https://api.iasouth.tech',
     VERCEL_URL: window.location.origin,
     
     // Detectar ambiente
