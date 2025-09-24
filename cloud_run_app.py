@@ -9,10 +9,23 @@ import json
 import logging
 import uuid
 import subprocess
+import sys
 from flask import Flask, request, jsonify, make_response, send_from_directory
 from datetime import datetime
 import threading
 import time
+
+# Adicionar paths para importar módulos
+sys.path.append('static/generator/processors')
+sys.path.append('static/generator/config')
+
+# Importar extrator de dados
+try:
+    from extract_video_campaign_data import VideoCampaignDataExtractor
+    logger.info("✅ VideoCampaignDataExtractor importado com sucesso")
+except ImportError as e:
+    logger.error(f"❌ Erro ao importar VideoCampaignDataExtractor: {e}")
+    VideoCampaignDataExtractor = None
 
 # Configurar logging
 logging.basicConfig(
@@ -293,15 +306,19 @@ def get_campaign_data(campaign_key):
         data = None
         source = "test_data"
         
-        try:
-            extractor = VideoCampaignDataExtractor(config)
-            data = extractor.extract_data()
-            if data:
-                source = "google_sheets"
-            else:
-                logger.warning("⚠️ Extrator retornou dados vazios")
-        except Exception as e:
-            logger.warning(f"⚠️ Não foi possível conectar com Google Sheets: {e}")
+        if VideoCampaignDataExtractor:
+            try:
+                extractor = VideoCampaignDataExtractor(config)
+                data = extractor.extract_data()
+                if data:
+                    source = "google_sheets"
+                    logger.info("✅ Dados reais carregados do Google Sheets")
+                else:
+                    logger.warning("⚠️ Extrator retornou dados vazios")
+            except Exception as e:
+                logger.warning(f"⚠️ Não foi possível conectar com Google Sheets: {e}")
+        else:
+            logger.warning("⚠️ VideoCampaignDataExtractor não disponível")
         
         # Se não conseguiu dados reais, usar dados de teste
         if not data:
