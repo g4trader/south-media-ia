@@ -9,7 +9,18 @@ import pandas as pd
 import sys
 import os
 import math
+import numpy as np
 from typing import Dict, List, Optional, Any
+
+def safe_int_convert(value, default=0):
+    """Converter valor para inteiro com segurança, tratando NaN"""
+    try:
+        numeric_val = pd.to_numeric(value, errors='coerce')
+        if pd.isna(numeric_val) or np.isnan(numeric_val):
+            return default
+        return int(numeric_val)
+    except:
+        return default
 
 # Adicionar diretório raiz ao path para importar google_sheets_service
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -27,7 +38,11 @@ DEFAULT_COLUMN_MAPPING = {
     'starts': 'Video Starts',
     'spend': 'Valor investido',
     'cpv': 'CPV',
-    'cpc': 'CPC'
+    'cpc': 'CPC',
+    'q25': '25% Video Complete',
+    'q50': '50% Video Complete',
+    'q75': '75% Video Complete',
+    'q100': '100% Complete'
 }
 
 # Mapeamento padrão de contrato
@@ -322,13 +337,13 @@ class VideoCampaignDataExtractor:
                 "date": date_value,
                 "creative": str(row.get(available_columns.get('creative', ''), '')),
                 "spend": spend_value,
-                "impressions": int(pd.to_numeric(row.get(available_columns.get('impressions', 0), 0), errors='coerce') or 0),
-                "clicks": int(pd.to_numeric(row.get(available_columns.get('clicks', 0), 0), errors='coerce') or 0),
-                "starts": int(pd.to_numeric(row.get(available_columns.get('starts', 0), 0), errors='coerce') or 0),
-                "q25": int(pd.to_numeric(row.get(available_columns.get('q25', 0), 0), errors='coerce') or 0),
-                "q50": int(pd.to_numeric(row.get(available_columns.get('q50', 0), 0), errors='coerce') or 0),
-                "q75": int(pd.to_numeric(row.get(available_columns.get('q75', 0), 0), errors='coerce') or 0),
-                "q100": int(pd.to_numeric(row.get(available_columns.get('q100', 0), 0), errors='coerce') or 0),
+                "impressions": safe_int_convert(row.get(available_columns.get('impressions', 0), 0)),
+                "clicks": safe_int_convert(row.get(available_columns.get('clicks', 0), 0)),
+                "starts": safe_int_convert(row.get(available_columns.get('starts', 0), 0)),
+                "q25": safe_int_convert(row.get(available_columns.get('q25', 0), 0)),
+                "q50": safe_int_convert(row.get(available_columns.get('q50', 0), 0)),
+                "q75": safe_int_convert(row.get(available_columns.get('q75', 0), 0)),
+                "q100": safe_int_convert(row.get(available_columns.get('q100', 0), 0)),
                 "ctr": float(pd.to_numeric(row.get(available_columns.get('ctr', 0), 0), errors='coerce') or 0),
                 "vtr": float(pd.to_numeric(row.get(available_columns.get('vtr', 0), 0), errors='coerce') or 0),
                 "cpv": float(pd.to_numeric(row.get(available_columns.get('cpv', 0), 0), errors='coerce') or 0)
