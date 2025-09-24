@@ -377,6 +377,9 @@
         </div>
     </div>
 
+    <!-- Configuração do Sistema -->
+    <script src="config.js"></script>
+    
     <script>
         // Form submission
         document.getElementById('campaignForm').addEventListener('submit', async (e) => {
@@ -448,12 +451,10 @@
                     description: campaignData.description || ''
                 };
                 
-                // Enviar para API (usar Cloud Run em produção)
-                const apiUrl = window.location.hostname.includes('vercel.app') 
-                    ? 'https://south-media-ia-609095880025.us-central1.run.app/api/generate-dashboard'
-                    : '/api/generate-dashboard';
+                // Enviar para API usando configuração
+                const apiUrl = CONFIG.getApiUrl(CONFIG.ENDPOINTS.GENERATE_DASHBOARD);
                 
-                const response = await fetch(apiUrl, {
+                const response = await apiRequest(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -461,20 +462,11 @@
                     body: JSON.stringify(payload)
                 });
                 
-                let result;
-                try {
-                    result = await response.json();
-                } catch (jsonError) {
-                    console.error('Erro ao processar resposta JSON:', jsonError);
-                    showStatus(`❌ Erro de comunicação: Resposta inválida do servidor (${response.status})`, 'error');
-                    return;
-                }
+                const result = await processJsonResponse(response);
                 
                 if (result.success) {
-                    // Ajustar URL do dashboard para Cloud Run se estiver no Vercel
-                    const dashboardUrl = window.location.hostname.includes('vercel.app') 
-                        ? `https://south-media-ia-609095880025.us-central1.run.app${result.dashboard_url}`
-                        : result.dashboard_url;
+                    // Usar configuração para URL do dashboard
+                    const dashboardUrl = CONFIG.getDashboardUrl(result.dashboard_url);
                     
                     showStatus(`✅ Dashboard gerado com sucesso!<br>
                         <strong>URL:</strong> <a href="${dashboardUrl}" target="_blank" style="color: #8B5CF6;">${dashboardUrl}</a><br>
