@@ -380,7 +380,9 @@ def get_campaign_data(campaign_key):
                     "publishers": data.get("publishers", [])
                 },
                 "timestamp": datetime.now().isoformat(),
-                "source": source
+                "source": source,
+                "test_mode": data.get("test_mode", False),
+                "test_message": data.get("test_message", "")
             })
         else:
             return jsonify({
