@@ -58,9 +58,9 @@ def commit_and_push_dashboard(file_path, dashboard_name):
         subprocess.run(['git', 'config', '--global', 'user.name', 'Dashboard Bot'], 
                       capture_output=True, text=True)
         
-        # Obter diretório de trabalho atual
+        # No Cloud Run, usar /app como diretório de trabalho
         import os
-        current_dir = os.getcwd()
+        current_dir = '/app'
         logger.info(f"📁 Diretório de trabalho: {current_dir}")
         
         # Verificar se é um repositório Git
@@ -887,10 +887,13 @@ def create_dashboard():
                 else:
                     logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
                 
-                # Nota: Commit/push será feito localmente pelo usuário
-                # O Cloud Run não tem acesso ao Git para fazer commit/push automático
-                git_success = False  # Será feito manualmente
+                # Fazer commit e push para o Git (para deploy automático no Vercel)
+                git_success = commit_and_push_dashboard(filepath, data.get('campaign', 'Campaign'))
+                
+                # Atualizar lista de dashboards no frontend
                 list_updated = False
+                if git_success:
+                    list_updated = update_dashboard_list(filename)
                 
                 result = {
                     "success": True,
