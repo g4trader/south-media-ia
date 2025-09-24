@@ -143,7 +143,20 @@ class GoogleSheetsService:
                 return None
             
             # Converter para DataFrame
-            df = pd.DataFrame(values[1:], columns=values[0])
+            # Garantir que todas as linhas tenham o mesmo número de colunas
+            max_cols = len(values[0]) if values else 0
+            normalized_values = []
+            
+            for row in values:
+                # Preencher com strings vazias se a linha tiver menos colunas
+                while len(row) < max_cols:
+                    row.append('')
+                # Truncar se a linha tiver mais colunas
+                if len(row) > max_cols:
+                    row = row[:max_cols]
+                normalized_values.append(row)
+            
+            df = pd.DataFrame(normalized_values[1:], columns=normalized_values[0])
             return df
             
         except HttpError as e:

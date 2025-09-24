@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>South Media - Dashboard Menu</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+    <style>
+        :root {
+            --bg: #0F1023;
+            --bg2: #16213E;
+            --panel: #1A1A2E;
+            --muted: #9CA3AF;
+            --stroke: rgba(139,92,246,.28);
+            --grad: linear-gradient(135deg,#8B5CF6,#EC4899);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 50%, var(--panel) 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: var(--grad);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .dashboard-card {
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--grad);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(139,92,246,.2);
+            border-color: rgba(139,92,246,.4);
+        }
+        
+        .dashboard-card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: var(--grad);
+            display: grid;
+            place-items: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+        
+        .card-description {
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .card-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        
+        .card-features li {
+            color: var(--muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-features li::before {
+            content: '✓';
+            color: #22c55e;
+            font-weight: bold;
+        }
+        
+        .card-button {
+            width: 100%;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .button-primary {
+            background: var(--grad);
+            color: #fff;
+        }
+        
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139,92,246,.35);
+        }
+        
+        .button-secondary {
+            background: rgba(255,255,255,.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+        }
+        
+        .button-secondary:hover {
+            background: rgba(255,255,255,.15);
+        }
+        
+        .status-section {
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            padding: 32px;
+            backdrop-filter: blur(8px);
+            margin-bottom: 40px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255,255,255,.05);
+            border-radius: 12px;
+            border: 1px solid rgba(148,163,184,.1);
+        }
+        
+        .status-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        
+        .status-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        
+        .quick-action {
+            padding: 12px 24px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,.05);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quick-action:hover {
+            background: rgba(255,255,255,.1);
+            border-color: rgba(255,255,255,.3);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .quick-action {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">SM</div>
+                <div class="logo-text">South Media</div>
+            </div>
+            <p>Sistema de Dashboards Inteligentes para Campanhas de Vídeo Programática</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Dashboard Generator -->
+            <div class="dashboard-card" onclick="window.location.href='/static/dashboard_generator.html'">
+                <div class="card-icon">🎬</div>
+                <h3 class="card-title">Gerador de Dashboard</h3>
+                <p class="card-description">
+                    Crie dashboards personalizados para novos clientes de forma rápida e automatizada
+                </p>
+                <ul class="card-features">
+                    <li>Configuração visual da campanha</li>
+                    <li>Integração automática com Google Sheets</li>
+                    <li>Template responsivo e moderno</li>
+                    <li>Dados atualizados em tempo real</li>
+                </ul>
+                <button class="card-button button-primary">
+                    ➕ Criar Novo Dashboard
+                </button>
+            </div>
+
+            <!-- SEBRAE Dashboard -->
+            <div class="dashboard-card" onclick="window.location.href='/static/dash_sebrae_generic.html'">
+                <div class="card-icon">📊</div>
+                <h3 class="card-title">Dashboard SEBRAE</h3>
+                <p class="card-description">
+                    Dashboard de vídeo programática para campanha SEBRAE PR - Institucional Setembro
+                </p>
+                <ul class="card-features">
+                    <li>Dados em tempo real da planilha</li>
+                    <li>Métricas de VC e performance</li>
+                    <li>Gráficos interativos</li>
+                    <li>Interface responsiva</li>
+                </ul>
+                <button class="card-button button-secondary">
+                    📈 Ver Dashboard
+                </button>
+            </div>
+
+            <!-- Template Genérico -->
+            <div class="dashboard-card" onclick="window.location.href='/static/dash_video_programmatic_template.html'">
+                <div class="card-icon">🔧</div>
+                <h3 class="card-title">Template Genérico</h3>
+                <p class="card-description">
+                    Template base para campanhas de vídeo programática com design moderno
+                </p>
+                <ul class="card-features">
+                    <li>Design responsivo e moderno</li>
+                    <li>Estrutura genérica reutilizável</li>
+                    <li>Fácil personalização</li>
+                    <li>Compatível com múltiplas campanhas</li>
+                </ul>
+                <button class="card-button button-secondary">
+                    🎨 Ver Template
+                </button>
+            </div>
+
+            <!-- Analytics -->
+            <div class="dashboard-card" onclick="window.location.href='/api/campaigns'">
+                <div class="card-icon">📈</div>
+                <h3 class="card-title">Analytics API</h3>
+                <p class="card-description">
+                    API para gerenciar e monitorar todas as campanhas configuradas no sistema
+                </p>
+                <ul class="card-features">
+                    <li>Listagem de campanhas ativas</li>
+                    <li>Endpoints para dados</li>
+                    <li>Monitoramento de performance</li>
+                    <li>Integração com sistemas externos</li>
+                </ul>
+                <button class="card-button button-secondary">
+                    🔗 Ver API
+                </button>
+            </div>
+        </div>
+
+        <div class="status-section">
+            <h3 style="text-align: center; margin-bottom: 32px; color: #fff; font-size: 1.5rem;">
+                📊 Status do Sistema
+            </h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-number" id="totalCampaigns">-</div>
+                    <div class="status-label">Campanhas Ativas</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-number" id="totalDashboards">-</div>
+                    <div class="status-label">Dashboards Gerados</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-number" id="systemStatus">✅</div>
+                    <div class="status-label">Status do Sistema</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-number" id="lastUpdate">-</div>
+                    <div class="status-label">Última Atualização</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="/static/dashboard_generator.html" class="quick-action">
+                🎬 Gerar Dashboard
+            </a>
+            <a href="/api/campaigns" class="quick-action" target="_blank">
+                📊 Ver Campanhas
+            </a>
+            <a href="/static/dash_sebrae_generic.html" class="quick-action">
+                📈 Dashboard SEBRAE
+            </a>
+            <a href="/static/dash_video_programmatic_template.html" class="quick-action">
+                🎨 Template
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Carregar status do sistema
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/campaigns');
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('totalCampaigns').textContent = result.total;
+                    document.getElementById('totalDashboards').textContent = result.total;
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('pt-BR');
+                } else {
+                    document.getElementById('systemStatus').textContent = '❌';
+                    document.getElementById('systemStatus').style.color = '#ef4444';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar status:', error);
+                document.getElementById('systemStatus').textContent = '⚠️';
+                document.getElementById('systemStatus').style.color = '#f59e0b';
+            }
+        }
+
+        // Carregar status quando a página carrega
+        document.addEventListener('DOMContentLoaded', loadSystemStatus);
+
+        // Atualizar status a cada 30 segundos
+        setInterval(loadSystemStatus, 30000);
+    </script>
+</body>
+</html>

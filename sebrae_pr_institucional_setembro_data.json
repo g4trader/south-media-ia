@@ -1,0 +1,286 @@
+{
+  "campaign_name": "SEBRAE PR - Institucional Setembro",
+  "dashboard_title": "Dashboard SEBRAE PR - Institucional Setembro",
+  "channel": "Prográmatica",
+  "creative_type": "Video",
+  "period": "15/09/2025 - 30/09/2025",
+  "contract": {
+    "client": "SEBRAE PR",
+    "campaign": "Institucional Setembro",
+    "channel": "Prográmatica",
+    "creative_type": "Video",
+    "investment": 31000.0,
+    "cpv_contracted": 0.16,
+    "complete_views_contracted": 193750,
+    "period_start": "15/09/2025",
+    "period_end": "30/09/2025"
+  },
+  "strategies": {
+    "segmentation": [],
+    "objectives": [
+      "Alcance em PARANÁ",
+      "White list para grandes portais"
+    ]
+  },
+  "publishers": [
+    {
+      "name": "Gazeta do Povo",
+      "type": "Site: gazetadopovo.com.br"
+    },
+    {
+      "name": "Bem Paraná",
+      "type": "Site: bemparana.com.br"
+    },
+    {
+      "name": "Tribuna PR",
+      "type": "Site: tribunapr.com.br"
+    },
+    {
+      "name": "Bonde",
+      "type": "Site: bonde.com.br"
+    },
+    {
+      "name": "Massa News",
+      "type": "Site: massanews.com"
+    },
+    {
+      "name": "Paraná Portal",
+      "type": "Site: paranaportal.com"
+    },
+    {
+      "name": "Plural Curitiba",
+      "type": "Site: plural.jor.br"
+    },
+    {
+      "name": "O Paraná",
+      "type": "Site: oparana.com.br"
+    },
+    {
+      "name": "AEN-PR",
+      "type": "Site: aen.pr.gov.br"
+    },
+    {
+      "name": "IPARDES",
+      "type": "Site: ipardes.pr.gov.br"
+    },
+    {
+      "name": "Revista PEGN",
+      "type": "Site: revistapegn.globo.com"
+    },
+    {
+      "name": "Exame",
+      "type": "Site: exame.com"
+    },
+    {
+      "name": "InfoMoney",
+      "type": "Site: infomoney.com.br"
+    },
+    {
+      "name": "Monitor do Mercado",
+      "type": "Site: monitordomercado.com.br"
+    },
+    {
+      "name": "Forbes Brasil",
+      "type": "Site: forbes.com.br"
+    },
+    {
+      "name": "Endeavor Brasil",
+      "type": "Site: endeavor.org.br"
+    },
+    {
+      "name": "Negócios Brasil",
+      "type": "Site: negociosbrasil.com.br"
+    },
+    {
+      "name": "MeuBiz",
+      "type": "Site: meubiz.com.br"
+    },
+    {
+      "name": "Quero um Negócio",
+      "type": "Site: queroumnegocio.com.br"
+    },
+    {
+      "name": "Sonoticiaboa",
+      "type": "Site: sonoticiaboa.com.br"
+    },
+    {
+      "name": "CNN Brasil Economia",
+      "type": "Site: cnnbrasil.com.br/economia"
+    },
+    {
+      "name": "R7 Economia",
+      "type": "Site: r7.com/economia"
+    },
+    {
+      "name": "Estadão Economia",
+      "type": "Site: estadao.com.br/"
+    },
+    {
+      "name": "Folha Mercado",
+      "type": "Site: folha.uol.com.br/"
+    },
+    {
+      "name": "O Globo Economia",
+      "type": "Site: oglobo.globo.com/"
+    },
+    {
+      "name": "UOL Economia",
+      "type": "Site: economia.uol.com.br"
+    },
+    {
+      "name": "Terra Economia",
+      "type": "Site: terra.com.br/"
+    },
+    {
+      "name": "Valor Econômico",
+      "type": "Site: valor.globo.com"
+    },
+    {
+      "name": "Bloomberg Línea",
+      "type": "Site: bloomberglinea.com.br"
+    },
+    {
+      "name": "InvestNews",
+      "type": "Site: investnews.com.br"
+    },
+    {
+      "name": "Investing Brasil",
+      "type": "Site: br.investing.com"
+    },
+    {
+      "name": "Notícias Agrícolas",
+      "type": "Site: noticiasagricolas.com.br"
+    },
+    {
+      "name": "Canal Rural",
+      "type": "Site: canalrural.com.br"
+    },
+    {
+      "name": "Compre Rural",
+      "type": "Site: comprerural.com"
+    },
+    {
+      "name": "Agro em Dia",
+      "type": "Site: agroemdia.com.br"
+    },
+    {
+      "name": "Agro Link",
+      "type": "Site: agrolink.com.br"
+    },
+    {
+      "name": "Proteste",
+      "type": "Site: proteste.org.br"
+    },
+    {
+      "name": "Reclame Aqui",
+      "type": "Site: reclameaqui.com.br"
+    },
+    {
+      "name": "MarketUp",
+      "type": "Site: marketup.com"
+    },
+    {
+      "name": "Econodata",
+      "type": "Site: econodata.com.br"
+    },
+    {
+      "name": "Casa dos Dados",
+      "type": "Site: casadosdados.com.br"
+    },
+    {
+      "name": "FDR",
+      "type": "Site: fdr.com.br"
+    },
+    {
+      "name": "CNPJ.biz",
+      "type": "Site: cnpj.biz"
+    },
+    {
+      "name": "Serasa Experian",
+      "type": "Site: serasaexperian.com.br"
+    },
+    {
+      "name": "Correio Braziliense (Economia)",
+      "type": "Site: correiobraziliense.com.br/"
+    },
+    {
+      "name": "Jovem Pan Economia",
+      "type": "Site: jovempan.com.br/"
+    },
+    {
+      "name": "Veja SP Economia",
+      "type": "Site: vejasp.abril.com.br/"
+    },
+    {
+      "name": "Revista IstoÉ Dinheiro",
+      "type": "Site: istoedinheiro.com.br"
+    },
+    {
+      "name": "Revista Época Negócios",
+      "type": "Site: epocanegocios.globo.com"
+    },
+    {
+      "name": "Carta Capital Economia",
+      "type": "Site: cartacapital.com.br/"
+    },
+    {
+      "name": "Revista Oeste Economia",
+      "type": "Site: revistaoeste.com/"
+    },
+    {
+      "name": "O Antagonista Economia",
+      "type": "Site: oantagonista.com.br/"
+    },
+    {
+      "name": "Metropoles Economia",
+      "type": "Site: metropoles.com/"
+    },
+    {
+      "name": "Diário do Comércio",
+      "type": "Site: dcomercio.com.br"
+    },
+    {
+      "name": "DCI - Diário Comércio Indústria",
+      "type": "Site: dci.com.br"
+    },
+    {
+      "name": "IPEA",
+      "type": "Site: ipea.gov.br"
+    },
+    {
+      "name": "SEBRAE Portal",
+      "type": "Site: sebrae.com.br"
+    },
+    {
+      "name": "Notícias Cascavel (Economia)",
+      "type": "Site: noticiascascavel.com.br"
+    },
+    {
+      "name": "CBN Ponta Grossa (Economia)",
+      "type": "Site: cbnpg.com.br/"
+    },
+    {
+      "name": "Jornal Ponta Grossa",
+      "type": "Site: jornalpontagrossa.com.br"
+    },
+    {
+      "name": "BNT Online",
+      "type": "Site: bntonline.com.br"
+    },
+    {
+      "name": "Bem Paraná – Economia",
+      "type": "Site: bemparana.com.br"
+    },
+    {
+      "name": "Central Sul de Notícias",
+      "type": "Site: centralsuldenoticias.com.br"
+    }
+  ],
+  "metrics": {
+    "pacing": 0.0
+  },
+  "daily_data": [],
+  "per_data": [],
+  "budget_contracted": 31000.0,
+  "vc_contracted": 193750
+}
