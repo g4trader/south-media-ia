@@ -416,7 +416,7 @@ class DashboardLoader {
             this.simulateProgress();
             
             // Carregar dados reais
-            const response = await fetch('/api/sebrae/data', {
+            const response = await fetch(this.apiEndpoint, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
