@@ -168,7 +168,7 @@
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-container">
         <div class="loading-spinner"></div>
-        <div class="loading-text">Carregando Dashboard SEBRAE</div>
+        <div class="loading-text">Carregando Dashboard...</div>
         <div class="loading-subtext">
             Conectando com Google Sheets e processando dados...
         </div>
@@ -229,7 +229,7 @@
                 </div>
                 <div class="card" style="margin-top: 24px;">
                     <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-                    <div class="muted" style="margin-bottom:10px">Programática Video - SEBRAE INSTITUCIONAL SETEMBRO</div>
+                    <div class="muted" style="margin-bottom:10px">Programática Video - Carregando...</div>
                     <div style="overflow:auto">
                         <table id="tableCampaign">
                             <thead>
@@ -284,7 +284,7 @@
                 <div class="card" style="margin-bottom:16px">
                     <h3 style="margin-bottom:10px">Objetivo da Campanha</h3>
                     <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
-                        Campanha de <strong>Programática Video</strong> para o SEBRAE com foco em <strong>Microempreendedores</strong> e <strong>Jovens Empreendedores em Ascensão</strong>, maximizando alcance qualificado e eficiência de conversão.
+                        Campanha de <strong>Programática Video</strong> com foco em <strong>Segmentação A</strong> e <strong>Segmentação B</strong>, maximizando alcance qualificado e eficiência de conversão.
                     </p>
                 </div>
 
@@ -303,16 +303,16 @@
                     <div style="margin-bottom:20px">
                         <h4 style="color:#ff6b35; margin-bottom:10px">🎯 TailTarget - BRAZIL</h4>
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Microsegment > Microempreendedores (PT)</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Segmentação específica para microempreendedores brasileiros</small>
+                            <strong>Segmentação A</strong><br>
+                            <small style="color:rgba(255,255,255,0.7)">Segmentação primária</small>
                         </div>
                     </div>
 
                     <div style="margin-bottom:20px">
                         <h4 style="color:#ff6b35; margin-bottom:10px">🌍 TailTarget - GLOBAL</h4>
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
-                            <strong>Mosaic Business - D25 - Jovens Empreendedores Em Ascensão</strong><br>
-                            <small style="color:rgba(255,255,255,0.7)">Perfil de jovens empreendedores em crescimento por Serasa Experian</small>
+                            <strong>Segmentação B</strong><br>
+                            <small style="color:rgba(255,255,255,0.7)">Segmentação secundária</small>
                         </div>
                         <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:10px">
                             <strong>Jobs > Perfil Autônomo e Empreendedor</strong><br>
@@ -492,8 +492,8 @@ class DashboardLoader {
         // Atualizar nome da campanha no cabeçalho
         const campaignElement = document.getElementById('campaignName');
         if (campaignElement && data.contract) {
-            const client = data.contract.client || 'SEBRAE PR';
-            const campaign = data.contract.campaign || 'Institucional Setembro';
+            const client = data.contract.client || 'Cliente';
+            const campaign = data.contract.campaign || 'Campanha';
             campaignElement.textContent = `${client} ${campaign.toUpperCase()}`;
         }
         
@@ -842,7 +842,7 @@ class DashboardLoader {
         items.push(`✅ <b>VTR:</b> <b>${(metrics.vtr || 0).toFixed(1)}%</b> - ${(metrics.vtr || 0) >= 20 ? 'boa performance para programática video' : 'performance abaixo do esperado'}.`);
         items.push(`⏱️ <b>Pacing orçamentário:</b> <b>${(metrics.pacing || 0).toFixed(1)}%</b> do orçamento já foi utilizado.`);
         items.push(`🎯 <b>Status da entrega:</b> ${vcPacing >= 100 ? 'Meta de VC atingida!' : `Faltam ${this.formatInt(vcRemaining)} VC para completar a meta.`}`);
-        items.push(`📊 <b>Segmentação:</b> <b>Microempreendedores</b> e <b>Jovens Empreendedores</b> em ascensão.`);
+        items.push(`📊 <b>Segmentação:</b> <b>${(data.strategies?.segmentation || ['Segmentação A', 'Segmentação B']).join('</b> e <b>')}</b> em ascensão.`);
         
         insightsList.innerHTML = items.map(t => `<li>${t}</li>`).join("");
     }
@@ -855,8 +855,8 @@ class DashboardLoader {
         const objectiveText = document.querySelector('#tab-planning .card p');
         if (objectiveText) {
             objectiveText.innerHTML = `
-                Campanha <strong>${data.contract?.campaign || 'Institucional Setembro'}</strong> de <strong>${data.channel || 'Prográmatica'}</strong> para <strong>${data.contract?.client || 'SEBRAE PR'}</strong> com foco em 
-                <strong>${(strategies.segmentation || ['Microempreendedores', 'Jovens Empreendedores']).join('</strong> e <strong>')}</strong>, 
+                Campanha <strong>${data.contract?.campaign || 'Campanha'}</strong> de <strong>${data.channel || 'Prográmatica'}</strong> para <strong>${data.contract?.client || 'Cliente'}</strong> com foco em 
+                <strong>${(strategies.segmentation || ['Segmentação A', 'Segmentação B']).join('</strong> e <strong>')}</strong>, 
                 ${objectives.join(', ')}.
             `;
         }
@@ -956,7 +956,7 @@ async function retryLoadData() {
 document.addEventListener('DOMContentLoaded', function() {
     // Tentar obter campaignKey da URL ou usar padrão
     const urlParams = new URLSearchParams(window.location.search);
-    let campaignKey = urlParams.get('campaign') || 'sebrae_pr';
+        let campaignKey = urlParams.get('campaign') || 'default_campaign';
     
     // Se não há parâmetro na URL, tentar obter do nome do arquivo
     if (!urlParams.has('campaign')) {
@@ -964,6 +964,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const filename = pathParts[pathParts.length - 1];
         if (filename.includes('sebrae')) {
             campaignKey = 'sebrae_pr';
+        } else if (filename.includes('copacol')) {
+            campaignKey = 'copacol_institucional_30s';
         } else if (filename.includes('exemplo')) {
             campaignKey = 'exemplo_cliente';
         }
