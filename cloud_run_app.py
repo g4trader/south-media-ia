@@ -44,6 +44,11 @@ def add_cors_headers(response):
         response.headers[key] = value
     return response
 
+@app.after_request
+def after_request(response):
+    """Aplicar headers CORS a todas as respostas"""
+    return add_cors_headers(response)
+
 def commit_and_push_dashboard(file_path, dashboard_name):
     """Fazer commit e push do dashboard criado para o Git"""
     try:
