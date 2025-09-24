@@ -1,0 +1,24 @@
+{
+  "teste_cliente_teste_campanha": {
+    "client": "Teste Cliente",
+    "campaign": "Teste Campanha",
+    "sheet_id": "1234567890",
+    "tabs": {
+      "daily_data": "111111111",
+      "contract": "222222222",
+      "strategies": "333333333",
+      "publishers": "444444444"
+    }
+  },
+  "teste_integrado_final": {
+    "client": "Teste Integrado",
+    "campaign": "Teste Sistema Final",
+    "sheet_id": "1234567890",
+    "tabs": {
+      "daily_data": "111111111",
+      "contract": "222222222",
+      "strategies": "333333333",
+      "publishers": "444444444"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+[
+  {"date": "02/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "03/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "04/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "05/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "06/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "07/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "08/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "09/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "10/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "11/09/2025", "channel": "SPOTIFY", "creative": "Áudio 30s", "spend": 580.05, "starts": 1250, "q25": 1100, "q50": 1000, "q75": 900, "q100": 800, "impressions": 4500, "clicks": 0, "visits": ""},
+  {"date": "02/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "03/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "04/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "05/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "06/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "07/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "08/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "09/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "10/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""},
+  {"date": "11/09/2025", "channel": "PROGRAMÁTICA", "creative": "Vídeo 15s", "spend": 2100.00, "starts": 1850, "q25": 1600, "q50": 1400, "q75": 1200, "q100": 1000, "impressions": 8500, "clicks": 210, "visits": ""}
+]

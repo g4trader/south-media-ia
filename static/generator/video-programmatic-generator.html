@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Dashboard - Video Programática</title>
+    <style>
+        :root {
+            --bg: #0F1023;
+            --bg2: #16213E;
+            --panel: #1A1A2E;
+            --muted: #9CA3AF;
+            --stroke: rgba(139,92,246,.28);
+            --grad: linear-gradient(135deg,#8B5CF6,#EC4899);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 50%, var(--panel) 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding: 20px;
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .back-button {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 6px;
+            background: rgba(255,255,255,.05);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,.1);
+            border-color: rgba(255,255,255,.3);
+        }
+        
+        .card {
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 12px;
+            border: 1px solid rgba(148,163,184,.2);
+            border-radius: 6px;
+            background: rgba(255,255,255,.05);
+            color: #fff;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 2px rgba(139,92,246,.1);
+        }
+        
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--muted);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .help-text {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        
+        .button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .button-primary {
+            background: var(--grad);
+            color: #fff;
+        }
+        
+        .button-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139,92,246,.35);
+        }
+        
+        .button-secondary {
+            background: rgba(255,255,255,.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.2);
+        }
+        
+        .button-secondary:hover {
+            background: rgba(255,255,255,.15);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 16px 0;
+            display: none;
+            font-size: 0.9rem;
+        }
+        
+        .status.success {
+            background: rgba(34,197,94,.1);
+            border: 1px solid rgba(34,197,94,.3);
+            color: var(--success);
+        }
+        
+        .status.error {
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            color: var(--error);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(139,92,246,.2);
+            border-top: 3px solid #8B5CF6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .preview {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(148,163,184,.1);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .preview h4 {
+            margin-bottom: 12px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        
+        .preview-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(148,163,184,.1);
+        }
+        
+        .preview-item:last-child {
+            border-bottom: none;
+        }
+        
+        .preview-label {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        
+        .preview-value {
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(148,163,184,.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Gerador de Dashboard - Video Programática</h1>
+            <a href="/dashboard-protected.html" class="back-button">← Voltar ao Painel</a>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom: 20px; color: #fff;">Configuração da Campanha</h3>
+            
+            <form id="campaignForm">
+                <div class="section-title">Informações Básicas</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="clientName">Nome do Cliente *</label>
+                        <input type="text" id="clientName" name="clientName" placeholder="Ex: Cliente Exemplo" required>
+                        <div class="help-text">Nome da empresa ou cliente</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="campaignName">Nome da Campanha *</label>
+                        <input type="text" id="campaignName" name="campaignName" placeholder="Ex: Campanha Setembro" required>
+                        <div class="help-text">Nome específico da campanha</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sheetId">ID da Planilha Google Sheets *</label>
+                        <input type="text" id="sheetId" name="sheetId" placeholder="1IUUSXaN0Drrdt-7B0IUiMRQK2gT-JtzhCFZvV7e5-V8" required>
+                        <div class="help-text">ID da planilha (encontrado na URL)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="channel">Canal *</label>
+                        <select id="channel" name="channel" required>
+                            <option value="Prográmatica">Prográmatica</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="TikTok">TikTok</option>
+                        </select>
+                        <div class="help-text">Canal principal da campanha</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Configuração das Abas da Planilha</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="dailyDataGid">GID - Dados Diários *</label>
+                        <input type="text" id="dailyDataGid" name="dailyDataGid" placeholder="668487440" required>
+                        <div class="help-text">Aba com dados diários (Report)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contractGid">GID - Contrato *</label>
+                        <input type="text" id="contractGid" name="contractGid" placeholder="719245615" required>
+                        <div class="help-text">Aba com informações de contrato</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="strategiesGid">GID - Estratégias *</label>
+                        <input type="text" id="strategiesGid" name="strategiesGid" placeholder="511331032" required>
+                        <div class="help-text">Aba com estratégias e segmentações</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="publishersGid">GID - Publishers *</label>
+                        <input type="text" id="publishersGid" name="publishersGid" placeholder="531141406" required>
+                        <div class="help-text">Aba com lista de publishers</div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="description">Descrição da Campanha</label>
+                    <textarea id="description" name="description" placeholder="Descrição opcional da campanha..."></textarea>
+                </div>
+
+                <div id="preview" class="preview">
+                    <h4>📋 Preview da Configuração</h4>
+                    <div id="previewContent"></div>
+                </div>
+
+                <div class="actions">
+                    <button type="button" class="button button-secondary" onclick="generatePreview()">👁️ Preview</button>
+                    <button type="submit" class="button button-primary">🚀 Gerar Dashboard</button>
+                    <button type="button" class="button button-secondary" onclick="resetForm()">🔄 Limpar</button>
+                </div>
+            </form>
+
+            <div id="status" class="status"></div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Gerando dashboard...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Form submission
+        document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const campaignData = Object.fromEntries(formData.entries());
+            
+            await generateDashboard(campaignData);
+        });
+
+        async function generatePreview() {
+            const formData = new FormData(document.getElementById('campaignForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            if (!data.clientName || !data.campaignName || !data.sheetId) {
+                showStatus('Preencha pelo menos Nome do Cliente, Campanha e ID da Planilha para o preview', 'error');
+                return;
+            }
+            
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = `
+                <div class="preview-item">
+                    <span class="preview-label">Cliente:</span>
+                    <span class="preview-value">${data.clientName}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Campanha:</span>
+                    <span class="preview-value">${data.campaignName}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Canal:</span>
+                    <span class="preview-value">${data.channel}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Campaign Key:</span>
+                    <span class="preview-value">${generateCampaignKey(data.clientName, data.campaignName)}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Dashboard URL:</span>
+                    <span class="preview-value">dash_${generateCampaignKey(data.clientName, data.campaignName)}.html</span>
+                </div>
+            `;
+            
+            document.getElementById('preview').style.display = 'block';
+        }
+
+        async function generateDashboard(campaignData) {
+            showLoading(true);
+            hideStatus();
+            
+            try {
+                // Gerar campaign key
+                const campaignKey = generateCampaignKey(campaignData.clientName, campaignData.campaignName);
+                
+                // Criar payload
+                const payload = {
+                    campaign_key: campaignKey,
+                    client: campaignData.clientName,
+                    campaign: campaignData.campaignName,
+                    sheet_id: campaignData.sheetId,
+                    channel: campaignData.channel,
+                    tabs: {
+                        daily_data: campaignData.dailyDataGid,
+                        contract: campaignData.contractGid,
+                        strategies: campaignData.strategiesGid,
+                        publishers: campaignData.publishersGid
+                    },
+                    description: campaignData.description || ''
+                };
+                
+                // Enviar para API
+                const response = await fetch('/api/generate-dashboard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(`✅ Dashboard gerado com sucesso!<br>
+                        <strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank" style="color: #8B5CF6;">${result.dashboard_url}</a><br>
+                        <strong>API:</strong> ${result.api_endpoint}`, 'success');
+                    resetForm();
+                } else {
+                    showStatus(`❌ Erro ao gerar dashboard: ${result.message}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Erro:', error);
+                showStatus(`❌ Erro de conexão: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function generateCampaignKey(clientName, campaignName) {
+            return `${clientName.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${campaignName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function hideStatus() {
+            document.getElementById('status').style.display = 'none';
+        }
+
+        function resetForm() {
+            document.getElementById('campaignForm').reset();
+            document.getElementById('preview').style.display = 'none';
+            hideStatus();
+        }
+    </script>
+</body>
+</html>

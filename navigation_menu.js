@@ -20,6 +20,7 @@ class NavigationMenu {
         const path = window.location.pathname;
         if (path.includes('dashboard-protected.html')) return 'dashboard';
         if (path.includes('dashboard-builder.html')) return 'dashboard-builder';
+        if (path.includes('video-programmatic-generator.html')) return 'video-generator';
         if (path.includes('users.html')) return 'users';
         if (path.includes('companies.html')) return 'companies';
         if (path.includes('system-status.html')) return 'system-status';
@@ -49,6 +50,48 @@ class NavigationMenu {
                                 <a href="/dashboard-protected.html" class="nav-link" data-page="dashboard">
                                     <span class="nav-icon">🏠</span>
                                     <span class="nav-text">Dashboard</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="nav-section">
+                        <h3 class="nav-section-title">Geradores</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item">
+                                <a href="/static/generator/video-programmatic-generator.html" class="nav-link" data-page="video-generator">
+                                    <span class="nav-icon">🎬</span>
+                                    <span class="nav-text">Video Programática</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" onclick="showComingSoon('YouTube')">
+                                    <span class="nav-icon">📺</span>
+                                    <span class="nav-text">YouTube</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" onclick="showComingSoon('Netflix')">
+                                    <span class="nav-icon">🎭</span>
+                                    <span class="nav-text">Netflix</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" onclick="showComingSoon('Disney')">
+                                    <span class="nav-icon">🏰</span>
+                                    <span class="nav-text">Disney</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" onclick="showComingSoon('LinkedIn')">
+                                    <span class="nav-icon">💼</span>
+                                    <span class="nav-text">LinkedIn</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="#" class="nav-link" onclick="showComingSoon('Pinterest')">
+                                    <span class="nav-icon">📌</span>
+                                    <span class="nav-text">Pinterest</span>
                                 </a>
                             </li>
                         </ul>
@@ -486,6 +529,11 @@ class NavigationMenu {
         }
     }
 
+}
+
+// Função para mostrar "Em breve" para geradores não implementados
+function showComingSoon(platform) {
+    alert(`🚧 Gerador de Dashboard ${platform} em desenvolvimento!\n\nEm breve você poderá criar dashboards para ${platform} de forma automática.`);
 }
 
 // Inicializar menu quando a página carregar

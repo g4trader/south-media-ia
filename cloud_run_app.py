@@ -256,6 +256,224 @@ def get_latest_semana_pescado_file():
         })
         return add_cors_headers(response), 500
 
+@app.route('/api/<campaign_key>/data', methods=['GET'])
+def get_campaign_data(campaign_key):
+    """Obter dados de uma campanha específica"""
+    try:
+        logger.info(f"📊 Carregando dados da campanha: {campaign_key}")
+        
+        # Importar configuração simplificada
+        from generator_config import get_campaign
+        
+        # Obter configuração da campanha
+        config = get_campaign(campaign_key)
+        if not config:
+            return jsonify({
+                "success": False,
+                "message": f"Campanha '{campaign_key}' não encontrada"
+            }), 404
+        
+        # Tentar carregar dados reais primeiro
+        data = None
+        source = "test_data"
+        
+        try:
+            extractor = VideoCampaignDataExtractor(config)
+            data = extractor.extract_data()
+            if data:
+                source = "google_sheets"
+            else:
+                logger.warning("⚠️ Extrator retornou dados vazios")
+        except Exception as e:
+            logger.warning(f"⚠️ Não foi possível conectar com Google Sheets: {e}")
+        
+        # Se não conseguiu dados reais, usar dados de teste
+        if not data:
+            logger.info("🔄 Usando dados de teste baseados na planilha real...")
+            data = create_test_data(config)
+        
+        if data:
+            return jsonify({
+                "success": True,
+                "data": {
+                    "campaign_name": data.get("campaign_name", f"{config.client} - {config.campaign}"),
+                    "dashboard_title": data.get("dashboard_title", f"Dashboard {config.client} - {config.campaign}"),
+                    "channel": data.get("channel", "Prográmatica"),
+                    "creative_type": data.get("creative_type", "Video"),
+                    "period": data.get("period", "15/09/2025 - 30/09/2025"),
+                    "metrics": {
+                        "budget_contracted": data.get("budget_contracted", 31000),
+                        "spend": data.get("metrics", {}).get("spend", 0),
+                        "impressions": data.get("metrics", {}).get("impressions", 0),
+                        "impressions_contracted": 193750,  # Valor contratado
+                        "clicks": data.get("metrics", {}).get("clicks", 0),
+                        "ctr": data.get("metrics", {}).get("ctr", 0),
+                        "q100": data.get("metrics", {}).get("q100", 0),
+                        "starts": data.get("metrics", {}).get("starts", 0),
+                        "vtr": data.get("metrics", {}).get("vtr", 0),
+                        "cpv": data.get("metrics", {}).get("cpv", 0),
+                        "cpm": data.get("metrics", {}).get("cpm", 0),
+                        "pacing": data.get("metrics", {}).get("pacing", 0),
+                        "vc_contracted": data.get("metrics", {}).get("vc_contracted", 0),
+                        "vc_delivered": data.get("metrics", {}).get("vc_delivered", 0),
+                        "vc_pacing": data.get("metrics", {}).get("vc_pacing", 0)
+                    },
+                    "daily_data": data.get("daily_data", []),
+                    "per_data": data.get("per_data", []),
+                    "contract": data.get("contract", {}),
+                    "strategies": data.get("strategies", {}),
+                    "publishers": data.get("publishers", [])
+                },
+                "timestamp": datetime.now().isoformat(),
+                "source": source
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Nenhum dado encontrado para {config.client}"
+            }), 404
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao carregar dados da campanha {campaign_key}: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500
+
+@app.route('/api/campaigns', methods=['GET'])
+def list_campaigns():
+    """Listar todas as campanhas disponíveis (estáticas + dinâmicas)"""
+    try:
+        from generator_config import get_all_campaigns
+        
+        campaigns = get_all_campaigns()
+        campaign_list = []
+        
+        for key, config in campaigns.items():
+            campaign_list.append({
+                "key": key,
+                "client": config.client,
+                "campaign": config.campaign,
+                "slug": config.get_slug(),
+                "api_endpoint": config.api_endpoint,
+                "dashboard_title": config.get_dashboard_title()
+            })
+        
+        return jsonify({
+            "success": True,
+            "campaigns": campaign_list,
+            "total": len(campaign_list)
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao listar campanhas: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500
+
+@app.route('/api/generate-dashboard', methods=['POST'])
+def generate_dashboard():
+    """Gerar novo dashboard de campanha"""
+    try:
+        import os
+        import shutil
+        
+        data = request.get_json()
+        
+        # Validar dados obrigatórios
+        required_fields = ['campaign_key', 'client', 'campaign', 'sheet_id', 'tabs']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({
+                    "success": False,
+                    "message": f"Campo obrigatório não fornecido: {field}"
+                }), 400
+        
+        # Criar configuração da campanha
+        from generator_config import CampaignConfig
+        config = CampaignConfig(
+            client=data['client'],
+            campaign=data['campaign'],
+            sheet_id=data['sheet_id'],
+            tabs=data['tabs']
+        )
+        
+        # Gerar nome do arquivo do dashboard
+        dashboard_filename = f"dash_{config.get_slug()}.html"
+        dashboard_path = f"static/{dashboard_filename}"
+        
+        # Verificar se já existe
+        if os.path.exists(dashboard_path):
+            return jsonify({
+                "success": False,
+                "message": f"Dashboard já existe: {dashboard_filename}"
+            }), 409
+        
+        # Copiar template genérico
+        template_path = "static/dash_video_programmatic_template.html"
+        if not os.path.exists(template_path):
+            return jsonify({
+                "success": False,
+                "message": "Template genérico não encontrado"
+            }), 500
+        
+        # Copiar arquivo
+        shutil.copy2(template_path, dashboard_path)
+        logger.info(f"✅ Dashboard criado: {dashboard_path}")
+        
+        # Personalizar o arquivo para a campanha específica
+        with open(dashboard_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Substituir campaign_key genérico pelo específico
+        content = content.replace(
+            'let campaignKey = urlParams.get(\'campaign\') || \'sebrae_pr\';',
+            f'let campaignKey = \'{data["campaign_key"]}\'; // Definido para {data["client"]}'
+        )
+        
+        # Substituir título da página
+        content = content.replace(
+            'Carregando Dashboard...',
+            f'Dashboard {data["client"]} - {data["campaign"]}'
+        )
+        
+        # Salvar arquivo personalizado
+        with open(dashboard_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        logger.info(f"✅ Dashboard personalizado para {data['client']}")
+        
+        # Salvar campanha na configuração
+        from generator_config import save_campaign
+        if save_campaign(data['campaign_key'], config):
+            logger.info(f"✅ Campanha {data['campaign_key']} salva na configuração")
+        else:
+            logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Dashboard gerado com sucesso para {data['client']} - {data['campaign']}",
+            "dashboard_url": f"/static/{dashboard_filename}",
+            "api_endpoint": f"/api/{data['campaign_key']}/data",
+            "campaign_key": data['campaign_key'],
+            "client": data['client'],
+            "campaign": data['campaign']
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao gerar dashboard: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500
+
+# Manter compatibilidade com endpoint antigo
+@app.route('/api/sebrae/data', methods=['GET'])
+def get_sebrae_data():
+    """Endpoint de compatibilidade para SEBRAE"""
+    return get_campaign_data('sebrae_pr')
+
 @app.route('/api/semana-pescado/sync', methods=['POST'])
 def sync_semana_pescado():
     """Sincronizar dados específicos da campanha Semana do Pescado"""
@@ -695,4 +913,12 @@ def start_scheduled_automation():
         logger.info("✅ Automação agendada iniciada (a cada 3 horas)")
     except Exception as e:
         logger.error(f"❌ Erro ao iniciar automação agendada: {e}")
+
+if __name__ == "__main__":
+    # Configuração para desenvolvimento local
+    logger.info("🚀 Iniciando servidor Flask para desenvolvimento local...")
+    logger.info("📊 Dashboard SEBRAE disponível em: http://localhost:5000/static/dash_sebrae_programatica_video_sync.html")
+    logger.info("🔗 API SEBRAE disponível em: http://localhost:5000/api/sebrae/data")
+    
+    app.run(host='0.0.0.0', port=5000, debug=True)
 

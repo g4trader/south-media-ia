@@ -1,0 +1,193 @@
+{
+  "campaign_name": "SEBRAE - Programática Video",
+  "channel": "Programática Video",
+  "period": "Setembro 2025",
+  "budget_contracted": 31000.0,
+  "vc_contracted": 193750,
+  "contract": {
+    "investment": 31000.0,
+    "cpv_contracted": 0.16,
+    "complete_views_contracted": 193750,
+    "period_start": "15/09/2025",
+    "period_end": "30/09/2025",
+    "channel": "Programática Video"
+  },
+  "strategies": {
+    "segmentation": [
+      "Microempreendedores",
+      "Jovens Empreendedores em Ascensão"
+    ],
+    "objectives": [
+      "Maximizar alcance qualificado",
+      "Eficiência de conversão"
+    ]
+  },
+  "publishers": [
+    {
+      "name": "YouTube",
+      "type": "Plataforma principal de vídeo"
+    },
+    {
+      "name": "Google Display Network",
+      "type": "Rede de display do Google"
+    },
+    {
+      "name": "Facebook/Meta",
+      "type": "Rede social e vídeo"
+    },
+    {
+      "name": "Instagram",
+      "type": "Stories e Reels"
+    },
+    {
+      "name": "TikTok",
+      "type": "Vídeos curtos"
+    },
+    {
+      "name": "LinkedIn",
+      "type": "Rede profissional"
+    }
+  ],
+  "metrics": {
+    "spend": 10873.68,
+    "impressions": 100036,
+    "clicks": 40,
+    "starts": 100035,
+    "q25": 8238,
+    "q50": 7583,
+    "q75": 7165,
+    "q100": 74472,
+    "ctr": 0.04,
+    "vtr": 67.9,
+    "cpv": 0.16,
+    "cpm": 16.0,
+    "pacing": 35.1,
+    "vc_contracted": 193750,
+    "vc_delivered": 74472,
+    "vc_pacing": 38.4
+  },
+  "daily_data": [
+    {
+      "date": "2025-09-17",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 1087.36,
+      "impressions": 10036,
+      "clicks": 5,
+      "starts": 10035,
+      "q25": 8238,
+      "q50": 7583,
+      "q75": 7165,
+      "q100": 6796,
+      "ctr": 0.0498,
+      "vtr": 67.72,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-18",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 673.92,
+      "impressions": 6514,
+      "clicks": 0,
+      "starts": 6513,
+      "q25": 5260,
+      "q50": 4854,
+      "q75": 4506,
+      "q100": 4212,
+      "ctr": 0.0,
+      "vtr": 64.66,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-19",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 1511.68,
+      "impressions": 11609,
+      "clicks": 1,
+      "starts": 11609,
+      "q25": 10367,
+      "q50": 9992,
+      "q75": 9698,
+      "q100": 9448,
+      "ctr": 0.0086,
+      "vtr": 81.39,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-20",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 346.4,
+      "impressions": 3130,
+      "clicks": 2,
+      "starts": 3130,
+      "q25": 2671,
+      "q50": 2480,
+      "q75": 2267,
+      "q100": 2165,
+      "ctr": 0.0639,
+      "vtr": 69.17,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-21",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 230.4,
+      "impressions": 1757,
+      "clicks": 0,
+      "starts": 1757,
+      "q25": 1629,
+      "q50": 1531,
+      "q75": 1466,
+      "q100": 1440,
+      "ctr": 0.0,
+      "vtr": 81.96,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-22",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 2577.44,
+      "impressions": 19936,
+      "clicks": 32,
+      "starts": 19934,
+      "q25": 17703,
+      "q50": 17015,
+      "q75": 16492,
+      "q100": 16109,
+      "ctr": 0.1605,
+      "vtr": 80.8,
+      "cpv": 0.16
+    },
+    {
+      "date": "2025-09-23",
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 5488.32,
+      "impressions": 41184,
+      "clicks": 2,
+      "starts": 41183,
+      "q25": 37210,
+      "q50": 35971,
+      "q75": 35091,
+      "q100": 34302,
+      "ctr": 0.0049,
+      "vtr": 83.29,
+      "cpv": 0.16
+    }
+  ],
+  "per_data": [
+    {
+      "creative": "TEASER SEBRAE 02 30s_V4.mp4 (667576613)",
+      "spend": 10873.68,
+      "impressions": 100036,
+      "clicks": 40,
+      "starts": 100035,
+      "q25": 8238,
+      "q50": 7583,
+      "q75": 7165,
+      "q100": 6796,
+      "ctr": 0.04,
+      "vtr": 67.9,
+      "cpv": 0.16,
+      "cpm": 16.0
+    }
+  ]
+}
