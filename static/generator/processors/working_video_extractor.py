@@ -129,7 +129,7 @@ class WorkingVideoExtractor:
             contract_data = self._extract_contract_data_real()
             
             # 4. Calcular métricas totais
-            total_metrics = self._calculate_total_metrics(daily_data)
+            total_metrics = self._calculate_total_metrics(daily_data, contract_data)
             
             # 5. Preparar dados finais
             result = {
@@ -331,32 +331,48 @@ class WorkingVideoExtractor:
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return self._get_default_contract()
     
-    def _calculate_total_metrics(self, daily_data: list) -> dict:
+    def _calculate_total_metrics(
+        self,
+        daily_data: list,
+        contract_data: Optional[Dict[str, Any]] = None,
+    ) -> dict:
         """Calcular métricas totais dos dados diários"""
         try:
             if not daily_data:
                 return {}
-            
+
             # Somar todas as métricas
             total_spend = sum(record.get("spend", 0) for record in daily_data)
             total_impressions = sum(record.get("impressions", 0) for record in daily_data)
             total_clicks = sum(record.get("clicks", 0) for record in daily_data)
             total_starts = sum(record.get("starts", 0) for record in daily_data)
             total_q100 = sum(record.get("q100", 0) for record in daily_data)
-            
+
             # Calcular métricas derivadas
             ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
             cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0
             vtr = (total_starts / total_impressions * 100) if total_impressions > 0 else 0
             cpv = (total_spend / total_q100) if total_q100 > 0 else 0
-            
+
             # Calcular pacing
-            budget_contracted = 31000
+            contract_data = contract_data or {}
+            default_contract = self._get_default_contract()
+
+            budget_contracted_raw = contract_data.get("investment")
+            if budget_contracted_raw in (None, "", 0):
+                budget_contracted_raw = default_contract.get("investment")
+            budget_contracted = self._safe_float(budget_contracted_raw)
+
+            complete_views_target_raw = contract_data.get("complete_views_contracted")
+            if complete_views_target_raw in (None, "", 0):
+                complete_views_target_raw = default_contract.get("complete_views_contracted")
+            complete_views_target = self._safe_int(complete_views_target_raw)
+
             pacing = (total_spend / budget_contracted * 100) if budget_contracted > 0 else 0
-            vc_pacing = (total_q100 / 193750 * 100) if 193750 > 0 else 0
-            
+            vc_pacing = (total_q100 / complete_views_target * 100) if complete_views_target > 0 else 0
+
             logger.info(f"✅ Métricas calculadas: R$ {total_spend}, {total_impressions} impressões")
-            
+
             return {
                 "spend": total_spend,
                 "impressions": total_impressions,
@@ -506,7 +522,7 @@ class WorkingVideoExtractor:
             contract_data = self._extract_contract_data_real()
             
             # 4. Calcular métricas totais
-            total_metrics = self._calculate_total_metrics(daily_data)
+            total_metrics = self._calculate_total_metrics(daily_data, contract_data)
             
             # 5. Preparar dados finais
             result = {
@@ -708,30 +724,46 @@ class WorkingVideoExtractor:
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return self._get_default_contract()
     
-    def _calculate_total_metrics(self, daily_data: list) -> dict:
+    def _calculate_total_metrics(
+        self,
+        daily_data: list,
+        contract_data: Optional[Dict[str, Any]] = None,
+    ) -> dict:
         """Calcular métricas totais dos dados diários"""
         try:
             if not daily_data:
                 return {}
-            
+
             # Somar todas as métricas
             total_spend = sum(record.get("spend", 0) for record in daily_data)
             total_impressions = sum(record.get("impressions", 0) for record in daily_data)
             total_clicks = sum(record.get("clicks", 0) for record in daily_data)
             total_starts = sum(record.get("starts", 0) for record in daily_data)
             total_q100 = sum(record.get("q100", 0) for record in daily_data)
-            
+
             # Calcular métricas derivadas
             ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
             cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0
             vtr = (total_starts / total_impressions * 100) if total_impressions > 0 else 0
             cpv = (total_spend / total_q100) if total_q100 > 0 else 0
-            
+
             # Calcular pacing
-            budget_contracted = 31000
+            contract_data = contract_data or {}
+            default_contract = self._get_default_contract()
+
+            budget_contracted_raw = contract_data.get("investment")
+            if budget_contracted_raw in (None, "", 0):
+                budget_contracted_raw = default_contract.get("investment")
+            budget_contracted = self._safe_float(budget_contracted_raw)
+
+            complete_views_target_raw = contract_data.get("complete_views_contracted")
+            if complete_views_target_raw in (None, "", 0):
+                complete_views_target_raw = default_contract.get("complete_views_contracted")
+            complete_views_target = self._safe_int(complete_views_target_raw)
+
             pacing = (total_spend / budget_contracted * 100) if budget_contracted > 0 else 0
-            vc_pacing = (total_q100 / 193750 * 100) if 193750 > 0 else 0
-            
+            vc_pacing = (total_q100 / complete_views_target * 100) if complete_views_target > 0 else 0
+
             logger.info(f"✅ Métricas calculadas: R$ {total_spend}, {total_impressions} impressões")
             
             return {
