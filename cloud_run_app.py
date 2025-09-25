@@ -591,16 +591,16 @@ def generate_dashboard():
                     current_sha = response.json()["sha"]
                 
                 # Dados do commit
-                data = {
+                commit_data = {
                     "message": f"🤖 Dashboard gerado automaticamente: {data['client']} - {data['campaign']}",
                     "content": base64.b64encode(content.encode('utf-8')).decode('utf-8')
                 }
                 
                 if current_sha:
-                    data["sha"] = current_sha
+                    commit_data["sha"] = current_sha
                 
                 # Fazer commit
-                response = requests.put(url, headers=headers, json=data)
+                response = requests.put(url, headers=headers, json=commit_data)
                 if response.status_code in [200, 201]:
                     logger.info("✅ Dashboard commitado no GitHub com sucesso via API")
                     git_committed = True
