@@ -633,14 +633,40 @@ def get_campaign_data(campaign_key):
                 data = fallback_data
         
         if data:
+            contract = data.get("contract", {}) or {}
+            total_metrics = data.get("total_metrics") or {}
             metrics_data = data.get("metrics")
-            if not metrics_data and data.get("total_metrics"):
-                metrics_data = data.get("total_metrics") or {}
+            if not metrics_data and total_metrics:
+                metrics_data = total_metrics or {}
                 # Garantir que os templates sempre encontrem a chave "metrics"
                 if isinstance(data, dict):
                     data["metrics"] = metrics_data
             if not metrics_data:
                 metrics_data = {}
+
+            def resolve_metric(metric_keys=None, contract_keys=None, total_keys=None, data_keys=None, default=0):
+                metric_keys = metric_keys or []
+                contract_keys = contract_keys or []
+                total_keys = total_keys or []
+                data_keys = data_keys or []
+
+                for key in metric_keys:
+                    if key in metrics_data and metrics_data[key] is not None:
+                        return metrics_data[key]
+
+                for key in contract_keys:
+                    if key in contract and contract[key] is not None:
+                        return contract[key]
+
+                for key in total_keys:
+                    if key in total_metrics and total_metrics[key] is not None:
+                        return total_metrics[key]
+
+                for key in data_keys:
+                    if key in data and data[key] is not None:
+                        return data[key]
+
+                return default
 
             return jsonify({
                 "success": True,
@@ -651,10 +677,22 @@ def get_campaign_data(campaign_key):
                     "creative_type": data.get("creative_type", "Video"),
                     "period": data.get("period", "15/09/2025 - 30/09/2025"),
                     "metrics": {
-                        "budget_contracted": data.get("budget_contracted", 31000),
+                        "budget_contracted": resolve_metric(
+                            metric_keys=["budget_contracted"],
+                            contract_keys=["investment", "budget_contracted"],
+                            total_keys=["budget_contracted"],
+                            data_keys=["budget_contracted"],
+                            default=0
+                        ),
                         "spend": metrics_data.get("spend", 0),
                         "impressions": metrics_data.get("impressions", 0),
-                        "impressions_contracted": 193750,  # Valor contratado
+                        "impressions_contracted": resolve_metric(
+                            metric_keys=["impressions_contracted"],
+                            contract_keys=["impressions_contracted"],
+                            total_keys=["impressions_contracted"],
+                            data_keys=["impressions_contracted"],
+                            default=0
+                        ),
                         "clicks": metrics_data.get("clicks", 0),
                         "ctr": metrics_data.get("ctr", 0),
                         "q100": metrics_data.get("q100", 0),
@@ -663,13 +701,19 @@ def get_campaign_data(campaign_key):
                         "cpv": metrics_data.get("cpv", 0),
                         "cpm": metrics_data.get("cpm", 0),
                         "pacing": metrics_data.get("pacing", metrics_data.get("vc_pacing", 0)),
-                        "vc_contracted": metrics_data.get("vc_contracted", 0),
+                        "vc_contracted": resolve_metric(
+                            metric_keys=["vc_contracted"],
+                            contract_keys=["complete_views_contracted", "vc_contracted"],
+                            total_keys=["vc_contracted"],
+                            data_keys=["vc_contracted"],
+                            default=0
+                        ),
                         "vc_delivered": metrics_data.get("vc_delivered", metrics_data.get("q100", 0)),
                         "vc_pacing": metrics_data.get("vc_pacing", metrics_data.get("pacing", 0))
                     },
                     "daily_data": data.get("daily_data", []),
                     "per_data": data.get("per_data", []),
-                    "contract": data.get("contract", {}),
+                    "contract": contract,
                     "strategies": data.get("strategies", {}),
                     "publishers": data.get("publishers", [])
                 },
