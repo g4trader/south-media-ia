@@ -16,6 +16,7 @@ import re
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from google_sheets_service import GoogleSheetsService
+from numeric_parsers import safe_float as parse_safe_float, safe_int as parse_safe_int
 
 logger = logging.getLogger(__name__)
 
@@ -441,21 +442,17 @@ class WorkingVideoExtractor:
     
     def _safe_float(self, value) -> float:
         """Converter valor para float de forma segura"""
-        try:
-            if pd.isna(value) or value == '' or value == 'nan':
-                return 0.0
-            return float(str(value).replace(',', '.'))
-        except (ValueError, TypeError):
+
+        if hasattr(pd, "isna") and pd.isna(value):
             return 0.0
-    
+        return parse_safe_float(value)
+
     def _safe_int(self, value) -> int:
         """Converter valor para int de forma segura"""
-        try:
-            if pd.isna(value) or value == '' or value == 'nan':
-                return 0
-            return int(float(str(value).replace(',', '.')))
-        except (ValueError, TypeError):
+
+        if hasattr(pd, "isna") and pd.isna(value):
             return 0
+        return parse_safe_int(value)
 
 def extract_campaign_data(campaign_key: str) -> Optional[Dict[str, Any]]:
     """Função principal para extrair dados de uma campanha - VERSÃO QUE FUNCIONA"""
@@ -834,21 +831,17 @@ class WorkingVideoExtractor:
     
     def _safe_float(self, value) -> float:
         """Converter valor para float de forma segura"""
-        try:
-            if pd.isna(value) or value == '' or value == 'nan':
-                return 0.0
-            return float(str(value).replace(',', '.'))
-        except (ValueError, TypeError):
+
+        if hasattr(pd, "isna") and pd.isna(value):
             return 0.0
-    
+        return parse_safe_float(value)
+
     def _safe_int(self, value) -> int:
         """Converter valor para int de forma segura"""
-        try:
-            if pd.isna(value) or value == '' or value == 'nan':
-                return 0
-            return int(float(str(value).replace(',', '.')))
-        except (ValueError, TypeError):
+
+        if hasattr(pd, "isna") and pd.isna(value):
             return 0
+        return parse_safe_int(value)
 
 def extract_campaign_data(campaign_key: str) -> Optional[Dict[str, Any]]:
     """Função principal para extrair dados de uma campanha - VERSÃO QUE FUNCIONA"""
