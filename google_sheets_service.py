@@ -60,8 +60,15 @@ class GoogleSheetsService:
                     # Forçar aplicação dos escopos
                     if credentials.scopes is None or not credentials.scopes:
                         print("🔍 DEBUG: Forçando aplicação dos escopos...")
-                        credentials = credentials.with_scopes(self.SCOPES)
-                        credentials.refresh(Request())
+                        try:
+                            credentials = credentials.with_scopes(self.SCOPES)
+                            credentials.refresh(Request())
+                        except AttributeError:
+                            # Para credenciais OAuth, tentar recriar com escopos
+                            print("🔍 DEBUG: Credenciais OAuth, recriando com escopos...")
+                            from google.auth import default as default_auth
+                            credentials, project = default_auth(scopes=self.SCOPES)
+                            credentials.refresh(Request())
                     
                     print("🔍 DEBUG: Construindo serviço")
                     self.service = build('sheets', 'v4', credentials=credentials)
