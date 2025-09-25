@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard - {{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Dashboard - {{CLIENT_NAME}}</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">{{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">{{CAMPAIGN_STATUS}}</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
+      <div class="muted" style="margin-bottom:10px">{{CAMPAIGN_DESCRIPTION}}</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th>CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Canal:</div>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">{{PRIMARY_CHANNEL}}</div>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — {{PRIMARY_CHANNEL}}</h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th></tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card">
+      <h3 style="margin-bottom:16px">📊 Análise & Insights</h3>
+      <div style="display:grid;gap:16px">
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">🎯 Estratégia de Segmentação</h4>
+          <ul style="margin-left:20px;line-height:1.6">
+            {{SEGMENTATION_STRATEGY}}
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">📱 Estratégia Criativa</h4>
+          <ul style="margin-left:20px;line-height:1.6">
+            {{CREATIVE_STRATEGY}}
+          </ul>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">🚀 Objetivos da Campanha</h4>
+          <p style="line-height:1.6;margin-bottom:12px">{{CAMPAIGN_OBJECTIVES}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLANNING -->
+  <div id="tab-planning" class="hidden">
+    <div class="card">
+      <h3 style="margin-bottom:16px">📋 Planejamento</h3>
+      <div style="display:grid;gap:20px">
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">📅 Cronograma</h4>
+          <p><strong>Período:</strong> {{CAMPAIGN_PERIOD}}</p>
+          <p><strong>Status:</strong> {{CAMPAIGN_STATUS}}</p>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">💰 Investimento</h4>
+          <p><strong>Budget Total:</strong> R$ {{TOTAL_BUDGET}}</p>
+          <p><strong>Budget Utilizado:</strong> R$ {{BUDGET_USED}}</p>
+          <p><strong>Pacing:</strong> {{PACING_PERCENTAGE}}%</p>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">🎯 Métricas</h4>
+          <p><strong>Meta VC:</strong> {{TARGET_VC}}</p>
+          <p><strong>CPV Contratado:</strong> R$ {{CPV_CONTRACTED}}</p>
+          <p><strong>CPV Atual:</strong> R$ {{CPV_CURRENT}}</p>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">📊 Canais</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            {{CHANNEL_BADGES}}
+          </div>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">🎬 Formatos</h4>
+          <ul style="margin-left:20px;line-height:1.6">
+            {{FORMAT_SPECIFICATIONS}}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Sistema de Loading com Dados Reais
+class DashboardLoader {
+    constructor(campaignKey) {
+        this.campaignKey = campaignKey;
+        // Usar Cloud Run diretamente para máxima confiabilidade
+        this.apiEndpoint = `{{API_ENDPOINT}}`;
+        this.loadingSteps = [
+            { text: "Inicializando...", progress: 10 },
+            { text: "Conectando com Google Sheets...", progress: 30 },
+            { text: "Extraindo dados da planilha...", progress: 50 },
+            { text: "Processando métricas...", progress: 70 },
+            { text: "Renderizando dashboard...", progress: 90 },
+            { text: "Concluído!", progress: 100 }
+        ];
+        this.currentStep = 0;
+    }
+
+    async loadDashboard() {
+        try {
+            // Carregar dados reais diretamente
+            const data = await this.fetchData();
+            
+            // Renderizar dashboard
+            this.renderDashboard(data);
+            
+        } catch (error) {
+            console.error('Erro ao carregar dashboard:', error);
+            // Em vez de mostrar erro, renderizar com dados vazios
+            console.log('Renderizando dashboard com dados vazios...');
+            this.renderDashboard({});
+        }
+    }
+
+    async fetchData() {
+        const response = await fetch(this.apiEndpoint);
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+        }
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error(result.message || 'Erro ao carregar dados');
+        }
+        return result.data;
+    }
+
+    showLoadingScreen() {
+        const loadingHtml = `
+            <div id="loadingScreen" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: 'Inter', sans-serif;
+                color: white;
+            ">
+                <div style="text-align: center; max-width: 400px; padding: 40px;">
+                    <div style="
+                        width: 80px;
+                        height: 80px;
+                        border: 4px solid rgba(139, 92, 246, 0.3);
+                        border-top: 4px solid #8B5CF6;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 30px;
+                    "></div>
+                    
+                    <h2 style="
+                        font-size: 24px;
+                        font-weight: 700;
+                        margin-bottom: 10px;
+                        background: linear-gradient(135deg, #8B5CF6, #EC4899);
+                        -webkit-background-clip: text;
+                        -webkit-text-fill-color: transparent;
+                        background-clip: text;
+                    ">Carregando Dashboard</h2>
+                    
+                    <div style="
+                        font-size: 16px;
+                        color: #9CA3AF;
+                        margin-bottom: 30px;
+                    " id="loadingText">Inicializando...</div>
+                    
+                    <div style="
+                        width: 100%;
+                        height: 6px;
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 3px;
+                        overflow: hidden;
+                        margin-bottom: 20px;
+                    ">
+                        <div id="progressBar" style="
+                            width: 0%;
+                            height: 100%;
+                            background: linear-gradient(90deg, #8B5CF6, #EC4899);
+                            border-radius: 3px;
+                            transition: width 0.3s ease;
+                        "></div>
+                    </div>
+                    
+                    <div style="
+                        font-size: 14px;
+                        color: #6B7280;
+                    " id="progressText">0%</div>
+                </div>
+                
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            </div>
+        `;
+        document.body.innerHTML = loadingHtml;
+    }
+
+    async updateProgress(step) {
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        
+        if (loadingText) loadingText.textContent = step.text;
+        if (progressBar) progressBar.style.width = step.progress + '%';
+        if (progressText) progressText.textContent = step.progress + '%';
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+            loadingScreen.remove();
+        }
+    }
+
+    showError(message) {
+        const errorHtml = `
+            <div style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: 'Inter', sans-serif;
+                color: white;
+            ">
+                <div style="
+                    text-align: center;
+                    max-width: 500px;
+                    padding: 40px;
+                    background: rgba(26, 26, 46, 0.8);
+                    border: 1px solid rgba(139, 92, 246, 0.3);
+                    border-radius: 16px;
+                    backdrop-filter: blur(10px);
+                ">
+                    <div style="
+                        font-size: 48px;
+                        margin-bottom: 20px;
+                    ">❌</div>
+                    
+                    <h2 style="
+                        font-size: 24px;
+                        font-weight: 700;
+                        margin-bottom: 15px;
+                        color: #EF4444;
+                    ">Erro ao Carregar Dashboard</h2>
+                    
+                    <p style="
+                        font-size: 16px;
+                        color: #9CA3AF;
+                        margin-bottom: 30px;
+                        line-height: 1.5;
+                    ">${message}</p>
+                    
+                    <button onclick="location.reload()" style="
+                        background: linear-gradient(135deg, #8B5CF6, #EC4899);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-size: 14px;
+                    ">Tentar Novamente</button>
+                </div>
+            </div>
+        `;
+        document.body.innerHTML = errorHtml;
+    }
+
+    renderDashboard(data) {
+        // Renderizar dados diretamente no HTML existente
+        this.renderMetrics(data);
+        this.renderCharts(data);
+        this.renderTables(data);
+        this.renderInsights(data);
+        this.setupEventListeners();
+    }
+
+    renderMetrics(data) {
+        // Renderizar métricas principais
+        const metricsContainer = document.getElementById('metrics-overview-top');
+        if (metricsContainer && data.campaign_summary) {
+            const summary = data.campaign_summary;
+            metricsContainer.innerHTML = `
+                <div class="metric">
+                    <div class="label">💰 Investimento</div>
+                    <div class="value">R$ ${this.formatCurrency(summary.investment || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">🎯 VC Contratadas</div>
+                    <div class="value">${this.formatNumber(summary.complete_views_contracted || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">📈 Pacing</div>
+                    <div class="value">${this.formatPercentage(summary.pacing || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💸 CPV</div>
+                    <div class="value">R$ ${this.formatCurrency(summary.cpv || 0)}</div>
+                </div>
+            `;
+        }
+    }
+
+    renderCharts(data) {
+        // Renderizar gráficos básicos
+        const spendCtx = document.getElementById('chartSpendShare');
+        const resultsCtx = document.getElementById('chartResults');
+        
+        if (spendCtx && data.campaign_summary) {
+            new Chart(spendCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Utilizado', 'Restante'],
+                    datasets: [{
+                        data: [
+                            data.campaign_summary.total_spend || 0,
+                            (data.campaign_summary.investment || 0) - (data.campaign_summary.total_spend || 0)
+                        ],
+                        backgroundColor: ['#8B5CF6', '#EC4899']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9CA3AF' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        if (resultsCtx && data.campaign_summary) {
+            new Chart(resultsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Impressões', 'Cliques', 'VC'],
+                    datasets: [{
+                        label: 'Performance',
+                        data: [
+                            data.campaign_summary.total_impressions || 0,
+                            data.campaign_summary.total_clicks || 0,
+                            data.campaign_summary.total_video_completions || 0
+                        ],
+                        backgroundColor: ['#8B5CF6', '#EC4899', '#10B981']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#9CA3AF' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    renderTables(data) {
+        // Renderizar tabela de canais
+        const tbodyChannels = document.getElementById('tbodyChannels');
+        if (tbodyChannels && data.publishers) {
+            tbodyChannels.innerHTML = data.publishers.map(publisher => `
+                <tr>
+                    <td>${publisher.publisher || publisher.name || 'N/A'}</td>
+                    <td>R$ ${this.formatCurrency(publisher.investimento || publisher.budget || 0)}</td>
+                    <td>R$ ${this.formatCurrency(publisher.investimento || publisher.spend || 0)}</td>
+                    <td>${this.formatPercentage(publisher.pacing || 0)}</td>
+                    <td>${this.formatNumber(publisher.impressoes || publisher.impressions || 0)}</td>
+                    <td>${this.formatNumber(publisher.cliques || publisher.clicks || 0)}</td>
+                    <td>${this.formatPercentage(publisher.ctr || 0)}</td>
+                    <td>${this.formatNumber(publisher.visualizacoes_completas || publisher.video_completions || 0)}</td>
+                    <td>${this.formatPercentage(publisher.vtr || 0)}</td>
+                    <td>R$ ${this.formatCurrency(publisher.cpv || 0)}</td>
+                    <td>R$ ${this.formatCurrency(publisher.cpm || 0)}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    renderInsights(data) {
+        // Renderizar insights se disponíveis
+        if (data.insights && data.insights.length > 0) {
+            console.log('Insights disponíveis:', data.insights);
+        }
+    }
+
+    setupEventListeners() {
+        // Configurar navegação por tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabId = tab.dataset.tab;
+                ['overview', 'channels', 'insights', 'planning'].forEach(key => {
+                    const element = document.getElementById(`tab-${key}`);
+                    if (element) {
+                        element.classList.toggle('hidden', key !== tabId);
+                    }
+                });
+            });
+        });
+    }
+
+    // Funções auxiliares de formatação
+    formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value || 0);
+    }
+
+    formatNumber(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            maximumFractionDigits: 0
+        }).format(value || 0);
+    }
+
+    formatPercentage(value) {
+        return `${(value || 0).toFixed(2)}%`;
+    }
+}
+
+// Inicializar dashboard quando a página carregar
+document.addEventListener('DOMContentLoaded', () => {
+    // Extrair campaign key da URL ou usar padrão
+    let campaignKey = '{{CAMPAIGN_KEY}}';
+    
+    // Criar e carregar dashboard
+    const dashboard = new DashboardLoader(campaignKey);
+    dashboard.loadDashboard();
+});
+</script>
+</body>
+</html>
