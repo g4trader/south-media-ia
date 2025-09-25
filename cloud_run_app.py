@@ -559,6 +559,35 @@ def generate_dashboard():
         else:
             logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
         
+        # Fazer commit automático para Git
+        git_committed = False
+        try:
+            import subprocess
+            logger.info("🔄 Iniciando commit automático...")
+            
+            # Adicionar arquivo ao Git
+            subprocess.run(['git', 'add', dashboard_path], check=True, capture_output=True)
+            logger.info(f"✅ Arquivo adicionado ao Git: {dashboard_filename}")
+            
+            # Fazer commit
+            commit_message = f"add: Dashboard {data['client']} - {data['campaign']} (auto-generated)"
+            subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True)
+            logger.info(f"✅ Commit realizado: {commit_message}")
+            
+            # Fazer push
+            subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)
+            logger.info("✅ Push realizado com sucesso")
+            
+            git_committed = True
+            logger.info("🎉 Commit automático concluído com sucesso!")
+            
+        except subprocess.CalledProcessError as e:
+            logger.error(f"❌ Erro no commit automático: {e}")
+            logger.error(f"stdout: {e.stdout.decode() if e.stdout else 'N/A'}")
+            logger.error(f"stderr: {e.stderr.decode() if e.stderr else 'N/A'}")
+        except Exception as e:
+            logger.error(f"❌ Erro inesperado no commit automático: {e}")
+        
         return jsonify({
             "success": True,
             "message": f"Dashboard gerado com sucesso para {data['client']} - {data['campaign']}",
@@ -566,7 +595,8 @@ def generate_dashboard():
             "api_endpoint": f"/api/{data['campaign_key']}/data",
             "campaign_key": data['campaign_key'],
             "client": data['client'],
-            "campaign": data['campaign']
+            "campaign": data['campaign'],
+            "git_committed": git_committed
         })
         
     except Exception as e:
