@@ -175,6 +175,7 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
+        this.data = null;
         // Usar Cloud Run diretamente para máxima confiabilidade
         this.apiEndpoint = `{{API_ENDPOINT}}`;
         this.loadingSteps = [
@@ -377,6 +378,7 @@ class DashboardLoader {
 
     renderDashboard(data) {
         // Renderizar dados diretamente no HTML existente
+        this.data = data || {};
         this.renderMetrics(data);
         this.renderCharts(data);
         this.renderTables(data);
@@ -387,8 +389,12 @@ class DashboardLoader {
     renderMetrics(data) {
         // Renderizar métricas principais
         const metricsContainer = document.getElementById('metrics-overview-top');
-        if (metricsContainer && data.campaign_summary) {
-            const summary = data.campaign_summary;
+        if (!metricsContainer) {
+            return;
+        }
+
+        const summary = this.getCampaignSummary(data);
+        if (summary) {
             metricsContainer.innerHTML = `
                 <div class="metric">
                     <div class="label">💰 Investimento</div>
@@ -407,6 +413,8 @@ class DashboardLoader {
                     <div class="value">R$ ${this.formatCurrency(summary.cpv || 0)}</div>
                 </div>
             `;
+        } else {
+            metricsContainer.innerHTML = '';
         }
     }
 
@@ -414,17 +422,18 @@ class DashboardLoader {
         // Renderizar gráficos básicos
         const spendCtx = document.getElementById('chartSpendShare');
         const resultsCtx = document.getElementById('chartResults');
-        
-        if (spendCtx && data.campaign_summary) {
+
+        const summary = this.getCampaignSummary(data);
+
+        if (spendCtx && summary) {
+            const totalSpend = summary.total_spend || 0;
+            const remaining = Math.max((summary.investment || 0) - totalSpend, 0);
             new Chart(spendCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Utilizado', 'Restante'],
                     datasets: [{
-                        data: [
-                            data.campaign_summary.total_spend || 0,
-                            (data.campaign_summary.investment || 0) - (data.campaign_summary.total_spend || 0)
-                        ],
+                        data: [totalSpend, remaining],
                         backgroundColor: ['#8B5CF6', '#EC4899']
                     }]
                 },
@@ -438,8 +447,8 @@ class DashboardLoader {
                 }
             });
         }
-        
-        if (resultsCtx && data.campaign_summary) {
+
+        if (resultsCtx && summary) {
             new Chart(resultsCtx, {
                 type: 'bar',
                 data: {
@@ -447,9 +456,9 @@ class DashboardLoader {
                     datasets: [{
                         label: 'Performance',
                         data: [
-                            data.campaign_summary.total_impressions || 0,
-                            data.campaign_summary.total_clicks || 0,
-                            data.campaign_summary.total_video_completions || 0
+                            summary.total_impressions || 0,
+                            summary.total_clicks || 0,
+                            summary.total_video_completions || 0
                         ],
                         backgroundColor: ['#8B5CF6', '#EC4899', '#10B981']
                     }]
@@ -523,6 +532,85 @@ class DashboardLoader {
         });
     }
 
+    getCampaignSummary(data) {
+        if (!data) {
+            return null;
+        }
+
+        if (data.campaign_summary) {
+            return data.campaign_summary;
+        }
+
+        const contract = data.contract || {};
+        const metrics = data.metrics || data.total_metrics || {};
+        const hasData = (contract && Object.keys(contract).length > 0) || (metrics && Object.keys(metrics).length > 0);
+
+        if (!hasData) {
+            return null;
+        }
+
+        const investment = this.toNumber(
+            contract.investment ??
+            metrics.investment ??
+            metrics.budget_contracted ??
+            data.budget_contracted ??
+            contract.budget ??
+            0
+        );
+
+        const totalSpend = this.toNumber(
+            metrics.total_spend ??
+            metrics.spend ??
+            metrics.budget_used ??
+            contract.budget_used ??
+            0
+        );
+
+        const totalImpressions = this.toNumber(
+            metrics.total_impressions ??
+            metrics.impressions ??
+            metrics.impressoes ??
+            0
+        );
+
+        const totalClicks = this.toNumber(
+            metrics.total_clicks ??
+            metrics.clicks ??
+            metrics.cliques ??
+            0
+        );
+
+        const totalVideoCompletions = this.toNumber(
+            metrics.total_video_completions ??
+            metrics.vc_delivered ??
+            metrics.q100 ??
+            metrics.video_completions ??
+            0
+        );
+
+        return {
+            investment,
+            complete_views_contracted: this.toNumber(
+                contract.complete_views_contracted ??
+                metrics.vc_contracted ??
+                data.vc_contracted ??
+                0
+            ),
+            pacing: this.toNumber(metrics.pacing ?? metrics.vc_pacing ?? contract.pacing ?? 0),
+            cpv: this.toNumber(
+                metrics.cpv ??
+                contract.cpv ??
+                contract.cpv_contracted ??
+                data.cpv ??
+                0
+            ),
+            total_spend: totalSpend,
+            total_impressions: totalImpressions,
+            total_clicks: totalClicks,
+            total_video_completions: totalVideoCompletions
+        };
+    }
+
     // Funções auxiliares de formatação
     formatCurrency(value) {
         return new Intl.NumberFormat('pt-BR', {
@@ -540,15 +628,24 @@ class DashboardLoader {
     formatPercentage(value) {
         return `${(value || 0).toFixed(2)}%`;
     }
+
+    toNumber(value) {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
 }
 
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
     let campaignKey = '{{CAMPAIGN_KEY}}';
-    
+
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);
+    window.dashboardLoader = dashboard;
     dashboard.loadDashboard();
 });
 </script>
