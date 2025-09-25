@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import logging
+import re
 
 # Adicionar diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -17,6 +18,89 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from google_sheets_service import GoogleSheetsService
 
 logger = logging.getLogger(__name__)
+
+
+PUBLISHER_COLUMN_CANDIDATES = [
+    "publisher",
+    "publisher name",
+    "publisher_name",
+    "publisher/ exchange",
+    "publisher / exchange",
+    "publisher label",
+    "exchange",
+    "inventory",
+    "inventory source",
+    "inventory_source",
+    "site",
+    "site name",
+    "site_name",
+    "channel",
+    "channel name",
+    "canal",
+    "veículo",
+    "veiculo",
+    "vehicle",
+    "placement",
+    "placement name",
+    "placement_name",
+    "publisher id",
+    "publisher_id"
+]
+
+PUBLISHER_TYPE_COLUMN_CANDIDATES = [
+    "type",
+    "publisher type",
+    "publisher_type",
+    "site type",
+    "site_type",
+    "channel type",
+    "channel_type"
+]
+
+
+def _normalize_sheet_value(value) -> Optional[str]:
+    """Return a stripped string representation for sheet values."""
+
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    return text
+
+
+def _extract_row_value(row: pd.Series, candidates) -> Optional[str]:
+    """Retrieve the first non-empty value from the provided candidate columns."""
+
+    if not isinstance(row, pd.Series):
+        return None
+
+    normalized_columns = {str(col).strip().lower(): col for col in row.index}
+
+    for candidate in candidates:
+        normalized_candidate = str(candidate).strip().lower()
+        source_column = normalized_columns.get(normalized_candidate)
+        if source_column is None:
+            continue
+
+        value = _normalize_sheet_value(row.get(source_column))
+        if value is not None:
+            return value
+
+    return None
+
+
+def _slugify_publisher(name: str) -> str:
+    """Create a simple slug for publisher descriptions."""
+
+    if not name:
+        return "publisher"
+
+    slug = "-".join(
+        part for part in re.split(r"[^a-z0-9]+", name.lower()) if part
+    )
+    return slug or "publisher"
 
 class WorkingVideoExtractor:
     """Extrator que realmente funciona"""
@@ -99,7 +183,9 @@ class WorkingVideoExtractor:
                     if not date_str or date_str == 'nan' or date_str == '':
                         continue
                     
-                    creative = str(row.get('Creative', ''))
+                    creative = _normalize_sheet_value(row.get('Creative')) or ''
+                    publisher_name = _extract_row_value(row, PUBLISHER_COLUMN_CANDIDATES) or creative or "Desconhecido"
+                    publisher_type = _extract_row_value(row, PUBLISHER_TYPE_COLUMN_CANDIDATES)
                     spend = self._safe_float(row.get('Valor investido', 0))
                     impressions = self._safe_int(row.get('Imps', 0))
                     clicks = self._safe_int(row.get('Clicks', 0))
@@ -115,6 +201,7 @@ class WorkingVideoExtractor:
                     record = {
                         "date": date_str,
                         "creative": creative,
+                        "publisher": publisher_name,
                         "spend": spend,
                         "impressions": impressions,
                         "clicks": clicks,
@@ -125,7 +212,10 @@ class WorkingVideoExtractor:
                         "q100": q100,
                         "vtr": vtr
                     }
-                    
+
+                    if publisher_type:
+                        record["publisher_type"] = publisher_type
+
                     daily_records.append(record)
                     logger.info(f"✅ Registro {index + 1}: {date_str} - {creative} - R$ {spend}")
                     
@@ -242,19 +332,34 @@ class WorkingVideoExtractor:
     def _get_publishers(self, daily_data: list) -> list:
         """Extrair publishers únicos dos dados diários"""
         try:
-            publishers = set()
+            publishers_list = []
+            seen_names = set()
+
             for record in daily_data:
-                creative = record.get("creative", "")
-                if creative:
-                    if "SEBRAE" in creative:
-                        publishers.add("SEBRAE PR")
-                    else:
-                        publishers.add("Publisher Padrão")
-            
-            result = [{"name": p, "type": f"Site: {p.lower().replace(' ', '-')}.com"} for p in publishers]
-            logger.info(f"✅ Publishers extraídos: {len(result)}")
-            return result
-            
+                raw_name = record.get("publisher") or record.get("site") or record.get("channel") or record.get("creative")
+                publisher_name = _normalize_sheet_value(raw_name) or "Desconhecido"
+                normalized_name = publisher_name.lower()
+
+                if normalized_name in seen_names:
+                    continue
+
+                seen_names.add(normalized_name)
+
+                entry = {"name": publisher_name}
+                publisher_type = record.get("publisher_type")
+                if publisher_type:
+                    entry["type"] = publisher_type
+                else:
+                    entry["type"] = f"Site: {_slugify_publisher(publisher_name)}.com"
+
+                publishers_list.append(entry)
+
+            if not publishers_list:
+                publishers_list.append({"name": "Publisher Padrão", "type": "Site: publisher-padrao.com"})
+
+            logger.info(f"✅ Publishers extraídos: {len(publishers_list)}")
+            return publishers_list
+
         except Exception as e:
             logger.error(f"❌ Erro ao extrair publishers: {e}")
             return [{"name": "Publisher Padrão", "type": "Site: publisher-padrao.com"}]
@@ -409,7 +514,9 @@ class WorkingVideoExtractor:
                     if not date_str or date_str == 'nan' or date_str == '':
                         continue
                     
-                    creative = str(row.get('Creative', ''))
+                    creative = _normalize_sheet_value(row.get('Creative')) or ''
+                    publisher_name = _extract_row_value(row, PUBLISHER_COLUMN_CANDIDATES) or creative or "Desconhecido"
+                    publisher_type = _extract_row_value(row, PUBLISHER_TYPE_COLUMN_CANDIDATES)
                     spend = self._safe_float(row.get('Valor investido', 0))
                     impressions = self._safe_int(row.get('Imps', 0))
                     clicks = self._safe_int(row.get('Clicks', 0))
@@ -425,6 +532,7 @@ class WorkingVideoExtractor:
                     record = {
                         "date": date_str,
                         "creative": creative,
+                        "publisher": publisher_name,
                         "spend": spend,
                         "impressions": impressions,
                         "clicks": clicks,
@@ -435,7 +543,10 @@ class WorkingVideoExtractor:
                         "q100": q100,
                         "vtr": vtr
                     }
-                    
+
+                    if publisher_type:
+                        record["publisher_type"] = publisher_type
+
                     daily_records.append(record)
                     logger.info(f"✅ Registro {index + 1}: {date_str} - {creative} - R$ {spend}")
                     
@@ -552,18 +663,33 @@ class WorkingVideoExtractor:
     def _get_publishers(self, daily_data: list) -> list:
         """Extrair publishers únicos dos dados diários"""
         try:
-            publishers = set()
+            publishers_list = []
+            seen_names = set()
+
             for record in daily_data:
-                creative = record.get("creative", "")
-                if creative:
-                    if "SEBRAE" in creative:
-                        publishers.add("SEBRAE PR")
-                    else:
-                        publishers.add("Publisher Padrão")
-            
-            result = [{"name": p, "type": f"Site: {p.lower().replace(' ', '-')}.com"} for p in publishers]
-            logger.info(f"✅ Publishers extraídos: {len(result)}")
-            return result
+                raw_name = record.get("publisher") or record.get("site") or record.get("channel") or record.get("creative")
+                publisher_name = _normalize_sheet_value(raw_name) or "Desconhecido"
+                normalized_name = publisher_name.lower()
+
+                if normalized_name in seen_names:
+                    continue
+
+                seen_names.add(normalized_name)
+
+                entry = {"name": publisher_name}
+                publisher_type = record.get("publisher_type")
+                if publisher_type:
+                    entry["type"] = publisher_type
+                else:
+                    entry["type"] = f"Site: {_slugify_publisher(publisher_name)}.com"
+
+                publishers_list.append(entry)
+
+            if not publishers_list:
+                publishers_list.append({"name": "Publisher Padrão", "type": "Site: publisher-padrao.com"})
+
+            logger.info(f"✅ Publishers extraídos: {len(publishers_list)}")
+            return publishers_list
             
         except Exception as e:
             logger.error(f"❌ Erro ao extrair publishers: {e}")
