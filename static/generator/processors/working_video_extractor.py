@@ -156,17 +156,66 @@ class WorkingVideoExtractor:
             import traceback
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return None
-    
+
+    def _get_tab_gid(self, tab_key: str) -> Optional[str]:
+        """Recupera o GID configurado para uma aba específica."""
+
+        tabs = getattr(self.config, "tabs", None) or {}
+        if not isinstance(tabs, dict):
+            return None
+
+        gid = tabs.get(tab_key)
+        if gid is None:
+            return None
+
+        gid_str = str(gid).strip()
+        return gid_str or None
+
+    def _read_tab_dataframe(
+        self,
+        tab_key: str,
+        default_sheet_name: Optional[str],
+    ) -> pd.DataFrame:
+        """Lê uma aba da planilha utilizando o GID configurado."""
+
+        gid = self._get_tab_gid(tab_key)
+        if gid:
+            logger.info("📄 Lendo aba '%s' usando GID %s", tab_key, gid)
+            df = self.sheets_service.read_sheet_data(
+                self.config.sheet_id,
+                gid=gid,
+            )
+
+            if not df.empty or default_sheet_name is None:
+                return df
+
+            logger.warning(
+                "⚠️ Aba '%s' (gid %s) vazia ou não encontrada; tentando nome padrão '%s'",
+                tab_key,
+                gid,
+                default_sheet_name,
+            )
+
+        if default_sheet_name:
+            logger.info(
+                "ℹ️ Utilizando fallback para aba '%s' com nome '%s'",
+                tab_key,
+                default_sheet_name,
+            )
+            return self.sheets_service.read_sheet_data(
+                self.config.sheet_id,
+                sheet_name=default_sheet_name,
+            )
+
+        return pd.DataFrame()
+
     def _extract_daily_data_real(self) -> list:
         """Extrair dados diários da aba Report - VERSÃO QUE FUNCIONA"""
         try:
             logger.info("🔄 Extraindo dados diários REAIS...")
             
             # Usar o método correto do GoogleSheetsService
-            df = self.sheets_service.read_sheet_data(
-                self.config.sheet_id, 
-                sheet_name="Report"
-            )
+            df = self._read_tab_dataframe("daily_data", "Report")
             
             if df is None or df.empty:
                 logger.warning("⚠️ DataFrame vazio da aba Report")
@@ -238,10 +287,7 @@ class WorkingVideoExtractor:
             logger.info("🔄 Extraindo dados de contrato REAIS...")
             
             # Usar o método correto do GoogleSheetsService
-            df = self.sheets_service.read_sheet_data(
-                self.config.sheet_id, 
-                sheet_name="Informações de contrato"
-            )
+            df = self._read_tab_dataframe("contract", "Informações de contrato")
             
             if df is None or df.empty:
                 logger.warning("⚠️ DataFrame vazio da aba Informações de contrato")
@@ -487,17 +533,66 @@ class WorkingVideoExtractor:
             import traceback
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
             return None
-    
+
+    def _get_tab_gid(self, tab_key: str) -> Optional[str]:
+        """Recupera o GID configurado para uma aba específica."""
+
+        tabs = getattr(self.config, "tabs", None) or {}
+        if not isinstance(tabs, dict):
+            return None
+
+        gid = tabs.get(tab_key)
+        if gid is None:
+            return None
+
+        gid_str = str(gid).strip()
+        return gid_str or None
+
+    def _read_tab_dataframe(
+        self,
+        tab_key: str,
+        default_sheet_name: Optional[str],
+    ) -> pd.DataFrame:
+        """Lê uma aba da planilha utilizando o GID configurado."""
+
+        gid = self._get_tab_gid(tab_key)
+        if gid:
+            logger.info("📄 Lendo aba '%s' usando GID %s", tab_key, gid)
+            df = self.sheets_service.read_sheet_data(
+                self.config.sheet_id,
+                gid=gid,
+            )
+
+            if not df.empty or default_sheet_name is None:
+                return df
+
+            logger.warning(
+                "⚠️ Aba '%s' (gid %s) vazia ou não encontrada; tentando nome padrão '%s'",
+                tab_key,
+                gid,
+                default_sheet_name,
+            )
+
+        if default_sheet_name:
+            logger.info(
+                "ℹ️ Utilizando fallback para aba '%s' com nome '%s'",
+                tab_key,
+                default_sheet_name,
+            )
+            return self.sheets_service.read_sheet_data(
+                self.config.sheet_id,
+                sheet_name=default_sheet_name,
+            )
+
+        return pd.DataFrame()
+
     def _extract_daily_data_real(self) -> list:
         """Extrair dados diários da aba Report - VERSÃO QUE FUNCIONA"""
         try:
             logger.info("🔄 Extraindo dados diários REAIS...")
             
             # Usar o método correto do GoogleSheetsService
-            df = self.sheets_service.read_sheet_data(
-                self.config.sheet_id, 
-                sheet_name="Report"
-            )
+            df = self._read_tab_dataframe("daily_data", "Report")
             
             if df is None or df.empty:
                 logger.warning("⚠️ DataFrame vazio da aba Report")
@@ -569,10 +664,7 @@ class WorkingVideoExtractor:
             logger.info("🔄 Extraindo dados de contrato REAIS...")
             
             # Usar o método correto do GoogleSheetsService
-            df = self.sheets_service.read_sheet_data(
-                self.config.sheet_id, 
-                sheet_name="Informações de contrato"
-            )
+            df = self._read_tab_dataframe("contract", "Informações de contrato")
             
             if df is None or df.empty:
                 logger.warning("⚠️ DataFrame vazio da aba Informações de contrato")
