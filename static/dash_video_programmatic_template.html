@@ -970,19 +970,8 @@ async function retryLoadData() {
 
 // Tabs functionality
 document.addEventListener('DOMContentLoaded', function() {
-    // Tentar obter campaignKey da URL ou usar padrão
-    const urlParams = new URLSearchParams(window.location.search);
-        let campaignKey = urlParams.get('campaign') || 'default_campaign';
-    
-    // Se não há parâmetro na URL, tentar obter do nome do arquivo
-    if (!urlParams.has('campaign')) {
-        const pathParts = window.location.pathname.split('/');
-        const filename = pathParts[pathParts.length - 1];
-        // Extrair campaign_key do nome do arquivo (formato: dash_CLIENTE_CAMPANHA.html)
-        if (filename.startsWith('dash_') && filename.endsWith('.html')) {
-            campaignKey = filename.replace('dash_', '').replace('.html', '');
-        }
-    }
+    // CAMPAIGN_KEY será substituído automaticamente pelo gerador
+    let campaignKey = 'CAMPAIGN_KEY_PLACEHOLDER';
     
     console.log('Campaign Key:', campaignKey);
     
