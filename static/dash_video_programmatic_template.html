@@ -978,12 +978,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!urlParams.has('campaign')) {
         const pathParts = window.location.pathname.split('/');
         const filename = pathParts[pathParts.length - 1];
-        if (filename.includes('sebrae')) {
-            campaignKey = 'sebrae_pr';
-        } else if (filename.includes('copacol')) {
-            campaignKey = 'copacol_institucional_30s';
-        } else if (filename.includes('exemplo')) {
-            campaignKey = 'exemplo_cliente';
+        // Extrair campaign_key do nome do arquivo (formato: dash_CLIENTE_CAMPANHA.html)
+        if (filename.startsWith('dash_') && filename.endsWith('.html')) {
+            campaignKey = filename.replace('dash_', '').replace('.html', '');
         }
     }
     

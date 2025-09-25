@@ -536,7 +536,7 @@ def generate_dashboard():
         
         # Substituir campaign_key genérico pelo específico
         content = content.replace(
-            'let campaignKey = urlParams.get(\'campaign\') || \'sebrae_pr\';',
+            'let campaignKey = urlParams.get(\'campaign\') || \'default_campaign\';',
             f'let campaignKey = \'{data["campaign_key"]}\'; // Definido para {data["client"]}'
         )
         
