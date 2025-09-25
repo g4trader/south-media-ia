@@ -374,9 +374,8 @@
 class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
-        // Tentar domínio personalizado primeiro, com fallback para Cloud Run
+        // Usar Cloud Run diretamente para máxima confiabilidade
         this.apiEndpoint = `https://south-media-ia-609095880025.us-central1.run.app/api/${campaignKey}/data`;
-        this.customDomainEndpoint = `https://api.iasouth.tech/api/${campaignKey}/data`;
         this.loadingSteps = [
             { text: "Inicializando...", progress: 10 },
             { text: "Conectando com Google Sheets...", progress: 30 },
