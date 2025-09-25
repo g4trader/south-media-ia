@@ -534,9 +534,9 @@ def generate_dashboard():
         with open(dashboard_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Substituir campaign_key genérico pelo específico
+        # Substituir placeholder do campaign_key pelo específico
         content = content.replace(
-            'let campaignKey = urlParams.get(\'campaign\') || \'default_campaign\';',
+            'let campaignKey = \'CAMPAIGN_KEY_PLACEHOLDER\';',
             f'let campaignKey = \'{data["campaign_key"]}\'; // Definido para {data["client"]}'
         )
         
@@ -559,52 +559,23 @@ def generate_dashboard():
         else:
             logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
         
-        # Fazer commit automático para Git (com timeout reduzido)
+        # Nota: Commit automático desabilitado por questões de estabilidade
+        # O dashboard será criado e ficará disponível no Cloud Run
+        # Para deploy no Vercel, será necessário commit manual
         git_committed = False
-        try:
-            import subprocess
-            logger.info("🔄 Iniciando commit automático...")
-            
-            # Configurar timeout de 30 segundos para cada comando
-            timeout_seconds = 30
-            
-            # Adicionar arquivo ao Git
-            result = subprocess.run(['git', 'add', dashboard_path], 
-                                  check=True, capture_output=True, text=True, timeout=timeout_seconds)
-            logger.info(f"✅ Arquivo adicionado ao Git: {dashboard_filename}")
-            
-            # Fazer commit
-            commit_message = f"add: Dashboard {data['client']} - {data['campaign']} (auto-generated)"
-            result = subprocess.run(['git', 'commit', '-m', commit_message], 
-                                  check=True, capture_output=True, text=True, timeout=timeout_seconds)
-            logger.info(f"✅ Commit realizado: {commit_message}")
-            
-            # Fazer push
-            result = subprocess.run(['git', 'push', 'origin', 'main'], 
-                                  check=True, capture_output=True, text=True, timeout=timeout_seconds)
-            logger.info("✅ Push realizado com sucesso")
-            
-            git_committed = True
-            logger.info("🎉 Commit automático concluído com sucesso!")
-            
-        except subprocess.TimeoutExpired as e:
-            logger.error(f"❌ Timeout no commit automático: {e}")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Erro no commit automático: {e}")
-            logger.error(f"stdout: {e.stdout if hasattr(e, 'stdout') and e.stdout else 'N/A'}")
-            logger.error(f"stderr: {e.stderr if hasattr(e, 'stderr') and e.stderr else 'N/A'}")
-        except Exception as e:
-            logger.error(f"❌ Erro inesperado no commit automático: {e}")
+        logger.info("ℹ️ Dashboard criado no Cloud Run - commit manual necessário para Vercel")
         
         return jsonify({
             "success": True,
             "message": f"Dashboard gerado com sucesso para {data['client']} - {data['campaign']}",
             "dashboard_url": f"/static/{dashboard_filename}",
+            "dashboard_url_cloud_run": f"https://south-media-ia-609095880025.us-central1.run.app/static/{dashboard_filename}",
             "api_endpoint": f"/api/{data['campaign_key']}/data",
             "campaign_key": data['campaign_key'],
             "client": data['client'],
             "campaign": data['campaign'],
-            "git_committed": git_committed
+            "git_committed": git_committed,
+            "note": "Dashboard disponível no Cloud Run. Para deploy no Vercel, será necessário commit manual."
         })
         
     except Exception as e:

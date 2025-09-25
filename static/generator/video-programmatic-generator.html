@@ -528,6 +528,8 @@
 
         // Função para mostrar progresso de deploy
         async function showDeployProgress(dashboardUrl, result) {
+            // Usar URL do Cloud Run se disponível
+            const actualDashboardUrl = result.dashboard_url_cloud_run || dashboardUrl;
             let attempt = 0;
             const maxAttempts = 36; // 6 minutos (10s * 36)
             
@@ -598,7 +600,7 @@
                             📊 ${result.client} - ${result.campaign}
                         </div>
                         <div style="font-size: 14px; color: #6B7280; margin-bottom: 5px;">
-                            🔗 <strong>URL:</strong> ${dashboardUrl}
+                            🔗 <strong>URL Cloud Run:</strong> ${actualDashboardUrl}
                         </div>
                         <div style="font-size: 14px; color: #6B7280;">
                             🔌 <strong>API:</strong> ${result.api_endpoint}
@@ -630,7 +632,7 @@
                     </div>
                     
                     <div style="display: flex; gap: 15px; justify-content: center;">
-                        <button id="openDashboardBtn" onclick="window.open('${dashboardUrl}', '_blank')" style="
+                        <button id="openDashboardBtn" onclick="window.open('${actualDashboardUrl}', '_blank')" style="
                             background: linear-gradient(135deg, #8B5CF6, #7C3AED);
                             color: white;
                             border: none;
@@ -676,7 +678,7 @@
                 progressBar.style.width = progress + '%';
                 
                 try {
-                    const response = await fetch(dashboardUrl, { method: 'HEAD' });
+                    const response = await fetch(actualDashboardUrl, { method: 'HEAD' });
                     
                     if (response.ok) {
                         // Dashboard disponível!
@@ -696,7 +698,7 @@
                         
                         // Redirecionar automaticamente após 3 segundos
                         setTimeout(() => {
-                            window.open(dashboardUrl, '_blank');
+                            window.open(actualDashboardUrl, '_blank');
                             closeDeployModal();
                         }, 3000);
                         
