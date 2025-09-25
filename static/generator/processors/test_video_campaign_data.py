@@ -70,6 +70,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-17",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher A",
                 "spend": 1087.36,
                 "impressions": 10036,
                 "clicks": 5,
@@ -85,6 +86,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-18",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher A",
                 "spend": 673.92,
                 "impressions": 6514,
                 "clicks": 0,
@@ -100,6 +102,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-19",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher B",
                 "spend": 1511.68,
                 "impressions": 11609,
                 "clicks": 1,
@@ -115,6 +118,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-20",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher C",
                 "spend": 346.40,
                 "impressions": 3130,
                 "clicks": 2,
@@ -130,6 +134,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-21",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher C",
                 "spend": 230.40,
                 "impressions": 1757,
                 "clicks": 0,
@@ -145,6 +150,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-22",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher D",
                 "spend": 2577.44,
                 "impressions": 19936,
                 "clicks": 32,
@@ -160,6 +166,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             {
                 "date": "2025-09-23",
                 "creative": f"Creative {campaign_config.client} 30s_V1.mp4",
+                "publisher": "Publisher E",
                 "spend": 5488.32,
                 "impressions": 41184,
                 "clicks": 2,
