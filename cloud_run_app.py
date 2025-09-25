@@ -559,11 +559,59 @@ def generate_dashboard():
         else:
             logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
         
-        # Nota: Commit automático desabilitado por questões de estabilidade
-        # O dashboard será criado e ficará disponível no Cloud Run
-        # Para deploy no Vercel, será necessário commit manual
+        # Fazer commit automático via GitHub API (como na automação multicanal)
         git_committed = False
-        logger.info("ℹ️ Dashboard criado no Cloud Run - commit manual necessário para Vercel")
+        try:
+            logger.info("🔄 Iniciando commit automático via GitHub API...")
+            
+            # Configurar token do GitHub
+            github_token = os.getenv('GITHUB_TOKEN')
+            if not github_token:
+                logger.warning("⚠️ GITHUB_TOKEN não configurado, pulando commit automático")
+            else:
+                # Ler o arquivo gerado
+                with open(dashboard_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Fazer commit via GitHub API
+                import base64
+                import requests
+                
+                # URL da API do GitHub
+                url = f"https://api.github.com/repos/g4trader/south-media-ia/contents/static/{dashboard_filename}"
+                headers = {
+                    "Authorization": f"token {github_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+                
+                # Obter SHA do arquivo atual (se existir)
+                response = requests.get(url, headers=headers)
+                current_sha = None
+                if response.status_code == 200:
+                    current_sha = response.json()["sha"]
+                
+                # Dados do commit
+                data = {
+                    "message": f"🤖 Dashboard gerado automaticamente: {data['client']} - {data['campaign']}",
+                    "content": base64.b64encode(content.encode('utf-8')).decode('utf-8')
+                }
+                
+                if current_sha:
+                    data["sha"] = current_sha
+                
+                # Fazer commit
+                response = requests.put(url, headers=headers, json=data)
+                if response.status_code in [200, 201]:
+                    logger.info("✅ Dashboard commitado no GitHub com sucesso via API")
+                    git_committed = True
+                else:
+                    logger.error(f"❌ Erro no commit via GitHub API: {response.status_code} - {response.text}")
+            
+        except Exception as e:
+            logger.error(f"❌ Erro no commit automático via GitHub API: {e}")
+        
+        if not git_committed:
+            logger.info("ℹ️ Dashboard criado no Cloud Run - commit manual necessário para Vercel")
         
         return jsonify({
             "success": True,
@@ -575,7 +623,7 @@ def generate_dashboard():
             "client": data['client'],
             "campaign": data['campaign'],
             "git_committed": git_committed,
-            "note": "Dashboard disponível no Cloud Run. Para deploy no Vercel, será necessário commit manual."
+            "note": "Dashboard disponível no Cloud Run. Commit automático via GitHub API ativado (se GITHUB_TOKEN configurado)."
         })
         
     except Exception as e:
