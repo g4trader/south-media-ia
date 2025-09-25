@@ -57,6 +57,12 @@ class GoogleSheetsService:
                         credentials, project = default_auth(scopes=self.SCOPES)
                         credentials.refresh(Request())
                     
+                    # Forçar aplicação dos escopos
+                    if credentials.scopes is None or not credentials.scopes:
+                        print("🔍 DEBUG: Forçando aplicação dos escopos...")
+                        credentials = credentials.with_scopes(self.SCOPES)
+                        credentials.refresh(Request())
+                    
                     print("🔍 DEBUG: Construindo serviço")
                     self.service = build('sheets', 'v4', credentials=credentials)
                     self.is_configured_flag = True
