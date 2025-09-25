@@ -806,23 +806,25 @@ def get_campaign_data(campaign_key):
             needs_fallback_aggregation = (VideoCampaignDataExtractor is None) or data.get("test_mode") or source == "test_data"
             aggregated_daily = []
             publisher_totals = {}
+            total_investment = _safe_float(contract.get("investment")) or _safe_float(metrics_data.get("budget_contracted"))
 
-            if needs_fallback_aggregation and daily_data_list:
-                total_investment = _safe_float(contract.get("investment")) or _safe_float(metrics_data.get("budget_contracted"))
+            if daily_data_list:
                 aggregated_daily, publisher_totals = aggregate_daily_data_by_publisher(
                     daily_data_list,
                     total_investment=total_investment
                 )
 
                 if aggregated_daily:
-                    # Preservar dados originais para depuração
-                    data["daily_data_raw"] = daily_data_list
-                    data["daily_data"] = aggregated_daily
                     data["daily_data_aggregated"] = aggregated_daily
+
+                    if needs_fallback_aggregation:
+                        # Preservar dados originais para depuração
+                        data["daily_data_raw"] = daily_data_list
+                        data["daily_data"] = aggregated_daily
 
             publishers_list = data.get("publishers") or []
             if publishers_list and publisher_totals:
-                total_investment = _safe_float(contract.get("investment")) or _safe_float(metrics_data.get("budget_contracted"))
+                total_investment = total_investment or 0
                 default_budget = (total_investment / len(publishers_list)) if total_investment and len(publishers_list) > 0 else 0
 
                 for publisher in publishers_list:
