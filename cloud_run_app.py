@@ -57,6 +57,40 @@ def add_cors_headers(response):
         response.headers[key] = value
     return response
 
+@app.route('/api/migrate-to-database', methods=['POST'])
+def migrate_to_database():
+    """Migrar configurações do JSON para o banco de dados"""
+    try:
+        from dashboard_database import db
+        
+        logger.info("🔄 Iniciando migração do JSON para banco de dados...")
+        
+        # Migrar configurações
+        success = db.migrate_from_json()
+        
+        if success:
+            # Contar campanhas migradas
+            campaigns = db.get_all_campaign_configs()
+            count = len(campaigns)
+            
+            return add_cors_headers(jsonify({
+                "success": True,
+                "message": f"Migração concluída com sucesso! {count} campanhas migradas para o banco de dados.",
+                "campaigns_migrated": count
+            }))
+        else:
+            return add_cors_headers(jsonify({
+                "success": False,
+                "message": "Erro na migração para o banco de dados"
+            })), 500
+            
+    except Exception as e:
+        logger.error(f"❌ Erro na migração: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        })), 500
+
 @app.after_request
 def after_request(response):
     """Aplicar headers CORS a todas as respostas"""
@@ -291,11 +325,11 @@ def get_campaign_data(campaign_key):
     try:
         logger.info(f"📊 Carregando dados da campanha: {campaign_key}")
         
-        # Importar configuração simplificada
-        from generator_config import get_campaign
+        # Importar configuração do banco de dados
+        from dashboard_database import get_campaign_config
         
-        # Obter configuração da campanha
-        config = get_campaign(campaign_key)
+        # Obter configuração da campanha do banco de dados
+        config = get_campaign_config(campaign_key)
         if not config:
             return jsonify({
                 "success": False,
@@ -405,9 +439,9 @@ def get_campaign_data(campaign_key):
 def list_campaigns():
     """Listar todas as campanhas disponíveis (estáticas + dinâmicas)"""
     try:
-        from generator_config import get_all_campaigns
+        from dashboard_database import get_all_campaign_configs
         
-        campaigns = get_all_campaigns()
+        campaigns = get_all_campaign_configs()
         campaign_list = []
         
         for key, config in campaigns.items():
@@ -415,9 +449,11 @@ def list_campaigns():
                 "key": key,
                 "client": config.client,
                 "campaign": config.campaign,
-                "slug": config.get_slug(),
-                "api_endpoint": config.api_endpoint,
-                "dashboard_title": config.get_dashboard_title()
+                "slug": key,  # Usar campaign_key como slug
+                "api_endpoint": f"/api/{key}/data",
+                "dashboard_url": f"/static/dash_{key}.html",
+                "created_at": config.created_at,
+                "updated_at": config.updated_at
             })
         
         return jsonify({
@@ -552,12 +588,20 @@ def generate_dashboard():
         
         logger.info(f"✅ Dashboard personalizado para {data['client']}")
         
-        # Salvar campanha na configuração
-        from generator_config import save_campaign
-        if save_campaign(data['campaign_key'], config):
-            logger.info(f"✅ Campanha {data['campaign_key']} salva na configuração")
+        # Salvar campanha no banco de dados
+        from dashboard_database import CampaignConfig, save_campaign_config
+        campaign_config = CampaignConfig(
+            campaign_key=data['campaign_key'],
+            client=data['client'],
+            campaign=data['campaign'],
+            sheet_id=data['sheet_id'],
+            tabs=data['tabs']
+        )
+        
+        if save_campaign_config(data['campaign_key'], campaign_config):
+            logger.info(f"✅ Campanha {data['campaign_key']} salva no banco de dados")
         else:
-            logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} na configuração")
+            logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} no banco de dados")
         
         # Fazer commit automático via GitHub API (como na automação multicanal)
         git_committed = False
