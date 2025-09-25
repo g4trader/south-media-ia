@@ -31,5 +31,16 @@
       "strategies": "1933747402",
       "publishers": "1065935170"
     }
+  },
+  "sebrae_pr_institucional_setembro": {
+    "client": "SEBRAE PR",
+    "campaign": "Institucional Setembro",
+    "sheet_id": "1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8",
+    "tabs": {
+      "daily_data": "1667459933",
+      "contract": "304240701",
+      "strategies": "1933747402",
+      "publishers": "1065935170"
+    }
   }
 }
