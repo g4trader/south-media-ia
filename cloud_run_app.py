@@ -444,6 +444,70 @@ def health_check():
     })
     return add_cors_headers(response)
 
+@app.route('/api/debug-extractor/<campaign_key>', methods=['GET'])
+def debug_extractor(campaign_key):
+    """Debug específico do extrator de dados"""
+    try:
+        logger.info(f"🔍 Debug do extrator para campanha: {campaign_key}")
+        
+        # Importar configuração do banco de dados
+        from persistent_database import get_campaign_config
+        
+        # Obter configuração da campanha do banco de dados
+        config = get_campaign_config(campaign_key)
+        if not config:
+            return add_cors_headers(jsonify({
+                "success": False,
+                "message": f"Campanha '{campaign_key}' não encontrada"
+            })), 404
+        
+        debug_info = {
+            "campaign_key": campaign_key,
+            "config_found": True,
+            "config": {
+                "client": config.client,
+                "campaign": config.campaign,
+                "sheet_id": config.sheet_id,
+                "tabs": config.tabs
+            },
+            "extractor_available": VideoCampaignDataExtractor is not None,
+            "extraction_result": None,
+            "error": None
+        }
+        
+        if VideoCampaignDataExtractor:
+            try:
+                logger.info(f"🔄 Criando extrator para debug...")
+                extractor = VideoCampaignDataExtractor(config)
+                logger.info("🔄 Extrator criado, iniciando extração de debug...")
+                data = extractor.extract_data()
+                debug_info["extraction_result"] = {
+                    "success": data is not None,
+                    "data_type": type(data).__name__ if data else None,
+                    "data_size": len(str(data)) if data else 0,
+                    "has_daily_data": bool(data and data.get("daily_data")) if data else False,
+                    "daily_data_count": len(data.get("daily_data", [])) if data else 0
+                }
+                logger.info(f"✅ Debug do extrator concluído: {debug_info['extraction_result']}")
+            except Exception as e:
+                debug_info["error"] = str(e)
+                debug_info["extraction_result"] = {"success": False, "error": str(e)}
+                logger.error(f"❌ Erro no debug do extrator: {e}")
+                import traceback
+                debug_info["traceback"] = traceback.format_exc()
+        
+        return add_cors_headers(jsonify({
+            "success": True,
+            "debug_info": debug_info
+        }))
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no debug do extrator: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro no debug: {str(e)}"
+        })), 500
+
 @app.route('/', methods=['OPTIONS'])
 @app.route('/api/<path:path>', methods=['OPTIONS'])
 def handle_options(path=None):
