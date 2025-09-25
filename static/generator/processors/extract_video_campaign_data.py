@@ -392,7 +392,7 @@ class VideoCampaignDataExtractor:
 
 def extract_campaign_data(campaign_key: str) -> Optional[Dict[str, Any]]:
     """Função principal para extrair dados de uma campanha"""
-    from campaign_config import get_campaign_config
+    from dashboard_database import get_campaign_config
     
     config = get_campaign_config(campaign_key)
     if not config:
