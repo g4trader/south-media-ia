@@ -83,8 +83,60 @@ def _normalize_name(name):
     return str(name).strip().lower()
 
 
+def _parse_date_value(raw_value):
+    """Tentar interpretar datas em formatos comuns para permitir ordenação consistente."""
+
+    if raw_value is None:
+        return None
+
+    if isinstance(raw_value, datetime):
+        return raw_value
+
+    value = str(raw_value).strip()
+    if not value:
+        return None
+
+    known_formats = ["%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"]
+
+    for fmt in known_formats:
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+
+    return None
+
+
+def _summarize_dates(date_values):
+    """Agrupar valores de data em um intervalo descritivo."""
+
+    if not date_values:
+        return None, None, None
+
+    unique_dates = {str(value).strip() for value in date_values if str(value).strip()}
+    if not unique_dates:
+        return None, None, None
+
+    def sort_key(item):
+        parsed = _parse_date_value(item)
+        if parsed is not None:
+            return (0, parsed)
+        return (1, item)
+
+    ordered = sorted(unique_dates, key=sort_key)
+    date_start = ordered[0]
+    date_end = ordered[-1]
+
+    if date_start == date_end:
+        label = date_start
+    else:
+        label = f"{date_start} - {date_end}"
+
+    return date_start, date_end, label
+
+
 def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
-    """Agrupar dados diários por criativo/publisher e calcular métricas derivadas"""
+    """Agrupar dados diários por criativo/publisher e calcular métricas derivadas."""
 
     if not daily_data:
         return [], {}
@@ -107,7 +159,8 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
                 "impressions": 0,
                 "clicks": 0,
                 "starts": 0,
-                "q100": 0
+                "q100": 0,
+                "_dates": []
             }
 
         record = aggregated[key]
@@ -116,6 +169,10 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
         record["clicks"] += _safe_int(entry.get("clicks"))
         record["starts"] += _safe_int(entry.get("starts") or entry.get("video_starts"))
         record["q100"] += _safe_int(entry.get("q100") or entry.get("video_completions"))
+
+        date_value = entry.get("date") or entry.get("day") or entry.get("period")
+        if date_value:
+            record["_dates"].append(date_value)
 
     results = []
     publisher_totals = {}
@@ -126,6 +183,8 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
         clicks = values["clicks"]
         starts = values["starts"]
         q100 = values["q100"]
+
+        date_start, date_end, date_label = _summarize_dates(values.pop("_dates", []))
 
         ctr = (clicks / impressions * 100) if impressions else 0
         vtr = (q100 / starts * 100) if starts else 0
@@ -149,6 +208,11 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
             "pacing": round(pacing, 2)
         }
 
+        if date_label:
+            result_entry["date_range"] = date_label
+            result_entry["date_start"] = date_start
+            result_entry["date_end"] = date_end
+
         results.append(result_entry)
 
         normalized_name = _normalize_name(publisher_name)
@@ -159,7 +223,8 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
                 "impressions": 0,
                 "clicks": 0,
                 "starts": 0,
-                "q100": 0
+                "q100": 0,
+                "_dates": []
             }
 
         totals = publisher_totals[normalized_name]
@@ -169,11 +234,16 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
         totals["starts"] += starts
         totals["q100"] += q100
 
+        if date_start or date_end:
+            totals["_dates"].extend([value for value in (date_start, date_end) if value])
+
     for totals in publisher_totals.values():
         impressions = totals["impressions"]
         clicks = totals["clicks"]
         starts = totals["starts"]
         q100 = totals["q100"]
+
+        date_start, date_end, date_label = _summarize_dates(totals.pop("_dates", []))
 
         totals["ctr"] = round((clicks / impressions * 100) if impressions else 0, 2)
         totals["vtr"] = round((q100 / starts * 100) if starts else 0, 2)
@@ -183,6 +253,11 @@ def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
         totals["vc_delivered"] = q100
         totals["starts"] = starts
         totals["spend"] = round(totals["spend"], 2)
+
+        if date_label:
+            totals["date_range"] = date_label
+            totals["date_start"] = date_start
+            totals["date_end"] = date_end
 
     results.sort(key=lambda item: item["spend"], reverse=True)
 
@@ -787,8 +862,7 @@ def get_campaign_data(campaign_key):
 
                     if needs_fallback_aggregation:
                         # Preservar dados originais para depuração
-                        data["daily_data_raw"] = daily_data_list
-                        data["daily_data"] = aggregated_daily
+                        data.setdefault("daily_data_raw", daily_data_list)
 
             publishers_list = data.get("publishers") or []
             if publishers_list and publisher_totals:
@@ -883,6 +957,7 @@ def get_campaign_data(campaign_key):
                         "vc_pacing": metrics_data.get("vc_pacing", metrics_data.get("pacing", 0))
                     },
                     "daily_data": data.get("daily_data", []),
+                    "daily_data_aggregated": data.get("daily_data_aggregated", []),
                     "per_data": data.get("per_data", []),
                     "contract": contract,
                     "strategies": data.get("strategies", {}),
