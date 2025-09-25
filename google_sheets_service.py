@@ -40,12 +40,41 @@ class GoogleSheetsService:
                 # Tentar obter credenciais com escopos explícitos
                 credentials, project = default(scopes=self.SCOPES)
                 if credentials and project:
+                    # Forçar refresh das credenciais para garantir que os escopos sejam aplicados
+                    credentials.refresh(Request())
                     self.service = build('sheets', 'v4', credentials=credentials)
                     self.is_configured_flag = True
                     print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
+                    print(f"🔑 Escopos aplicados: {self.SCOPES}")
                     return
             except Exception as e:
                 print(f"⚠️ Não foi possível usar credenciais padrão do projeto: {e}")
+                
+                # Tentar abordagem alternativa via metadata server
+                try:
+                    import requests
+                    from google.oauth2 import service_account
+                    
+                    # Obter token do metadata server
+                    metadata_server_token_url = 'http://metadata/computeMetadata/v1/instance/service-accounts/default/token?scopes=' + ','.join(self.SCOPES)
+                    metadata_server_token_headers = {'Metadata-Flavor': 'Google'}
+                    
+                    token_response = requests.get(metadata_server_token_url, headers=metadata_server_token_headers)
+                    token_data = token_response.json()
+                    
+                    # Criar credenciais com o token obtido
+                    from google.auth.transport.requests import Request
+                    from google.oauth2.credentials import Credentials
+                    
+                    credentials = Credentials(token_data['access_token'])
+                    self.service = build('sheets', 'v4', credentials=credentials)
+                    self.is_configured_flag = True
+                    print(f"✅ Google Sheets configurado via metadata server")
+                    print(f"🔑 Escopos aplicados: {self.SCOPES}")
+                    return
+                    
+                except Exception as metadata_error:
+                    print(f"⚠️ Falha no metadata server: {metadata_error}")
             
             # Verificar se temos credenciais OAuth para desenvolvimento local
             if os.path.exists('credentials.json'):
