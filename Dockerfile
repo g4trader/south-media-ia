@@ -1,5 +1,5 @@
 # Dashboard Builder - Production Dockerfile
-FROM python:3.11-slim
+FROM gcr.io/google-appengine/python:latest
 
 # Set working directory
 WORKDIR /app
