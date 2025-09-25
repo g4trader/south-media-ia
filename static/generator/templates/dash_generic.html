@@ -491,14 +491,14 @@ class DashboardLoader {
         if (tbodyChannels && data.publishers) {
             tbodyChannels.innerHTML = data.publishers.map(publisher => `
                 <tr>
-                    <td>${publisher.publisher || publisher.name || 'N/A'}</td>
-                    <td>R$ ${this.formatCurrency(publisher.investimento || publisher.budget || 0)}</td>
-                    <td>R$ ${this.formatCurrency(publisher.investimento || publisher.spend || 0)}</td>
+                    <td>${publisher.name || publisher.publisher || 'N/A'}</td>
+                    <td>R$ ${this.formatCurrency(publisher.budget_contracted || publisher.budget || 0)}</td>
+                    <td>R$ ${this.formatCurrency(publisher.spend || 0)}</td>
                     <td>${this.formatPercentage(publisher.pacing || 0)}</td>
-                    <td>${this.formatNumber(publisher.impressoes || publisher.impressions || 0)}</td>
-                    <td>${this.formatNumber(publisher.cliques || publisher.clicks || 0)}</td>
+                    <td>${this.formatNumber(publisher.impressions || 0)}</td>
+                    <td>${this.formatNumber(publisher.clicks || 0)}</td>
                     <td>${this.formatPercentage(publisher.ctr || 0)}</td>
-                    <td>${this.formatNumber(publisher.visualizacoes_completas || publisher.video_completions || 0)}</td>
+                    <td>${this.formatNumber(publisher.vc_delivered || publisher.q100 || 0)}</td>
                     <td>${this.formatPercentage(publisher.vtr || 0)}</td>
                     <td>R$ ${this.formatCurrency(publisher.cpv || 0)}</td>
                     <td>R$ ${this.formatCurrency(publisher.cpm || 0)}</td>
