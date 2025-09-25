@@ -483,8 +483,12 @@
                         ? `https://dash.iasouth.tech${result.dashboard_url}`
                         : result.dashboard_url;
                     
-                    // Sempre mostrar modal de progresso para melhor UX
-                    showDeployProgress(dashboardUrl, result);
+                    // Verificar se commit foi realizado antes de mostrar progresso
+                    if (result.git_committed) {
+                        showDeployProgress(dashboardUrl, result);
+                    } else {
+                        showStatus('⚠️ Dashboard criado, mas commit automático falhou. Aguarde alguns minutos e tente acessar manualmente.', 'warning');
+                    }
                 } else {
                     showStatus(`❌ Erro ao gerar dashboard: ${result.message}`, 'error');
                 }
