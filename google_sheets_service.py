@@ -31,28 +31,20 @@ class GoogleSheetsService:
     def _initialize_service(self):
         """Inicializar o serviço do Google Sheets"""
         try:
-            # Verificar se estamos no Google Cloud Run
-            if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
-                # Usar Service Account no Cloud Run
-                self.service = build('sheets', 'v4')
-                self.is_configured_flag = True
-                print("✅ Google Sheets Service Account configurado (Cloud Run)")
-                return
-            
             # Verificar se estamos no Google Cloud (Cloud Run, Cloud Functions, etc.)
-            # Tentar usar credenciais padrão do projeto
+            # Tentar usar credenciais padrão do projeto (Service Account)
             try:
                 from google.auth import default
                 credentials, project = default()
                 if credentials and project:
                     self.service = build('sheets', 'v4', credentials=credentials)
                     self.is_configured_flag = True
-                    print(f"✅ Google Sheets configurado com credenciais padrão do projeto: {project}")
+                    print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
                     return
             except Exception as e:
-                print(f"⚠️ Não foi possível usar credenciais padrão: {e}")
+                print(f"⚠️ Não foi possível usar credenciais padrão do projeto: {e}")
             
-            # Verificar se temos credenciais OAuth
+            # Verificar se temos credenciais OAuth para desenvolvimento local
             if os.path.exists('credentials.json'):
                 self.credentials = self._get_credentials()
                 if self.credentials:
