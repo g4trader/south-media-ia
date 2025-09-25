@@ -496,6 +496,7 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
         // Tab functionality
         document.querySelectorAll('.tab').forEach(tab => {
@@ -533,6 +534,9 @@
             }
             
             const previewContent = document.getElementById('previewContent');
+            const dashboardPath = `/static/dash_${generateCampaignKey(data.clientName, data.campaignName)}.html`;
+            const dashboardUrl = CONFIG.getDashboardUrl(dashboardPath);
+
             previewContent.innerHTML = `
                 <div class="preview-item">
                     <span class="preview-label">Cliente:</span>
@@ -556,7 +560,7 @@
                 </div>
                 <div class="preview-item">
                     <span class="preview-label">URL do Dashboard:</span>
-                    <span class="preview-value">/static/dash_${generateCampaignKey(data.clientName, data.campaignName)}.html</span>
+                    <span class="preview-value">${dashboardUrl}</span>
                 </div>
             `;
             
@@ -588,7 +592,7 @@
                 };
                 
                 // Enviar para API
-                const response = await fetch('/api/generate-dashboard', {
+                const response = await fetch(CONFIG.getApiUrl('/api/generate-dashboard'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -620,7 +624,7 @@
             campaignsList.innerHTML = '<div class="loading"><div class="spinner"></div><p>Carregando campanhas...</p></div>';
             
             try {
-                const response = await fetch('/api/campaigns');
+                const response = await fetch(CONFIG.getApiUrl('/api/campaigns'));
                 const result = await response.json();
                 
                 if (result.success) {
@@ -635,7 +639,7 @@
                                 </div>
                                 <div class="campaign-actions">
                                     <a href="${campaign.api_endpoint.replace('/data', '')}" class="button button-secondary" target="_blank">📊 Ver API</a>
-                                    <a href="/static/dash_${campaign.slug}.html" class="button button-primary" target="_blank">🎬 Dashboard</a>
+                                    <a href="${CONFIG.getDashboardUrl(`/static/dash_${campaign.slug}.html`)}" class="button button-primary" target="_blank">🎬 Dashboard</a>
                                 </div>
                             </div>
                         `).join('');
