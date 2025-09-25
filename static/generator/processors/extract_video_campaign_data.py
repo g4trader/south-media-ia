@@ -36,6 +36,10 @@ def convert_nan_to_null(obj):
 # Adicionar diretório raiz ao path para importar google_sheets_service
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
+print(f"🔍 DEBUG: sys.path includes: {sys.path[-1]}")
+print(f"🔍 DEBUG: Current working directory: {os.getcwd()}")
+print(f"🔍 DEBUG: __file__ location: {__file__}")
+
 from google_sheets_service import GoogleSheetsService
 
 # Mapeamento padrão de colunas
