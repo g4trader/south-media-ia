@@ -638,7 +638,7 @@
                                     <p>Canal: ${campaign.channel || 'Prográmatica'} | Key: ${campaign.key}</p>
                                 </div>
                                 <div class="campaign-actions">
-                                    <a href="${CONFIG.getApiUrl(campaign.api_endpoint.replace('/data', ''))}" class="button button-secondary" target="_blank">📊 Ver API</a>
+                                    <a href="${CONFIG.getApiUrl(campaign.api_endpoint)}" class="button button-secondary" target="_blank">📊 Ver API</a>
                                     <a href="${CONFIG.getDashboardUrl(`/static/dash_${campaign.slug}.html`)}" class="button button-primary" target="_blank">🎬 Dashboard</a>
                                 </div>
                             </div>
