@@ -62,6 +62,164 @@ def add_cors_headers(response):
         response.headers[key] = value
     return response
 
+
+def _safe_float(value):
+    """Converter valores para float de forma resiliente"""
+    if value is None:
+        return 0.0
+
+    try:
+        if isinstance(value, (int, float)):
+            return float(value)
+
+        value_str = str(value).strip()
+        if not value_str:
+            return 0.0
+
+        value_str = value_str.replace('R$', '').replace(' ', '')
+        if ',' in value_str:
+            value_str = value_str.replace('.', '').replace(',', '.')
+
+        return float(value_str)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _safe_int(value):
+    """Converter valores para int de forma resiliente"""
+    if value is None:
+        return 0
+
+    try:
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float):
+            return int(value)
+
+        value_str = str(value).strip()
+        if not value_str:
+            return 0
+
+        value_str = value_str.replace('R$', '').replace(' ', '')
+        if ',' in value_str:
+            value_str = value_str.replace('.', '').replace(',', '.')
+
+        return int(float(value_str))
+    except (ValueError, TypeError):
+        return 0
+
+
+def _normalize_name(name):
+    if not name:
+        return ""
+    return str(name).strip().lower()
+
+
+def aggregate_daily_data_by_publisher(daily_data, total_investment=0):
+    """Agrupar dados diários por criativo/publisher e calcular métricas derivadas"""
+
+    if not daily_data:
+        return [], {}
+
+    aggregated = {}
+
+    for entry in daily_data:
+        publisher_name = entry.get("publisher") or entry.get("site") or entry.get("channel") or entry.get("creative") or "Desconhecido"
+        creative_name = entry.get("creative") or ""
+
+        publisher_name = str(publisher_name).strip() or "Desconhecido"
+        creative_name = str(creative_name).strip()
+
+        key = (publisher_name, creative_name)
+        if key not in aggregated:
+            aggregated[key] = {
+                "publisher": publisher_name,
+                "creative": creative_name,
+                "spend": 0.0,
+                "impressions": 0,
+                "clicks": 0,
+                "starts": 0,
+                "q100": 0
+            }
+
+        record = aggregated[key]
+        record["spend"] += _safe_float(entry.get("spend"))
+        record["impressions"] += _safe_int(entry.get("impressions"))
+        record["clicks"] += _safe_int(entry.get("clicks"))
+        record["starts"] += _safe_int(entry.get("starts") or entry.get("video_starts"))
+        record["q100"] += _safe_int(entry.get("q100") or entry.get("video_completions"))
+
+    results = []
+    publisher_totals = {}
+
+    for (publisher_name, creative_name), values in aggregated.items():
+        spend = values["spend"]
+        impressions = values["impressions"]
+        clicks = values["clicks"]
+        starts = values["starts"]
+        q100 = values["q100"]
+
+        ctr = (clicks / impressions * 100) if impressions else 0
+        vtr = (q100 / starts * 100) if starts else 0
+        cpv = (spend / q100) if q100 else 0
+        cpm = (spend / impressions * 1000) if impressions else 0
+        pacing = (spend / total_investment * 100) if total_investment else 0
+
+        result_entry = {
+            "publisher": publisher_name,
+            "creative": creative_name,
+            "spend": round(spend, 2),
+            "impressions": impressions,
+            "clicks": clicks,
+            "ctr": round(ctr, 2),
+            "q100": q100,
+            "vc_delivered": q100,
+            "starts": starts,
+            "vtr": round(vtr, 2),
+            "cpv": round(cpv, 2),
+            "cpm": round(cpm, 2),
+            "pacing": round(pacing, 2)
+        }
+
+        results.append(result_entry)
+
+        normalized_name = _normalize_name(publisher_name)
+        if normalized_name not in publisher_totals:
+            publisher_totals[normalized_name] = {
+                "publisher": publisher_name,
+                "spend": 0.0,
+                "impressions": 0,
+                "clicks": 0,
+                "starts": 0,
+                "q100": 0
+            }
+
+        totals = publisher_totals[normalized_name]
+        totals["spend"] += spend
+        totals["impressions"] += impressions
+        totals["clicks"] += clicks
+        totals["starts"] += starts
+        totals["q100"] += q100
+
+    for totals in publisher_totals.values():
+        impressions = totals["impressions"]
+        clicks = totals["clicks"]
+        starts = totals["starts"]
+        q100 = totals["q100"]
+
+        totals["ctr"] = round((clicks / impressions * 100) if impressions else 0, 2)
+        totals["vtr"] = round((q100 / starts * 100) if starts else 0, 2)
+        totals["cpv"] = round((totals["spend"] / q100) if q100 else 0, 2)
+        totals["cpm"] = round((totals["spend"] / impressions * 1000) if impressions else 0, 2)
+        totals["pacing"] = round((totals["spend"] / total_investment * 100) if total_investment else 0, 2)
+        totals["vc_delivered"] = q100
+        totals["starts"] = starts
+        totals["spend"] = round(totals["spend"], 2)
+
+    results.sort(key=lambda item: item["spend"], reverse=True)
+
+    return results, publisher_totals
+
 @app.route('/api/debug-google-sheets', methods=['GET'])
 def debug_google_sheets():
     """Endpoint para debug do Google Sheets"""
@@ -643,6 +801,49 @@ def get_campaign_data(campaign_key):
                     data["metrics"] = metrics_data
             if not metrics_data:
                 metrics_data = {}
+
+            daily_data_list = data.get("daily_data") or []
+            needs_fallback_aggregation = (VideoCampaignDataExtractor is None) or data.get("test_mode") or source == "test_data"
+            aggregated_daily = []
+            publisher_totals = {}
+
+            if needs_fallback_aggregation and daily_data_list:
+                total_investment = _safe_float(contract.get("investment")) or _safe_float(metrics_data.get("budget_contracted"))
+                aggregated_daily, publisher_totals = aggregate_daily_data_by_publisher(
+                    daily_data_list,
+                    total_investment=total_investment
+                )
+
+                if aggregated_daily:
+                    # Preservar dados originais para depuração
+                    data["daily_data_raw"] = daily_data_list
+                    data["daily_data"] = aggregated_daily
+                    data["daily_data_aggregated"] = aggregated_daily
+
+            publishers_list = data.get("publishers") or []
+            if publishers_list and publisher_totals:
+                total_investment = _safe_float(contract.get("investment")) or _safe_float(metrics_data.get("budget_contracted"))
+                default_budget = (total_investment / len(publishers_list)) if total_investment and len(publishers_list) > 0 else 0
+
+                for publisher in publishers_list:
+                    normalized_name = _normalize_name(publisher.get("name") or publisher.get("publisher"))
+                    metrics = publisher_totals.get(normalized_name)
+
+                    if metrics:
+                        publisher.setdefault("spend", metrics.get("spend", 0))
+                        publisher.setdefault("impressions", metrics.get("impressions", 0))
+                        publisher.setdefault("clicks", metrics.get("clicks", 0))
+                        publisher.setdefault("ctr", metrics.get("ctr", 0))
+                        publisher.setdefault("q100", metrics.get("q100", 0))
+                        publisher.setdefault("vc_delivered", metrics.get("vc_delivered", metrics.get("q100", 0)))
+                        publisher.setdefault("vtr", metrics.get("vtr", 0))
+                        publisher.setdefault("cpv", metrics.get("cpv", 0))
+                        publisher.setdefault("cpm", metrics.get("cpm", 0))
+                        publisher.setdefault("pacing", metrics.get("pacing", 0))
+                        publisher.setdefault("starts", metrics.get("starts", 0))
+
+                    if default_budget and "budget_contracted" not in publisher:
+                        publisher["budget_contracted"] = round(default_budget, 2)
 
             def resolve_metric(metric_keys=None, contract_keys=None, total_keys=None, data_keys=None, default=0):
                 metric_keys = metric_keys or []
