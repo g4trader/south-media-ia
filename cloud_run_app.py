@@ -82,11 +82,33 @@ def debug_google_sheets():
             "error": str(e)
         })), 500
 
+@app.route('/api/backup-database', methods=['POST'])
+def backup_database():
+    """Forçar backup manual do banco de dados"""
+    try:
+        from persistent_database import force_backup
+        
+        logger.info("🔄 Forçando backup manual do banco de dados...")
+        force_backup()
+        
+        return add_cors_headers(jsonify({
+            "success": True,
+            "message": "Backup realizado com sucesso",
+            "timestamp": datetime.now().isoformat()
+        }))
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no backup manual: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro no backup: {str(e)}"
+        })), 500
+
 @app.route('/api/migrate-to-database', methods=['POST'])
 def migrate_to_database():
     """Migrar configurações do JSON para o banco de dados"""
     try:
-        from dashboard_database import db
+        from persistent_database import db
         
         logger.info("🔄 Iniciando migração do JSON para banco de dados...")
         
@@ -351,7 +373,7 @@ def get_campaign_data(campaign_key):
         logger.info(f"📊 Carregando dados da campanha: {campaign_key}")
         
         # Importar configuração do banco de dados
-        from dashboard_database import get_campaign_config
+        from persistent_database import get_campaign_config
         
         # Obter configuração da campanha do banco de dados
         config = get_campaign_config(campaign_key)
@@ -464,7 +486,7 @@ def get_campaign_data(campaign_key):
 def list_campaigns():
     """Listar todas as campanhas disponíveis (estáticas + dinâmicas)"""
     try:
-        from dashboard_database import get_all_campaign_configs
+        from persistent_database import get_all_campaign_configs
         
         campaigns = get_all_campaign_configs()
         campaign_list = []
@@ -614,7 +636,7 @@ def generate_dashboard():
         logger.info(f"✅ Dashboard personalizado para {data['client']}")
         
         # Salvar campanha no banco de dados
-        from dashboard_database import CampaignConfig, save_campaign_config
+        from persistent_database import CampaignConfig, save_campaign_config
         campaign_config = CampaignConfig(
             campaign_key=data['campaign_key'],
             client=data['client'],
