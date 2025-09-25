@@ -517,15 +517,20 @@ def get_campaign_data(campaign_key):
         
         if VideoCampaignDataExtractor:
             try:
+                logger.info(f"🔄 Criando extrator para campanha: {config.campaign_key}")
                 extractor = VideoCampaignDataExtractor(config)
+                logger.info("🔄 Extrator criado, iniciando extração...")
                 data = extractor.extract_data()
+                logger.info(f"🔄 Extração concluída. Dados: {type(data)}, Tamanho: {len(str(data)) if data else 0}")
                 if data:
                     source = "google_sheets"
                     logger.info("✅ Dados reais carregados do Google Sheets")
                 else:
                     logger.warning("⚠️ Extrator retornou dados vazios")
             except Exception as e:
-                logger.warning(f"⚠️ Não foi possível conectar com Google Sheets: {e}")
+                logger.error(f"❌ Erro na extração: {e}")
+                import traceback
+                logger.error(f"❌ Traceback: {traceback.format_exc()}")
         else:
             logger.warning("⚠️ VideoCampaignDataExtractor não disponível")
         
