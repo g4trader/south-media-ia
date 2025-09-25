@@ -445,7 +445,7 @@ class DashboardLoader {
     renderChannelsSection(data) {
         const contract = (data && data.contract) || {};
         const strategies = (data && data.strategies) || {};
-        const primaryChannel = this.resolveText(
+        let primaryChannel = this.resolveText(
             contract.primary_channel,
             contract.channel,
             data && data.primary_channel,
@@ -453,12 +453,283 @@ class DashboardLoader {
             strategies.primary_channel
         );
 
-        this.updateText('primary-channel-badge', primaryChannel);
-
-        const titleElement = document.getElementById('primary-channel-title');
-        if (titleElement && this.hasValue(primaryChannel)) {
-            titleElement.textContent = `Entrega diária — ${primaryChannel}`;
+        if (!this.hasValue(primaryChannel)) {
+            const publishers = Array.isArray(data && data.publishers) ? data.publishers : [];
+            const firstPublisher = publishers.find(publisher => {
+                const label = this.resolveText(
+                    publisher && publisher.name,
+                    publisher && publisher.channel,
+                    publisher && publisher.publisher,
+                    publisher && publisher.label
+                );
+                return this.hasValue(label);
+            });
+            if (firstPublisher) {
+                primaryChannel = this.resolveText(
+                    firstPublisher.name,
+                    firstPublisher.channel,
+                    firstPublisher.publisher,
+                    firstPublisher.label
+                );
+            }
         }
+
+        if (this.hasValue(primaryChannel)) {
+            this.updateText('primary-channel-badge', primaryChannel);
+            const titleElement = document.getElementById('primary-channel-title');
+            if (titleElement) {
+                titleElement.textContent = `Entrega diária — ${primaryChannel}`;
+            }
+        }
+
+        this.renderChannelView(data, primaryChannel);
+    }
+
+    renderChannelView(data, channelName) {
+        const metricsContainer = document.getElementById('metrics-channel');
+        const dailyBody = document.getElementById('channelDailyBody');
+        if (!metricsContainer || !dailyBody) {
+            return;
+        }
+
+        metricsContainer.innerHTML = '';
+        dailyBody.innerHTML = '';
+
+        const publishers = Array.isArray(data && data.publishers) ? data.publishers : [];
+        const dailyData = Array.isArray(data && data.daily_data) ? data.daily_data : [];
+
+        const normalizedTarget = typeof channelName === 'string' ? channelName.trim().toLowerCase() : '';
+
+        const publisherMetrics = publishers.find(publisher => {
+            const label = this.resolveText(
+                publisher && publisher.name,
+                publisher && publisher.channel,
+                publisher && publisher.publisher,
+                publisher && publisher.label
+            );
+            return typeof label === 'string' && label.trim().toLowerCase() === normalizedTarget;
+        }) || null;
+
+        const filterDailyRecord = (record) => {
+            if (!normalizedTarget) {
+                return true;
+            }
+            const label = this.resolveText(
+                record && record.publisher,
+                record && record.site,
+                record && record.channel,
+                record && record.name
+            );
+            if (typeof label === 'string' && label.trim().toLowerCase() === normalizedTarget) {
+                return true;
+            }
+            return false;
+        };
+
+        const filteredDaily = dailyData.filter(filterDailyRecord);
+        const dailyRecords = filteredDaily.length ? filteredDaily : dailyData;
+
+        const totals = {
+            spend: 0,
+            impressions: 0,
+            clicks: 0,
+            starts: 0,
+            vc: 0
+        };
+
+        const rows = dailyRecords.map(record => {
+            const spend = this.parseNumber(record && (record.spend ?? record.budget ?? record.investment));
+            const impressions = this.parseNumber(record && (record.impressions ?? record.impressoes));
+            const clicks = this.parseNumber(record && (record.clicks ?? record.cliques));
+            const starts = this.parseNumber(record && (record.starts ?? record.video_starts));
+            const vcDelivered = this.parseNumber(record && (
+                record.q100 ??
+                record.vc ??
+                record.vc_delivered ??
+                record.video_completions ??
+                record.complete_views
+            ));
+
+            if (Number.isFinite(spend)) {
+                totals.spend += spend;
+            }
+            if (Number.isFinite(impressions)) {
+                totals.impressions += impressions;
+            }
+            if (Number.isFinite(clicks)) {
+                totals.clicks += clicks;
+            }
+            if (Number.isFinite(starts)) {
+                totals.starts += starts;
+            }
+            if (Number.isFinite(vcDelivered)) {
+                totals.vc += vcDelivered;
+            }
+
+            const ctr = this.resolveNumber(
+                record && record.ctr,
+                record && record.click_through_rate,
+                Number.isFinite(impressions) && impressions > 0 && Number.isFinite(clicks)
+                    ? (clicks / impressions) * 100
+                    : null
+            );
+
+            const vtr = this.resolveNumber(
+                record && record.vtr,
+                record && record.view_through_rate,
+                Number.isFinite(starts) && starts > 0 && Number.isFinite(vcDelivered)
+                    ? (vcDelivered / starts) * 100
+                    : null
+            );
+
+            const cpv = this.resolveNumber(
+                record && record.cpv,
+                record && record.cost_per_view,
+                Number.isFinite(vcDelivered) && vcDelivered > 0 && Number.isFinite(spend)
+                    ? spend / vcDelivered
+                    : null
+            );
+
+            const cpm = this.resolveNumber(
+                record && record.cpm,
+                record && record.cost_per_mille,
+                Number.isFinite(impressions) && impressions > 0 && Number.isFinite(spend)
+                    ? (spend / impressions) * 1000
+                    : null
+            );
+
+            const date = this.resolveText(
+                record && record.date,
+                record && record.data,
+                record && record.day,
+                record && record.reference_date
+            );
+
+            return {
+                date: date || '',
+                spend: Number.isFinite(spend) ? spend : null,
+                impressions: Number.isFinite(impressions) ? impressions : null,
+                clicks: Number.isFinite(clicks) ? clicks : null,
+                ctr: Number.isFinite(ctr) ? ctr : null,
+                vc: Number.isFinite(vcDelivered) ? vcDelivered : null,
+                vtr: Number.isFinite(vtr) ? vtr : null,
+                cpv: Number.isFinite(cpv) ? cpv : null,
+                cpm: Number.isFinite(cpm) ? cpm : null
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (a.date && b.date) {
+                return String(a.date).localeCompare(String(b.date));
+            }
+            if (a.date) return -1;
+            if (b.date) return 1;
+            return 0;
+        });
+
+        const aggregateFromPublisher = publisherMetrics || {};
+        const fallbackSpend = this.parseNumber(aggregateFromPublisher.spend);
+        if (!totals.spend && Number.isFinite(fallbackSpend)) {
+            totals.spend = fallbackSpend;
+        }
+        const fallbackImpressions = this.parseNumber(aggregateFromPublisher.impressions);
+        if (!totals.impressions && Number.isFinite(fallbackImpressions)) {
+            totals.impressions = fallbackImpressions;
+        }
+        const fallbackClicks = this.parseNumber(aggregateFromPublisher.clicks);
+        if (!totals.clicks && Number.isFinite(fallbackClicks)) {
+            totals.clicks = fallbackClicks;
+        }
+        const fallbackStarts = this.parseNumber(aggregateFromPublisher.starts ?? aggregateFromPublisher.video_starts);
+        if (!totals.starts && Number.isFinite(fallbackStarts)) {
+            totals.starts = fallbackStarts;
+        }
+        const fallbackVc = this.parseNumber(aggregateFromPublisher.q100 ?? aggregateFromPublisher.vc_delivered ?? aggregateFromPublisher.vc);
+        if (!totals.vc && Number.isFinite(fallbackVc)) {
+            totals.vc = fallbackVc;
+        }
+
+        const ctrTotal = Number.isFinite(totals.impressions) && totals.impressions > 0 && Number.isFinite(totals.clicks)
+            ? (totals.clicks / totals.impressions) * 100
+            : null;
+        const vtrTotal = Number.isFinite(totals.starts) && totals.starts > 0 && Number.isFinite(totals.vc)
+            ? (totals.vc / totals.starts) * 100
+            : null;
+        const cpvTotal = Number.isFinite(totals.vc) && totals.vc > 0 && Number.isFinite(totals.spend)
+            ? totals.spend / totals.vc
+            : null;
+        const cpmTotal = Number.isFinite(totals.impressions) && totals.impressions > 0 && Number.isFinite(totals.spend)
+            ? (totals.spend / totals.impressions) * 1000
+            : null;
+
+        const cards = [];
+        const pushCard = (label, value, formatter) => {
+            if (!Number.isFinite(value) || value === 0) {
+                return;
+            }
+            cards.push(`
+                <div class="metric">
+                    <div class="label">${label}</div>
+                    <div class="value">${formatter(value)}</div>
+                </div>
+            `);
+        };
+
+        pushCard('💰 Investimento', totals.spend, value => `R$ ${this.formatCurrency(value)}`);
+        pushCard('👁️ Impressões', totals.impressions, value => this.formatNumber(value));
+        pushCard('🧲 Cliques', totals.clicks, value => this.formatNumber(value));
+        pushCard('🎯 VC Entregues', totals.vc, value => this.formatNumber(value));
+        pushCard('📈 CTR', ctrTotal, value => this.formatPercentage(value));
+        pushCard('📊 VTR', vtrTotal, value => this.formatPercentage(value));
+        pushCard('💸 CPV', cpvTotal, value => `R$ ${this.formatCurrency(value)}`);
+        pushCard('📉 CPM', cpmTotal, value => `R$ ${this.formatCurrency(value)}`);
+
+        metricsContainer.innerHTML = cards.join('\n');
+
+        const formatCurrencyCell = (value) => {
+            if (!Number.isFinite(value) || value === 0) {
+                return '-';
+            }
+            return `R$ ${this.formatCurrency(value)}`;
+        };
+
+        const formatNumberCell = (value) => {
+            if (!Number.isFinite(value)) {
+                return '-';
+            }
+            if (value === 0) {
+                return '0';
+            }
+            return this.formatNumber(value);
+        };
+
+        const formatPercentageCell = (value) => {
+            if (!Number.isFinite(value) || value === 0) {
+                return '-';
+            }
+            return this.formatPercentage(value);
+        };
+
+        if (rows.length === 0) {
+            dailyBody.innerHTML = '<tr><td colspan="9" class="muted">Sem dados diários disponíveis</td></tr>';
+            return;
+        }
+
+        const rowsHtml = rows.map(row => `
+            <tr>
+                <td>${row.date || '-'}</td>
+                <td>${formatCurrencyCell(row.spend)}</td>
+                <td>${formatNumberCell(row.impressions)}</td>
+                <td>${formatNumberCell(row.clicks)}</td>
+                <td>${formatPercentageCell(row.ctr)}</td>
+                <td>${formatNumberCell(row.vc)}</td>
+                <td>${formatPercentageCell(row.vtr)}</td>
+                <td>${formatCurrencyCell(row.cpv)}</td>
+                <td>${formatCurrencyCell(row.cpm)}</td>
+            </tr>
+        `).join('');
+
+        dailyBody.innerHTML = rowsHtml;
     }
 
     renderPlanning(data) {
