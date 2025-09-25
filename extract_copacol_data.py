@@ -5,8 +5,10 @@ da planilha Google Sheets e atualizar o dashboard.
 """
 
 import json
-import os
-from datetime import datetime
+from datetime import datetime, timedelta
+
+import pandas as pd
+
 from google_sheets_service import GoogleSheetsService
 
 def extract_copacol_data():
@@ -26,11 +28,13 @@ def extract_copacol_data():
         
         # Extrair dados principais da campanha
         print("Extraindo dados principais da campanha...")
-        main_data = sheets_service.read_sheet_data(main_sheet_id, main_gid)
+        main_data = sheets_service.read_sheet_data(main_sheet_id, gid=main_gid)
         
         # Extrair lista de publishers
         print("Extraindo lista de publishers...")
-        publishers_data = sheets_service.read_sheet_data(publishers_sheet_id, publishers_gid)
+        publishers_data = sheets_service.read_sheet_data(
+            publishers_sheet_id, gid=publishers_gid
+        )
         
         # Processar dados da campanha
         campaign_data = process_campaign_data(main_data)
@@ -86,45 +90,74 @@ def process_campaign_data(raw_data):
     }
     
     # Processar dados reais da planilha se disponíveis
-    if raw_data and len(raw_data) > 1:
-        headers = raw_data[0]
-        data_rows = raw_data[1:]
-        
-        # Procurar por colunas relevantes
-        for row in data_rows:
-            if len(row) >= len(headers):
-                row_dict = dict(zip(headers, row))
-                
-                # Mapear colunas da planilha para nossos dados
-                if "Budget Utilizado" in str(row_dict):
-                    try:
-                        campaign_data["Budget Utilizado (R$)"] = float(str(row_dict.get("Budget Utilizado", 0)).replace(",", "."))
-                    except:
-                        pass
-                
-                if "Impressões Realizadas" in str(row_dict):
-                    try:
-                        campaign_data["Impressões Realizadas"] = int(float(str(row_dict.get("Impressões Realizadas", 0))))
-                    except:
-                        pass
-                
-                if "CPV Realizado" in str(row_dict):
-                    try:
-                        campaign_data["CPV Realizado (R$)"] = float(str(row_dict.get("CPV Realizado", 0)).replace(",", "."))
-                    except:
-                        pass
-                
-                if "VTR" in str(row_dict):
-                    try:
-                        campaign_data["VTR (100%)"] = float(str(row_dict.get("VTR", 0)).replace(",", "."))
-                    except:
-                        pass
-                
-                if "CTR" in str(row_dict):
-                    try:
-                        campaign_data["CTR (%)"] = float(str(row_dict.get("CTR", 0)).replace(",", "."))
-                    except:
-                        pass
+    if isinstance(raw_data, pd.DataFrame):
+        df = raw_data
+    elif raw_data:
+        try:
+            if isinstance(raw_data, list) and len(raw_data) > 1:
+                df = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+            else:
+                df = pd.DataFrame(raw_data)
+        except Exception:
+            df = pd.DataFrame()
+    else:
+        df = pd.DataFrame()
+
+    if not df.empty:
+        for row_dict in df.to_dict(orient="records"):
+            if not isinstance(row_dict, dict):
+                continue
+
+            # Mapear colunas da planilha para nossos dados
+            if "Budget Utilizado" in row_dict:
+                try:
+                    value = row_dict.get("Budget Utilizado", 0)
+                    if pd.notna(value):
+                        campaign_data["Budget Utilizado (R$)"] = float(
+                            str(value).replace(",", ".")
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+            if "Impressões Realizadas" in row_dict:
+                try:
+                    value = row_dict.get("Impressões Realizadas", 0)
+                    if pd.notna(value):
+                        campaign_data["Impressões Realizadas"] = int(
+                            float(str(value).replace(",", "."))
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+            if "CPV Realizado" in row_dict:
+                try:
+                    value = row_dict.get("CPV Realizado", 0)
+                    if pd.notna(value):
+                        campaign_data["CPV Realizado (R$)"] = float(
+                            str(value).replace(",", ".")
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+            if "VTR" in row_dict:
+                try:
+                    value = row_dict.get("VTR", 0)
+                    if pd.notna(value):
+                        campaign_data["VTR (100%)"] = float(
+                            str(value).replace(",", ".")
+                        )
+                except (ValueError, TypeError):
+                    pass
+
+            if "CTR" in row_dict:
+                try:
+                    value = row_dict.get("CTR", 0)
+                    if pd.notna(value):
+                        campaign_data["CTR (%)"] = float(
+                            str(value).replace(",", ".")
+                        )
+                except (ValueError, TypeError):
+                    pass
     
     # Calcular pacing
     if campaign_data["Budget Contratado (R$)"] > 0:
@@ -137,21 +170,31 @@ def process_publishers_data(raw_data):
     
     publishers = []
     
-    if raw_data and len(raw_data) > 1:
-        headers = raw_data[0]
-        data_rows = raw_data[1:]
-        
-        for row in data_rows:
-            if len(row) >= len(headers):
-                row_dict = dict(zip(headers, row))
-                
-                publisher_name = str(row_dict.get("Publisher", "")).strip()
-                if publisher_name and publisher_name != "":
-                    publishers.append({
-                        "name": publisher_name,
-                        "category": str(row_dict.get("Categoria", "Portal")).strip(),
-                        "description": str(row_dict.get("Descrição", "")).strip()
-                    })
+    if isinstance(raw_data, pd.DataFrame):
+        df = raw_data
+    elif raw_data:
+        try:
+            if isinstance(raw_data, list) and len(raw_data) > 1:
+                df = pd.DataFrame(raw_data[1:], columns=raw_data[0])
+            else:
+                df = pd.DataFrame(raw_data)
+        except Exception:
+            df = pd.DataFrame()
+    else:
+        df = pd.DataFrame()
+
+    if not df.empty:
+        for row_dict in df.fillna("").to_dict(orient="records"):
+            if not isinstance(row_dict, dict):
+                continue
+
+            publisher_name = str(row_dict.get("Publisher", "")).strip()
+            if publisher_name:
+                publishers.append({
+                    "name": publisher_name,
+                    "category": str(row_dict.get("Categoria", "Portal")).strip(),
+                    "description": str(row_dict.get("Descrição", "")).strip()
+                })
     
     # Se não houver dados, usar lista padrão
     if not publishers:
@@ -206,7 +249,7 @@ def generate_daily_data(campaign_data):
             "ctr": campaign_data["CTR (%)"] / 100 if campaign_data["CTR (%)"] > 0 else 0
         })
         
-        current_date = datetime(current_date.year, current_date.month, current_date.day + 1)
+        current_date += timedelta(days=1)
         day_count += 1
     
     return daily_data
