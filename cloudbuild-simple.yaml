@@ -1,0 +1,13 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/automatizar-452311/dashboard-builder:latest', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/automatizar-452311/dashboard-builder:latest']
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'run', 'deploy', 'dashboard-builder',
+      '--image', 'gcr.io/automatizar-452311/dashboard-builder:latest',
+      '--region', 'us-central1',
+      '--platform', 'managed',
+      '--allow-unauthenticated'
+    ]
