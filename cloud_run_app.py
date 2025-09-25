@@ -31,10 +31,10 @@ try:
     import sys
     import os
     sys.path.append(os.path.join(os.path.dirname(__file__), 'static', 'generator', 'processors'))
-    from extract_video_campaign_data import VideoCampaignDataExtractor
-    logger.info("✅ VideoCampaignDataExtractor importado com sucesso")
+    from simple_video_extractor import SimpleVideoExtractor as VideoCampaignDataExtractor
+    logger.info("✅ SimpleVideoExtractor importado com sucesso")
 except ImportError as e:
-    logger.error(f"❌ Erro ao importar VideoCampaignDataExtractor: {e}")
+    logger.error(f"❌ Erro ao importar SimpleVideoExtractor: {e}")
     VideoCampaignDataExtractor = None
 
 app = Flask(__name__)
