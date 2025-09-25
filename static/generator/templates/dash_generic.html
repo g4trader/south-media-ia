@@ -42,12 +42,12 @@
       <div class="logo-icon">SM</div>
       <div>
         <div style="font-weight:800;font-size:1.1rem">South Media</div>
-        <div class="muted">Dashboard - {{CLIENT_NAME}}</div>
+        <div class="muted">Dashboard - <span id="header-client">{{CLIENT_NAME}}</span></div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">{{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</div>
-      <div class="muted" style="text-align:right">Status: <span class="badge">{{CAMPAIGN_STATUS}}</span></div>
+      <div id="header-campaign" style="font-weight:700;font-size:1rem;text-align:right">{{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge" id="header-status">{{CAMPAIGN_STATUS}}</span></div>
     </div>
   </div>
 
@@ -67,7 +67,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">{{CAMPAIGN_DESCRIPTION}}</div>
+      <div id="campaign-description" class="muted" style="margin-bottom:10px">{{CAMPAIGN_DESCRIPTION}}</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -88,13 +88,13 @@
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">{{PRIMARY_CHANNEL}}</div>
+        <div id="primary-channel-badge" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">{{PRIMARY_CHANNEL}}</div>
       </div>
     </div>
     <div class="metrics" id="metrics-channel"></div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Entrega diária — {{PRIMARY_CHANNEL}}</h3>
+      <h3 id="primary-channel-title" style="margin-bottom:10px">Entrega diária — {{PRIMARY_CHANNEL}}</h3>
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
@@ -113,19 +113,23 @@
       <div style="display:grid;gap:16px">
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🎯 Estratégia de Segmentação</h4>
-          <ul style="margin-left:20px;line-height:1.6">
+          <ul id="insights-segmentation" data-hide-when-empty="true" style="margin-left:20px;line-height:1.6">
             {{SEGMENTATION_STRATEGY}}
           </ul>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">📱 Estratégia Criativa</h4>
-          <ul style="margin-left:20px;line-height:1.6">
+          <ul id="insights-creative" data-hide-when-empty="true" style="margin-left:20px;line-height:1.6">
             {{CREATIVE_STRATEGY}}
           </ul>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🚀 Objetivos da Campanha</h4>
-          <p style="line-height:1.6;margin-bottom:12px">{{CAMPAIGN_OBJECTIVES}}</p>
+          <div id="insights-objectives" data-hide-when-empty="true" style="line-height:1.6;margin-bottom:12px">{{CAMPAIGN_OBJECTIVES}}</div>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px;color:#8B5CF6">📌 Principais Insights</h4>
+          <ul id="insights-highlights" data-hide-when-empty="true" style="margin-left:20px;line-height:1.6"></ul>
         </div>
       </div>
     </div>
@@ -138,30 +142,30 @@
       <div style="display:grid;gap:20px">
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">📅 Cronograma</h4>
-          <p><strong>Período:</strong> {{CAMPAIGN_PERIOD}}</p>
-          <p><strong>Status:</strong> {{CAMPAIGN_STATUS}}</p>
+          <p><strong>Período:</strong> <span id="planning-period">{{CAMPAIGN_PERIOD}}</span></p>
+          <p><strong>Status:</strong> <span id="planning-status">{{CAMPAIGN_STATUS}}</span></p>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">💰 Investimento</h4>
-          <p><strong>Budget Total:</strong> R$ {{TOTAL_BUDGET}}</p>
-          <p><strong>Budget Utilizado:</strong> R$ {{BUDGET_USED}}</p>
-          <p><strong>Pacing:</strong> {{PACING_PERCENTAGE}}%</p>
+          <p><strong>Budget Total:</strong> R$ <span id="planning-budget-total">{{TOTAL_BUDGET}}</span></p>
+          <p><strong>Budget Utilizado:</strong> R$ <span id="planning-budget-used">{{BUDGET_USED}}</span></p>
+          <p><strong>Pacing:</strong> <span id="planning-pacing">{{PACING_PERCENTAGE}}%</span></p>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🎯 Métricas</h4>
-          <p><strong>Meta VC:</strong> {{TARGET_VC}}</p>
-          <p><strong>CPV Contratado:</strong> R$ {{CPV_CONTRACTED}}</p>
-          <p><strong>CPV Atual:</strong> R$ {{CPV_CURRENT}}</p>
+          <p><strong>Meta VC:</strong> <span id="planning-target-vc">{{TARGET_VC}}</span></p>
+          <p><strong>CPV Contratado:</strong> R$ <span id="planning-cpv-contracted">{{CPV_CONTRACTED}}</span></p>
+          <p><strong>CPV Atual:</strong> R$ <span id="planning-cpv-current">{{CPV_CURRENT}}</span></p>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">📊 Canais</h4>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div id="planning-channel-badges" data-hide-when-empty="true" style="display:flex;gap:8px;flex-wrap:wrap">
             {{CHANNEL_BADGES}}
           </div>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🎬 Formatos</h4>
-          <ul style="margin-left:20px;line-height:1.6">
+          <ul id="planning-formats" style="margin-left:20px;line-height:1.6">
             {{FORMAT_SPECIFICATIONS}}
           </ul>
         </div>
@@ -379,11 +383,197 @@ class DashboardLoader {
     renderDashboard(data) {
         // Renderizar dados diretamente no HTML existente
         this.data = data || {};
+        this.renderHeader(data);
+        this.renderChannelsSection(data);
+        this.renderPlanning(data);
+        this.renderInsights(data);
         this.renderMetrics(data);
         this.renderCharts(data);
         this.renderTables(data);
-        this.renderInsights(data);
         this.setupEventListeners();
+    }
+
+    renderHeader(data) {
+        const contract = (data && data.contract) || {};
+        const clientName = this.resolveText(
+            contract.client,
+            data && data.client,
+            data && data.client_name
+        );
+        this.updateText('header-client', clientName);
+
+        const campaignName = this.resolveText(
+            contract.campaign,
+            data && data.campaign,
+            data && data.campaign_name
+        );
+
+        const campaignElement = document.getElementById('header-campaign');
+        if (campaignElement && (clientName || campaignName)) {
+            const parts = [];
+            if (clientName) parts.push(clientName);
+            if (campaignName) parts.push(campaignName);
+            if (parts.length) {
+                campaignElement.textContent = parts.join(' - ');
+            }
+        }
+
+        const status = this.resolveText(
+            contract.status,
+            data && data.status
+        );
+        this.updateText('header-status', status);
+
+        const description = this.resolveText(
+            contract.description,
+            data && data.campaign_description,
+            data && data.description
+        );
+        const descriptionElement = document.getElementById('campaign-description');
+        if (descriptionElement && this.hasValue(description)) {
+            descriptionElement.textContent = description;
+        }
+
+        if (clientName || campaignName) {
+            const titleParts = ['Dashboard'];
+            if (clientName) titleParts.push(clientName);
+            if (campaignName) titleParts.push(campaignName);
+            document.title = titleParts.join(' - ');
+        }
+    }
+
+    renderChannelsSection(data) {
+        const contract = (data && data.contract) || {};
+        const strategies = (data && data.strategies) || {};
+        const primaryChannel = this.resolveText(
+            contract.primary_channel,
+            contract.channel,
+            data && data.primary_channel,
+            data && data.channel,
+            strategies.primary_channel
+        );
+
+        this.updateText('primary-channel-badge', primaryChannel);
+
+        const titleElement = document.getElementById('primary-channel-title');
+        if (titleElement && this.hasValue(primaryChannel)) {
+            titleElement.textContent = `Entrega diária — ${primaryChannel}`;
+        }
+    }
+
+    renderPlanning(data) {
+        const contract = (data && data.contract) || {};
+        const metrics = (data && (data.metrics || data.total_metrics)) || {};
+        const strategies = (data && data.strategies) || {};
+
+        const period = this.buildPeriod(contract, data);
+        this.updateText('planning-period', period);
+
+        const status = this.resolveText(contract.status, data && data.status);
+        this.updateText('planning-status', status);
+
+        const totalBudget = this.resolveNumber(
+            contract.total_budget,
+            contract.investment,
+            data && data.total_budget,
+            data && data.budget_contracted,
+            metrics.total_budget,
+            metrics.budget_contracted
+        );
+        this.updateCurrency('planning-budget-total', totalBudget);
+
+        const budgetUsed = this.resolveNumber(
+            contract.budget_used,
+            data && data.budget_used,
+            metrics.total_spend,
+            metrics.spend,
+            metrics.budget_used
+        );
+        this.updateCurrency('planning-budget-used', budgetUsed);
+
+        const pacing = this.resolveNumber(
+            contract.pacing_percentage,
+            contract.pacing,
+            data && data.pacing_percentage,
+            metrics.pacing,
+            metrics.vc_pacing
+        );
+        this.updatePercentage('planning-pacing', pacing);
+
+        const targetVc = this.resolveNumber(
+            contract.target_vc,
+            contract.complete_views_contracted,
+            data && data.target_vc,
+            metrics.vc_contracted,
+            metrics.q100
+        );
+        this.updateNumber('planning-target-vc', targetVc);
+
+        const cpvContracted = this.resolveNumber(
+            contract.cpv_contracted,
+            contract.cpv,
+            data && data.cpv_contracted,
+            metrics.cpv_contracted
+        );
+        this.updateCurrency('planning-cpv-contracted', cpvContracted);
+
+        const cpvCurrent = this.resolveNumber(
+            contract.cpv_current,
+            data && data.cpv_current,
+            metrics.cpv
+        );
+        this.updateCurrency('planning-cpv-current', cpvCurrent);
+
+        const channelSources = [
+            contract.channels,
+            strategies.channels,
+            data && data.channels,
+            data && data.publishers ? data.publishers.map(publisher => (
+                publisher && (publisher.name || publisher.channel || publisher.publisher)
+            )) : null
+        ];
+        this.renderBadges('planning-channel-badges', ...channelSources);
+
+        const formatSources = [
+            contract.formats,
+            contract.format_specifications,
+            strategies.formats,
+            data && data.formats
+        ];
+        this.renderList('planning-formats', ...formatSources);
+    }
+
+    renderInsights(data) {
+        const contract = (data && data.contract) || {};
+        const strategies = (data && data.strategies) || {};
+
+        this.renderList(
+            'insights-segmentation',
+            strategies.segmentation,
+            contract.segmentation,
+            data && data.segmentation
+        );
+
+        this.renderList(
+            'insights-creative',
+            strategies.creative_strategy,
+            contract.creative_strategy,
+            data && data.creative_strategy
+        );
+
+        this.renderObjectives(
+            'insights-objectives',
+            strategies.objectives,
+            contract.objectives,
+            data && data.objectives
+        );
+
+        this.renderList(
+            'insights-highlights',
+            data && data.insights,
+            strategies.highlights,
+            contract.insights
+        );
     }
 
     renderMetrics(data) {
@@ -507,11 +697,300 @@ class DashboardLoader {
         }
     }
 
-    renderInsights(data) {
-        // Renderizar insights se disponíveis
-        if (data.insights && data.insights.length > 0) {
-            console.log('Insights disponíveis:', data.insights);
+    renderBadges(elementId, ...sources) {
+        const container = document.getElementById(elementId);
+        if (!container) {
+            return;
         }
+        const labels = this.collectLabels(...sources);
+        const hideWhenEmpty = container.dataset.hideWhenEmpty === 'true';
+        const block = hideWhenEmpty ? container.parentElement : null;
+        if (!labels.length) {
+            if (hideWhenEmpty && block) {
+                this.setVisibility(block, false);
+            }
+            return;
+        }
+        if (hideWhenEmpty && block) {
+            this.setVisibility(block, true);
+        }
+        container.innerHTML = '';
+        labels.forEach(label => {
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            badge.style.margin = '4px';
+            badge.style.display = 'inline-flex';
+            badge.textContent = label;
+            container.appendChild(badge);
+        });
+    }
+
+    renderList(elementId, ...sources) {
+        const listElement = document.getElementById(elementId);
+        if (!listElement) {
+            return;
+        }
+        const items = this.collectLabels(...sources);
+        const hideWhenEmpty = listElement.dataset.hideWhenEmpty === 'true';
+        const block = hideWhenEmpty ? listElement.parentElement : null;
+        if (!items.length) {
+            if (hideWhenEmpty && block) {
+                this.setVisibility(block, false);
+            }
+            return;
+        }
+        if (hideWhenEmpty && block) {
+            this.setVisibility(block, true);
+        }
+        listElement.innerHTML = '';
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            listElement.appendChild(li);
+        });
+    }
+
+    renderObjectives(elementId, ...sources) {
+        const container = document.getElementById(elementId);
+        if (!container) {
+            return;
+        }
+        const items = this.collectLabels(...sources);
+        const hideWhenEmpty = container.dataset.hideWhenEmpty === 'true';
+        const block = hideWhenEmpty ? container.parentElement : null;
+        if (!items.length) {
+            if (hideWhenEmpty && block) {
+                this.setVisibility(block, false);
+            }
+            return;
+        }
+        if (hideWhenEmpty && block) {
+            this.setVisibility(block, true);
+        }
+        const list = document.createElement('ul');
+        list.style.marginLeft = '20px';
+        list.style.lineHeight = '1.6';
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+        });
+        container.innerHTML = '';
+        container.appendChild(list);
+    }
+
+    setVisibility(element, shouldShow) {
+        if (!element) {
+            return;
+        }
+        element.style.display = shouldShow ? '' : 'none';
+    }
+
+    updateText(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+        if (!this.hasValue(value) && value !== 0) {
+            return;
+        }
+        const text = typeof value === 'number' ? String(value) : value;
+        element.textContent = text;
+    }
+
+    updateCurrency(elementId, value) {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+        element.textContent = this.formatCurrency(value);
+    }
+
+    updateNumber(elementId, value) {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+        element.textContent = this.formatNumber(value);
+    }
+
+    updatePercentage(elementId, value) {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return;
+        }
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+        element.textContent = this.formatPercentage(value);
+    }
+
+    resolveText(...values) {
+        for (const value of values) {
+            if (typeof value === 'string' && value.trim()) {
+                return value.trim();
+            }
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                return String(value);
+            }
+        }
+        return null;
+    }
+
+    resolveNumber(...values) {
+        for (const value of values) {
+            const numeric = this.parseNumber(value);
+            if (numeric !== null && Number.isFinite(numeric)) {
+                return numeric;
+            }
+        }
+        return null;
+    }
+
+    hasValue(value) {
+        if (value === null || value === undefined) {
+            return false;
+        }
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        if (typeof value === 'object') {
+            return Object.keys(value).length > 0;
+        }
+        if (typeof value === 'string') {
+            return value.trim() !== '';
+        }
+        return true;
+    }
+
+    collectLabels(...sources) {
+        const labels = [];
+        sources.forEach(source => {
+            if (source === null || source === undefined) {
+                return;
+            }
+            if (Array.isArray(source)) {
+                source.forEach(item => {
+                    const label = this.extractLabel(item);
+                    if ((this.hasValue(label) || label === 0 || label === '0') && label !== null) {
+                        labels.push(String(label));
+                    }
+                });
+                return;
+            }
+            if (typeof source === 'object') {
+                const label = this.extractLabel(source);
+                if (this.hasValue(label) || label === 0 || label === '0') {
+                    labels.push(String(label));
+                    return;
+                }
+                Object.entries(source).forEach(([key, value]) => {
+                    if (!this.hasValue(value) && value !== 0) {
+                        return;
+                    }
+                    if (typeof value === 'object') {
+                        const nested = this.extractLabel(value);
+                        if (this.hasValue(nested) || nested === 0 || nested === '0') {
+                            labels.push(`${key}: ${nested}`);
+                        } else if (this.hasValue(key)) {
+                            labels.push(String(key));
+                        }
+                    } else {
+                        labels.push(`${key}: ${value}`);
+                    }
+                });
+                return;
+            }
+            const label = this.extractLabel(source);
+            if (this.hasValue(label) || label === 0 || label === '0') {
+                labels.push(String(label));
+            }
+        });
+        return Array.from(new Set(labels.filter(item => typeof item === 'string' ? item.trim() !== '' : item !== null)));
+    }
+
+    extractLabel(item) {
+        if (item === null || item === undefined) {
+            return null;
+        }
+        if (Array.isArray(item)) {
+            const nested = this.collectLabels(...item);
+            return nested.length ? nested.join(' • ') : null;
+        }
+        if (typeof item === 'object') {
+            const hasTitle = this.hasValue(item.title);
+            const hasDescription = this.hasValue(item.description);
+            if (hasTitle && hasDescription) {
+                return `${String(item.title).trim()}: ${String(item.description).trim()}`;
+            }
+            const keys = ['label', 'name', 'title', 'channel', 'value', 'description', 'text'];
+            for (const key of keys) {
+                if (this.hasValue(item[key]) || item[key] === 0) {
+                    return String(item[key]).trim();
+                }
+            }
+            return null;
+        }
+        if (typeof item === 'number' && Number.isFinite(item)) {
+            return item;
+        }
+        if (typeof item === 'string') {
+            return item.trim();
+        }
+        return null;
+    }
+
+    buildPeriod(contract, data) {
+        const period = this.resolveText(
+            contract.period,
+            data && data.period
+        );
+        if (period) {
+            return period;
+        }
+        const start = this.resolveText(
+            contract.period_start,
+            contract.start_date,
+            data && data.period_start,
+            data && data.start_date
+        );
+        const end = this.resolveText(
+            contract.period_end,
+            contract.end_date,
+            data && data.period_end,
+            data && data.end_date
+        );
+        if (start || end) {
+            return [start, end].filter(Boolean).join(' - ');
+        }
+        return null;
+    }
+
+    parseNumber(value) {
+        if (value === null || value === undefined || value === '') {
+            return null;
+        }
+        if (typeof value === 'number') {
+            return Number.isFinite(value) ? value : null;
+        }
+        if (typeof value === 'string') {
+            const normalized = value
+                .replace(/[^0-9,.-]/g, '')
+                .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+                .replace(',', '.');
+            if (!normalized) {
+                return null;
+            }
+            const parsed = Number(normalized);
+            return Number.isFinite(parsed) ? parsed : null;
+        }
+        return null;
     }
 
     setupEventListeners() {
@@ -626,7 +1105,11 @@ class DashboardLoader {
     }
 
     formatPercentage(value) {
-        return `${(value || 0).toFixed(2)}%`;
+        const numeric = Number.isFinite(value) ? value : this.parseNumber(value) || 0;
+        return `${numeric.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}%`;
     }
 
     toNumber(value) {
