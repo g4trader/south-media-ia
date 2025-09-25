@@ -48,6 +48,38 @@ gcloud iam service-accounts keys create service-account-key.json \
     --iam-account=dashboard-builder-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com
 ```
 
+#### **Configurar credenciais no Cloud Run:**
+```bash
+# Criar um secret com o JSON da service account
+gcloud secrets create dashboard-builder-sa-key \
+    --data-file=service-account-key.json
+
+# Conceder acesso ao service account utilizado pelo Cloud Run
+gcloud secrets add-iam-policy-binding dashboard-builder-sa-key \
+    --member="serviceAccount:dashboard-builder-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor"
+
+# Durante o deploy, disponibilizar o secret como variável de ambiente
+gcloud run deploy dashboard-builder \
+    --source . \
+    --platform managed \
+    --region us-central1 \
+    --allow-unauthenticated \
+    --port 8080 \
+    --service-account=dashboard-builder-sa@YOUR_PROJECT_ID.iam.gserviceaccount.com \
+    --set-secrets=GOOGLE_SERVICE_ACCOUNT_JSON=dashboard-builder-sa-key:latest
+
+# Alternativa: montar o arquivo no container e apontar GOOGLE_APPLICATION_CREDENTIALS
+gcloud run services update dashboard-builder \
+    --set-env-vars=GOOGLE_APPLICATION_CREDENTIALS=/secrets/service-account-key.json \
+    --add-volume=name=sa,secret=dashboard-builder-sa-key \
+    --add-volume-mount=volume=sa,mount-path=/secrets
+```
+
+O serviço `GoogleSheetsService` detecta automaticamente tanto a variável
+`GOOGLE_SERVICE_ACCOUNT_JSON` (com o conteúdo do JSON) quanto caminhos expostos
+via `GOOGLE_APPLICATION_CREDENTIALS`, garantindo autenticação segura em produção.
+
 #### **Deploy:**
 ```bash
 # Build e deploy
