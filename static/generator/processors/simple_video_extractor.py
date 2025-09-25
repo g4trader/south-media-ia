@@ -73,17 +73,14 @@ class SimpleVideoExtractor:
             report_gid = self.config.tabs.get("daily", "0")
             
             # Ler dados da planilha
-            data = self.sheets_service.read_sheet(
+            df = self.sheets_service.read_sheet_data(
                 self.config.sheet_id, 
-                f"Report!A:N"  # Colunas A até N
+                sheet_name="Report"
             )
             
-            if not data or len(data) < 2:
+            if df is None or df.empty:
                 logger.warning("⚠️ Dados insuficientes na aba Report")
                 return []
-            
-            # Converter para DataFrame
-            df = pd.DataFrame(data[1:], columns=data[0])
             
             daily_records = []
             for _, row in df.iterrows():
@@ -140,21 +137,21 @@ class SimpleVideoExtractor:
             contract_gid = self.config.tabs.get("contract", "0")
             
             # Ler dados da planilha
-            data = self.sheets_service.read_sheet(
+            df = self.sheets_service.read_sheet_data(
                 self.config.sheet_id, 
-                f"Informações de contrato!A:B"  # Colunas A e B
+                sheet_name="Informações de contrato"
             )
             
-            if not data or len(data) < 2:
+            if df is None or df.empty:
                 logger.warning("⚠️ Dados insuficientes na aba Informações de contrato")
                 return self._get_default_contract()
             
             # Converter para dicionário
             contract_dict = {}
-            for row in data[1:]:
+            for _, row in df.iterrows():
                 if len(row) >= 2:
-                    key = str(row[0]).strip()
-                    value = str(row[1]).strip()
+                    key = str(row.iloc[0]).strip()
+                    value = str(row.iloc[1]).strip()
                     if key and value and value != 'nan':
                         contract_dict[key] = value
             

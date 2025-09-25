@@ -39,43 +39,21 @@ class GoogleSheetsService:
                 from google.auth import default
                 from google.auth.transport.requests import Request
                 
-                # Tentar obter credenciais com escopos explícitos
-                credentials, project = default(scopes=self.SCOPES)
-                print(f"🔍 DEBUG: Credenciais obtidas: {type(credentials)}, Projeto: {project}")
-                if credentials and project:
-                    # Forçar refresh das credenciais para garantir que os escopos sejam aplicados
-                    print("🔍 DEBUG: Fazendo refresh das credenciais")
-                    credentials.refresh(Request())
-                    
-                    # Verificar se os escopos foram aplicados corretamente
-                    print(f"🔍 DEBUG: Escopos das credenciais: {credentials.scopes}")
-                    
-                    # Se os escopos não estão corretos, criar novas credenciais
-                    if not credentials.scopes or not any(scope in credentials.scopes for scope in self.SCOPES):
-                        print("🔍 DEBUG: Escopos insuficientes, criando novas credenciais...")
-                        from google.auth import default as default_auth
-                        credentials, project = default_auth(scopes=self.SCOPES)
-                        credentials.refresh(Request())
-                    
-                    # Forçar aplicação dos escopos
-                    if credentials.scopes is None or not credentials.scopes:
+                    # Tentar obter credenciais com escopos explícitos
+                    credentials, project = default(scopes=self.SCOPES)
+                    print(f"🔍 DEBUG: Credenciais obtidas: {type(credentials)}, Projeto: {project}")
+                    if credentials and project:
+                        # Forçar aplicação dos escopos
                         print("🔍 DEBUG: Forçando aplicação dos escopos...")
-                        try:
-                            credentials = credentials.with_scopes(self.SCOPES)
-                            credentials.refresh(Request())
-                        except AttributeError:
-                            # Para credenciais OAuth, tentar recriar com escopos
-                            print("🔍 DEBUG: Credenciais OAuth, recriando com escopos...")
-                            from google.auth import default as default_auth
-                            credentials, project = default_auth(scopes=self.SCOPES)
-                            credentials.refresh(Request())
-                    
-                    print("🔍 DEBUG: Construindo serviço")
-                    self.service = build('sheets', 'v4', credentials=credentials)
-                    self.is_configured_flag = True
-                    print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
-                    print(f"🔑 Escopos aplicados: {credentials.scopes}")
-                    return
+                        credentials = credentials.with_scopes(self.SCOPES)
+                        credentials.refresh(Request())
+                        
+                        print("🔍 DEBUG: Construindo serviço")
+                        self.service = build('sheets', 'v4', credentials=credentials)
+                        self.is_configured_flag = True
+                        print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
+                        print(f"🔑 Escopos aplicados: {credentials.scopes}")
+                        return
             except Exception as e:
                 print(f"⚠️ Não foi possível usar credenciais padrão do projeto: {e}")
                 
