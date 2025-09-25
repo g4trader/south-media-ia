@@ -10,10 +10,12 @@ import logging
 import uuid
 import subprocess
 import sys
+import re
 from flask import Flask, request, jsonify, make_response, send_from_directory
 from datetime import datetime
 import threading
 import time
+from html import escape
 
 # Adicionar paths para importar módulos
 sys.path.append('static/generator/processors')
@@ -803,7 +805,7 @@ def generate_dashboard():
             os.remove(dashboard_path)
         
         # Copiar template genérico
-        template_path = "static/dash_video_programmatic_template.html"
+        template_path = "static/generator/templates/dash_generic.html"
         if not os.path.exists(template_path):
             return jsonify({
                 "success": False,
@@ -818,17 +820,219 @@ def generate_dashboard():
         with open(dashboard_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        # Substituir placeholder do campaign_key pelo específico
-        content = content.replace(
-            'let campaignKey = \'CAMPAIGN_KEY_PLACEHOLDER\';',
-            f'let campaignKey = \'{data["campaign_key"]}\'; // Definido para {data["client"]}'
+        contract_info = data.get('contract') or {}
+        strategies_info = data.get('strategies') or {}
+        metrics_info = data.get('metrics') or {}
+
+        def safe_text(value):
+            if value is None:
+                return ""
+            return escape(str(value))
+
+        def format_currency(value):
+            try:
+                if value is None or value == "":
+                    return ""
+                return (
+                    f"{float(value):,.2f}"
+                    .replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                )
+            except (TypeError, ValueError):
+                return safe_text(value)
+
+        def format_number(value):
+            try:
+                if value is None or value == "":
+                    return ""
+                return (
+                    f"{float(value):,.0f}"
+                    .replace(",", "X")
+                    .replace(".", ",")
+                    .replace("X", ".")
+                )
+            except (TypeError, ValueError):
+                return safe_text(value)
+
+        def format_percentage(value):
+            try:
+                if value is None or value == "":
+                    return ""
+                return f"{float(value):.1f}".replace(".", ",")
+            except (TypeError, ValueError):
+                return safe_text(value)
+
+        def format_list_items(values):
+            items = []
+            if isinstance(values, dict):
+                for key, val in values.items():
+                    label = f"{key}: {val}" if val is not None else key
+                    items.append(label)
+            elif isinstance(values, (list, tuple, set)):
+                items = [item for item in values if item]
+            elif values:
+                items = [values]
+
+            if not items:
+                return ""
+
+            return "\n".join(
+                f"<li>{escape(str(item))}</li>" for item in items if item is not None
+            )
+
+        def format_badges(values):
+            items = []
+            if isinstance(values, dict):
+                for key, val in values.items():
+                    if val:
+                        items.append(f"{key}: {val}")
+                    else:
+                        items.append(key)
+            elif isinstance(values, (list, tuple, set)):
+                for item in values:
+                    if isinstance(item, dict):
+                        label = item.get('name') or item.get('channel') or item.get('label')
+                        if label:
+                            items.append(label)
+                    elif item:
+                        items.append(item)
+            elif values:
+                items = [values]
+
+            if not items:
+                return ""
+
+            return "".join(
+                f'<span class="badge" style="margin:4px;display:inline-flex;">{escape(str(item))}</span>'
+                for item in items
+            )
+
+        def format_text_block(value):
+            if isinstance(value, dict):
+                entries = [f"{k}: {v}" for k, v in value.items() if v]
+                return "<br/>".join(escape(str(entry)) for entry in entries)
+            if isinstance(value, (list, tuple, set)):
+                entries = [escape(str(item)) for item in value if item]
+                return "<br/>".join(entries)
+            if value:
+                return escape(str(value))
+            return ""
+
+        campaign_key = data['campaign_key']
+        client_name = data.get('client', '')
+        campaign_name = data.get('campaign', '')
+        campaign_status = (
+            contract_info.get('status')
+            or data.get('status')
+            or 'Em andamento'
         )
-        
-        # Substituir título da página
-        content = content.replace(
-            'Carregando Dashboard...',
-            f'Dashboard {data["client"]} - {data["campaign"]}'
+
+        period = (
+            contract_info.get('period')
+            or data.get('period')
         )
+        if not period:
+            start = contract_info.get('period_start')
+            end = contract_info.get('period_end')
+            if start or end:
+                parts = [p for p in (start, end) if p]
+                period = " - ".join(parts)
+
+        primary_channel = (
+            contract_info.get('primary_channel')
+            or contract_info.get('channel')
+            or data.get('primary_channel')
+            or data.get('channel')
+            or ''
+        )
+
+        segmentation = (
+            contract_info.get('segmentation')
+            or strategies_info.get('segmentation')
+        )
+        creative_strategy = (
+            contract_info.get('creative_strategy')
+            or strategies_info.get('creative_strategy')
+        )
+        campaign_objectives = (
+            contract_info.get('objectives')
+            or strategies_info.get('objectives')
+        )
+
+        channels = (
+            contract_info.get('channels')
+            or data.get('channels')
+            or strategies_info.get('channels')
+        )
+        formats = contract_info.get('formats') or data.get('formats')
+
+        campaign_description = (
+            contract_info.get('description')
+            or data.get('description')
+            or 'Acompanhe os resultados desta campanha em tempo real.'
+        )
+
+        total_budget = (
+            contract_info.get('total_budget')
+            or contract_info.get('investment')
+            or data.get('total_budget')
+            or data.get('budget_contracted')
+        )
+        budget_used = (
+            contract_info.get('budget_used')
+            or data.get('budget_used')
+            or metrics_info.get('spend')
+        )
+        pacing_value = (
+            contract_info.get('pacing_percentage')
+            or data.get('pacing_percentage')
+            or metrics_info.get('pacing')
+        )
+        target_vc = (
+            contract_info.get('target_vc')
+            or data.get('target_vc')
+            or metrics_info.get('vc_contracted')
+        )
+        cpv_contracted = (
+            contract_info.get('cpv_contracted')
+            or data.get('cpv_contracted')
+            or metrics_info.get('cpv_contracted')
+        )
+        cpv_current = (
+            contract_info.get('cpv_current')
+            or data.get('cpv_current')
+            or metrics_info.get('cpv')
+        )
+
+        api_endpoint = f"{CLOUD_RUN_URL}/api/{campaign_key}/data"
+
+        replacements = {
+            "CLIENT_NAME": safe_text(client_name),
+            "CAMPAIGN_NAME": safe_text(campaign_name),
+            "CAMPAIGN_STATUS": safe_text(campaign_status),
+            "CAMPAIGN_PERIOD": safe_text(period),
+            "CAMPAIGN_DESCRIPTION": safe_text(campaign_description),
+            "PRIMARY_CHANNEL": safe_text(primary_channel),
+            "SEGMENTATION_STRATEGY": format_list_items(segmentation),
+            "CREATIVE_STRATEGY": format_list_items(creative_strategy),
+            "CAMPAIGN_OBJECTIVES": format_text_block(campaign_objectives),
+            "TOTAL_BUDGET": format_currency(total_budget),
+            "BUDGET_USED": format_currency(budget_used),
+            "PACING_PERCENTAGE": format_percentage(pacing_value),
+            "TARGET_VC": format_number(target_vc),
+            "CPV_CONTRACTED": format_currency(cpv_contracted),
+            "CPV_CURRENT": format_currency(cpv_current),
+            "CHANNEL_BADGES": format_badges(channels),
+            "FORMAT_SPECIFICATIONS": format_list_items(formats),
+            "API_ENDPOINT": safe_text(api_endpoint),
+            "CAMPAIGN_KEY": safe_text(campaign_key),
+        }
+
+        template_tokens = set(re.findall(r"\{\{([A-Z0-9_]+)\}\}", content))
+        for token in template_tokens:
+            replacement = replacements.get(token, "")
+            content = content.replace(f"{{{{{token}}}}}", replacement)
         
         # Salvar arquivo personalizado
         with open(dashboard_path, 'w', encoding='utf-8') as f:
