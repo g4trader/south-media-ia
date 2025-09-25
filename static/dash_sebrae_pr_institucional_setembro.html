@@ -835,7 +835,8 @@ class DashboardLoader {
         const strategies = data.strategies || {};
         const objectives = strategies.objectives || ["Maximizar alcance qualificado e eficiência de conversão"];
         
-        const objectiveText = document.querySelector('#tab-planning .card p');
+        // Atualizar objetivo da campanha - usar seletor mais simples
+        const objectiveText = document.querySelector('#tab-planning p');
         if (objectiveText) {
             objectiveText.innerHTML = `
                 Campanha <strong>${data.contract?.campaign || 'Campanha'}</strong> de <strong>${data.channel || 'Prográmatica'}</strong> para <strong>${data.contract?.client || 'Cliente'}</strong> com foco em 
@@ -891,7 +892,7 @@ class DashboardLoader {
         
         // Atualizar detalhes da campanha com dados de contratação
         const contract = data.contract || {};
-        const contractDetails = document.querySelector('#tab-planning .card:nth-child(4) div[style*="grid-template-columns"]');
+        const contractDetails = document.querySelector('#tab-planning .card:last-child div[style*="grid-template-columns"]');
         if (contractDetails) {
             contractDetails.innerHTML = `
                 <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:8px; text-align:center">
