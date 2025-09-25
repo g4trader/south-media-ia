@@ -8,7 +8,7 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 import re
 
@@ -143,10 +143,7 @@ class WorkingVideoExtractor:
                 "daily_data": daily_data,
                 "total_metrics": total_metrics,
                 "publishers": self._get_publishers(daily_data),
-                "strategies": {
-                    "segmentation": ["Lookalike", "Interesse", "Retargeting"],
-                    "objectives": ["Brand Awareness", "Video Views", "Engagement"]
-                }
+                "strategies": self._extract_strategies_data_real(),
             }
             
             logger.info(f"✅ Extração REAL concluída: {len(daily_data)} registros diários")
@@ -209,6 +206,67 @@ class WorkingVideoExtractor:
             )
 
         return pd.DataFrame()
+
+    def _extract_strategies_data_real(self) -> Dict[str, List[str]]:
+        """Extrai dados de estratégias convertendo linhas da planilha em listas."""
+
+        empty_strategies = {
+            "segmentation": [],
+            "creative_strategy": [],
+            "objectives": [],
+            "highlights": [],
+            "formats": [],
+            "channels": [],
+            "insights": [],
+        }
+
+        try:
+            df = self._read_tab_dataframe("strategies", "Estratégias")
+        except Exception as error:
+            logger.warning("⚠️ Erro ao ler aba de estratégias: %s", error)
+            return empty_strategies
+
+        if df is None or df.empty:
+            return empty_strategies
+
+        strategies_data = {key: list(values) for key, values in empty_strategies.items()}
+
+        for _, row in df.iterrows():
+            row_values = [
+                str(value).strip()
+                for value in row
+                if value is not None and not (isinstance(value, float) and pd.isna(value)) and str(value).strip()
+            ]
+
+            if len(row_values) < 2:
+                continue
+
+            category = row_values[0].lower()
+            values = row_values[1:]
+
+            if "segment" in category:
+                target_key = "segmentation"
+            elif "criativo" in category or "creative" in category:
+                target_key = "creative_strategy"
+            elif "objetivo" in category or "objective" in category:
+                target_key = "objectives"
+            elif "destaque" in category or "highlight" in category:
+                target_key = "highlights"
+            elif "formato" in category or "format" in category:
+                target_key = "formats"
+            elif "canal" in category or "channel" in category:
+                target_key = "channels"
+            elif "insight" in category:
+                target_key = "insights"
+            else:
+                continue
+
+            for value in values:
+                cleaned_value = value.strip()
+                if cleaned_value and cleaned_value.lower() != "nan":
+                    strategies_data[target_key].append(cleaned_value)
+
+        return strategies_data
 
     def _extract_daily_data_real(self) -> list:
         """Extrair dados diários da aba Report - VERSÃO QUE FUNCIONA"""
@@ -482,7 +540,7 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import logging
 
 # Adicionar diretório raiz ao path
@@ -532,10 +590,7 @@ class WorkingVideoExtractor:
                 "daily_data": daily_data,
                 "total_metrics": total_metrics,
                 "publishers": self._get_publishers(daily_data),
-                "strategies": {
-                    "segmentation": ["Lookalike", "Interesse", "Retargeting"],
-                    "objectives": ["Brand Awareness", "Video Views", "Engagement"]
-                }
+                "strategies": self._extract_strategies_data_real(),
             }
             
             logger.info(f"✅ Extração REAL concluída: {len(daily_data)} registros diários")
@@ -598,6 +653,67 @@ class WorkingVideoExtractor:
             )
 
         return pd.DataFrame()
+
+    def _extract_strategies_data_real(self) -> Dict[str, List[str]]:
+        """Extrai dados de estratégias convertendo linhas da planilha em listas."""
+
+        empty_strategies = {
+            "segmentation": [],
+            "creative_strategy": [],
+            "objectives": [],
+            "highlights": [],
+            "formats": [],
+            "channels": [],
+            "insights": [],
+        }
+
+        try:
+            df = self._read_tab_dataframe("strategies", "Estratégias")
+        except Exception as error:
+            logger.warning("⚠️ Erro ao ler aba de estratégias: %s", error)
+            return empty_strategies
+
+        if df is None or df.empty:
+            return empty_strategies
+
+        strategies_data = {key: list(values) for key, values in empty_strategies.items()}
+
+        for _, row in df.iterrows():
+            row_values = [
+                str(value).strip()
+                for value in row
+                if value is not None and not (isinstance(value, float) and pd.isna(value)) and str(value).strip()
+            ]
+
+            if len(row_values) < 2:
+                continue
+
+            category = row_values[0].lower()
+            values = row_values[1:]
+
+            if "segment" in category:
+                target_key = "segmentation"
+            elif "criativo" in category or "creative" in category:
+                target_key = "creative_strategy"
+            elif "objetivo" in category or "objective" in category:
+                target_key = "objectives"
+            elif "destaque" in category or "highlight" in category:
+                target_key = "highlights"
+            elif "formato" in category or "format" in category:
+                target_key = "formats"
+            elif "canal" in category or "channel" in category:
+                target_key = "channels"
+            elif "insight" in category:
+                target_key = "insights"
+            else:
+                continue
+
+            for value in values:
+                cleaned_value = value.strip()
+                if cleaned_value and cleaned_value.lower() != "nan":
+                    strategies_data[target_key].append(cleaned_value)
+
+        return strategies_data
 
     def _extract_daily_data_real(self) -> list:
         """Extrair dados diários da aba Report - VERSÃO QUE FUNCIONA"""
