@@ -514,12 +514,9 @@ def generate_dashboard():
         dashboard_filename = f"dash_{config.get_slug()}.html"
         dashboard_path = f"static/{dashboard_filename}"
         
-        # Verificar se já existe
+        # Verificar se já existe e remover se necessário
         if os.path.exists(dashboard_path):
-            return jsonify({
-                "success": False,
-                "message": f"Dashboard já existe: {dashboard_filename}"
-            }), 409
+            os.remove(dashboard_path)
         
         # Copiar template genérico
         template_path = "static/dash_video_programmatic_template.html"
