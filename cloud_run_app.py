@@ -21,6 +21,8 @@ from html import escape
 sys.path.append('static/generator/processors')
 sys.path.append('static/generator/config')
 
+from numeric_parsers import safe_float as parse_safe_float, safe_int as parse_safe_int
+
 # Configurar logging primeiro
 logging.basicConfig(
     level=logging.INFO,
@@ -65,48 +67,14 @@ def add_cors_headers(response):
 
 def _safe_float(value):
     """Converter valores para float de forma resiliente"""
-    if value is None:
-        return 0.0
 
-    try:
-        if isinstance(value, (int, float)):
-            return float(value)
-
-        value_str = str(value).strip()
-        if not value_str:
-            return 0.0
-
-        value_str = value_str.replace('R$', '').replace(' ', '')
-        if ',' in value_str:
-            value_str = value_str.replace('.', '').replace(',', '.')
-
-        return float(value_str)
-    except (ValueError, TypeError):
-        return 0.0
+    return parse_safe_float(value)
 
 
 def _safe_int(value):
     """Converter valores para int de forma resiliente"""
-    if value is None:
-        return 0
 
-    try:
-        if isinstance(value, int):
-            return value
-        if isinstance(value, float):
-            return int(value)
-
-        value_str = str(value).strip()
-        if not value_str:
-            return 0
-
-        value_str = value_str.replace('R$', '').replace(' ', '')
-        if ',' in value_str:
-            value_str = value_str.replace('.', '').replace(',', '.')
-
-        return int(float(value_str))
-    except (ValueError, TypeError):
-        return 0
+    return parse_safe_int(value)
 
 
 def _normalize_name(name):
