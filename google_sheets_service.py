@@ -30,18 +30,23 @@ class GoogleSheetsService:
     
     def _initialize_service(self):
         """Inicializar o serviço do Google Sheets"""
+        print("🔍 DEBUG: Iniciando _initialize_service")
         try:
             # Verificar se estamos no Google Cloud (Cloud Run, Cloud Functions, etc.)
             # Tentar usar credenciais padrão do projeto (Service Account)
             try:
+                print("🔍 DEBUG: Tentando google.auth.default")
                 from google.auth import default
                 from google.auth.transport.requests import Request
                 
                 # Tentar obter credenciais com escopos explícitos
                 credentials, project = default(scopes=self.SCOPES)
+                print(f"🔍 DEBUG: Credenciais obtidas: {type(credentials)}, Projeto: {project}")
                 if credentials and project:
                     # Forçar refresh das credenciais para garantir que os escopos sejam aplicados
+                    print("🔍 DEBUG: Fazendo refresh das credenciais")
                     credentials.refresh(Request())
+                    print("🔍 DEBUG: Construindo serviço")
                     self.service = build('sheets', 'v4', credentials=credentials)
                     self.is_configured_flag = True
                     print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
