@@ -28,6 +28,9 @@ logger = logging.getLogger(__name__)
 
 # Importar extrator de dados
 try:
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'static', 'generator', 'processors'))
     from extract_video_campaign_data import VideoCampaignDataExtractor
     logger.info("✅ VideoCampaignDataExtractor importado com sucesso")
 except ImportError as e:
@@ -102,6 +105,131 @@ def backup_database():
         return add_cors_headers(jsonify({
             "success": False,
             "message": f"Erro no backup: {str(e)}"
+        })), 500
+
+@app.route('/api/debug-git', methods=['GET', 'POST'])
+def debug_git():
+    """Debug do sistema Git"""
+    try:
+        github_token = os.getenv('GITHUB_TOKEN')
+        
+        debug_info = {
+            "github_token_configured": bool(github_token),
+            "github_token_length": len(github_token) if github_token else 0,
+            "current_directory": os.getcwd(),
+            "git_status": None,
+            "git_remote": None,
+            "git_automation_test": None
+        }
+        
+        # Testar Git local
+        try:
+            import subprocess
+            result = subprocess.run(['git', 'status', '--porcelain'], 
+                                  capture_output=True, text=True, timeout=10)
+            debug_info["git_status"] = result.stdout.strip()
+            
+            result = subprocess.run(['git', 'remote', '-v'], 
+                                  capture_output=True, text=True, timeout=10)
+            debug_info["git_remote"] = result.stdout.strip()
+        except Exception as e:
+            debug_info["git_error"] = str(e)
+        
+        # Testar GitAutomation
+        try:
+            from git_automation import GitAutomation
+            git = GitAutomation()
+            debug_info["git_automation_test"] = git.test_github_connection()
+        except Exception as e:
+            debug_info["git_automation_error"] = str(e)
+        
+        return add_cors_headers(jsonify({
+            "success": True,
+            "debug_info": debug_info
+        }))
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no debug Git: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro no debug: {str(e)}"
+        })), 500
+
+@app.route('/api/test-git-commit', methods=['POST', 'OPTIONS'])
+def test_git_commit():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        return '', 200
+    """Testar commit automático"""
+    try:
+        from git_automation import GitAutomation
+        git = GitAutomation()
+        
+        # Criar arquivo de teste
+        test_content = f"""# Teste de Commit Automático
+
+Este é um teste do sistema de commit automático do gerador de dashboards.
+
+- Gerado em: {datetime.now().isoformat()}
+- Sistema: Cloud Run
+- Objetivo: Verificar se o commit automático está funcionando
+
+Se você está vendo este arquivo, o commit automático está funcionando! 🎉
+"""
+        
+        test_file_path = "test_git_automation.md"
+        commit_message = f"🧪 Teste de commit automático - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        
+        success = git.commit_file_to_github(test_file_path, test_content, commit_message)
+        
+        return add_cors_headers(jsonify({
+            "success": success,
+            "message": "Teste de commit automático realizado",
+            "test_file": test_file_path,
+            "commit_message": commit_message
+        }))
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no teste de commit: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro no teste: {str(e)}"
+        })), 500
+
+@app.route('/api/test-data-access', methods=['POST', 'OPTIONS'])
+def test_data_access():
+    # Handle preflight OPTIONS request
+    if request.method == 'OPTIONS':
+        return '', 200
+    """Testar acesso aos dados"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return add_cors_headers(jsonify({
+                "success": False,
+                "message": "Dados JSON não fornecidos"
+            })), 400
+        
+        # Testar acesso aos campos
+        test_results = {}
+        for field in ['client', 'campaign', 'sheet_id', 'tabs', 'campaign_key']:
+            try:
+                test_results[field] = data[field]
+            except KeyError as e:
+                test_results[field] = f"Erro: {str(e)}"
+        
+        return add_cors_headers(jsonify({
+            "success": True,
+            "message": "Teste de acesso aos dados realizado",
+            "data": test_results
+        }))
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no teste de dados: {e}")
+        return add_cors_headers(jsonify({
+            "success": False,
+            "message": f"Erro no teste: {str(e)}"
         })), 500
 
 @app.route('/api/migrate-to-database', methods=['POST'])
@@ -413,7 +541,7 @@ def get_campaign_data(campaign_key):
             except ImportError as e:
                 logger.error(f"❌ Erro ao importar create_test_data: {e}")
                 # Usar dados básicos como fallback
-                data = {
+                fallback_data = {
                     "contract": {
                         "client": config.client,
                         "campaign": config.campaign,
@@ -431,6 +559,7 @@ def get_campaign_data(campaign_key):
                     "test_mode": True,
                     "test_message": "Dados de demonstração - Configure credenciais do Google Sheets para dados reais"
                 }
+                data = fallback_data
         
         if data:
             return jsonify({
@@ -584,18 +713,12 @@ def generate_dashboard():
                     "message": f"Campo obrigatório não fornecido: {field}"
                 }), 400
         
-        # Criar configuração da campanha
-        from generator_config import CampaignConfig
-        config = CampaignConfig(
-            client=data['client'],
-            campaign=data['campaign'],
-            sheet_id=data['sheet_id'],
-            tabs=data['tabs']
-        )
-        
         # Gerar nome do arquivo do dashboard
-        dashboard_filename = f"dash_{config.get_slug()}.html"
+        dashboard_filename = f"dash_{data['campaign_key']}.html"
         dashboard_path = f"static/{dashboard_filename}"
+        
+        # URL fixa do Cloud Run
+        CLOUD_RUN_URL = "https://south-media-ia-609095880025.us-central1.run.app"
         
         # Verificar se já existe e remover se necessário
         if os.path.exists(dashboard_path):
@@ -650,56 +773,69 @@ def generate_dashboard():
         else:
             logger.warning(f"⚠️ Erro ao salvar campanha {data['campaign_key']} no banco de dados")
         
-        # Fazer commit automático via GitHub API (como na automação multicanal)
+        # Fazer commit automático via GitHub API (como dashboard_automation.py)
         git_committed = False
         try:
             logger.info("🔄 Iniciando commit automático via GitHub API...")
             
-            # Configurar token do GitHub
-            github_token = os.getenv('GITHUB_TOKEN')
-            if not github_token:
-                logger.warning("⚠️ GITHUB_TOKEN não configurado, pulando commit automático")
+            # Ler o arquivo gerado
+            with open(dashboard_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Validação simplificada - verificar se arquivo não está vazio
+            if not content.strip():
+                logger.error("❌ Arquivo vazio, commit cancelado")
             else:
-                # Ler o arquivo gerado
-                with open(dashboard_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+                logger.info("✅ Template validado, prosseguindo com commit seguro...")
                 
-                # Fazer commit via GitHub API
+                # Fazer commit direto via GitHub API (como dashboard_automation.py)
                 import base64
                 import requests
                 
-                # URL da API do GitHub
-                url = f"https://api.github.com/repos/g4trader/south-media-ia/contents/static/{dashboard_filename}"
-                headers = {
-                    "Authorization": f"token {github_token}",
-                    "Accept": "application/vnd.github.v3+json"
-                }
-                
-                # Obter SHA do arquivo atual (se existir)
-                response = requests.get(url, headers=headers)
-                current_sha = None
-                if response.status_code == 200:
-                    current_sha = response.json()["sha"]
-                
-                # Dados do commit
-                commit_data = {
-                    "message": f"🤖 Dashboard gerado automaticamente: {data['client']} - {data['campaign']}",
-                    "content": base64.b64encode(content.encode('utf-8')).decode('utf-8')
-                }
-                
-                if current_sha:
-                    commit_data["sha"] = current_sha
-                
-                # Fazer commit
-                response = requests.put(url, headers=headers, json=commit_data)
-                if response.status_code in [200, 201]:
-                    logger.info("✅ Dashboard commitado no GitHub com sucesso via API")
-                    git_committed = True
+                # Configurar token do GitHub
+                token = os.getenv('GITHUB_TOKEN')
+                if not token:
+                    logger.error("❌ Token do GitHub não configurado")
                 else:
-                    logger.error(f"❌ Erro no commit via GitHub API: {response.status_code} - {response.text}")
+                    # Fazer commit
+                    url = f"https://api.github.com/repos/g4trader/south-media-ia/contents/{dashboard_path}"
+                    headers = {
+                        "Authorization": f"token {token}",
+                        "Accept": "application/vnd.github.v3+json"
+                    }
+                    
+                    # Obter SHA do arquivo atual (se existir)
+                    response = requests.get(url, headers=headers)
+                    current_sha = None
+                    if response.status_code == 200:
+                        current_sha = response.json()["sha"]
+                        logger.info(f"✅ Arquivo existente encontrado, SHA: {current_sha[:8]}...")
+                    elif response.status_code == 404:
+                        logger.info("ℹ️ Arquivo não existe, será criado novo")
+                    else:
+                        logger.warning(f"⚠️ Erro ao verificar arquivo existente: {response.status_code}")
+                    
+                    # Fazer commit
+                    commit_data = {
+                        "message": f"🤖 Dashboard gerado: {data['client']} - {data['campaign']} ({datetime.now().strftime('%d/%m/%Y %H:%M')})",
+                        "content": base64.b64encode(content.encode('utf-8')).decode('utf-8')
+                    }
+                    
+                    if current_sha:
+                        commit_data["sha"] = current_sha
+                    
+                    response = requests.put(url, headers=headers, json=commit_data)
+                    if response.status_code == 200:
+                        commit_info = response.json()
+                        logger.info("✅ Dashboard atualizado no GitHub com sucesso")
+                        logger.info(f"   - SHA: {commit_info['commit']['sha'][:8]}...")
+                        logger.info(f"   - URL: {commit_info['content']['html_url']}")
+                        git_committed = True
+                    else:
+                        logger.error(f"❌ Erro no commit: {response.status_code} - {response.text}")
             
         except Exception as e:
-            logger.error(f"❌ Erro no commit automático via GitHub API: {e}")
+            logger.error(f"❌ Erro ao fazer commit/push via GitHub API: {e}")
         
         if not git_committed:
             logger.info("ℹ️ Dashboard criado no Cloud Run - commit manual necessário para Vercel")
@@ -708,7 +844,7 @@ def generate_dashboard():
             "success": True,
             "message": f"Dashboard gerado com sucesso para {data['client']} - {data['campaign']}",
             "dashboard_url": f"/static/{dashboard_filename}",
-            "dashboard_url_cloud_run": f"https://south-media-ia-609095880025.us-central1.run.app/static/{dashboard_filename}",
+            "dashboard_url_cloud_run": f"{CLOUD_RUN_URL}/static/{dashboard_filename}",
             "api_endpoint": f"/api/{data['campaign_key']}/data",
             "campaign_key": data['campaign_key'],
             "client": data['client'],
