@@ -57,6 +57,31 @@ def add_cors_headers(response):
         response.headers[key] = value
     return response
 
+@app.route('/api/debug-google-sheets', methods=['GET'])
+def debug_google_sheets():
+    """Endpoint para debug do Google Sheets"""
+    try:
+        import subprocess
+        import sys
+        
+        # Executar o script de debug
+        result = subprocess.run([
+            sys.executable, 'debug_google_sheets_cloud_run.py'
+        ], capture_output=True, text=True, timeout=60)
+        
+        return add_cors_headers(jsonify({
+            "success": result.returncode == 0,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode
+        }))
+        
+    except Exception as e:
+        return add_cors_headers(jsonify({
+            "success": False,
+            "error": str(e)
+        })), 500
+
 @app.route('/api/migrate-to-database', methods=['POST'])
 def migrate_to_database():
     """Migrar configurações do JSON para o banco de dados"""
