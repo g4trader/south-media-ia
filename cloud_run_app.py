@@ -1058,6 +1058,39 @@ def start_scheduled_automation():
     except Exception as e:
         logger.error(f"❌ Erro ao iniciar automação agendada: {e}")
 
+@app.route('/api/remove-dashboard', methods=['POST'])
+def remove_dashboard():
+    """Endpoint para remover qualquer dashboard"""
+    try:
+        data = request.get_json()
+        if not data or 'filename' not in data:
+            return jsonify({
+                "success": False,
+                "message": "Nome do arquivo não fornecido"
+            }), 400
+        
+        filename = data['filename']
+        if not filename.endswith('.html'):
+            filename += '.html'
+        
+        dashboard_path = f"static/{filename}"
+        if os.path.exists(dashboard_path):
+            os.remove(dashboard_path)
+            return jsonify({
+                "success": True,
+                "message": f"Dashboard {filename} removido com sucesso"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Dashboard {filename} não encontrado"
+            })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Erro ao remover dashboard: {str(e)}"
+        }), 500
+
 if __name__ == "__main__":
     # Configuração para desenvolvimento local
     logger.info("🚀 Iniciando servidor Flask para desenvolvimento local...")
