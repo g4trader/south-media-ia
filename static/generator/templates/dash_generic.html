@@ -113,19 +113,15 @@
       <div style="display:grid;gap:16px">
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🎯 Estratégia de Segmentação</h4>
-          <ul style="margin-left:20px;line-height:1.6">
-            {{SEGMENTATION_STRATEGY}}
-          </ul>
+          <ul id="segmentationStrategy" style="margin-left:20px;line-height:1.6"></ul>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">📱 Estratégia Criativa</h4>
-          <ul style="margin-left:20px;line-height:1.6">
-            {{CREATIVE_STRATEGY}}
-          </ul>
+          <ul id="creativeStrategy" style="margin-left:20px;line-height:1.6"></ul>
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🚀 Objetivos da Campanha</h4>
-          <p style="line-height:1.6;margin-bottom:12px">{{CAMPAIGN_OBJECTIVES}}</p>
+          <div id="campaignObjectives" style="line-height:1.6;margin-bottom:12px"></div>
         </div>
       </div>
     </div>
@@ -161,9 +157,7 @@
         </div>
         <div>
           <h4 style="margin-bottom:8px;color:#8B5CF6">🎬 Formatos</h4>
-          <ul style="margin-left:20px;line-height:1.6">
-            {{FORMAT_SPECIFICATIONS}}
-          </ul>
+          <ul id="formatSpecifications" style="margin-left:20px;line-height:1.6"></ul>
         </div>
       </div>
     </div>
@@ -381,6 +375,7 @@ class DashboardLoader {
         this.renderCharts(data);
         this.renderTables(data);
         this.renderInsights(data);
+        this.renderFormatSpecifications(data);
         this.setupEventListeners();
     }
 
@@ -499,10 +494,22 @@ class DashboardLoader {
     }
 
     renderInsights(data) {
-        // Renderizar insights se disponíveis
-        if (data.insights && data.insights.length > 0) {
-            console.log('Insights disponíveis:', data.insights);
+        const strategies = (data && data.strategies) ? data.strategies : {};
+
+        this.populateList('segmentationStrategy', strategies.segmentation, 'Nenhuma segmentação disponível.');
+        const creativeList = strategies.creative || strategies.creative_strategy;
+        this.populateList('creativeStrategy', creativeList, 'Nenhuma estratégia criativa disponível.');
+        this.populateParagraphs('campaignObjectives', strategies.objectives, 'Nenhum objetivo cadastrado para a campanha.');
+
+        if (strategies.insights && strategies.insights.length > 0) {
+            console.log('Insights disponíveis:', strategies.insights);
         }
+    }
+
+    renderFormatSpecifications(data) {
+        const strategies = (data && data.strategies) ? data.strategies : {};
+        const specifications = data.format_specifications || strategies.format_specifications;
+        this.populateList('formatSpecifications', specifications, 'Nenhum formato informado.');
     }
 
     setupEventListeners() {
@@ -524,6 +531,66 @@ class DashboardLoader {
     }
 
     // Funções auxiliares de formatação
+    populateList(elementId, items, emptyMessage) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+
+        element.innerHTML = '';
+
+        const values = Array.isArray(items) ? items.filter(item => item) : [];
+
+        if (values.length === 0) {
+            if (emptyMessage) {
+                const li = document.createElement('li');
+                li.textContent = emptyMessage;
+                li.classList.add('muted');
+                element.appendChild(li);
+            }
+            return;
+        }
+
+        values.forEach(value => {
+            const li = document.createElement('li');
+            li.textContent = value;
+            li.style.marginBottom = '6px';
+            element.appendChild(li);
+        });
+    }
+
+    populateParagraphs(elementId, items, emptyMessage) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            return;
+        }
+
+        element.innerHTML = '';
+
+        const values = Array.isArray(items)
+            ? items.filter(item => item)
+            : (typeof items === 'string' && items.trim()
+                ? [items.trim()]
+                : []);
+
+        if (values.length === 0) {
+            if (emptyMessage) {
+                const p = document.createElement('p');
+                p.textContent = emptyMessage;
+                p.classList.add('muted');
+                element.appendChild(p);
+            }
+            return;
+        }
+
+        values.forEach(value => {
+            const p = document.createElement('p');
+            p.textContent = value;
+            p.style.marginBottom = '8px';
+            element.appendChild(p);
+        });
+    }
+
     formatCurrency(value) {
         return new Intl.NumberFormat('pt-BR', {
             minimumFractionDigits: 2,

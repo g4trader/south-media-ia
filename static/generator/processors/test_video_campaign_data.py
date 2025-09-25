@@ -39,8 +39,27 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             "objectives": [
                 "Objetivo 1",
                 "Objetivo 2"
+            ],
+            "creative": [
+                "Sequência de vídeos com foco em awareness e consideração.",
+                "Adaptação dos roteiros para linguagem mobile-first.",
+                "Utilização de chamadas finais com CTA direto ao serviço."
+            ],
+            "insights": [
+                "Audiência de 25-34 anos apresenta maior taxa de conclusão de vídeo.",
+                "Segmentos com afinidade em empreendedorismo geram CTR superior."
+            ],
+            "format_specifications": [
+                "Vídeo 30s – 1920x1080",
+                "Vídeo 15s – 1080x1920",
+                "Bumper 6s – 1:1"
             ]
         },
+        "format_specifications": [
+            "Vídeo 30s – 1920x1080",
+            "Vídeo 15s – 1080x1920",
+            "Bumper 6s – 1:1"
+        ],
         "publishers": [
             {"name": "Publisher A", "type": "Site: publisher-a.com"},
             {"name": "Publisher B", "type": "Site: publisher-b.com"},

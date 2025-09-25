@@ -619,8 +619,21 @@ def get_campaign_data(campaign_key):
                     "daily_data": [],
                     "strategies": {
                         "segmentation": ["Segmentação A", "Segmentação B"],
-                        "objectives": ["Objetivo 1", "Objetivo 2"]
+                        "objectives": ["Objetivo 1", "Objetivo 2"],
+                        "creative": [
+                            "Peças em vídeo com chamadas claras para a ação.",
+                            "Adaptação dos criativos para múltiplos formatos."
+                        ],
+                        "insights": [
+                            "Performance superior em dispositivos mobile.",
+                            "Melhor engajamento nas praças Sul e Sudeste."
+                        ]
                     },
+                    "format_specifications": [
+                        "Vídeo 30s – 1920x1080",
+                        "Vídeo 15s – 1080x1920",
+                        "Bumper 6s – 1:1"
+                    ],
                     "publishers": [
                         {"name": "Publisher A", "type": "Site: publisher-a.com"},
                         {"name": "Publisher B", "type": "Site: publisher-b.com"}
@@ -631,6 +644,65 @@ def get_campaign_data(campaign_key):
                 data = fallback_data
         
         if data:
+            strategies_data = data.get("strategies") or {}
+
+            def ensure_list(value):
+                if isinstance(value, list):
+                    return [item for item in value if item]
+                if isinstance(value, str):
+                    cleaned = value.strip()
+                    return [cleaned] if cleaned else []
+                if isinstance(value, dict):
+                    iterable = value.values()
+                else:
+                    iterable = value
+                if iterable:
+                    try:
+                        return [item for item in iterable if item]
+                    except TypeError:
+                        return []
+                return []
+
+            default_segmentation = [
+                "Segmentação demográfica alinhada ao público prioritário.",
+                "Otimização para dispositivos mobile e ambientes premium.",
+                "Ajustes semanais considerando performance por público e localidade."
+            ]
+            default_objectives = [
+                "Fortalecer reconhecimento de marca durante o período da campanha.",
+                "Gerar tráfego qualificado para as páginas estratégicas do anunciante."
+            ]
+            default_creative = [
+                "Utilização de peças em vídeo com mensagem clara e direta.",
+                "Adaptações de formatos priorizando consumo mobile-first."
+            ]
+            default_format_specs = [
+                "Vídeo 30s – 1920x1080 (Horizontal)",
+                "Vídeo 15s – 1080x1920 (Vertical)",
+                "Bumper 6s – 1080x1080 (Quadrado)"
+            ]
+
+            segmentation = ensure_list(strategies_data.get("segmentation")) or default_segmentation
+            objectives = ensure_list(strategies_data.get("objectives")) or default_objectives
+            creative_strategy = ensure_list(
+                strategies_data.get("creative") or strategies_data.get("creative_strategy")
+            ) or default_creative
+            insights = ensure_list(strategies_data.get("insights"))
+            format_specifications = ensure_list(
+                data.get("format_specifications") or strategies_data.get("format_specifications")
+            ) or default_format_specs
+
+            strategies_payload = {}
+            if isinstance(strategies_data, dict):
+                strategies_payload.update(strategies_data)
+
+            strategies_payload.update({
+                "segmentation": segmentation,
+                "objectives": objectives,
+                "creative": creative_strategy,
+                "insights": insights
+            })
+
             return jsonify({
                 "success": True,
                 "data": {
@@ -659,7 +731,8 @@ def get_campaign_data(campaign_key):
                     "daily_data": data.get("daily_data", []),
                     "per_data": data.get("per_data", []),
                     "contract": data.get("contract", {}),
-                    "strategies": data.get("strategies", {}),
+                    "strategies": strategies_payload,
+                    "format_specifications": format_specifications,
                     "publishers": data.get("publishers", [])
                 },
                 "timestamp": datetime.now().isoformat(),
