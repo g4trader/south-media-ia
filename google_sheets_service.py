@@ -36,11 +36,12 @@ class GoogleSheetsService:
             try:
                 from google.auth import default
                 from google.auth.transport.requests import Request
-                credentials, project = default(scopes=self.SCOPES)
+                
+                # Tentar obter credenciais com escopos explícitos
+                credentials, project = default()
                 if credentials and project:
-                    # Garantir que os escopos estão aplicados
-                    if hasattr(credentials, 'refresh'):
-                        credentials.refresh(Request())
+                    # Forçar os escopos corretos
+                    credentials = credentials.with_scopes(self.SCOPES)
                     self.service = build('sheets', 'v4', credentials=credentials)
                     self.is_configured_flag = True
                     print(f"✅ Google Sheets configurado com Service Account do projeto: {project}")
