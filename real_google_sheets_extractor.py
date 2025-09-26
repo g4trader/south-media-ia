@@ -126,21 +126,42 @@ class RealGoogleSheetsExtractor:
             spreadsheet_info = self.service.spreadsheets().get(spreadsheetId=self.config.sheet_id).execute()
             sheets = spreadsheet_info.get('sheets', [])
             
-            # Procurar por abas que contenham "Report" (ignorando espaços)
+            # Procurar por abas que contenham dados diários (mais flexível)
             report_sheet = None
+            possible_names = ['report', 'dados', 'daily', 'diário', 'performance', 'delivery']
+            
             for sheet in sheets:
                 sheet_name = sheet['properties']['title']
-                # Limpar espaços em branco e comparar
-                clean_name = sheet_name.strip()
-                if clean_name.lower() == 'report':
-                    report_sheet = sheet_name  # Usar o nome original da planilha
-                    logger.info(f"📊 Encontrada aba Report: '{sheet_name}' (limpo: '{clean_name}')")
+                clean_name = sheet_name.strip().lower()
+                
+                # Verificar se o nome da aba contém alguma das palavras-chave
+                for possible_name in possible_names:
+                    if possible_name in clean_name:
+                        report_sheet = sheet_name
+                        logger.info(f"📊 Encontrada aba de dados: '{sheet_name}' (contém: '{possible_name}')")
+                        break
+                
+                if report_sheet:
                     break
+            
+            # Se não encontrou, usar a primeira aba que não seja de configuração
+            if not report_sheet:
+                config_sheets = ['informações', 'contrato', 'publishers', 'estratégias', 'config']
+                for sheet in sheets:
+                    sheet_name = sheet['properties']['title']
+                    clean_name = sheet_name.strip().lower()
+                    
+                    # Pular abas de configuração
+                    is_config = any(config_word in clean_name for config_word in config_sheets)
+                    if not is_config:
+                        report_sheet = sheet_name
+                        logger.info(f"📊 Usando primeira aba de dados disponível: '{sheet_name}'")
+                        break
             
             if not report_sheet:
                 # Listar todas as abas para debug
                 available_sheets = [sheet['properties']['title'] for sheet in sheets]
-                raise Exception(f"Aba 'Report' não encontrada. Abas disponíveis: {available_sheets}")
+                raise Exception(f"Nenhuma aba de dados encontrada. Abas disponíveis: {available_sheets}")
             
             range_name = f"{report_sheet}!A:Z"
             

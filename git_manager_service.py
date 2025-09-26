@@ -337,6 +337,59 @@ def force_commit():
             "message": f"Erro interno: {str(e)}"
         }), 500
 
+@app.route('/notify', methods=['POST'])
+def notify_dashboard_created():
+    """Notificar que um novo dashboard foi criado"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
+        
+        action = data.get('action')
+        if action == 'dashboard_created':
+            file_path = data.get('file_path')
+            campaign_key = data.get('campaign_key')
+            client = data.get('client')
+            campaign_name = data.get('campaign_name')
+            
+            logger.info(f"🔔 Notificação recebida: Dashboard criado para {client} - {campaign_name}")
+            logger.info(f"📄 Arquivo: {file_path}")
+            
+            # Tentar fazer commit imediatamente
+            if file_path and os.path.exists(file_path):
+                file_path_obj = Path(file_path)
+                if git_manager.commit_file(file_path_obj):
+                    logger.info(f"✅ Commit realizado imediatamente para: {file_path_obj.name}")
+                    return jsonify({
+                        "success": True,
+                        "message": "Dashboard commitado com sucesso",
+                        "file_committed": file_path_obj.name
+                    })
+                else:
+                    logger.warning(f"⚠️ Falha no commit imediato para: {file_path_obj.name}")
+                    return jsonify({
+                        "success": False,
+                        "message": "Falha no commit imediato"
+                    })
+            else:
+                logger.warning(f"⚠️ Arquivo não encontrado: {file_path}")
+                return jsonify({
+                    "success": False,
+                    "message": "Arquivo não encontrado"
+                })
+        
+        return jsonify({
+            "success": False,
+            "message": "Ação não reconhecida"
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no endpoint /notify: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro interno: {str(e)}"
+        }), 500
+
 if __name__ == '__main__':
     logger.info("🚀 Iniciando Git Manager Microservice")
     app.run(host='0.0.0.0', port=8080, debug=False)

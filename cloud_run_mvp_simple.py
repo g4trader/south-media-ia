@@ -248,6 +248,32 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         
         logger.info(f"✅ Dashboard gerado: {dashboard_filename}")
         
+        # Notificar o microserviço Git Manager sobre o novo arquivo
+        try:
+            import requests
+            git_manager_url = "https://git-manager-609095880025.us-central1.run.app"
+            notification_data = {
+                "action": "dashboard_created",
+                "file_path": dashboard_path,
+                "campaign_key": campaign_key,
+                "client": client,
+                "campaign_name": campaign_name
+            }
+            
+            response = requests.post(
+                f"{git_manager_url}/notify",
+                json=notification_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                logger.info("✅ Microserviço Git Manager notificado")
+            else:
+                logger.warning(f"⚠️ Falha ao notificar Git Manager: {response.status_code}")
+                
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao notificar Git Manager: {e}")
+        
         return {
             "success": True,
             "dashboard_filename": dashboard_filename,

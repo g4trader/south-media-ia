@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-MVP Dashboard Builder para Google Cloud Run
-Versão otimizada do persistent_server.py para produção
+MVP Dashboard Builder para Google Cloud Run - Versão Simplificada
+Foca apenas na geração de dashboards, sem lógica de commit
 """
 
 import os
@@ -10,7 +10,6 @@ import logging
 import json
 import sqlite3
 import tempfile
-import subprocess
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory, render_template_string
@@ -35,58 +34,14 @@ CORS(app)
 PORT = int(os.environ.get('PORT', 8080))
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-def git_commit_and_push(file_path: str, commit_message: str) -> bool:
-    """Fazer commit e push automático de um arquivo para o Git"""
-    try:
-        # Verificar se estamos em um repositório Git
-        try:
-            subprocess.run(['git', 'status'], check=True, capture_output=True)
-        except subprocess.CalledProcessError:
-            logger.warning("⚠️ Não é um repositório Git, pulando commit automático")
-            return False
-        
-        # Configurar Git (usar token do GitHub se disponível)
-        github_token = os.environ.get('GITHUB_TOKEN')
-        if github_token:
-            # Configurar autenticação
-            subprocess.run([
-                'git', 'config', '--global', 'user.name', 'Cloud Run Bot'
-            ], check=True, capture_output=True)
-            subprocess.run([
-                'git', 'config', '--global', 'user.email', 'cloudrun@automatizar.com'
-            ], check=True, capture_output=True)
-            subprocess.run([
-                'git', 'remote', 'set-url', 'origin', 
-                f'https://{github_token}@github.com/g4trader/south-media-ia.git'
-            ], check=True, capture_output=True)
-        
-        # Adicionar arquivo
-        logger.info(f"🔧 Executando: git add {file_path}")
-        result = subprocess.run(['git', 'add', file_path], check=True, capture_output=True, text=True)
-        logger.info(f"✅ git add executado com sucesso")
-        
-        # Commit
-        logger.info(f"🔧 Executando: git commit -m '{commit_message}'")
-        result = subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True, text=True)
-        logger.info(f"✅ git commit executado com sucesso: {result.stdout}")
-        
-        # Push
-        logger.info(f"🔧 Executando: git push origin main")
-        result = subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True, text=True)
-        logger.info(f"✅ git push executado com sucesso: {result.stdout}")
-        
-        logger.info(f"✅ Git commit/push realizado: {file_path}")
-        return True
-        
-    except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Erro no Git: {e.stderr if e.stderr else str(e)}")
-        return False
-    except Exception as e:
-        logger.error(f"❌ Erro inesperado no Git: {e}")
-        return False
-
-# Configuração do banco de dados
-DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///campaigns.db')
+class CampaignConfig:
+    """Configuração de uma campanha"""
+    def __init__(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None):
+        self.campaign_key = campaign_key
+        self.client = client
+        self.campaign_name = campaign_name
+        self.sheet_id = sheet_id
+        self.channel = channel or "Video Programática"
 
 class CloudRunDatabaseManager:
     """Gerenciador de banco para Cloud Run com persistência"""
@@ -105,7 +60,6 @@ class CloudRunDatabaseManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            # Criar tabela de campanhas
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS campaigns (
                     campaign_key TEXT PRIMARY KEY,
@@ -115,16 +69,6 @@ class CloudRunDatabaseManager:
                     channel TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            # Criar tabela de cache
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS cache_data (
-                    campaign_key TEXT PRIMARY KEY,
-                    data TEXT NOT NULL,
-                    cached_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (campaign_key) REFERENCES campaigns (campaign_key)
                 )
             ''')
             
@@ -163,37 +107,9 @@ class CloudRunDatabaseManager:
             logger.info("✅ Banco de dados salvo no GCS")
         except Exception as e:
             logger.error(f"❌ Erro ao salvar no GCS: {e}")
-    
-    def get_campaign(self, campaign_key: str) -> Optional[Dict]:
-        """Obter campanha por chave"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('SELECT * FROM campaigns WHERE campaign_key = ?', (campaign_key,))
-            row = cursor.fetchone()
-            
-            conn.close()
-            
-            if row:
-                return {
-                    'campaign_key': row[0],
-                    'client': row[1],
-                    'campaign_name': row[2],
-                    'sheet_id': row[3],
-                    'channel': row[4],
-                    'created_at': row[5],
-                    'updated_at': row[6]
-                }
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Erro ao obter campanha: {e}")
-            return None
-    
-    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, 
-                     sheet_id: str, channel: str = None) -> bool:
-        """Salvar nova campanha"""
+
+    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None) -> bool:
+        """Salvar ou atualizar uma campanha no banco de dados"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
@@ -216,28 +132,61 @@ class CloudRunDatabaseManager:
         except Exception as e:
             logger.error(f"❌ Erro ao salvar campanha: {e}")
             return False
-    
+
+    def get_campaign(self, campaign_key: str) -> Optional[Dict[str, Any]]:
+        """Obter uma campanha do banco de dados"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT campaign_key, client, campaign_name, sheet_id, channel, created_at, updated_at
+                FROM campaigns WHERE campaign_key = ?
+            ''', (campaign_key,))
+            
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                return {
+                    'campaign_key': result[0],
+                    'client': result[1],
+                    'campaign_name': result[2],
+                    'sheet_id': result[3],
+                    'channel': result[4],
+                    'created_at': result[5],
+                    'updated_at': result[6]
+                }
+            return None
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter campanha: {e}")
+            return None
+
     def list_campaigns(self) -> list:
         """Listar todas as campanhas"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
-            cursor.execute('SELECT * FROM campaigns ORDER BY updated_at DESC')
-            rows = cursor.fetchall()
+            cursor.execute('''
+                SELECT campaign_key, client, campaign_name, sheet_id, channel, created_at, updated_at
+                FROM campaigns ORDER BY updated_at DESC
+            ''')
             
+            results = cursor.fetchall()
             conn.close()
             
             campaigns = []
-            for row in rows:
+            for result in results:
                 campaigns.append({
-                    'campaign_key': row[0],
-                    'client': row[1],
-                    'campaign_name': row[2],
-                    'sheet_id': row[3],
-                    'channel': row[4],
-                    'created_at': row[5],
-                    'updated_at': row[6]
+                    'campaign_key': result[0],
+                    'client': result[1],
+                    'campaign_name': result[2],
+                    'sheet_id': result[3],
+                    'channel': result[4],
+                    'created_at': result[5],
+                    'updated_at': result[6]
                 })
             
             return campaigns
@@ -245,135 +194,42 @@ class CloudRunDatabaseManager:
         except Exception as e:
             logger.error(f"❌ Erro ao listar campanhas: {e}")
             return []
-    
-    def get_cached_data(self, campaign_key: str, max_age_hours: int = 1) -> Optional[Dict]:
-        """Obter dados do cache"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
-            cursor.execute('''
-                SELECT data FROM cache_data 
-                WHERE campaign_key = ? AND cached_at > ?
-            ''', (campaign_key, cutoff_time))
-            
-            row = cursor.fetchone()
-            conn.close()
-            
-            if row:
-                return json.loads(row[0])
-            return None
-            
-        except Exception as e:
-            logger.error(f"❌ Erro ao obter cache: {e}")
-            return None
-    
-    def update_cache(self, campaign_key: str, data: Dict) -> bool:
-        """Atualizar cache"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute('''
-                INSERT OR REPLACE INTO cache_data (campaign_key, data, cached_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-            ''', (campaign_key, json.dumps(data)))
-            
-            conn.commit()
-            conn.close()
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Erro ao atualizar cache: {e}")
-            return False
 
-# Inicializar gerenciador de banco
+# Instanciar gerenciador de banco
 db_manager = CloudRunDatabaseManager()
 
-class CampaignConfig:
-    """Configuração de campanha"""
-    def __init__(self, campaign_key: str, client: str, campaign_name: str, 
-                 sheet_id: str, channel: str = None):
-        self.campaign_key = campaign_key
-        self.client = client
-        self.campaign_name = campaign_name
-        self.sheet_id = sheet_id
-        self.channel = channel
+def generate_campaign_key(client: str, campaign_name: str) -> str:
+    """Gerar chave única para a campanha"""
+    import re
+    from unidecode import unidecode
+    
+    # Normalizar texto
+    client_clean = unidecode(client.lower())
+    campaign_clean = unidecode(campaign_name.lower())
+    
+    # Remover caracteres especiais e espaços
+    client_clean = re.sub(r'[^a-z0-9]', '_', client_clean)
+    campaign_clean = re.sub(r'[^a-z0-9]', '_', campaign_clean)
+    
+    # Remover underscores duplos e no início/fim
+    client_clean = re.sub(r'_+', '_', client_clean).strip('_')
+    campaign_clean = re.sub(r'_+', '_', campaign_clean).strip('_')
+    
+    return f"{client_clean}_{campaign_clean}"
 
-@app.route('/')
-def home():
-    """Página inicial"""
-    return jsonify({
-        "service": "MVP Dashboard Builder",
-        "version": "1.0.0",
-        "status": "running",
-        "endpoints": {
-            "health": "/health",
-            "generate": "/api/generate-dashboard",
-            "data": "/api/<campaign_key>/data",
-            "list": "/api/list-campaigns",
-            "generator": "/test-generator"
-        }
-    })
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check para Cloud Run"""
-    return jsonify({
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
-        "service": "mvp-dashboard-builder"
-    })
-
-@app.route('/api/generate-dashboard', methods=['POST'])
-def generate_dashboard():
-    """Gerar dashboard com dados reais"""
+def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática") -> Dict[str, Any]:
+    """Gerar dashboard a partir do template"""
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
-        
-        # Validar campos obrigatórios
-        required_fields = ['client', 'campaign_name', 'sheet_id']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({"success": False, "message": f"Campo obrigatório: {field}"}), 400
-        
-        # Gerar campaign_key automaticamente se não fornecido
-        campaign_key = data.get('campaign_key')
-        if not campaign_key:
-            import re
-            client_slug = re.sub(r'[^a-zA-Z0-9]', '_', data['client'].lower())
-            campaign_slug = re.sub(r'[^a-zA-Z0-9]', '_', data['campaign_name'].lower())
-            campaign_key = f"{client_slug}_{campaign_slug}"
-        client = data['client']
-        campaign_name = data['campaign_name']
-        sheet_id = data['sheet_id']
-        channel = data.get('channel', 'Video Programática')
-        
-        logger.info(f"🔄 Gerando dashboard: {campaign_key}")
-        
-        # Salvar campanha no banco
-        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel):
-            return jsonify({"success": False, "message": "Erro ao salvar campanha"}), 500
-        
-        # Gerar arquivo HTML
-        dashboard_filename = f"dash_{campaign_key}.html"
-        dashboard_path = os.path.join('static', dashboard_filename)
-        
-        # Ler template
-        template_path = os.path.join('static', 'dash_generic_template.html')
+        # Carregar template
+        template_path = 'static/dash_generic_template.html'
         if not os.path.exists(template_path):
-            return jsonify({"success": False, "message": "Template não encontrado"}), 500
+            raise Exception(f"Template não encontrado: {template_path}")
         
         with open(template_path, 'r', encoding='utf-8') as f:
-            template_content = f.read()
+            dashboard_content = f.read()
         
         # Substituir placeholders
-        dashboard_content = template_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
         dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
         dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-609095880025.us-central1.run.app')
@@ -385,35 +241,224 @@ def generate_dashboard():
         
         # Salvar dashboard
         os.makedirs('static', exist_ok=True)
+        dashboard_filename = f"dash_{campaign_key}.html"
+        dashboard_path = os.path.join('static', dashboard_filename)
         with open(dashboard_path, 'w', encoding='utf-8') as f:
             f.write(dashboard_content)
         
         logger.info(f"✅ Dashboard gerado: {dashboard_filename}")
         
-        # Commit e push para o Git (para deploy no Vercel)
-        logger.info(f"🔧 ANTES DE CHAMAR git_commit_and_push")
-        logger.info(f"🔧 Iniciando processo de commit automático para: {dashboard_path}")
+        # Notificar o microserviço Git Manager sobre o novo arquivo
         try:
-            result = git_commit_and_push(dashboard_path, f"feat: Add dashboard for {campaign_name} ({campaign_key})")
-            if result:
-                logger.info(f"✅ Dashboard {dashboard_filename} commitado e enviado para o Git.")
+            import requests
+            git_manager_url = "https://git-manager-609095880025.us-central1.run.app"
+            notification_data = {
+                "action": "dashboard_created",
+                "file_path": dashboard_path,
+                "campaign_key": campaign_key,
+                "client": client,
+                "campaign_name": campaign_name
+            }
+            
+            response = requests.post(
+                f"{git_manager_url}/notify",
+                json=notification_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                logger.info("✅ Microserviço Git Manager notificado")
             else:
-                logger.warning(f"⚠️ Commit automático falhou para: {dashboard_filename}")
+                logger.warning(f"⚠️ Falha ao notificar Git Manager: {response.status_code}")
+                
         except Exception as e:
-            logger.error(f"❌ Erro ao commitar e enviar dashboard para o Git: {e}")
-            # Continuar mesmo com erro no Git, mas logar
+            logger.warning(f"⚠️ Erro ao notificar Git Manager: {e}")
+        
+        return {
+            "success": True,
+            "dashboard_filename": dashboard_filename,
+            "dashboard_path": dashboard_path,
+            "dashboard_url": f"/static/{dashboard_filename}"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao gerar dashboard: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check"""
+    return jsonify({
+        "status": "healthy",
+        "service": "mvp-dashboard-builder",
+        "timestamp": datetime.now().isoformat()
+    })
+
+@app.route('/test-generator', methods=['GET'])
+def test_generator():
+    """Interface de teste do gerador"""
+    return render_template_string('''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Dashboards - Teste</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .loading { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Gerador de Dashboards - Teste</h1>
+    
+    <form id="generatorForm">
+        <div class="form-group">
+            <label for="clientName">Cliente:</label>
+            <input type="text" id="clientName" name="client" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="campaignName">Nome da Campanha:</label>
+            <input type="text" id="campaignName" name="campaign_name" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="sheetId">ID da Planilha Google Sheets:</label>
+            <input type="text" id="sheetId" name="sheet_id" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="channel">Canal:</label>
+            <select id="channel" name="channel">
+                <option value="Video Programática">Video Programática</option>
+                <option value="YouTube">YouTube</option>
+                <option value="Netflix">Netflix</option>
+                <option value="Disney">Disney</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Pinterest">Pinterest</option>
+            </select>
+        </div>
+        
+        <button type="submit" id="generateButton">🚀 Gerar Dashboard</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const generateButton = document.getElementById('generateButton');
+            
+            // Mostrar loading
+            resultDiv.innerHTML = '<div class="loading">🔄 Gerando dashboard...</div>';
+            generateButton.disabled = true;
+            
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData);
+                
+                const response = await fetch('/api/generate-dashboard', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Dashboard Gerado com Sucesso!</h3>
+                            <p><strong>Campanha:</strong> ${result.campaign_key}</p>
+                            <p><strong>Nome:</strong> ${result.dashboard_name}</p>
+                            <p><strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank">${result.dashboard_url}</a></p>
+                            <p><strong>Arquivo:</strong> ${result.file_path}</p>
+                            <p><em>💡 O arquivo será commitado automaticamente pelo Git Manager em até 2 minutos.</em></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Erro ao Gerar Dashboard</h3>
+                            <p>${result.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Erro de Conexão</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                generateButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+    ''')
+
+@app.route('/api/generate-dashboard', methods=['POST'])
+def generate_dashboard_endpoint():
+    """Gerar dashboard via API"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
+        
+        # Validar campos obrigatórios
+        required_fields = ['client', 'campaign_name', 'sheet_id']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"success": False, "message": f"Campo obrigatório: {field}"}), 400
+        
+        client = data['client']
+        campaign_name = data['campaign_name']
+        sheet_id = data['sheet_id']
+        channel = data.get('channel', 'Video Programática')
+        
+        # Gerar campaign_key automaticamente
+        campaign_key = generate_campaign_key(client, campaign_name)
+        
+        # Salvar campanha no banco
+        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel):
+            return jsonify({"success": False, "message": "Erro ao salvar configuração da campanha"}), 500
+        
+        # Gerar dashboard
+        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel)
+        
+        if not result['success']:
+            return jsonify({"success": False, "message": f"Erro ao gerar dashboard: {result['error']}"}), 500
         
         return jsonify({
             "success": True,
             "message": "Dashboard gerado com sucesso",
             "campaign_key": campaign_key,
             "dashboard_name": f"{client} - {campaign_name}",
-            "dashboard_url": f"/static/{dashboard_filename}",
-            "file_path": dashboard_path
+            "dashboard_url": result['dashboard_url'],
+            "file_path": result['dashboard_path']
         })
         
     except Exception as e:
-        logger.error(f"❌ Erro ao gerar dashboard: {e}")
+        logger.error(f"❌ Erro no endpoint /api/generate-dashboard: {e}")
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
 @app.route('/api/<campaign_key>/data', methods=['GET'])
@@ -424,9 +469,8 @@ def get_campaign_data(campaign_key):
         if not campaign:
             return jsonify({"success": False, "message": f"Campanha '{campaign_key}' não encontrada"}), 404
         
-        # Sempre extrair dados frescos da planilha (sem cache)
+        # Sempre extrair dados frescos da planilha
         logger.info(f"🔄 Extraindo dados frescos da planilha para: {campaign_key}")
-        
         config = CampaignConfig(
             campaign_key=campaign_key,
             client=campaign['client'],
@@ -441,178 +485,26 @@ def get_campaign_data(campaign_key):
         if not extracted_data:
             return jsonify({"success": False, "message": "Falha ao extrair dados da planilha"}), 500
         
-        # Atualizar cache com os novos dados
-        db_manager.update_cache(campaign_key, extracted_data)
-        
         return jsonify({"success": True, "data": extracted_data})
-        
     except Exception as e:
         logger.error(f"❌ Erro ao obter dados da campanha {campaign_key}: {e}")
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
-@app.route('/api/list-campaigns', methods=['GET'])
+@app.route('/api/campaigns', methods=['GET'])
 def list_campaigns():
     """Listar todas as campanhas"""
     try:
         campaigns = db_manager.list_campaigns()
         return jsonify({"success": True, "campaigns": campaigns})
-        
     except Exception as e:
         logger.error(f"❌ Erro ao listar campanhas: {e}")
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
-@app.route('/test-generator')
-def test_generator():
-    """Interface para testar o gerador"""
-    return '''
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Gerador de Dashboards - MVP</title>
-        <style>
-            body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-                background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
-                color: white;
-                margin: 0;
-                padding: 2rem;
-                min-height: 100vh;
-            }
-            .container {
-                max-width: 600px;
-                margin: 0 auto;
-            }
-            .form-group {
-                margin-bottom: 1.5rem;
-            }
-            label {
-                display: block;
-                margin-bottom: 0.5rem;
-                font-weight: 600;
-            }
-            input, select {
-                width: 100%;
-                padding: 0.75rem;
-                border: 1px solid rgba(148, 163, 184, 0.25);
-                border-radius: 8px;
-                background: rgba(255, 255, 255, 0.06);
-                color: white;
-                font-size: 16px;
-            }
-            button {
-                width: 100%;
-                padding: 1rem;
-                background: linear-gradient(135deg, #8B5CF6, #EC4899);
-                border: none;
-                border-radius: 12px;
-                color: white;
-                font-size: 18px;
-                font-weight: 600;
-                cursor: pointer;
-            }
-            button:hover {
-                opacity: 0.9;
-            }
-            .result {
-                margin-top: 2rem;
-                padding: 1rem;
-                border-radius: 8px;
-                background: rgba(16, 185, 129, 0.1);
-                border: 1px solid rgba(16, 185, 129, 0.3);
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🎯 Gerador de Dashboards - MVP</h1>
-            <p>Crie dashboards programáticos em segundos!</p>
-            
-            <form id="generatorForm">
-                <div class="form-group">
-                    <label for="campaign_key">Campaign Key (identificador único):</label>
-                    <input type="text" id="campaign_key" name="campaign_key" placeholder="ex: cliente_campanha" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="client">Cliente:</label>
-                    <input type="text" id="client" name="client" placeholder="ex: Copacol" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="campaign_name">Nome da Campanha:</label>
-                    <input type="text" id="campaign_name" name="campaign_name" placeholder="ex: Institucional 30s" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="sheet_id">ID da Planilha Google Sheets:</label>
-                    <input type="text" id="sheet_id" name="sheet_id" placeholder="ex: 1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="channel">Canal:</label>
-                    <select id="channel" name="channel">
-                        <option value="Video Programática">Video Programática</option>
-                        <option value="YouTube">YouTube</option>
-                        <option value="LinkedIn">LinkedIn</option>
-                        <option value="Facebook">Facebook</option>
-                    </select>
-                </div>
-                
-                <button type="submit">🚀 Gerar Dashboard</button>
-            </form>
-            
-            <div id="result" style="display: none;"></div>
-        </div>
-        
-        <script>
-            document.getElementById('generatorForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                const data = Object.fromEntries(formData.entries());
-                
-                try {
-                    const response = await fetch('/api/generate-dashboard', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    
-                    const result = await response.json();
-                    const resultDiv = document.getElementById('result');
-                    
-                    if (result.success) {
-                        resultDiv.innerHTML = `
-                            <h3>✅ Dashboard Gerado com Sucesso!</h3>
-                            <p><strong>Nome:</strong> ${result.dashboard_name}</p>
-                            <p><strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank">${result.dashboard_url}</a></p>
-                            <p><strong>Arquivo:</strong> ${result.file_path}</p>
-                        `;
-                        resultDiv.style.display = 'block';
-                    } else {
-                        resultDiv.innerHTML = `<h3>❌ Erro:</h3><p>${result.message}</p>`;
-                        resultDiv.style.display = 'block';
-                    }
-                } catch (error) {
-                    const resultDiv = document.getElementById('result');
-                    resultDiv.innerHTML = `<h3>❌ Erro de Conexão:</h3><p>${error.message}</p>`;
-                    resultDiv.style.display = 'block';
-                }
-            });
-        </script>
-    </body>
-    </html>
-    '''
-
-@app.route('/static/<filename>')
+@app.route('/static/<path:filename>')
 def serve_static(filename):
     """Servir arquivos estáticos"""
     return send_from_directory('static', filename)
 
 if __name__ == '__main__':
-    logger.info(f"🚀 Iniciando MVP Dashboard Builder na porta {PORT}")
+    logger.info("🚀 Iniciando MVP Dashboard Builder (Versão Simplificada)")
     app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
