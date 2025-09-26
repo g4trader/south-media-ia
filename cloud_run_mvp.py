@@ -10,6 +10,7 @@ import logging
 import json
 import sqlite3
 import tempfile
+import subprocess
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from flask import Flask, request, jsonify, send_from_directory, render_template_string
@@ -34,6 +35,43 @@ CORS(app)
 PORT = int(os.environ.get('PORT', 8080))
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
+def git_commit_and_push(file_path: str, commit_message: str) -> bool:
+    """Fazer commit e push automático de um arquivo para o Git"""
+    try:
+        # Configurar Git (usar token do GitHub se disponível)
+        github_token = os.environ.get('GITHUB_TOKEN')
+        if github_token:
+            # Configurar autenticação
+            subprocess.run([
+                'git', 'config', '--global', 'user.name', 'Cloud Run Bot'
+            ], check=True, capture_output=True)
+            subprocess.run([
+                'git', 'config', '--global', 'user.email', 'cloudrun@automatizar.com'
+            ], check=True, capture_output=True)
+            subprocess.run([
+                'git', 'remote', 'set-url', 'origin', 
+                f'https://{github_token}@github.com/g4trader/south-media-ia.git'
+            ], check=True, capture_output=True)
+        
+        # Adicionar arquivo
+        subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+        
+        # Commit
+        subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True)
+        
+        # Push
+        subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)
+        
+        logger.info(f"✅ Git commit/push realizado: {file_path}")
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"❌ Erro no Git: {e.stderr.decode() if e.stderr else str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"❌ Erro inesperado no Git: {e}")
+        return False
+
 # Configuração do banco de dados
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///campaigns.db')
 
@@ -41,8 +79,12 @@ class CloudRunDatabaseManager:
     """Gerenciador de banco para Cloud Run com persistência"""
     
     def __init__(self):
-        self.db_path = os.path.join(tempfile.gettempdir(), 'campaigns.db')
+        # Usar diretório persistente do Cloud Run
+        self.db_path = os.path.join('/tmp', 'campaigns.db')
+        self.gcs_bucket = 'south-media-ia-database-452311'
+        self.gcs_db_path = 'campaigns.db'
         self.init_database()
+        self._load_from_gcs()
     
     def init_database(self):
         """Inicializar banco de dados"""
@@ -79,6 +121,35 @@ class CloudRunDatabaseManager:
             
         except Exception as e:
             logger.error(f"❌ Erro ao inicializar banco: {e}")
+    
+    def _load_from_gcs(self):
+        """Carregar banco de dados do Google Cloud Storage"""
+        try:
+            from google.cloud import storage
+            client = storage.Client()
+            bucket = client.bucket(self.gcs_bucket)
+            blob = bucket.blob(self.gcs_db_path)
+            
+            if blob.exists():
+                blob.download_to_filename(self.db_path)
+                logger.info("✅ Banco de dados carregado do GCS")
+            else:
+                logger.info("📝 Banco de dados não encontrado no GCS, criando novo")
+        except Exception as e:
+            logger.warning(f"⚠️ Não foi possível carregar do GCS: {e}")
+    
+    def _save_to_gcs(self):
+        """Salvar banco de dados no Google Cloud Storage"""
+        try:
+            from google.cloud import storage
+            client = storage.Client()
+            bucket = client.bucket(self.gcs_bucket)
+            blob = bucket.blob(self.gcs_db_path)
+            
+            blob.upload_from_filename(self.db_path)
+            logger.info("✅ Banco de dados salvo no GCS")
+        except Exception as e:
+            logger.error(f"❌ Erro ao salvar no GCS: {e}")
     
     def get_campaign(self, campaign_key: str) -> Optional[Dict]:
         """Obter campanha por chave"""
@@ -122,6 +193,9 @@ class CloudRunDatabaseManager:
             
             conn.commit()
             conn.close()
+            
+            # Salvar no GCS após commit local
+            self._save_to_gcs()
             
             logger.info(f"✅ Campanha salva: {campaign_key}")
             return True
@@ -302,6 +376,14 @@ def generate_dashboard():
             f.write(dashboard_content)
         
         logger.info(f"✅ Dashboard gerado: {dashboard_filename}")
+        
+        # Commit e push para o Git (para deploy no Vercel)
+        try:
+            git_commit_and_push(dashboard_path, f"feat: Add dashboard for {campaign_name} ({campaign_key})")
+            logger.info(f"✅ Dashboard {dashboard_filename} commitado e enviado para o Git.")
+        except Exception as e:
+            logger.error(f"❌ Erro ao commitar e enviar dashboard para o Git: {e}")
+            # Continuar mesmo com erro no Git, mas logar
         
         return jsonify({
             "success": True,
