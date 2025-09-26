@@ -278,7 +278,8 @@ class RealGoogleSheetsExtractor:
             if not contract_sheet:
                 # Listar todas as abas para debug
                 available_sheets = [sheet['properties']['title'] for sheet in sheets]
-                raise Exception(f"Aba 'Informações de contrato' não encontrada. Abas disponíveis: {available_sheets}")
+                logger.error(f"❌ Aba 'Informações de contrato' não encontrada. Abas disponíveis: {available_sheets}")
+                return None
             
             range_name = f"{contract_sheet}!A:B"
             result = self.service.spreadsheets().values().get(
@@ -288,7 +289,8 @@ class RealGoogleSheetsExtractor:
             
             values = result.get('values', [])
             if not values:
-                raise Exception("Aba 'Informações de contrato' está vazia")
+                logger.error(f"❌ Aba '{contract_sheet}' está vazia")
+                return None
             
             # Converter para dicionário
             contract_dict = {}
