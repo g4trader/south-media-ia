@@ -301,21 +301,24 @@ def health_check():
 def test_credentials():
     """Testar credenciais Google Sheets"""
     try:
-        # Testar com uma planilha simples
-        test_sheet_id = '1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8'
-        
         # Criar serviço Google Sheets
         service = GoogleSheetsService()
         
-        # Testar acesso à planilha
-        result = service.service.spreadsheets().get(spreadsheetId=test_sheet_id).execute()
+        # Testar conexão
+        status = service.test_connection()
         
-        return jsonify({
-            "success": True,
-            "message": "Credenciais funcionando",
-            "sheet_title": result.get('properties', {}).get('title', 'N/A'),
-            "sheets_count": len(result.get('sheets', []))
-        })
+        if status == "connected":
+            return jsonify({
+                "success": True,
+                "message": "Credenciais funcionando",
+                "status": status
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Problema nas credenciais: {status}",
+                "status": status
+            }), 500
         
     except Exception as e:
         logger.error(f"❌ Erro ao testar credenciais: {e}")
