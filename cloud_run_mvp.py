@@ -250,12 +250,18 @@ def generate_dashboard():
             return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
         
         # Validar campos obrigatórios
-        required_fields = ['campaign_key', 'client', 'campaign_name', 'sheet_id']
+        required_fields = ['client', 'campaign_name', 'sheet_id']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({"success": False, "message": f"Campo obrigatório: {field}"}), 400
         
-        campaign_key = data['campaign_key']
+        # Gerar campaign_key automaticamente se não fornecido
+        campaign_key = data.get('campaign_key')
+        if not campaign_key:
+            import re
+            client_slug = re.sub(r'[^a-zA-Z0-9]', '_', data['client'].lower())
+            campaign_slug = re.sub(r'[^a-zA-Z0-9]', '_', data['campaign_name'].lower())
+            campaign_key = f"{client_slug}_{campaign_slug}"
         client = data['client']
         campaign_name = data['campaign_name']
         sheet_id = data['sheet_id']
