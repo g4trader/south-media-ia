@@ -683,13 +683,14 @@ class DashboardLoader {
 
         const cards = [];
         const pushCard = (label, value, formatter) => {
-            if (!Number.isFinite(value) || value === 0) {
+            const numeric = Number.isFinite(value) ? value : this.parseNumber(value);
+            if (!Number.isFinite(numeric)) {
                 return;
             }
             cards.push(`
                 <div class="metric">
                     <div class="label">${label}</div>
-                    <div class="value">${formatter(value)}</div>
+                    <div class="value">${formatter(numeric)}</div>
                 </div>
             `);
         };
@@ -1439,21 +1440,29 @@ class DashboardLoader {
 
     // Funções auxiliares de formatação
     formatCurrency(value) {
+        const numeric = Number.isFinite(value) ? value : this.parseNumber(value);
+        const safeValue = Number.isFinite(numeric) ? numeric : 0;
+        const normalized = Object.is(safeValue, -0) ? 0 : safeValue;
         return new Intl.NumberFormat('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        }).format(value || 0);
+        }).format(normalized);
     }
 
     formatNumber(value) {
+        const numeric = Number.isFinite(value) ? value : this.parseNumber(value);
+        const safeValue = Number.isFinite(numeric) ? numeric : 0;
+        const normalized = Object.is(safeValue, -0) ? 0 : safeValue;
         return new Intl.NumberFormat('pt-BR', {
             maximumFractionDigits: 0
-        }).format(value || 0);
+        }).format(normalized);
     }
 
     formatPercentage(value) {
-        const numeric = Number.isFinite(value) ? value : this.parseNumber(value) || 0;
-        return `${numeric.toLocaleString('pt-BR', {
+        const numeric = Number.isFinite(value) ? value : this.parseNumber(value);
+        const safeValue = Number.isFinite(numeric) ? numeric : 0;
+        const normalized = Object.is(safeValue, -0) ? 0 : safeValue;
+        return `${normalized.toLocaleString('pt-BR', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         })}%`;
