@@ -297,6 +297,33 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     })
 
+@app.route('/test-credentials', methods=['GET'])
+def test_credentials():
+    """Testar credenciais Google Sheets"""
+    try:
+        # Testar com uma planilha simples
+        test_sheet_id = '1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8'
+        
+        # Criar serviço Google Sheets
+        service = GoogleSheetsService()
+        
+        # Testar acesso à planilha
+        result = service.service.spreadsheets().get(spreadsheetId=test_sheet_id).execute()
+        
+        return jsonify({
+            "success": True,
+            "message": "Credenciais funcionando",
+            "sheet_title": result.get('properties', {}).get('title', 'N/A'),
+            "sheets_count": len(result.get('sheets', []))
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao testar credenciais: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Erro nas credenciais: {str(e)}"
+        }), 500
+
 @app.route('/test-generator', methods=['GET'])
 def test_generator():
     """Interface de teste do gerador"""
