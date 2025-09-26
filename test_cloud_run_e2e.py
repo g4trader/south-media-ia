@@ -157,7 +157,7 @@ class CloudRunE2ETest:
             
             # Verificar se o título contém o nome da campanha
             title = self.driver.find_element(By.TAG_NAME, "title")
-            if "Dashboard" in title.text:
+            if "Dashboard" in title.text and "Cliente Teste E2E" in title.text:
                 self.log_test_result("Carregamento do Dashboard", True, "Página carregou")
                 
                 # Verificar se o modal de loading aparece
@@ -244,12 +244,13 @@ class CloudRunE2ETest:
             self.log_test_result("Exibição de Dados", False, f"Erro: {str(e)}")
             return False
     
-    def test_api_data_endpoint(self):
+    def test_api_data_endpoint(self, campaign_key=None):
         """Teste 6: Endpoint de Dados da API"""
         try:
-            # Usar a campanha copacol_institucional_30s que sabemos que funciona
+            # Usar a campanha fornecida ou a campanha copacol_institucional_30s como fallback
+            test_campaign = campaign_key or "copacol_institucional_30s"
             response = requests.get(
-                f"{self.base_url}/api/copacol_institucional_30s/data",
+                f"{self.base_url}/api/{test_campaign}/data",
                 timeout=30
             )
             
@@ -301,11 +302,17 @@ class CloudRunE2ETest:
             ]
             
             dashboard_url = None
+            campaign_key = None
             for test_name, test_func in tests:
                 logger.info(f"🧪 Executando: {test_name}")
                 
                 if test_name == "Geração de Dashboard":
                     dashboard_url = test_func()
+                    # Extrair campaign_key da URL do dashboard
+                    if dashboard_url:
+                        campaign_key = dashboard_url.split('/')[-1].replace('.html', '').replace('dash_', '')
+                elif test_name == "API Data Endpoint":
+                    test_func(campaign_key)
                 elif test_name in ["Carregamento do Dashboard", "Exibição de Dados"]:
                     if dashboard_url:
                         if test_name == "Carregamento do Dashboard":
