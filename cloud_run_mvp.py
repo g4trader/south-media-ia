@@ -333,6 +333,45 @@ def test_credentials():
             "message": f"Erro nas credenciais: {str(e)}"
         }), 500
 
+@app.route('/test-extractor', methods=['GET'])
+def test_extractor():
+    """Testar extrator específico"""
+    try:
+        # Configurar campanha de teste
+        config = CampaignConfig(
+            campaign_key='test_extractor',
+            client='Copacol',
+            campaign_name='Institucional 30s',
+            sheet_id='1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8',
+            tabs={
+                'report': 'Report',
+                'contract': 'Informações de contrato',
+                'publishers': 'Lista de publishers',
+                'strategies': 'Estratégias'
+            }
+        )
+        
+        # Criar extrator
+        extractor = RealGoogleSheetsExtractor(config)
+        
+        # Testar extração de contrato
+        contract_data = extractor._extract_contract_data()
+        
+        return jsonify({
+            "success": True,
+            "message": "Extrator funcionando",
+            "contract_data": contract_data
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao testar extrator: {e}")
+        import traceback
+        return jsonify({
+            "success": False,
+            "message": f"Erro no extrator: {str(e)}",
+            "traceback": traceback.format_exc()
+        }), 500
+
 @app.route('/test-generator', methods=['GET'])
 def test_generator():
     """Interface de teste do gerador"""
