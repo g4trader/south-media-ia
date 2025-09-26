@@ -74,3 +74,4 @@ echo "    -H 'Content-Type: application/json' \\"
 echo "    -d '{\"campaign_key\": \"teste\", \"client\": \"Teste\", \"campaign_name\": \"Campanha Teste\", \"sheet_id\": \"1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8\"}'"
 echo ""
 echo "🎉 MVP Dashboard Builder está rodando na nuvem!"
+

@@ -1,0 +1,48 @@
+# Google Cloud Build ignore file
+# This file specifies which files should be ignored when uploading to Cloud Build
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Node modules (if any)
+node_modules/
+
+# IMPORTANT: Do NOT ignore .git directory - it's needed for automatic commits
+# The .git directory MUST be included in the build
+# .git/  # This line is commented out to ensure .git is included
+
+# Do NOT ignore credentials.json (needed for local development)
+# credentials.json
+
+# Do NOT ignore any .html files in static/
+# static/*.html
+
+# Explicitly include .git directory
+!.git/
+!.git/**

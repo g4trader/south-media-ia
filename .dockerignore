@@ -1,5 +1,4 @@
 # Arquivos não necessários para o container
-.git
 .gitignore
 README*.md
 CLOUD_RUN_DEPLOYMENT.md

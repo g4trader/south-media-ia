@@ -18,9 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY git_manager_service.py .
 COPY static/ ./static/
 
-# Copy .git directory for Git operations
-COPY .git/ ./.git/
-
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app

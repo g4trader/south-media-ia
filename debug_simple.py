@@ -1,48 +1,97 @@
 #!/usr/bin/env python3
 """
-Debug simples do erro JavaScript
+Script simples para debugar valores da planilha
 """
 
-import time
-import logging
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import sys
+import os
+sys.path.append(os.path.dirname(__file__))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+try:
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+    GOOGLE_AVAILABLE = True
+except ImportError:
+    GOOGLE_AVAILABLE = False
 
 def debug_simple():
-    """Debug simples"""
-    chrome_options = Options()
-    chrome_options.add_argument('--headless')
-    chrome_options.add_argument('--no-sandbox')
-    chrome_options.add_argument('--disable-dev-shm-usage')
+    """Debugar valores da planilha de forma simples"""
+    print("🔍 Debugando valores da planilha...")
     
-    driver = webdriver.Chrome(options=chrome_options)
+    if not GOOGLE_AVAILABLE:
+        print("❌ Google API não disponível")
+        return
+    
+    sheet_id = "1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8"
     
     try:
-        logging.info("🔍 Debug simples...")
-        driver.get("https://dash.iasouth.tech")
-        time.sleep(5)
+        # Inicializar serviço
+        credentials = service_account.Credentials.from_service_account_file(
+            "credentials.json",
+            scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
+        )
+        service = build('sheets', 'v4', credentials=credentials)
         
-        # Capturar logs
-        logs = driver.get_log('browser')
+        # Ler dados da aba Report
+        range_name = "Report!A:O"  # A até O para pegar todas as colunas
+        result = service.spreadsheets().values().get(
+            spreadsheetId=sheet_id,
+            range=range_name
+        ).execute()
         
-        localhost_errors = [log for log in logs if 'localhost:8081' in log['message']]
+        values = result.get('values', [])
+        if not values:
+            print("❌ Dados vazios")
+            return
         
-        logging.info(f"📊 Total de logs: {len(logs)}")
-        logging.info(f"🚨 Erros localhost:8081: {len(localhost_errors)}")
+        print(f"✅ {len(values)} linhas encontradas")
         
-        for error in localhost_errors:
-            logging.error(f"   - {error['message']}")
-        
-        return len(localhost_errors) == 0
+        # Mostrar cabeçalho
+        if values:
+            headers = values[0]
+            print(f"📋 Cabeçalhos: {headers}")
+            
+            # Encontrar índice da coluna de investimento
+            invest_index = None
+            for i, header in enumerate(headers):
+                if 'investido' in header.lower():
+                    invest_index = i
+                    print(f"💰 Coluna de investimento encontrada: '{header}' (índice {i})")
+                    break
+            
+            if invest_index is not None:
+                print(f"\n📊 Primeiros 10 valores de investimento:")
+                for i in range(1, min(11, len(values))):
+                    if invest_index < len(values[i]):
+                        value = values[i][invest_index]
+                        print(f"  Linha {i}: '{value}'")
+                    else:
+                        print(f"  Linha {i}: (vazio)")
+                
+                # Calcular total
+                total = 0
+                count = 0
+                for i in range(1, len(values)):
+                    if invest_index < len(values[i]):
+                        value_str = values[i][invest_index]
+                        if value_str:
+                            try:
+                                # Remover R$ e converter
+                                clean_value = value_str.replace('R$', '').replace(' ', '').replace(',', '.')
+                                numeric_value = float(clean_value)
+                                total += numeric_value
+                                count += 1
+                            except:
+                                pass
+                
+                print(f"\n💰 Total calculado: R$ {total:,.2f} ({count} registros)")
+            else:
+                print("❌ Coluna de investimento não encontrada")
         
     except Exception as e:
-        logging.error(f"❌ Erro: {e}")
-        return False
-    finally:
-        driver.quit()
+        print(f"❌ Erro: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
-    success = debug_simple()
-    logging.info(f"🎯 Resultado: {'✅ SUCESSO' if success else '❌ AINDA HÁ ERROS'}")
+    debug_simple()

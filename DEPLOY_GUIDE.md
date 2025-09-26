@@ -241,3 +241,4 @@ O MVP Dashboard Builder está pronto para produção no Google Cloud Run!
 **Custo Estimado**: R$ 5-15/mês para uso moderado
 
 **Escalabilidade**: 0-10 instâncias automáticas
+

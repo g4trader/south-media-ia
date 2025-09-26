@@ -38,6 +38,13 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 def git_commit_and_push(file_path: str, commit_message: str) -> bool:
     """Fazer commit e push automático de um arquivo para o Git"""
     try:
+        # Verificar se estamos em um repositório Git
+        try:
+            subprocess.run(['git', 'status'], check=True, capture_output=True)
+        except subprocess.CalledProcessError:
+            logger.warning("⚠️ Não é um repositório Git, pulando commit automático")
+            return False
+        
         # Configurar Git (usar token do GitHub se disponível)
         github_token = os.environ.get('GITHUB_TOKEN')
         if github_token:
@@ -54,19 +61,25 @@ def git_commit_and_push(file_path: str, commit_message: str) -> bool:
             ], check=True, capture_output=True)
         
         # Adicionar arquivo
-        subprocess.run(['git', 'add', file_path], check=True, capture_output=True)
+        logger.info(f"🔧 Executando: git add {file_path}")
+        result = subprocess.run(['git', 'add', file_path], check=True, capture_output=True, text=True)
+        logger.info(f"✅ git add executado com sucesso")
         
         # Commit
-        subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True)
+        logger.info(f"🔧 Executando: git commit -m '{commit_message}'")
+        result = subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True, text=True)
+        logger.info(f"✅ git commit executado com sucesso: {result.stdout}")
         
         # Push
-        subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)
+        logger.info(f"🔧 Executando: git push origin main")
+        result = subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True, text=True)
+        logger.info(f"✅ git push executado com sucesso: {result.stdout}")
         
         logger.info(f"✅ Git commit/push realizado: {file_path}")
         return True
         
     except subprocess.CalledProcessError as e:
-        logger.error(f"❌ Erro no Git: {e.stderr.decode() if e.stderr else str(e)}")
+        logger.error(f"❌ Erro no Git: {e.stderr if e.stderr else str(e)}")
         return False
     except Exception as e:
         logger.error(f"❌ Erro inesperado no Git: {e}")
@@ -378,9 +391,14 @@ def generate_dashboard():
         logger.info(f"✅ Dashboard gerado: {dashboard_filename}")
         
         # Commit e push para o Git (para deploy no Vercel)
+        logger.info(f"🔧 ANTES DE CHAMAR git_commit_and_push")
+        logger.info(f"🔧 Iniciando processo de commit automático para: {dashboard_path}")
         try:
-            git_commit_and_push(dashboard_path, f"feat: Add dashboard for {campaign_name} ({campaign_key})")
-            logger.info(f"✅ Dashboard {dashboard_filename} commitado e enviado para o Git.")
+            result = git_commit_and_push(dashboard_path, f"feat: Add dashboard for {campaign_name} ({campaign_key})")
+            if result:
+                logger.info(f"✅ Dashboard {dashboard_filename} commitado e enviado para o Git.")
+            else:
+                logger.warning(f"⚠️ Commit automático falhou para: {dashboard_filename}")
         except Exception as e:
             logger.error(f"❌ Erro ao commitar e enviar dashboard para o Git: {e}")
             # Continuar mesmo com erro no Git, mas logar
