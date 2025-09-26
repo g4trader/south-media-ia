@@ -316,7 +316,7 @@
 
       renderCampaignMetrics() {
         const metricsContainer = document.getElementById('campaignMetrics');
-        const metrics = this.data.data.metrics;
+        const metrics = this.data.data.campaign_summary;
         const contract = this.data.data.contract;
 
         // Métricas específicas para Remarketing CPM
@@ -553,7 +553,7 @@
       }
 
       renderInsights() {
-        const metrics = this.data.data.metrics;
+        const metrics = this.data.data.campaign_summary;
         const contract = this.data.data.contract;
         
         const insights = [];
