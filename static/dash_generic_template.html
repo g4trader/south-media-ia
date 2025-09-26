@@ -1044,7 +1044,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = '{{CAMPAIGN_KEY}}';
+    let campaignKey = '{{CAMPAIGN_KEY_PLACEHOLDER}}';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);
