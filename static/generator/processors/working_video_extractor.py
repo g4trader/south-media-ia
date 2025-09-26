@@ -12,6 +12,8 @@ from typing import Dict, Any, Optional, List
 import logging
 import re
 
+from unidecode import unidecode
+
 # Adicionar diretório raiz ao path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
@@ -491,40 +493,118 @@ class WorkingVideoExtractor:
         """Extrair dados de contrato - VERSÃO QUE FUNCIONA"""
         try:
             logger.info("🔄 Extraindo dados de contrato REAIS...")
-            
+
             # Usar o método correto do GoogleSheetsService
             df = self._read_tab_dataframe("contract", "Informações de contrato")
-            
+
             if df is None or df.empty:
                 logger.warning("⚠️ DataFrame vazio da aba Informações de contrato")
                 return self._get_default_contract()
-            
+
             logger.info(f"✅ DataFrame de contrato carregado: {len(df)} linhas")
             logger.info(f"📊 Colunas de contrato: {list(df.columns)}")
-            
+
+            def _normalize_contract_key(key: Optional[str]) -> Optional[str]:
+                if key is None:
+                    return None
+
+                normalized = unidecode(str(key))
+                normalized = normalized.strip().lower()
+                normalized = re.sub(r"[^a-z0-9]+", " ", normalized)
+                normalized = re.sub(r"\s+", " ", normalized).strip()
+                return normalized or None
+
+            normalized_key_map: Dict[str, str] = {}
             # Converter para dicionário
             contract_dict = {}
             for index, row in df.iterrows():
                 try:
                     if len(row) >= 2:
-                        key = str(row.iloc[0]).strip()
-                        value = str(row.iloc[1]).strip()
+                        raw_key = row.iloc[0]
+                        raw_value = row.iloc[1]
+                        key = _normalize_sheet_value(raw_key)
+                        value = _normalize_sheet_value(raw_value)
                         if key and value and value != 'nan':
                             contract_dict[key] = value
+                            normalized_key = _normalize_contract_key(key)
+                            if normalized_key and normalized_key not in normalized_key_map:
+                                normalized_key_map[normalized_key] = key
                             logger.info(f"✅ Contrato: {key} = {value}")
                 except Exception as e:
                     logger.warning(f"⚠️ Erro ao processar linha de contrato {index}: {e}")
                     continue
-            
+
+            def _get_contract_value(candidates: List[str]) -> Optional[str]:
+                for candidate in candidates:
+                    candidate_slug = _normalize_contract_key(candidate)
+                    if not candidate_slug:
+                        continue
+
+                    original_key = normalized_key_map.get(candidate_slug)
+                    if not original_key:
+                        # Tentar correspondência parcial (casos com sufixos adicionais)
+                        for slug, mapped_key in normalized_key_map.items():
+                            if slug.startswith(candidate_slug):
+                                original_key = mapped_key
+                                break
+
+                    if original_key:
+                        return contract_dict.get(original_key)
+
+                return None
+
+            default_contract = self._get_default_contract()
+
+            investment_value = _get_contract_value(["valor investido", "investimento total"])
+            if investment_value is None:
+                logger.warning("⚠️ Valor investido não encontrado na planilha. Usando valor padrão.")
+            investment = (
+                self._safe_float(investment_value)
+                if investment_value is not None
+                else self._safe_float(default_contract.get("investment"))
+            )
+
+            cpv_value = _get_contract_value(["cpv"])
+            if cpv_value is None:
+                logger.warning("⚠️ CPV não encontrado na planilha. Usando valor padrão.")
+            cpv_contracted = (
+                self._safe_float(cpv_value)
+                if cpv_value is not None
+                else self._safe_float(default_contract.get("cpv_contracted"))
+            )
+
+            complete_views_value = _get_contract_value(["visualizacoes completas", "vc contratadas"])
+            if complete_views_value is None:
+                logger.warning("⚠️ Visualizações completas contratadas não encontradas. Usando valor padrão.")
+            complete_views_contracted = (
+                self._safe_int(complete_views_value)
+                if complete_views_value is not None
+                else self._safe_int(default_contract.get("complete_views_contracted"))
+            )
+
+            impressions_value = _get_contract_value(["impressoes contratadas"])
+            if impressions_value is None:
+                logger.warning("⚠️ Impressões contratadas não encontradas. Usando valor padrão.")
+            impressions_contracted = (
+                self._safe_int(impressions_value)
+                if impressions_value is not None
+                else self._safe_int(default_contract.get("impressions_contracted"))
+            )
+
+            period_value = _get_contract_value(["periodo de veiculacao", "período de veiculação"])
+            if period_value is None:
+                logger.warning("⚠️ Período de veiculação não encontrado. Usando valor padrão.")
+            period = period_value or default_contract.get("period")
+
             # Processar dados de contrato
             result = {
                 "client": self.config.client,
                 "campaign": self.config.campaign,
-                "investment": self._safe_float(contract_dict.get("Valor investido", 31000)),
-                "cpv_contracted": self._safe_float(contract_dict.get("CPV", 0.16)),
-                "complete_views_contracted": self._safe_int(contract_dict.get("Visualizações completas", 193750)),
-                "impressions_contracted": self._safe_int(contract_dict.get("Impressões", 193750)),
-                "period": contract_dict.get("Periodo de veiculação", "15/09/2025 - 30/09/2025"),
+                "investment": investment,
+                "cpv_contracted": cpv_contracted,
+                "complete_views_contracted": complete_views_contracted,
+                "impressions_contracted": impressions_contracted,
+                "period": period,
                 "status": "Em andamento"
             }
             
