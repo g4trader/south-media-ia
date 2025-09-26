@@ -603,8 +603,21 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    const dashboardRelativeUrl = result.dashboard_url;
+                    const dashboardAbsoluteUrl = result.dashboard_url_cloud_run || (dashboardRelativeUrl ? CONFIG.getDashboardUrl(dashboardRelativeUrl) : null);
+                    const dashboardUrlLabel = result.dashboard_url_cloud_run ? 'URL (Cloud Run)' : 'URL';
+
+                    const absoluteUrlMessage = dashboardAbsoluteUrl
+                        ? `<strong>${dashboardUrlLabel}:</strong> <a href="${dashboardAbsoluteUrl}" target="_blank" style="color: #8B5CF6;">${dashboardAbsoluteUrl}</a><br>`
+                        : '';
+
+                    const relativeUrlMessage = dashboardRelativeUrl && dashboardAbsoluteUrl !== dashboardRelativeUrl
+                        ? `<span style="display: block; color: var(--muted); font-size: 0.9rem; margin-top: 4px;"><strong>URL relativa:</strong> ${dashboardRelativeUrl}</span>`
+                        : '';
+
                     showStatus(`✅ Dashboard gerado com sucesso!<br>
-                        <strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank" style="color: #8B5CF6;">${result.dashboard_url}</a><br>
+                        ${absoluteUrlMessage}
+                        ${relativeUrlMessage}
                         <strong>API:</strong> ${result.api_endpoint}`, 'success');
                     resetForm();
                 } else {
