@@ -281,6 +281,8 @@ def generate_dashboard():
         
         # Substituir placeholders
         dashboard_content = template_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
+        dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
         dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-{os.environ.get("PROJECT_ID", "your-project")}-uc.a.run.app')
         
         # Salvar dashboard
