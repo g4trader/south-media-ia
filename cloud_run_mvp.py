@@ -291,6 +291,11 @@ def generate_dashboard():
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
         dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-609095880025.us-central1.run.app')
         
+        # Substituir placeholders adicionais
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_DESCRIPTION}}', f'Dashboard de performance para a campanha {campaign_name} do cliente {client}')
+        dashboard_content = dashboard_content.replace('{{PRIMARY_CHANNEL}}', channel)
+        
         # Salvar dashboard
         os.makedirs('static', exist_ok=True)
         with open(dashboard_path, 'w', encoding='utf-8') as f:
