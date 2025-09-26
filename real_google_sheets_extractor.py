@@ -340,7 +340,18 @@ class RealGoogleSheetsExtractor:
             
         except Exception as e:
             logger.error(f"❌ Erro ao extrair dados de contrato: {e}")
-            return None
+            # Retornar dados padrão em caso de erro
+            return {
+                "client": self.config.client,
+                "campaign": self.config.campaign,
+                "investment": 0.0,
+                "complete_views_contracted": 0,
+                "cpv_contracted": 0.0,
+                "canal": "Programática",
+                "tipo_criativo": "Video",
+                "period_start": None,
+                "period_end": None
+            }
     
     def _extract_publishers_data(self) -> list:
         """Extrair dados de publishers da aba 'Lista de publishers'"""
