@@ -279,7 +279,8 @@ class DashboardLoader {
     }
 
     async fetchData() {
-        const response = await fetch(this.apiEndpoint);
+        const apiUrl = `${this.apiEndpoint}/api/${this.campaignKey}/data`;
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
         }
