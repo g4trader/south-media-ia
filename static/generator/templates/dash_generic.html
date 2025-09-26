@@ -453,39 +453,63 @@ class DashboardLoader {
             strategies.primary_channel
         );
 
-        if (!this.hasValue(primaryChannel)) {
-            const publishers = Array.isArray(data && data.publishers) ? data.publishers : [];
-            const firstPublisher = publishers.find(publisher => {
-                const label = this.resolveText(
-                    publisher && publisher.name,
-                    publisher && publisher.channel,
-                    publisher && publisher.publisher,
-                    publisher && publisher.label
-                );
-                return this.hasValue(label);
-            });
-            if (firstPublisher) {
-                primaryChannel = this.resolveText(
-                    firstPublisher.name,
-                    firstPublisher.channel,
-                    firstPublisher.publisher,
-                    firstPublisher.label
-                );
+        const publishers = Array.isArray(data && data.publishers) ? data.publishers : [];
+        const normalizedPublishers = publishers.map(publisher => {
+            const label = this.resolveText(
+                publisher && publisher.name,
+                publisher && publisher.channel,
+                publisher && publisher.publisher,
+                publisher && publisher.label
+            );
+            if (!this.hasValue(label)) {
+                return null;
+            }
+            const identifier = this.normalizeIdentifier(
+                (publisher && (publisher.identifier || publisher.id || publisher.slug || publisher.key))
+                    || label
+            );
+            if (publisher && typeof publisher === 'object') {
+                publisher._label = label;
+                publisher._normalizedName = identifier;
+            }
+            return {
+                original: publisher,
+                label,
+                normalized: identifier
+            };
+        }).filter(Boolean);
+
+        let selectedLabel = this.hasValue(primaryChannel) ? primaryChannel : null;
+        let selectedIdentifier = this.normalizeIdentifier(selectedLabel);
+        let selectedPublisher = null;
+
+        if (normalizedPublishers.length) {
+            if (selectedIdentifier) {
+                selectedPublisher = normalizedPublishers.find(item => item.normalized === selectedIdentifier) || null;
+            }
+
+            if (!selectedPublisher) {
+                selectedPublisher = normalizedPublishers[0];
             }
         }
 
-        if (this.hasValue(primaryChannel)) {
-            this.updateText('primary-channel-badge', primaryChannel);
+        if (selectedPublisher) {
+            selectedLabel = selectedPublisher.label;
+            selectedIdentifier = selectedPublisher.normalized;
+        }
+
+        if (this.hasValue(selectedLabel)) {
+            this.updateText('primary-channel-badge', selectedLabel);
             const titleElement = document.getElementById('primary-channel-title');
             if (titleElement) {
-                titleElement.textContent = `Entrega diária — ${primaryChannel}`;
+                titleElement.textContent = `Entrega diária — ${selectedLabel}`;
             }
         }
 
-        this.renderChannelView(data, primaryChannel);
+        this.renderChannelView(data, selectedLabel, selectedIdentifier);
     }
 
-    renderChannelView(data, channelName) {
+    renderChannelView(data, channelName, channelIdentifier) {
         const metricsContainer = document.getElementById('metrics-channel');
         const dailyBody = document.getElementById('channelDailyBody');
         if (!metricsContainer || !dailyBody) {
@@ -498,21 +522,82 @@ class DashboardLoader {
         const publishers = Array.isArray(data && data.publishers) ? data.publishers : [];
         const dailyData = Array.isArray(data && data.daily_data) ? data.daily_data : [];
 
-        const normalizedTarget = typeof channelName === 'string' ? channelName.trim().toLowerCase() : '';
+        const normalizedTarget = this.normalizeIdentifier(channelIdentifier)
+            || this.normalizeIdentifier(channelName);
 
         const publisherMetrics = publishers.find(publisher => {
+            if (!publisher || typeof publisher !== 'object') {
+                return false;
+            }
+            if (!publisher._normalizedName) {
+                const candidate = this.normalizeIdentifier(
+                    publisher.normalized_name
+                        || publisher.identifier
+                        || publisher.id
+                        || publisher.slug
+                        || publisher.key
+                ) || this.normalizeIdentifier(
+                    this.resolveText(
+                        publisher && publisher.name,
+                        publisher && publisher.channel,
+                        publisher && publisher.publisher,
+                        publisher && publisher.label
+                    )
+                );
+                if (candidate) {
+                    publisher._normalizedName = candidate;
+                }
+            }
+            if (publisher._label === undefined) {
+                const label = this.resolveText(
+                    publisher && publisher.name,
+                    publisher && publisher.channel,
+                    publisher && publisher.publisher,
+                    publisher && publisher.label
+                );
+                if (this.hasValue(label)) {
+                    publisher._label = label;
+                }
+            }
             const label = this.resolveText(
                 publisher && publisher.name,
                 publisher && publisher.channel,
                 publisher && publisher.publisher,
                 publisher && publisher.label
             );
-            return typeof label === 'string' && label.trim().toLowerCase() === normalizedTarget;
+            const normalizedLabel = publisher._normalizedName || this.normalizeIdentifier(label);
+            return normalizedTarget && normalizedLabel === normalizedTarget;
         }) || null;
 
         const filterDailyRecord = (record) => {
             if (!normalizedTarget) {
                 return true;
+            }
+            if (record && typeof record === 'object' && !record._normalizedPublisher) {
+                const candidateIdentifier = this.normalizeIdentifier(
+                    record.publisher_identifier
+                        || record.publisher_id
+                        || record.publisher_slug
+                        || record.publisher_key
+                        || record.publisher
+                        || record.site
+                        || record.channel
+                        || record.name
+                );
+                if (candidateIdentifier) {
+                    record._normalizedPublisher = candidateIdentifier;
+                } else {
+                    const fallbackLabel = this.resolveText(
+                        record && record.publisher,
+                        record && record.site,
+                        record && record.channel,
+                        record && record.name
+                    );
+                    record._normalizedPublisher = this.normalizeIdentifier(fallbackLabel);
+                }
+            }
+            if (record && typeof record === 'object' && record._normalizedPublisher) {
+                return record._normalizedPublisher === normalizedTarget;
             }
             const label = this.resolveText(
                 record && record.publisher,
@@ -520,14 +605,12 @@ class DashboardLoader {
                 record && record.channel,
                 record && record.name
             );
-            if (typeof label === 'string' && label.trim().toLowerCase() === normalizedTarget) {
-                return true;
-            }
-            return false;
+            const normalizedLabel = this.normalizeIdentifier(label);
+            return normalizedLabel === normalizedTarget;
         };
 
-        const filteredDaily = dailyData.filter(filterDailyRecord);
-        const dailyRecords = filteredDaily.length ? filteredDaily : dailyData;
+        const filteredDaily = normalizedTarget ? dailyData.filter(filterDailyRecord) : dailyData;
+        const dailyRecords = normalizedTarget ? filteredDaily : dailyData;
 
         const totals = {
             spend: 0,
@@ -733,7 +816,10 @@ class DashboardLoader {
         };
 
         if (rows.length === 0) {
-            dailyBody.innerHTML = '<tr><td colspan="9" class="muted">Sem dados diários disponíveis</td></tr>';
+            const emptyMessage = normalizedTarget
+                ? 'Sem dados para este canal'
+                : 'Sem dados diários disponíveis';
+            dailyBody.innerHTML = `<tr><td colspan="9" class="muted">${emptyMessage}</td></tr>`;
             return;
         }
 
@@ -1144,6 +1230,20 @@ class DashboardLoader {
             }
         }
         return null;
+    }
+
+    normalizeIdentifier(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        const text = String(value).trim();
+        if (!text) {
+            return '';
+        }
+        return text
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
     }
 
     hasValue(value) {
