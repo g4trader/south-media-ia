@@ -95,7 +95,7 @@ class RealGoogleSheetsExtractor:
             result = {
                 "campaign_summary": {
                     "client": self.config.client,
-                    "campaign": self.config.campaign,
+                    "campaign": getattr(self.config, 'campaign', getattr(self.config, 'campaign_name', 'N/A')),
                     "status": self._get_campaign_status(contract_data),
                     "period": f"{contract_data['period_start']} a {contract_data['period_end']}" if contract_data.get('period_start') and contract_data.get('period_end') else "N/A",
                     **total_metrics

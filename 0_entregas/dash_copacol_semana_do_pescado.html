@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - SEBRAE PR - Feira do Empreendedor</title>
+<title>Dashboard - COPACOL - Semana do Pescado</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -123,11 +124,11 @@
       <div class="logo-icon">SM</div>
       <div>
         <div style="font-weight:800;font-size:1.1rem">South Media</div>
-        <div class="muted">Dashboard - SEBRAE PR</div>
+        <div class="muted">Dashboard - COPACOL</div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">SEBRAE PR - Feira do Empreendedor</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Semana do Pescado</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
@@ -148,7 +149,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Feira do Empreendedor do cliente SEBRAE PR</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Semana do Pescado do cliente COPACOL</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -1044,7 +1045,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = 'sebrae_pr_feira_do_empreendedor';
+    let campaignKey = 'copacol_semana_do_pescado';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);

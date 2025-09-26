@@ -226,8 +226,14 @@ def generate_campaign_key(client: str, campaign_name: str) -> str:
 def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática") -> Dict[str, Any]:
     """Gerar dashboard a partir do template"""
     try:
-        # Carregar template
+        # Determinar template baseado no tipo de campanha
         template_path = 'static/dash_generic_template.html'
+        
+        # Verificar se é campanha de remarketing CPM
+        if 'remarketing' in campaign_name.lower() or 'cpm' in channel.lower():
+            template_path = 'static/dash_remarketing_cpm_template.html'
+            logger.info(f"🎯 Usando template de Remarketing CPM para: {campaign_name}")
+        
         if not os.path.exists(template_path):
             raise Exception(f"Template não encontrado: {template_path}")
         
@@ -238,7 +244,7 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
         dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
-        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-609095880025.us-central1.run.app')
+        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'http://localhost:5002')
         
         # Substituir placeholders adicionais
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')

@@ -128,7 +128,7 @@
     </div>
     <div>
       <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Semana do Pescado</div>
-      <div class="muted" style="text-align:right">Status: <span class="badge">ATIVA</span></div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
 
@@ -148,7 +148,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Performance do Video Programática - Complete View</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Semana do Pescado do cliente COPACOL</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -169,7 +169,7 @@
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">VIDEO PROGRAMÁTICA</div>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">Video Programática</div>
       </div>
     </div>
     
@@ -181,7 +181,7 @@
     <div class="metrics" id="metrics-channel"></div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Entrega diária — VIDEO PROGRAMÁTICA</h3>
+      <h3 style="margin-bottom:10px">Entrega diária — Video Programática</h3>
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `/api/copacol_semana_do_pescado/data`;
+        this.apiEndpoint = `http://localhost:5002`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
@@ -279,7 +279,8 @@ class DashboardLoader {
     }
 
     async fetchData() {
-        const response = await fetch(this.apiEndpoint);
+        const apiUrl = `${this.apiEndpoint}/api/${this.campaignKey}/data`;
+        const response = await fetch(apiUrl);
         if (!response.ok) {
             throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
         }
