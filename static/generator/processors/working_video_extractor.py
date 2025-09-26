@@ -640,7 +640,7 @@ class WorkingVideoExtractor:
             # Calcular métricas derivadas
             ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
             cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0
-            vtr = (total_starts / total_impressions * 100) if total_impressions > 0 else 0
+            vtr = (total_q100 / total_starts * 100) if total_starts > 0 else 0
             cpv = (total_spend / total_q100) if total_q100 > 0 else 0
 
             # Calcular pacing
