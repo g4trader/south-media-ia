@@ -354,13 +354,18 @@ def test_extractor():
         # Criar extrator
         extractor = RealGoogleSheetsExtractor(config)
         
+        # Verificar se o extrator está configurado
+        is_configured = extractor.service is not None
+        
         # Testar extração de contrato
         contract_data = extractor._extract_contract_data()
         
         return jsonify({
             "success": True,
             "message": "Extrator funcionando",
-            "contract_data": contract_data
+            "is_configured": is_configured,
+            "contract_data": contract_data,
+            "config_tabs": config.tabs
         })
         
     except Exception as e:
