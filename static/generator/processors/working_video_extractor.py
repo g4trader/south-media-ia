@@ -58,6 +58,68 @@ PUBLISHER_TYPE_COLUMN_CANDIDATES = [
     "channel_type"
 ]
 
+DAY_COLUMN_CANDIDATES = [
+    "day",
+    "date",
+    "data",
+]
+
+CREATIVE_COLUMN_CANDIDATES = [
+    "creative",
+    "criativo",
+    "ad",
+    "ad name",
+    "ad_name",
+]
+
+SPEND_COLUMN_CANDIDATES = [
+    "valor investido",
+    "valor investido (r$)",
+    "investimento",
+    "budget",
+    "spend",
+]
+
+IMPRESSIONS_COLUMN_CANDIDATES = [
+    "imps",
+    "impressions",
+    "impressões",
+    "impressoes",
+]
+
+CLICKS_COLUMN_CANDIDATES = [
+    "clicks",
+    "cliques",
+]
+
+CPV_COLUMN_CANDIDATES = [
+    "cpv",
+    "cost per view",
+]
+
+CTR_COLUMN_CANDIDATES = [
+    "ctr",
+    "ctr ",
+    "click-through rate",
+]
+
+VIDEO_STARTS_COLUMN_CANDIDATES = [
+    "video starts",
+    "starts",
+    "video start",
+    "inícios de vídeo",
+    "inicios de video",
+]
+
+VIDEO_COMPLETIONS_COLUMN_CANDIDATES = [
+    "100%  video complete",
+    "100% video complete",
+    "video completions",
+    "video assistido 100%",
+    "complete views",
+    "completed views",
+]
+
 
 def _normalize_sheet_value(value) -> Optional[str]:
     """Return a stripped string representation for sheet values."""
@@ -71,13 +133,19 @@ def _normalize_sheet_value(value) -> Optional[str]:
     return text
 
 
-def _extract_row_value(row: pd.Series, candidates) -> Optional[str]:
+def _extract_row_value(
+    row: pd.Series,
+    candidates,
+    normalized_columns: Optional[Dict[str, str]] = None,
+) -> Optional[str]:
     """Retrieve the first non-empty value from the provided candidate columns."""
 
     if not isinstance(row, pd.Series):
         return None
 
-    normalized_columns = {str(col).strip().lower(): col for col in row.index}
+    normalized_columns = normalized_columns or {
+        str(col).strip().lower(): col for col in row.index
+    }
 
     for candidate in candidates:
         normalized_candidate = str(candidate).strip().lower()
@@ -88,6 +156,37 @@ def _extract_row_value(row: pd.Series, candidates) -> Optional[str]:
         value = _normalize_sheet_value(row.get(source_column))
         if value is not None:
             return value
+
+    return None
+
+
+def _extract_candidate_value(
+    row: pd.Series,
+    normalized_columns: Dict[str, str],
+    candidates: List[str],
+):
+    """Return the first non-null value for any of the candidate columns."""
+
+    if not isinstance(row, pd.Series) or not normalized_columns:
+        return None
+
+    for candidate in candidates:
+        normalized_candidate = str(candidate).strip().lower()
+        source_column = normalized_columns.get(normalized_candidate)
+        if source_column is None:
+            continue
+
+        value = row.get(source_column)
+        if value is None:
+            continue
+
+        if isinstance(value, float) and pd.isna(value):
+            continue
+
+        if isinstance(value, str) and not value.strip():
+            continue
+
+        return value
 
     return None
 
@@ -286,21 +385,69 @@ class WorkingVideoExtractor:
             daily_records = []
             for index, row in df.iterrows():
                 try:
+                    normalized_columns = {
+                        str(col).strip().lower(): col for col in row.index
+                    }
+
                     # Extrair dados básicos com tratamento de erro
-                    date_str = str(row.get('Day', ''))
+                    date_value = _extract_candidate_value(
+                        row, normalized_columns, DAY_COLUMN_CANDIDATES
+                    )
+                    date_str = str(date_value or "").strip()
                     if not date_str or date_str == 'nan' or date_str == '':
                         continue
-                    
-                    creative = _normalize_sheet_value(row.get('Creative')) or ''
-                    publisher_name = _extract_row_value(row, PUBLISHER_COLUMN_CANDIDATES) or creative or "Desconhecido"
-                    publisher_type = _extract_row_value(row, PUBLISHER_TYPE_COLUMN_CANDIDATES)
-                    spend = self._safe_float(row.get('Valor investido', 0))
-                    impressions = self._safe_int(row.get('Imps', 0))
-                    clicks = self._safe_int(row.get('Clicks', 0))
-                    cpv = self._safe_float(row.get('CPV', 0))
-                    ctr = self._safe_float(row.get('CTR ', 0))
-                    starts = self._safe_int(row.get('Video Starts', 0))
-                    q100 = self._safe_int(row.get('Video Completions', 0))
+
+                    creative_value = _extract_candidate_value(
+                        row, normalized_columns, CREATIVE_COLUMN_CANDIDATES
+                    )
+                    creative = _normalize_sheet_value(creative_value) or ''
+                    publisher_name = (
+                        _extract_row_value(
+                            row,
+                            PUBLISHER_COLUMN_CANDIDATES,
+                            normalized_columns,
+                        )
+                        or creative
+                        or "Desconhecido"
+                    )
+                    publisher_type = _extract_row_value(
+                        row, PUBLISHER_TYPE_COLUMN_CANDIDATES, normalized_columns
+                    )
+                    spend = self._safe_float(
+                        _extract_candidate_value(
+                            row, normalized_columns, SPEND_COLUMN_CANDIDATES
+                        )
+                    )
+                    impressions = self._safe_int(
+                        _extract_candidate_value(
+                            row, normalized_columns, IMPRESSIONS_COLUMN_CANDIDATES
+                        )
+                    )
+                    clicks = self._safe_int(
+                        _extract_candidate_value(
+                            row, normalized_columns, CLICKS_COLUMN_CANDIDATES
+                        )
+                    )
+                    cpv = self._safe_float(
+                        _extract_candidate_value(
+                            row, normalized_columns, CPV_COLUMN_CANDIDATES
+                        )
+                    )
+                    ctr = self._safe_float(
+                        _extract_candidate_value(
+                            row, normalized_columns, CTR_COLUMN_CANDIDATES
+                        )
+                    )
+                    starts = self._safe_int(
+                        _extract_candidate_value(
+                            row, normalized_columns, VIDEO_STARTS_COLUMN_CANDIDATES
+                        )
+                    )
+                    q100 = self._safe_int(
+                        _extract_candidate_value(
+                            row, normalized_columns, VIDEO_COMPLETIONS_COLUMN_CANDIDATES
+                        )
+                    )
                     
                     # Calcular métricas derivadas
                     cpm = (spend / impressions * 1000) if impressions > 0 else 0
