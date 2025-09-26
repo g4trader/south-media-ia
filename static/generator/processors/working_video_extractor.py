@@ -453,7 +453,10 @@ class WorkingVideoExtractor:
                     
                     # Calcular métricas derivadas
                     cpm = (spend / impressions * 1000) if impressions > 0 else 0
-                    vtr = (starts / impressions * 100) if impressions > 0 else 0
+                    if starts > 0:
+                        vtr = (q100 / starts) * 100
+                    else:
+                        vtr = 0
                     
                     record = {
                         "date": date_str,
