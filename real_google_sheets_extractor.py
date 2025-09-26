@@ -306,7 +306,7 @@ class RealGoogleSheetsExtractor:
             # Mapear para estrutura padrão (usando as chaves reais da planilha)
             contract_data = {
                 "client": self.config.client,
-                "campaign": self.config.campaign,
+                "campaign": getattr(self.config, 'campaign', getattr(self.config, 'campaign_name', 'N/A')),
                 "investment": float(contract_dict.get("Investimento:", "0").replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')) if contract_dict.get("Investimento:") else 0.0,
                 "complete_views_contracted": int(contract_dict.get("Complete Views Contrado", "0").replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") else 0,
                 "cpv_contracted": float(contract_dict.get("CPV contratado:", "0").replace('R$', '').replace(' ', '').replace(',', '.')) if contract_dict.get("CPV contratado:") else 0.0,
@@ -343,7 +343,7 @@ class RealGoogleSheetsExtractor:
             # Retornar dados padrão em caso de erro
             return {
                 "client": self.config.client,
-                "campaign": self.config.campaign,
+                "campaign": getattr(self.config, 'campaign', getattr(self.config, 'campaign_name', 'N/A')),
                 "investment": 0.0,
                 "complete_views_contracted": 0,
                 "cpv_contracted": 0.0,
