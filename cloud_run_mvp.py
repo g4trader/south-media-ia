@@ -36,12 +36,18 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 class CampaignConfig:
     """Configuração de uma campanha"""
-    def __init__(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None):
+    def __init__(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, tabs: Optional[Dict] = None):
         self.campaign_key = campaign_key
         self.client = client
         self.campaign_name = campaign_name
         self.sheet_id = sheet_id
         self.channel = channel or "Video Programática"
+        self.tabs = tabs or {
+            'report': 'Report',
+            'contract': 'Informações de contrato',
+            'publishers': 'Lista de publishers',
+            'strategies': 'Estratégias'
+        }
 
 class CloudRunDatabaseManager:
     """Gerenciador de banco para Cloud Run com persistência"""
