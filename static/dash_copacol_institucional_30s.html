@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `/api/copacol_institucional_30s/data`;
+        this.apiEndpoint = `https://mvp-dashboard-builder-609095880025.us-central1.run.app/api/copacol_institucional_30s/data`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
