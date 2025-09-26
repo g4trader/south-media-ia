@@ -95,7 +95,7 @@ class RealGoogleSheetsExtractor:
             result = {
                 "campaign_summary": {
                     "client": self.config.client,
-                    "campaign": self.config.campaign_name,
+                    "campaign": self.config.campaign,
                     "status": self._get_campaign_status(contract_data),
                     "period": f"{contract_data['period_start']} a {contract_data['period_end']}" if contract_data.get('period_start') and contract_data.get('period_end') else "N/A",
                     **total_metrics
@@ -304,7 +304,7 @@ class RealGoogleSheetsExtractor:
             # Mapear para estrutura padrão (usando as chaves reais da planilha)
             contract_data = {
                 "client": self.config.client,
-                "campaign": self.config.campaign_name,
+                "campaign": self.config.campaign,
                 "investment": float(contract_dict.get("Investimento:", "0").replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')) if contract_dict.get("Investimento:") else 0.0,
                 "complete_views_contracted": int(contract_dict.get("Complete Views Contrado", "0").replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") else 0,
                 "cpv_contracted": float(contract_dict.get("CPV contratado:", "0").replace('R$', '').replace(' ', '').replace(',', '.')) if contract_dict.get("CPV contratado:") else 0.0,
