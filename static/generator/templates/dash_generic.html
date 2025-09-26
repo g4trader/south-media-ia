@@ -882,9 +882,12 @@ class DashboardLoader {
         const targetVc = this.resolveNumber(
             contract.target_vc,
             contract.complete_views_contracted,
-            data && data.target_vc,
-            metrics.vc_contracted,
-            metrics.q100
+            contract.vc_contracted,
+            contract.vc_target,
+            contract.goal_vc,
+            metrics.target_vc,
+            metrics.vc_target,
+            metrics.vc_contracted
         );
         this.updateNumber('planning-target-vc', targetVc);
 
@@ -1189,13 +1192,20 @@ class DashboardLoader {
     }
 
     updateNumber(elementId, value) {
-        if (value === null || value === undefined || !Number.isFinite(value)) {
-            return;
-        }
         const element = document.getElementById(elementId);
         if (!element) {
             return;
         }
+
+        if (!Object.prototype.hasOwnProperty.call(element.dataset, 'placeholder')) {
+            element.dataset.placeholder = element.textContent || '';
+        }
+
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            element.textContent = element.dataset.placeholder || '';
+            return;
+        }
+
         element.textContent = this.formatNumber(value);
     }
 
