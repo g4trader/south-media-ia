@@ -706,10 +706,11 @@ class DashboardLoader {
         metricsContainer.innerHTML = cards.join('\n');
 
         const formatCurrencyCell = (value) => {
-            if (!Number.isFinite(value) || value === 0) {
+            if (!Number.isFinite(value)) {
                 return '-';
             }
-            return `R$ ${this.formatCurrency(value)}`;
+            const normalized = Object.is(value, -0) ? 0 : value;
+            return `R$ ${this.formatCurrency(normalized)}`;
         };
 
         const formatNumberCell = (value) => {
@@ -723,10 +724,11 @@ class DashboardLoader {
         };
 
         const formatPercentageCell = (value) => {
-            if (!Number.isFinite(value) || value === 0) {
+            if (!Number.isFinite(value)) {
                 return '-';
             }
-            return this.formatPercentage(value);
+            const normalized = Object.is(value, -0) ? 0 : value;
+            return this.formatPercentage(normalized);
         };
 
         if (rows.length === 0) {
