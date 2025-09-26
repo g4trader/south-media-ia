@@ -244,7 +244,7 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
         dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
-        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'http://localhost:5002')
+        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-6f3ckz7c7q-uc.a.run.app')
         
         # Substituir placeholders adicionais
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')
