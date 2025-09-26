@@ -79,12 +79,10 @@ def normalise_numeric_string(value: NumericInput) -> Optional[str]:
     treat_as_decimal = bool(decimal_digits)
 
     if treat_as_decimal:
-        if decimal_sep == "." and "," not in unsigned:
-            # Heuristic: patterns like 193.750 are thousands with three trailing digits.
-            if len(decimal_digits) == 3 and len(integer_digits) > 2:
-                treat_as_decimal = False
-        elif decimal_sep == "," and "." not in unsigned:
-            if len(decimal_digits) == 3 and len(integer_digits) > 2:
+        other_separator = "," if decimal_sep == "." else "."
+        if other_separator not in unsigned:
+            # Heuristic: strings like 31.000 or 12.345 represent thousands.
+            if len(decimal_digits) == 3 and len(digits_only) > 3:
                 treat_as_decimal = False
 
     if treat_as_decimal:
