@@ -415,48 +415,88 @@ class WorkingVideoExtractor:
                     publisher_type = _extract_row_value(
                         row, PUBLISHER_TYPE_COLUMN_CANDIDATES, normalized_columns
                     )
-                    spend = self._safe_float(
-                        _extract_candidate_value(
-                            row, normalized_columns, SPEND_COLUMN_CANDIDATES
-                        )
+                    spend_value = _extract_candidate_value(
+                        row, normalized_columns, SPEND_COLUMN_CANDIDATES
                     )
-                    impressions = self._safe_int(
-                        _extract_candidate_value(
-                            row, normalized_columns, IMPRESSIONS_COLUMN_CANDIDATES
-                        )
+                    spend = (
+                        self._safe_float(spend_value)
+                        if spend_value is not None
+                        else 0.0
                     )
-                    clicks = self._safe_int(
-                        _extract_candidate_value(
-                            row, normalized_columns, CLICKS_COLUMN_CANDIDATES
-                        )
+                    impressions_value = _extract_candidate_value(
+                        row, normalized_columns, IMPRESSIONS_COLUMN_CANDIDATES
                     )
-                    cpv = self._safe_float(
-                        _extract_candidate_value(
-                            row, normalized_columns, CPV_COLUMN_CANDIDATES
-                        )
+                    impressions = (
+                        self._safe_int(impressions_value)
+                        if impressions_value is not None
+                        else 0
                     )
-                    ctr = self._safe_float(
-                        _extract_candidate_value(
-                            row, normalized_columns, CTR_COLUMN_CANDIDATES
-                        )
+                    clicks_value = _extract_candidate_value(
+                        row, normalized_columns, CLICKS_COLUMN_CANDIDATES
                     )
-                    starts = self._safe_int(
-                        _extract_candidate_value(
-                            row, normalized_columns, VIDEO_STARTS_COLUMN_CANDIDATES
-                        )
+                    clicks = (
+                        self._safe_int(clicks_value)
+                        if clicks_value is not None
+                        else 0
                     )
-                    q100 = self._safe_int(
-                        _extract_candidate_value(
-                            row, normalized_columns, VIDEO_COMPLETIONS_COLUMN_CANDIDATES
-                        )
+                    cpv_value = _extract_candidate_value(
+                        row, normalized_columns, CPV_COLUMN_CANDIDATES
                     )
-                    
-                    # Calcular métricas derivadas
-                    cpm = (spend / impressions * 1000) if impressions > 0 else 0
-                    if starts > 0:
+                    cpv = (
+                        self._safe_float(cpv_value)
+                        if cpv_value is not None
+                        else None
+                    )
+                    ctr_value = _extract_candidate_value(
+                        row, normalized_columns, CTR_COLUMN_CANDIDATES
+                    )
+                    ctr = (
+                        self._safe_float(ctr_value)
+                        if ctr_value is not None
+                        else None
+                    )
+                    starts_value = _extract_candidate_value(
+                        row, normalized_columns, VIDEO_STARTS_COLUMN_CANDIDATES
+                    )
+                    starts = (
+                        self._safe_int(starts_value)
+                        if starts_value is not None
+                        else 0
+                    )
+                    q100_value = _extract_candidate_value(
+                        row, normalized_columns, VIDEO_COMPLETIONS_COLUMN_CANDIDATES
+                    )
+                    q100 = (
+                        self._safe_int(q100_value)
+                        if q100_value is not None
+                        else 0
+                    )
+
+                    # Calcular métricas derivadas e preencher CTR/CPV quando possível
+                    impressions_available = impressions_value is not None
+                    clicks_available = clicks_value is not None
+                    spend_available = spend_value is not None
+                    starts_available = starts_value is not None
+                    q100_available = q100_value is not None
+
+                    if ctr is None and clicks_available and impressions_available and impressions > 0:
+                        ctr = (clicks / impressions) * 100
+
+                    if cpv is None and spend_available:
+                        if starts_available and starts > 0:
+                            cpv = spend / starts
+                        elif q100_available and q100 > 0:
+                            cpv = spend / q100
+
+                    cpm = (
+                        (spend / impressions * 1000)
+                        if impressions_available and impressions > 0
+                        else None
+                    )
+                    if starts_available and starts > 0 and q100_available:
                         vtr = (q100 / starts) * 100
                     else:
-                        vtr = 0
+                        vtr = None
                     
                     record = {
                         "date": date_str,
