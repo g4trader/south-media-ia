@@ -483,10 +483,10 @@ class WorkingVideoExtractor:
                         ctr = (clicks / impressions) * 100
 
                     if cpv is None and spend_available:
-                        if starts_available and starts > 0:
-                            cpv = spend / starts
-                        elif q100_available and q100 > 0:
+                        if q100_available and q100 > 0:
                             cpv = spend / q100
+                        elif starts_available and starts > 0:
+                            cpv = spend / starts
 
                     cpm = (
                         (spend / impressions * 1000)
