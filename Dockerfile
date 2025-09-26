@@ -1,4 +1,4 @@
-# Git Manager Microservice Dockerfile
+# Dashboard Builder MVP Dockerfile
 FROM python:3.11-slim
 
 # Set working directory
@@ -15,11 +15,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY git_manager_service.py .
+COPY cloud_run_mvp.py .
+COPY real_google_sheets_extractor.py .
+COPY google_sheets_service.py .
+COPY credentials.json .
 COPY static/ ./static/
-
-# Copy .git directory for Git operations
-COPY .git/ ./.git/
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \
@@ -34,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Run the application
-CMD ["python", "git_manager_service.py"]
+CMD ["python", "cloud_run_mvp.py"]
