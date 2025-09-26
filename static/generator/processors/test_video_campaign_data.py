@@ -58,7 +58,7 @@ def create_test_data(campaign_config: CampaignConfig) -> Dict[str, Any]:
             "q75": 7165,  # Soma dos 75%
             "q100": 74472,  # Soma dos 100% (6796+4212+9448+2165+1440+16109+34302)
             "ctr": 0.04,  # CTR médio
-            "vtr": 67.9,  # VTR médio
+            "vtr": 79.1,  # VTR médio
             "cpv": 0.16,  # CPV médio
             "cpm": 16.00,  # CPM calculado
             "pacing": 35.1,  # Pacing calculado

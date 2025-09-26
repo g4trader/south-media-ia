@@ -71,7 +71,7 @@ def create_sebrae_test_data():
             "q75": 7165,  # Soma dos 75%
             "q100": 74472,  # Soma dos 100% (6796+4212+9448+2165+1440+16109+34302)
             "ctr": 0.04,  # CTR médio
-            "vtr": 67.9,  # VTR médio
+            "vtr": 79.1,  # VTR médio
             "cpv": 0.16,  # CPV médio
             "cpm": 16.00,  # CPM calculado
             "pacing": 35.1,  # Pacing calculado
@@ -198,7 +198,7 @@ def create_sebrae_test_data():
                 "q75": 7165,
                 "q100": 6796,
                 "ctr": 0.04,
-                "vtr": 67.9,
+                "vtr": 79.1,
                 "cpv": 0.16,
                 "cpm": 16.00
             }
@@ -220,7 +220,16 @@ def test_dashboard_data():
     print(f"💰 CPV: R$ {data['metrics']['cpv']:.2f}")
     print(f"⏱️ Pacing: {data['metrics']['pacing']:.1f}%")
     print(f"📅 Dias com dados: {len(data['daily_data'])}")
-    
+
+    total_starts = sum(item.get("starts", 0) for item in data["daily_data"])
+    total_q100 = sum(item.get("q100", 0) for item in data["daily_data"])
+    consolidated_vtr = (total_q100 / total_starts * 100) if total_starts else 0
+
+    assert round(data["metrics"].get("vtr", 0), 1) == round(consolidated_vtr, 1), (
+        f"VTR total ({data['metrics'].get('vtr')}) deve corresponder ao consolidado "
+        f"dos dias ({consolidated_vtr})"
+    )
+
     # Salvar dados de teste
     with open('sebrae_test_data.json', 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
