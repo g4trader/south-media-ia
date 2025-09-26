@@ -222,17 +222,16 @@ class WorkingVideoExtractor:
                 return None
             
             # 2. Extrair dados diários da aba "Report"
-            daily_data = self._extract_daily_data_real()
+            daily_data = self._extract_daily_data_real() or []
             if not daily_data:
-                logger.warning("⚠️ Nenhum dado diário encontrado")
-                return None
-            
+                logger.warning("⚠️ Nenhum dado diário encontrado - retornando estrutura padrão")
+
             # 3. Extrair dados de contrato
             contract_data = self._extract_contract_data_real()
-            
+
             # 4. Calcular métricas totais
             total_metrics = self._calculate_total_metrics(daily_data, contract_data)
-            
+
             # 5. Preparar dados finais
             result = {
                 "campaign_name": f"{self.config.client} - {self.config.campaign}",
@@ -243,6 +242,7 @@ class WorkingVideoExtractor:
                 "contract": contract_data,
                 "daily_data": daily_data,
                 "total_metrics": total_metrics,
+                "metrics": total_metrics,
                 "publishers": self._get_publishers(daily_data),
                 "strategies": self._extract_strategies_data_real(),
             }
@@ -666,9 +666,39 @@ class WorkingVideoExtractor:
         contract_data: Optional[Dict[str, Any]] = None,
     ) -> dict:
         """Calcular métricas totais dos dados diários"""
+        zero_metrics = {
+            "spend": 0,
+            "impressions": 0,
+            "clicks": 0,
+            "starts": 0,
+            "q100": 0,
+            "ctr": 0,
+            "cpm": 0,
+            "vtr": 0,
+            "cpv": 0,
+            "pacing": 0,
+            "vc_pacing": 0,
+        }
+
         try:
+            contract_data = contract_data or {}
+            default_contract = self._get_default_contract()
+
+            budget_contracted_raw = contract_data.get("investment")
+            if budget_contracted_raw in (None, "", 0):
+                budget_contracted_raw = default_contract.get("investment")
+            budget_contracted = self._safe_float(budget_contracted_raw)
+
+            complete_views_target_raw = contract_data.get("complete_views_contracted")
+            if complete_views_target_raw in (None, "", 0):
+                complete_views_target_raw = default_contract.get("complete_views_contracted")
+            complete_views_target = self._safe_int(complete_views_target_raw)
+
             if not daily_data:
-                return {}
+                # Sem dados entregues, manter estrutura padrão com métricas zeradas
+                zero_metrics["pacing"] = 0
+                zero_metrics["vc_pacing"] = 0
+                return zero_metrics
 
             # Somar todas as métricas
             total_spend = sum(record.get("spend", 0) for record in daily_data)
@@ -684,19 +714,6 @@ class WorkingVideoExtractor:
             cpv = (total_spend / total_q100) if total_q100 > 0 else 0
 
             # Calcular pacing
-            contract_data = contract_data or {}
-            default_contract = self._get_default_contract()
-
-            budget_contracted_raw = contract_data.get("investment")
-            if budget_contracted_raw in (None, "", 0):
-                budget_contracted_raw = default_contract.get("investment")
-            budget_contracted = self._safe_float(budget_contracted_raw)
-
-            complete_views_target_raw = contract_data.get("complete_views_contracted")
-            if complete_views_target_raw in (None, "", 0):
-                complete_views_target_raw = default_contract.get("complete_views_contracted")
-            complete_views_target = self._safe_int(complete_views_target_raw)
-
             pacing = (total_spend / budget_contracted * 100) if budget_contracted > 0 else 0
             vc_pacing = (total_q100 / complete_views_target * 100) if complete_views_target > 0 else 0
 
@@ -715,10 +732,10 @@ class WorkingVideoExtractor:
                 "pacing": pacing,
                 "vc_pacing": vc_pacing
             }
-            
+
         except Exception as e:
             logger.error(f"❌ Erro ao calcular métricas totais: {e}")
-            return {}
+            return zero_metrics
     
     def _get_publishers(self, daily_data: list) -> list:
         """Extrair publishers únicos dos dados diários"""
