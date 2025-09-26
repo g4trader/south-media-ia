@@ -301,6 +301,7 @@ def generate_dashboard():
         return jsonify({
             "success": True,
             "message": "Dashboard gerado com sucesso",
+            "campaign_key": campaign_key,
             "dashboard_name": f"{client} - {campaign_name}",
             "dashboard_url": f"/static/{dashboard_filename}",
             "file_path": dashboard_path
