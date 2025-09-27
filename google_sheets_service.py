@@ -114,7 +114,9 @@ class GoogleSheetsService:
         for env_key in self._SERVICE_ACCOUNT_ENV_KEYS:
             raw_value = os.environ.get(env_key)
             if raw_value:
-                logger.info(f"📋 Encontrada variável {env_key}")
+                logger.info(f"📋 Encontrada variável {env_key} com valor: {raw_value[:50]}...")
+            else:
+                logger.info(f"📋 Variável {env_key} não encontrada ou vazia")
             if not raw_value:
                 continue
 
