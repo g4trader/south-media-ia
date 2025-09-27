@@ -26,13 +26,14 @@ sys.path.append(os.path.dirname(__file__))
 # Importar módulos do MVP
 from real_google_sheets_extractor import RealGoogleSheetsExtractor
 from google_sheets_service import GoogleSheetsService
+from config import get_api_endpoint, get_git_manager_url, is_production, is_development, get_port, is_debug
 
 app = Flask(__name__)
 CORS(app)
 
-# Configuração do Cloud Run
-PORT = int(os.environ.get('PORT', 8080))
-DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+# Configuração do ambiente
+PORT = get_port()
+DEBUG = is_debug()
 
 class CampaignConfig:
     """Configuração de uma campanha"""
@@ -223,16 +224,21 @@ def generate_campaign_key(client: str, campaign_name: str) -> str:
     
     return f"{client_clean}_{campaign_clean}"
 
-def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática") -> Dict[str, Any]:
+def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática", kpi: str = "CPV") -> Dict[str, Any]:
     """Gerar dashboard a partir do template"""
     try:
-        # Determinar template baseado no tipo de campanha
+        # Determinar template baseado no KPI
         template_path = 'static/dash_generic_template.html'
         
-        # Verificar se é campanha de remarketing CPM
-        if 'remarketing' in campaign_name.lower() or 'cpm' in channel.lower():
+        # Selecionar template baseado no KPI
+        if kpi.upper() == 'CPM':
             template_path = 'static/dash_remarketing_cpm_template.html'
-            logger.info(f"🎯 Usando template de Remarketing CPM para: {campaign_name}")
+            logger.info(f"🎯 Usando template CPM para: {campaign_name} (KPI: {kpi})")
+        elif kpi.upper() == 'CPV':
+            template_path = 'static/dash_generic_template.html'
+            logger.info(f"🎯 Usando template CPV para: {campaign_name} (KPI: {kpi})")
+        else:
+            logger.info(f"🎯 Usando template genérico para: {campaign_name} (KPI: {kpi})")
         
         if not os.path.exists(template_path):
             raise Exception(f"Template não encontrado: {template_path}")
@@ -244,7 +250,7 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
         dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
-        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', f'https://mvp-dashboard-builder-6f3ckz7c7q-uc.a.run.app')
+        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', get_api_endpoint())
         
         # Substituir placeholders adicionais
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')
@@ -263,7 +269,7 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         # Notificar o microserviço Git Manager sobre o novo arquivo
         try:
             import requests
-            git_manager_url = "https://git-manager-609095880025.us-central1.run.app"
+            git_manager_url = get_git_manager_url()
             notification_data = {
                 "action": "dashboard_created",
                 "file_path": dashboard_path,
@@ -383,8 +389,8 @@ def test_extractor():
             "traceback": traceback.format_exc()
         }), 500
 
-@app.route('/test-generator', methods=['GET'])
-def test_generator():
+@app.route('/dash-generator-pro', methods=['GET'])
+def dash_generator_pro():
     """Interface de teste do gerador"""
     return render_template_string('''
 <!DOCTYPE html>
@@ -392,7 +398,7 @@ def test_generator():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Dashboards - Teste</title>
+    <title>Gerador de Dashboards - Pro</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         .form-group { margin-bottom: 15px; }
@@ -407,7 +413,7 @@ def test_generator():
     </style>
 </head>
 <body>
-    <h1>🎯 Gerador de Dashboards - Teste</h1>
+    <h1>🎯 Gerador de Dashboards - Pro</h1>
     
     <form id="generatorForm">
         <div class="form-group">
@@ -421,8 +427,15 @@ def test_generator():
         </div>
         
         <div class="form-group">
-            <label for="sheetId">ID da Planilha Google Sheets:</label>
-            <input type="text" id="sheetId" name="sheet_id" required>
+            <label for="sheetUrl">URL da Planilha Google Sheets:</label>
+            <input type="url" id="sheetUrl" name="sheet_url" placeholder="https://docs.google.com/spreadsheets/d/1ABC.../edit" required>
+            <small style="color: #666; font-size: 12px;">Cole a URL completa da planilha (o ID será extraído automaticamente)</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="sheetId">ID da Planilha (Auto-extraído):</label>
+            <input type="text" id="sheetId" name="sheet_id" readonly style="background: #f8f9fa; color: #666;">
+            <small style="color: #666; font-size: 12px;">ID extraído automaticamente da URL</small>
         </div>
         
         <div class="form-group">
@@ -434,7 +447,19 @@ def test_generator():
                 <option value="Disney">Disney</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="Pinterest">Pinterest</option>
+                <option value="Spotify">Spotify</option>
             </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="kpi">KPI Contratado:</label>
+            <select id="kpi" name="kpi" required>
+                <option value="CPV">CPV - Custo por View (Complete Views)</option>
+                <option value="CPM">CPM - Custo por Mil Impressões</option>
+                <option value="CPC">CPC - Custo por Clique</option>
+                <option value="CPA">CPA - Custo por Aquisição</option>
+            </select>
+            <small style="color: #666; font-size: 12px;">Métrica principal contratada (define o layout do dashboard)</small>
         </div>
         
         <button type="submit" id="generateButton">🚀 Gerar Dashboard</button>
@@ -443,6 +468,42 @@ def test_generator():
     <div id="result"></div>
     
     <script>
+        // Função para extrair ID da planilha da URL
+        function extractSheetId(url) {
+            if (!url) return '';
+            
+            // Padrões de URL do Google Sheets
+            const patterns = [
+                /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/,
+                /\/d\/([a-zA-Z0-9-_]+)/,
+                /id=([a-zA-Z0-9-_]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            
+            return '';
+        }
+        
+        // Event listener para extrair ID automaticamente
+        document.getElementById('sheetUrl').addEventListener('input', function() {
+            const url = this.value;
+            const sheetId = extractSheetId(url);
+            const sheetIdField = document.getElementById('sheetId');
+            
+            if (sheetId) {
+                sheetIdField.value = sheetId;
+                sheetIdField.style.color = '#28a745'; // Verde para sucesso
+            } else {
+                sheetIdField.value = '';
+                sheetIdField.style.color = '#666';
+            }
+        });
+
         document.getElementById('generatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -511,7 +572,7 @@ def generate_dashboard_endpoint():
             return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
         
         # Validar campos obrigatórios
-        required_fields = ['client', 'campaign_name', 'sheet_id']
+        required_fields = ['client', 'campaign_name', 'sheet_id', 'kpi']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({"success": False, "message": f"Campo obrigatório: {field}"}), 400
@@ -520,6 +581,7 @@ def generate_dashboard_endpoint():
         campaign_name = data['campaign_name']
         sheet_id = data['sheet_id']
         channel = data.get('channel', 'Video Programática')
+        kpi = data.get('kpi', 'CPV')
         
         # Gerar campaign_key automaticamente
         campaign_key = generate_campaign_key(client, campaign_name)
@@ -529,7 +591,7 @@ def generate_dashboard_endpoint():
             return jsonify({"success": False, "message": "Erro ao salvar configuração da campanha"}), 500
         
         # Gerar dashboard
-        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel)
+        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel, kpi)
         
         if not result['success']:
             return jsonify({"success": False, "message": f"Erro ao gerar dashboard: {result['error']}"}), 500
@@ -593,4 +655,7 @@ def serve_static(filename):
 
 if __name__ == '__main__':
     logger.info("🚀 Iniciando MVP Dashboard Builder (Versão Simplificada)")
+    logger.info(f"🌍 Ambiente: {'Produção' if is_production() else 'Desenvolvimento'}")
+    logger.info(f"🔗 API Endpoint: {get_api_endpoint()}")
+    logger.info(f"🚪 Porta: {PORT}")
     app.run(host='0.0.0.0', port=PORT, debug=DEBUG)

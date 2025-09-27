@@ -322,8 +322,8 @@ def get_campaign_data(campaign_key):
         "timestamp": datetime.now().isoformat()
     })
 
-@app.route('/test-generator')
-def test_generator():
+@app.route('/dash-generator-pro')
+def dash_generator_pro():
     """Interface do gerador REAL - Usando design correto"""
     with open('correct_generator.html', 'r', encoding='utf-8') as f:
         return f.read()

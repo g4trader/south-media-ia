@@ -124,8 +124,8 @@ def get_campaign_data(campaign_key):
         "timestamp": datetime.now().isoformat()
     })
 
-@app.route('/test-generator')
-def test_generator():
+@app.route('/dash-generator-pro')
+def dash_generator_pro():
     """Interface de teste do gerador"""
     return render_template_string("""
     <!DOCTYPE html>
@@ -148,8 +148,8 @@ def test_generator():
     </head>
     <body>
         <div class="container">
-            <h1>🎬 Teste do Gerador Local</h1>
-            <p>Teste a geração de dashboards localmente</p>
+        <h1>🎬 Gerador de Dashboards - Pro Local</h1>
+        <p>Gere dashboards profissionalmente em ambiente local</p>
             
             <form id="generatorForm">
                 <div class="form-group">

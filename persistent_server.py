@@ -468,8 +468,8 @@ def database_info():
         logger.error(f"❌ Erro ao obter info do banco: {e}")
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
-@app.route('/test-generator')
-def test_generator():
+@app.route('/dash-generator-pro')
+def dash_generator_pro():
     """Interface para testar o gerador"""
     return """
     <!DOCTYPE html>
