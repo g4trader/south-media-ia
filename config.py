@@ -1,122 +1,108 @@
+#!/usr/bin/env python3
 """
-Configurações atualizadas para automação do dashboard com GIDs corretos
+Configuração de ambiente para o Dashboard Builder
 """
 
-# IDs das planilhas do Google Sheets para cada canal (com GIDs corretos)
-GOOGLE_SHEETS_CONFIG = {
-    "YouTube": {
-        "sheet_id": "1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo",
-        "gid": "1863167182",
-        "columns": {
-            "date": "Date",
-            "creative": "criativo", 
-            "spend": "Valor investido",
-            "starts": "Starts (Video)",
-            "q25": "First-Quartile Views (Video)",
-            "q50": "Midpoint Views (Video)",
-            "q75": "Third-Quartile Views (Video)",
-            "q100": "Complete Views (Video)",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "visits": "Visits"
-        }
-    },
-    "TikTok": {
-        "sheet_id": "1ZWA8SOvS_vYT_tIk8Wt4ZgxtMmzk9B8MAsLQ1fBMWsk",
-        "gid": "1727929489",  # GID da aba específica do TikTok
-        "columns": {
-            "date": "By Day",
-            "creative": "Ad name",
-            "spend": "Valor Investido", 
-            "impressions": "Impressions",
-            "clicks": "Clicks ",  # Com espaço no final
-            "visits": "Visits"
-        }
-    },
-    "Netflix": {
-        "sheet_id": "1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo",
-        "gid": "1743413064",
-        "columns": {
-            "date": "Day",
-            "creative": "Criativo",
-            "spend": "Valor investido",
-            "starts": "Video Starts",
-            "q25": "25% Video Complete",
-            "q50": "50% Video Complete", 
-            "q75": "75% Video Complete",
-            "q100": "100% Complete",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "visits": "Visits"
-        }
-    },
-    "Disney": {
-        "sheet_id": "1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o",
-        "sheet_name": "Setembro",  # Usar nome da aba específica do Disney
-        "columns": {
-            "date": "Day",
-            "creative": "Criativo",
-            "spend": "Valor investido",
-            "starts": "Video Starts",
-            "q25": "25% Video Complete",
-            "q50": "50% Video Complete", 
-            "q75": "75% Video Complete",
-            "q100": "100% Complete",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "visits": "Visits"
-        }
-    },
-    "CTV": {
-        "sheet_id": "1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U",
-        "sheet_name": "Setembro",  # Usar nome da aba em vez de GID
-        "columns": {
-            "date": "",  # Primeira coluna está vazia, mas contém as datas
-            "creative": "Creative",
-            "spend": "Valor investido",
-            "starts": "Starts (Video)",
-            "q25": "First-Quartile Views (Video)",
-            "q50": "Midpoint Views (Video)",
-            "q75": "Third-Quartile Views (Video)",
-            "q100": "Complete Views (Video)",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "visits": "Visits"
-        }
-    },
-    "Footfall Display": {
-        "sheet_id": "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA", 
-        "gid": "1743413064",  # GID correto da aba Footfall Display
-        "columns": {
-            "date": "Date",
-            "creative": "Creative",
-            "spend": "VALOR DO INVESTIMENTO",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "visits": "Visits"
-        }
-    }
-}
+import os
+from typing import Dict, Any
 
-# Configurações de automação
-AUTOMATION_CONFIG = {
-    "update_interval_hours": 3,
-    "dashboard_file": "static/dash_sonho.html",
-    "log_file": "logs/dashboard_automation.log",
-    "backup_enabled": True,
-    "backup_dir": "backups"
-}
+class EnvironmentConfig:
+    """Configuração baseada no ambiente"""
+    
+    def __init__(self):
+        self.environment = self._detect_environment()
+        self.config = self._get_config()
+    
+    def _detect_environment(self) -> str:
+        """Detectar ambiente baseado em variáveis ou contexto"""
+        # Verificar se está rodando no Cloud Run
+        if os.environ.get('K_SERVICE'):
+            return 'production'
+        
+        # Verificar se está rodando localmente
+        if os.environ.get('LOCAL_DEV') == 'true':
+            return 'development'
+        
+        # Verificar se está rodando em produção (Cloud Run) - PORT=8080
+        if os.environ.get('PORT') == '8080':
+            return 'production'
+        
+        # Padrão: desenvolvimento
+        return 'development'
+    
+    def _get_config(self) -> Dict[str, Any]:
+        """Obter configuração baseada no ambiente"""
+        
+        if self.environment == 'production':
+            return {
+                'api_endpoint': 'https://mvp-dashboard-builder-609095880025.us-central1.run.app',
+                'git_manager_url': 'https://git-manager-improved-609095880025.us-central1.run.app',
+                'debug': False,
+                'port': int(os.environ.get('PORT', 8080))
+            }
+        else:  # development
+            return {
+                'api_endpoint': 'http://localhost:5002',
+                'git_manager_url': 'http://localhost:5003',  # Se tiver git manager local
+                'debug': True,
+                'port': 5002
+            }
+    
+    def get_api_endpoint(self) -> str:
+        """Obter endpoint da API baseado no ambiente"""
+        return self.config['api_endpoint']
+    
+    def get_git_manager_url(self) -> str:
+        """Obter URL do Git Manager baseado no ambiente"""
+        return self.config['git_manager_url']
+    
+    def is_production(self) -> bool:
+        """Verificar se está em produção"""
+        return self.environment == 'production'
+    
+    def is_development(self) -> bool:
+        """Verificar se está em desenvolvimento"""
+        return self.environment == 'development'
+    
+    def get_port(self) -> int:
+        """Obter porta baseada no ambiente"""
+        return self.config['port']
+    
+    def is_debug(self) -> bool:
+        """Verificar se debug está habilitado"""
+        return self.config['debug']
 
-# Configurações de notificação (opcional)
-NOTIFICATION_CONFIG = {
-    "enabled": False,
-    "webhook_url": "",  # URL do webhook para notificações
-    "email": {
-        "enabled": False,
-        "smtp_server": "",
-        "smtp_port": 587,
-        "username": "",
-        "password": "",
-        "to_email": ""
-    }
-}
+# Instância global da configuração
+config = EnvironmentConfig()
+
+# Funções de conveniência
+def get_api_endpoint() -> str:
+    """Obter endpoint da API"""
+    return config.get_api_endpoint()
+
+def get_git_manager_url() -> str:
+    """Obter URL do Git Manager"""
+    return config.get_git_manager_url()
+
+def is_production() -> bool:
+    """Verificar se está em produção"""
+    return config.is_production()
+
+def is_development() -> bool:
+    """Verificar se está em desenvolvimento"""
+    return config.is_development()
+
+def get_port() -> int:
+    """Obter porta"""
+    return config.get_port()
+
+def is_debug() -> bool:
+    """Verificar se debug está habilitado"""
+    return config.is_debug()
+
+# Log da configuração
+if __name__ == "__main__":
+    print(f"🌍 Ambiente detectado: {config.environment}")
+    print(f"🔗 API Endpoint: {config.get_api_endpoint()}")
+    print(f"🔧 Debug: {config.is_debug()}")
+    print(f"🚪 Porta: {config.get_port()}")
