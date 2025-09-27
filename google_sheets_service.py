@@ -150,14 +150,16 @@ class GoogleSheetsService:
                 scopes=self.SCOPES,
             )
 
-        # Finally, look for a local development file "credentials.json".
-        default_path = os.path.join(os.getcwd(), "credentials.json")
-        if os.path.exists(default_path):
-            self._credentials_source = f"file:{default_path}"
-            return service_account.Credentials.from_service_account_file(
-                default_path,
-                scopes=self.SCOPES,
-            )
+        # Finally, look for local development files "credentials.json" or "service-account-key.json".
+        for filename in ["credentials.json", "service-account-key.json"]:
+            default_path = os.path.join(os.getcwd(), filename)
+            if os.path.exists(default_path):
+                self._credentials_source = f"file:{default_path}"
+                logger.info(f"✅ Usando credenciais do arquivo: {filename}")
+                return service_account.Credentials.from_service_account_file(
+                    default_path,
+                    scopes=self.SCOPES,
+                )
 
         # Try Application Default Credentials as fallback
         try:
