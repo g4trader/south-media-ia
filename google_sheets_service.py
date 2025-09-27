@@ -113,33 +113,37 @@ class GoogleSheetsService:
 
         # First check for JSON provided directly via environment variables.
         logger.info("🔍 Verificando variáveis de ambiente...")
-        for env_key in self._SERVICE_ACCOUNT_ENV_KEYS:
-            raw_value = os.environ.get(env_key)
-            if raw_value:
-                logger.info(f"📋 Encontrada variável {env_key} com valor: {raw_value[:50]}...")
+        raw_value = None
+        env_key = None
+        
+        for key in self._SERVICE_ACCOUNT_ENV_KEYS:
+            value = os.environ.get(key)
+            if value:
+                logger.info(f"📋 Encontrada variável {key} com valor: {value[:50]}...")
+                raw_value = value
+                env_key = key
+                break
             else:
-                logger.info(f"📋 Variável {env_key} não encontrada ou vazia")
-            if not raw_value:
-                continue
+                logger.info(f"📋 Variável {key} não encontrada ou vazia")
                 
-        # Check for base64 encoded credentials
-        b64_value = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON_B64')
-        if b64_value:
-            logger.info("📋 Encontrada variável GOOGLE_SERVICE_ACCOUNT_JSON_B64")
-            try:
-                import base64
-                raw_value = base64.b64decode(b64_value).decode('utf-8')
-                logger.info(f"✅ Base64 decodificado com sucesso: {raw_value[:50]}...")
-            except Exception as e:
-                logger.error(f"❌ Erro ao decodificar base64: {e}")
-                raw_value = None
-        else:
-            logger.info("📋 Variável GOOGLE_SERVICE_ACCOUNT_JSON_B64 não encontrada")
-            raw_value = None
+        # Check for base64 encoded credentials if no direct JSON found
+        if not raw_value:
+            b64_value = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON_B64')
+            if b64_value:
+                logger.info("📋 Encontrada variável GOOGLE_SERVICE_ACCOUNT_JSON_B64")
+                try:
+                    import base64
+                    raw_value = base64.b64decode(b64_value).decode('utf-8')
+                    env_key = 'GOOGLE_SERVICE_ACCOUNT_JSON_B64'
+                    logger.info(f"✅ Base64 decodificado com sucesso: {raw_value[:50]}...")
+                except Exception as e:
+                    logger.error(f"❌ Erro ao decodificar base64: {e}")
+                    raw_value = None
+            else:
+                logger.info("📋 Variável GOOGLE_SERVICE_ACCOUNT_JSON_B64 não encontrada")
             
-        # Use the decoded value if available
-        if raw_value:
-            env_key = 'GOOGLE_SERVICE_ACCOUNT_JSON_B64'
+        # Process the found credentials
+        if raw_value and env_key:
 
             try:
                 logger.info(f"🔄 Tentando decodificar JSON da variável {env_key}...")
