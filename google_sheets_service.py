@@ -163,16 +163,19 @@ class GoogleSheetsService:
 
         # Try to download credentials from Google Cloud Storage (for Cloud Run)
         try:
+            logger.info("🔄 Tentando baixar credenciais do Google Cloud Storage...")
             import google.cloud.storage
             bucket_name = "south-media-credentials"
             blob_name = "service-account-key.json"
             
+            logger.info(f"🪣 Criando cliente do Storage para bucket: {bucket_name}")
             storage_client = google.cloud.storage.Client()
             bucket = storage_client.bucket(bucket_name)
             blob = bucket.blob(blob_name)
             
             # Download to a temporary file
             temp_credentials_path = "/tmp/service-account-key.json"
+            logger.info(f"⬇️ Baixando {blob_name} para {temp_credentials_path}")
             blob.download_to_filename(temp_credentials_path)
             
             self._credentials_source = f"gcs:{bucket_name}/{blob_name}"
@@ -182,7 +185,9 @@ class GoogleSheetsService:
                 scopes=self.SCOPES,
             )
         except Exception as e:
-            logger.warning(f"⚠️ Não foi possível baixar credenciais do GCS: {e}")
+            logger.error(f"❌ Erro ao baixar credenciais do GCS: {e}")
+            import traceback
+            logger.error(f"❌ Traceback: {traceback.format_exc()}")
 
         # Try Application Default Credentials as fallback
         try:
