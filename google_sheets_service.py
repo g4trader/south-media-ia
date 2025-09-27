@@ -154,7 +154,7 @@ class GoogleSheetsService:
                     "⚠️ Conteúdo inválido em %s: %s", env_key, exc, exc_info=True
                 )
                 self._auth_error = exc
-                continue
+                raw_value = None  # Reset to continue to next method
 
             self._credentials_source = f"env:{env_key}"
             logger.info(f"🔐 Criando credenciais do service account para {env_key}")
