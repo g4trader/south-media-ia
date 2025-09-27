@@ -159,6 +159,17 @@ class GoogleSheetsService:
                 scopes=self.SCOPES,
             )
 
+        # Try Application Default Credentials as fallback
+        try:
+            import google.auth
+            credentials, project = google.auth.default(scopes=self.SCOPES)
+            if credentials:
+                self._credentials_source = "application_default"
+                logger.info("✅ Usando Application Default Credentials")
+                return credentials
+        except Exception as e:
+            logger.warning(f"⚠️ Application Default Credentials não disponíveis: {e}")
+
         return None
 
     # ------------------------------------------------------------------
