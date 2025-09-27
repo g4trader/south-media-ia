@@ -1,0 +1,32 @@
+# Dockerfile para Git Manager Melhorado
+FROM python:3.11-slim
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos do Git Manager Melhorado
+COPY git_manager_service_improved.py .
+COPY requirements.txt .
+
+# Instalar dependências Python
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Criar diretório static
+RUN mkdir -p /app/static
+
+# Configurar Git
+RUN git config --global init.defaultBranch main
+RUN git config --global user.name "Dashboard Bot"
+RUN git config --global user.email "dashboard@automatizar.com"
+
+# Expor porta
+EXPOSE 8080
+
+# Comando para executar o Git Manager Melhorado
+CMD ["python", "git_manager_service_improved.py"]
