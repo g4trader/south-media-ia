@@ -110,8 +110,11 @@ class GoogleSheetsService:
         logger.info("🔄 Iniciando carregamento de credenciais...")
 
         # First check for JSON provided directly via environment variables.
+        logger.info("🔍 Verificando variáveis de ambiente...")
         for env_key in self._SERVICE_ACCOUNT_ENV_KEYS:
             raw_value = os.environ.get(env_key)
+            if raw_value:
+                logger.info(f"📋 Encontrada variável {env_key}")
             if not raw_value:
                 continue
 
