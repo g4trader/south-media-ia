@@ -36,14 +36,14 @@ class EnvironmentConfig:
         if self.environment == 'production':
             return {
                 'api_endpoint': 'https://mvp-dashboard-builder-609095880025.us-central1.run.app',
-                'git_manager_url': 'https://git-manager-improved-609095880025.us-central1.run.app',
+                'git_manager_url': None,  # Desativado para evitar instabilidade
                 'debug': False,
                 'port': int(os.environ.get('PORT', 8080))
             }
         else:  # development
             return {
                 'api_endpoint': 'http://localhost:5002',
-                'git_manager_url': 'http://localhost:5003',  # Se tiver git manager local
+                'git_manager_url': None,  # Desativado para evitar instabilidade
                 'debug': True,
                 'port': 5002
             }
