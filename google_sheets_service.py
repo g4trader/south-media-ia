@@ -107,6 +107,7 @@ class GoogleSheetsService:
 
     def _load_credentials(self):
         """Try to load service account credentials from supported sources."""
+        logger.info("🔄 Iniciando carregamento de credenciais...")
 
         # First check for JSON provided directly via environment variables.
         for env_key in self._SERVICE_ACCOUNT_ENV_KEYS:
@@ -210,7 +211,7 @@ class GoogleSheetsService:
         """Return ``True`` when the service is authenticated and ready."""
 
         return self._service is not None
-
+    
     def test_connection(self) -> str:
         """Check the connectivity with Google Sheets.
 
@@ -223,7 +224,7 @@ class GoogleSheetsService:
 
         if not self.is_configured():
             return "not_configured"
-
+        
         test_sheet_id = os.environ.get("GOOGLE_SHEETS_TEST_SHEET_ID")
         if not test_sheet_id:
             # Nothing else to validate – authentication already succeeded.
@@ -247,7 +248,7 @@ class GoogleSheetsService:
         except Exception as exc:  # pragma: no cover - defensive logging
             logger.error("❌ Erro inesperado ao testar conexão: %s", exc, exc_info=True)
             return "error"
-
+    
     def get_sheet_metadata(self, sheet_id: str) -> Optional[Dict[str, Any]]:
         """Return spreadsheet metadata when accessible."""
 
@@ -289,7 +290,7 @@ class GoogleSheetsService:
         if not self.is_configured():
             logger.warning("⚠️ Google Sheets Service não configurado")
             return False
-
+        
         try:
             metadata = self.get_sheet_metadata(sheet_id)
             if not metadata:
@@ -300,7 +301,7 @@ class GoogleSheetsService:
 
             sheet_name = self.get_sheet_name_by_gid(sheet_id, gid)
             if sheet_name:
-                return True
+            return True
 
             logger.warning(
                 "⚠️ Aba com GID %s não encontrada na planilha %s", gid, sheet_id
@@ -315,7 +316,7 @@ class GoogleSheetsService:
                 exc_info=True,
             )
             return False
-
+    
     def read_sheet_data(
         self,
         sheet_id: str,
@@ -374,7 +375,7 @@ class GoogleSheetsService:
             return pd.DataFrame()
 
         values = result.get("values", [])
-        if not values:
+            if not values:
             logger.info(
                 "ℹ️ Planilha %s (%s) não contém dados", sheet_id, target_range
             )
@@ -399,8 +400,8 @@ class GoogleSheetsService:
             sheet_id,
             resolved_sheet_name or target_range,
         )
-        return df
-
+            return df
+    
     def get_campaign_data(self, campaign: Dict[str, Any]) -> Dict[str, Any]:
         """Aggregate Google Sheets data for a campaign configuration."""
 
@@ -413,7 +414,7 @@ class GoogleSheetsService:
             sheet_id = channel.get("sheet_id")
             sheet_name = channel.get("sheet_name")
             gid = channel.get("gid")
-
+            
             if not sheet_id:
                 logger.warning(
                     "⚠️ Canal '%s' ignorado – ID da planilha não informado", channel_name
