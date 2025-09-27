@@ -121,7 +121,9 @@ class GoogleSheetsService:
                 continue
 
             try:
+                logger.info(f"🔄 Tentando decodificar JSON da variável {env_key}...")
                 credentials_dict = json.loads(raw_value)
+                logger.info(f"✅ JSON decodificado com sucesso para {env_key}")
             except json.JSONDecodeError as exc:
                 logger.error(
                     "⚠️ Conteúdo inválido em %s: %s", env_key, exc, exc_info=True
