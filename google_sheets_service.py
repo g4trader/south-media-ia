@@ -161,6 +161,29 @@ class GoogleSheetsService:
                     scopes=self.SCOPES,
                 )
 
+        # Try to download credentials from Google Cloud Storage (for Cloud Run)
+        try:
+            import google.cloud.storage
+            bucket_name = "south-media-credentials"
+            blob_name = "service-account-key.json"
+            
+            storage_client = google.cloud.storage.Client()
+            bucket = storage_client.bucket(bucket_name)
+            blob = bucket.blob(blob_name)
+            
+            # Download to a temporary file
+            temp_credentials_path = "/tmp/service-account-key.json"
+            blob.download_to_filename(temp_credentials_path)
+            
+            self._credentials_source = f"gcs:{bucket_name}/{blob_name}"
+            logger.info(f"✅ Usando credenciais do Google Cloud Storage: {bucket_name}/{blob_name}")
+            return service_account.Credentials.from_service_account_file(
+                temp_credentials_path,
+                scopes=self.SCOPES,
+            )
+        except Exception as e:
+            logger.warning(f"⚠️ Não foi possível baixar credenciais do GCS: {e}")
+
         # Try Application Default Credentials as fallback
         try:
             import google.auth

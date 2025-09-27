@@ -19,7 +19,7 @@ COPY cloud_run_mvp.py .
 COPY real_google_sheets_extractor.py .
 COPY google_sheets_service.py .
 COPY config.py .
-COPY service-account-key.json .
+# Credenciais agora são baixadas do Google Cloud Storage
 COPY static/ ./static/
 
 # Create non-root user
