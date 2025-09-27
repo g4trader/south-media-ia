@@ -400,22 +400,203 @@ def dash_generator_pro():
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerador de Dashboards - Pro</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
-        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
-        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
-        .loading { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        :root {
+            --bg: #0F1023;
+            --bg2: #16213E;
+            --panel: #1A1A2E;
+            --muted: #9CA3AF;
+            --stroke: rgba(139,92,246,.28);
+            --grad: linear-gradient(135deg,#8B5CF6,#EC4899);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 50%, var(--panel) 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+            padding: 2rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: var(--grad);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+        
+        h1 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.82rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(148,163,184,.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,.04);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+        }
+        
+        input[readonly] {
+            background: rgba(255,255,255,.02);
+            color: var(--muted);
+        }
+        
+        small {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--grad);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139,92,246,.35);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .success {
+            background: rgba(16,185,129,.1);
+            border: 1px solid rgba(16,185,129,.3);
+            color: #10B981;
+        }
+        
+        .error {
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            color: #EF4444;
+        }
+        
+        .loading {
+            background: rgba(59,130,246,.1);
+            border: 1px solid rgba(59,130,246,.3);
+            color: #3B82F6;
+        }
+        
+        .result h3 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .result p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .result a {
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .result a:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(139,92,246,.2);
+            border: 1px solid rgba(139,92,246,.4);
+            font-weight: 600;
+            color: #8B5CF6;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body>
-    <h1>🎯 Gerador de Dashboards - Pro</h1>
-    
-    <form id="generatorForm">
+    <div class="container">
+        <div class="header">
+            <div class="logo">SM</div>
+            <h1>Gerador de Dashboards</h1>
+            <p class="subtitle">Sistema Profissional de Geração de Dashboards</p>
+        </div>
+        
+        <form id="generatorForm">
         <div class="form-group">
             <label for="clientName">Cliente:</label>
             <input type="text" id="clientName" name="client" required>
@@ -429,13 +610,13 @@ def dash_generator_pro():
         <div class="form-group">
             <label for="sheetUrl">URL da Planilha Google Sheets:</label>
             <input type="url" id="sheetUrl" name="sheet_url" placeholder="https://docs.google.com/spreadsheets/d/1ABC.../edit" required>
-            <small style="color: #666; font-size: 12px;">Cole a URL completa da planilha (o ID será extraído automaticamente)</small>
+            <small>Cole a URL completa da planilha (o ID será extraído automaticamente)</small>
         </div>
         
         <div class="form-group">
             <label for="sheetId">ID da Planilha (Auto-extraído):</label>
-            <input type="text" id="sheetId" name="sheet_id" readonly style="background: #f8f9fa; color: #666;">
-            <small style="color: #666; font-size: 12px;">ID extraído automaticamente da URL</small>
+            <input type="text" id="sheetId" name="sheet_id" readonly>
+            <small>ID extraído automaticamente da URL</small>
         </div>
         
         <div class="form-group">
@@ -459,13 +640,14 @@ def dash_generator_pro():
                 <option value="CPC">CPC - Custo por Clique</option>
                 <option value="CPA">CPA - Custo por Aquisição</option>
             </select>
-            <small style="color: #666; font-size: 12px;">Métrica principal contratada (define o layout do dashboard)</small>
+            <small>Métrica principal contratada (define o layout do dashboard)</small>
         </div>
         
         <button type="submit" id="generateButton">🚀 Gerar Dashboard</button>
-    </form>
-    
-    <div id="result"></div>
+        </form>
+        
+        <div id="result"></div>
+    </div>
     
     <script>
         // Função para extrair ID da planilha da URL
