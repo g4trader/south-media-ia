@@ -82,6 +82,7 @@ class GoogleSheetsService:
                 )
                 return
 
+            logger.info(f"🔧 Criando serviço Google Sheets com credenciais de {self._credentials_source}")
             self._service = build(
                 "sheets",
                 "v4",
@@ -92,6 +93,7 @@ class GoogleSheetsService:
                 "✅ Google Sheets autenticado com sucesso (%s)",
                 self._credentials_source or "unknown source",
             )
+            logger.info(f"✅ Serviço criado: {self._service is not None}")
         except (GoogleAuthError, OSError, ValueError, HttpError) as exc:
             self._auth_error = exc
             logger.error("❌ Erro na autenticação com Google Sheets: %s", exc, exc_info=True)
@@ -132,10 +134,13 @@ class GoogleSheetsService:
                 continue
 
             self._credentials_source = f"env:{env_key}"
-            return service_account.Credentials.from_service_account_info(
+            logger.info(f"🔐 Criando credenciais do service account para {env_key}")
+            credentials = service_account.Credentials.from_service_account_info(
                 credentials_dict,
                 scopes=self.SCOPES,
             )
+            logger.info(f"✅ Credenciais criadas com sucesso para {env_key}")
+            return credentials
 
         # Then fall back to environment variables pointing to credential files.
         for env_key in self._SERVICE_ACCOUNT_FILE_ENV_KEYS:
