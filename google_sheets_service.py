@@ -121,6 +121,25 @@ class GoogleSheetsService:
                 logger.info(f"📋 Variável {env_key} não encontrada ou vazia")
             if not raw_value:
                 continue
+                
+        # Check for base64 encoded credentials
+        b64_value = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON_B64')
+        if b64_value:
+            logger.info("📋 Encontrada variável GOOGLE_SERVICE_ACCOUNT_JSON_B64")
+            try:
+                import base64
+                raw_value = base64.b64decode(b64_value).decode('utf-8')
+                logger.info(f"✅ Base64 decodificado com sucesso: {raw_value[:50]}...")
+            except Exception as e:
+                logger.error(f"❌ Erro ao decodificar base64: {e}")
+                raw_value = None
+        else:
+            logger.info("📋 Variável GOOGLE_SERVICE_ACCOUNT_JSON_B64 não encontrada")
+            raw_value = None
+            
+        # Use the decoded value if available
+        if raw_value:
+            env_key = 'GOOGLE_SERVICE_ACCOUNT_JSON_B64'
 
             try:
                 logger.info(f"🔄 Tentando decodificar JSON da variável {env_key}...")
