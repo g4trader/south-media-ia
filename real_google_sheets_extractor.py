@@ -41,32 +41,16 @@ class RealGoogleSheetsExtractor:
         self._initialize_service()
     
     def _initialize_service(self):
-        """Inicializar serviço do Google Sheets"""
+        """Inicializar serviço do Google Sheets usando GoogleSheetsService"""
         try:
-            # Tentar credenciais locais primeiro
-            credentials_path = "credentials.json"
-            if os.path.exists(credentials_path):
-                logger.info("🔐 Usando credenciais locais (credentials.json)")
-                credentials = service_account.Credentials.from_service_account_file(
-                    credentials_path,
-                    scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
-                )
-            else:
-                # Tentar variável de ambiente
-                credentials_json = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
-                if credentials_json:
-                    logger.info("🔐 Usando credenciais da variável de ambiente")
-                    import json
-                    credentials_info = json.loads(credentials_json)
-                    credentials = service_account.Credentials.from_service_account_info(
-                        credentials_info,
-                        scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
-                    )
-                else:
-                    raise Exception("Credenciais não encontradas. Configure credentials.json ou GOOGLE_APPLICATION_CREDENTIALS_JSON")
+            from google_sheets_service import GoogleSheetsService
+            sheets_service = GoogleSheetsService()
             
-            self.service = build('sheets', 'v4', credentials=credentials)
-            logger.info("✅ Serviço Google Sheets inicializado com sucesso")
+            if not sheets_service.is_configured():
+                raise Exception("GoogleSheetsService não configurado")
+            
+            self.service = sheets_service._service
+            logger.info("✅ Serviço Google Sheets inicializado via GoogleSheetsService")
             
         except Exception as e:
             logger.error(f"❌ Erro ao inicializar Google Sheets: {e}")
