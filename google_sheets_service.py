@@ -375,7 +375,7 @@ class GoogleSheetsService:
             return pd.DataFrame()
 
         values = result.get("values", [])
-            if not values:
+        if not values:
             logger.info(
                 "ℹ️ Planilha %s (%s) não contém dados", sheet_id, target_range
             )
@@ -400,7 +400,7 @@ class GoogleSheetsService:
             sheet_id,
             resolved_sheet_name or target_range,
         )
-            return df
+        return df
     
     def get_campaign_data(self, campaign: Dict[str, Any]) -> Dict[str, Any]:
         """Aggregate Google Sheets data for a campaign configuration."""
