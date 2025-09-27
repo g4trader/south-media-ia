@@ -697,10 +697,14 @@ class DashboardLoader {
             const contract = data.contract;
             
             // Renderizar insights dinâmicos
+            // Calcular CPM atual baseado em impressões
+            const current_cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
+            const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
+            
             const insightsList = data.insights && data.insights.length > 0 ? data.insights : [
                 "Campanha tem espaço para acelerar o investimento.",
-                `CPM atual (R$ ${summary.cpm ? summary.cpm.toFixed(2) : '0.00'}) está ${summary.cpm && contract.cpv_contracted ? (summary.cpm < contract.cpv_contracted ? 'abaixo' : 'acima') : 'dentro'} do contratado (R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2) : '0.00'}).`,
-                "CTR baixo - revisar targeting e criativos para melhorar engajamento."
+                `Impressões entregues (${summary.total_impressions ? summary.total_impressions.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_impressions > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
+                `CTR ${ctr > 0.5 ? 'excelente' : ctr > 0.2 ? 'bom' : 'baixo'} (${ctr.toFixed(2)}%) - ${ctr > 0.5 ? 'audiência altamente engajada' : ctr > 0.2 ? 'audiência moderadamente engajada' : 'revisar targeting e criativos para melhorar engajamento'}.`
             ];
 
             insightsContainer.innerHTML = `
