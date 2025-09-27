@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - COPACOL - Remarketing youtube</title>
+<title>Dashboard - SENAI - PGR Native Test Local</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -123,11 +123,11 @@
       <div class="logo-icon">SM</div>
       <div>
         <div style="font-weight:800;font-size:1.1rem">South Media</div>
-        <div class="muted">Dashboard - COPACOL</div>
+        <div class="muted">Dashboard - SENAI</div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Remarketing youtube</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">SENAI - PGR Native Test Local</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
@@ -148,7 +148,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Remarketing youtube do cliente COPACOL</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha PGR Native Test Local do cliente SENAI</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -169,7 +169,7 @@
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">YouTube</div>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">Native Programática</div>
       </div>
     </div>
     
@@ -181,7 +181,7 @@
     <div class="metrics" id="metrics-channel"></div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Entrega diária — YouTube</h3>
+      <h3 style="margin-bottom:10px">Entrega diária — Native Programática</h3>
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `https://mvp-dashboard-builder-609095880025.us-central1.run.app`;
+        this.apiEndpoint = `http://localhost:5002`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
@@ -1022,7 +1022,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = 'copacol_remarketing_youtube';
+    let campaignKey = 'senai_pgr_native_test_local';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);

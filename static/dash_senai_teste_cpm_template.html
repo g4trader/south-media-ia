@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - COPACOL - Remarketing youtube</title>
+<title>Dashboard - SENAI - Teste CPM Template</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -123,11 +123,11 @@
       <div class="logo-icon">SM</div>
       <div>
         <div style="font-weight:800;font-size:1.1rem">South Media</div>
-        <div class="muted">Dashboard - COPACOL</div>
+        <div class="muted">Dashboard - SENAI</div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Remarketing youtube</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">SENAI - Teste CPM Template</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
@@ -148,7 +148,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Remarketing youtube do cliente COPACOL</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Teste CPM Template do cliente SENAI</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -169,7 +169,7 @@
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">YouTube</div>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">Native Programática</div>
       </div>
     </div>
     
@@ -181,7 +181,7 @@
     <div class="metrics" id="metrics-channel"></div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Entrega diária — YouTube</h3>
+      <h3 style="margin-bottom:10px">Entrega diária — Native Programática</h3>
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `https://mvp-dashboard-builder-609095880025.us-central1.run.app`;
+        this.apiEndpoint = `http://localhost:5002`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
@@ -643,7 +643,7 @@ class DashboardLoader {
             
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
-            const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_impressions / contract.complete_views_contracted * 100) : 0;
+            const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_video_completions / contract.complete_views_contracted * 100) : 0;
             const vtr = summary.total_video_starts > 0 ? (summary.total_video_completions / summary.total_video_starts * 100) : 0;
             const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
             const cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
@@ -697,14 +697,10 @@ class DashboardLoader {
             const contract = data.contract;
             
             // Renderizar insights dinâmicos
-            // Calcular CPM atual baseado em impressões
-            const current_cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
-            const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
-            
             const insightsList = data.insights && data.insights.length > 0 ? data.insights : [
                 "Campanha tem espaço para acelerar o investimento.",
-                `Impressões entregues (${summary.total_impressions ? summary.total_impressions.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_impressions > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
-                `CTR ${ctr > 0.5 ? 'excelente' : ctr > 0.2 ? 'bom' : 'baixo'} (${ctr.toFixed(2)}%) - ${ctr > 0.5 ? 'audiência altamente engajada' : ctr > 0.2 ? 'audiência moderadamente engajada' : 'revisar targeting e criativos para melhorar engajamento'}.`
+                `CPM atual (R$ ${summary.cpm ? summary.cpm.toFixed(2) : '0.00'}) está ${summary.cpm && contract.cpv_contracted ? (summary.cpm < contract.cpv_contracted ? 'abaixo' : 'acima') : 'dentro'} do contratado (R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2) : '0.00'}).`,
+                "CTR baixo - revisar targeting e criativos para melhorar engajamento."
             ];
 
             insightsContainer.innerHTML = `
@@ -912,11 +908,11 @@ class DashboardLoader {
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
                                         <span style="color: #9CA3AF;">Imp Entregue:</span>
-                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_impressions || 0)}</span>
+                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_video_completions || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
                                         <span style="color: #9CA3AF;">Pacing Imp:</span>
-                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_impressions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
+                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_video_completions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
                                         <span style="color: #9CA3AF;">CPM Contratado:</span>
@@ -1022,7 +1018,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = 'copacol_remarketing_youtube';
+    let campaignKey = 'senai_teste_cpm_template';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - COPACOL - Remarketing youtube</title>
+<title>Dashboard - COPACOL - Teste Local Credenciais</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -127,7 +127,7 @@
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Remarketing youtube</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Teste Local Credenciais</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
@@ -148,14 +148,14 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Remarketing youtube do cliente COPACOL</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Teste Local Credenciais do cliente COPACOL</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
             <tr>
               <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
-              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Imp Entregue</th>
-              <th>CPM Contratado (R$)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th>CPM (R$)</th>
             </tr>
           </thead>
           <tbody id="tbodyChannels"></tbody>
@@ -185,7 +185,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>CPM</th><th>Creative</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Creative</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `https://mvp-dashboard-builder-609095880025.us-central1.run.app`;
+        this.apiEndpoint = `http://localhost:5002`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
@@ -502,19 +502,19 @@ class DashboardLoader {
                     <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎯 Imp Contratadas</div>
+                    <div class="label">🎯 VC Contratadas</div>
                     <div class="value">${this.formatNumber(summary.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📺 Imp Entregue</div>
-                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+                    <div class="label">📺 VC Entregue</div>
+                    <div class="value">${this.formatNumber(summary.total_video_completions || 0)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">📈 Pacing</div>
                     <div class="value">${this.formatPercentage(summary.pacing || 0)}</div>
                 </div>
                     <div class="metric">
-                        <div class="label">💵 CPM Contratado</div>
+                        <div class="label">💵 CPV</div>
                         <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                     </div>
             `;
@@ -554,14 +554,15 @@ class DashboardLoader {
             new Chart(resultsCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Impressões', 'Cliques'],
+                    labels: ['Impressões', 'Cliques', 'VC'],
                     datasets: [{
                         label: 'Performance',
                         data: [
                             data.campaign_summary.total_impressions || 0,
-                            data.campaign_summary.total_clicks || 0
+                            data.campaign_summary.total_clicks || 0,
+                            data.campaign_summary.total_video_completions || 0
                         ],
-                        backgroundColor: ['#8B5CF6', '#EC4899']
+                        backgroundColor: ['#8B5CF6', '#EC4899', '#10B981']
                     }]
                 },
                 options: {
@@ -605,8 +606,10 @@ class DashboardLoader {
                     <td>${this.formatNumber(summary.total_impressions || 0)}</td>
                     <td>${this.formatNumber(summary.total_clicks || 0)}</td>
                     <td>${this.formatPercentage(summary.ctr || 0)}</td>
-                    <td>${this.formatNumber(summary.total_impressions || 0)}</td>
+                    <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
+                    <td>${this.formatPercentage(summary.vtr || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
+                    <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
                 </tr>
             `;
         }
@@ -616,6 +619,8 @@ class DashboardLoader {
         if (channelDailyBody && data.daily_data && data.daily_data.length > 0) {
             const contract = data.contract || {};
             channelDailyBody.innerHTML = data.daily_data.map(record => {
+                const vtr = record.video_completions && record.video_starts ? 
+                    (record.video_completions / record.video_starts * 100) : 0;
                 const cpm = record.impressions ? 
                     (record.spend / record.impressions * 1000) : 0;
                 
@@ -626,6 +631,9 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.impressions)}</td>
                         <td>${this.formatNumber(record.clicks)}</td>
                         <td>${this.formatPercentage(record.ctr)}</td>
+                        <td>${this.formatNumber(record.video_completions)}</td>
+                        <td>${this.formatPercentage(vtr)}</td>
+                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>R$ ${this.formatCurrency(cpm)}</td>
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
@@ -643,7 +651,7 @@ class DashboardLoader {
             
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
-            const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_impressions / contract.complete_views_contracted * 100) : 0;
+            const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_video_completions / contract.complete_views_contracted * 100) : 0;
             const vtr = summary.total_video_starts > 0 ? (summary.total_video_completions / summary.total_video_starts * 100) : 0;
             const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
             const cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
@@ -662,16 +670,20 @@ class DashboardLoader {
                     <div class="value">${this.formatPercentage(pacing)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎯 Imp Contratadas</div>
+                    <div class="label">🎯 VC Contratadas</div>
                     <div class="value">${this.formatNumber(contract.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📺 Imp Entregue</div>
-                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+                    <div class="label">📺 VC Entregue</div>
+                    <div class="value">${this.formatNumber(summary.total_video_completions || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📊 Pacing Imp</div>
+                    <div class="label">📊 Pacing VC</div>
                     <div class="value">${this.formatPercentage(vc_pacing)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">👁️ Total Impressões</div>
+                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">🖱️ Total Cliques</div>
@@ -682,8 +694,16 @@ class DashboardLoader {
                     <div class="value">${this.formatPercentage(ctr)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">💵 CPM Contratado</div>
+                    <div class="label">🎬 VTR Médio</div>
+                    <div class="value">${this.formatPercentage(vtr)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💵 CPV Contratado</div>
                     <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">📊 CPM Médio</div>
+                    <div class="value">${this.formatCurrency(cpm)}</div>
                 </div>
             `;
         }
@@ -697,14 +717,11 @@ class DashboardLoader {
             const contract = data.contract;
             
             // Renderizar insights dinâmicos
-            // Calcular CPM atual baseado em impressões
-            const current_cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
-            const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
-            
             const insightsList = data.insights && data.insights.length > 0 ? data.insights : [
-                "Campanha tem espaço para acelerar o investimento.",
-                `Impressões entregues (${summary.total_impressions ? summary.total_impressions.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_impressions > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
-                `CTR ${ctr > 0.5 ? 'excelente' : ctr > 0.2 ? 'bom' : 'baixo'} (${ctr.toFixed(2)}%) - ${ctr > 0.5 ? 'audiência altamente engajada' : ctr > 0.2 ? 'audiência moderadamente engajada' : 'revisar targeting e criativos para melhorar engajamento'}.`
+                "A campanha está performando conforme o esperado.",
+                `O pacing da campanha está em ${summary.pacing ? summary.pacing.toFixed(1) : '0.0'}%.`,
+                `CPV contratado de R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2) : '0.00'} está sendo cumprido conforme planejado.`,
+                "Recomenda-se monitorar a performance diariamente para otimizações."
             ];
 
             insightsContainer.innerHTML = `
@@ -737,7 +754,13 @@ class DashboardLoader {
                                 <div style="font-size: 32px; font-weight: 700; color: #8B5CF6; margin-bottom: 8px;">
                                     ${contract.cpv_contracted ? 'R$ ' + contract.cpv_contracted.toFixed(2).replace('.', ',') : 'R$ 0,00'}
                                 </div>
-                                <div style="color: #9CA3AF; font-size: 14px;">CPM Contratado</div>
+                                <div style="color: #9CA3AF; font-size: 14px;">CPV Contratado</div>
+                            </div>
+                            <div style="padding: 20px; background: linear-gradient(135deg, rgba(245,158,11,.1), rgba(217,119,6,.1)); border-radius: 12px; border: 1px solid rgba(245,158,11,.3); text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #F59E0B; margin-bottom: 8px;">
+                                    ${summary.vtr ? summary.vtr.toFixed(1) : '0.0'}%
+                                </div>
+                                <div style="color: #9CA3AF; font-size: 14px;">VTR (View-Through Rate)</div>
                             </div>
                             <div style="padding: 20px; background: linear-gradient(135deg, rgba(59,130,246,.1), rgba(37,99,235,.1)); border-radius: 12px; border: 1px solid rgba(59,130,246,.3); text-align: center;">
                                 <div style="font-size: 32px; font-weight: 700; color: #3B82F6; margin-bottom: 8px;">
@@ -867,7 +890,7 @@ class DashboardLoader {
                             border-radius: 12px;
                             border: 1px solid rgba(139,92,246,.2);
                         ">
-                            Campanha institucional da ${contract.client || 'Cliente'} no ${contract.canal || 'Video Programática'} com foco em Alcance para fortalecer a marca e comunicar valores de qualidade, sustentabilidade e cooperativismo.
+                            Campanha institucional da ${contract.client || 'Cliente'} no ${contract.canal || 'Video Programática'} com foco em Complete View para fortalecer a marca e comunicar valores de qualidade, sustentabilidade e cooperativismo.
                         </p>
                     </div>
 
@@ -907,19 +930,19 @@ class DashboardLoader {
                                 </h4>
                                 <div style="display: grid; gap: 12px;">
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Meta Imp:</span>
+                                        <span style="color: #9CA3AF;">Meta VC:</span>
                                         <span style="color: #fff; font-weight: 600;">${this.formatNumber(contract.complete_views_contracted || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Imp Entregue:</span>
-                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_impressions || 0)}</span>
+                                        <span style="color: #9CA3AF;">VC Entregue:</span>
+                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_video_completions || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Pacing Imp:</span>
-                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_impressions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
+                                        <span style="color: #9CA3AF;">Pacing VC:</span>
+                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_video_completions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">CPM Contratado:</span>
+                                        <span style="color: #9CA3AF;">CPV Contratado:</span>
                                         <span style="color: #F59E0B; font-weight: 600;">R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</span>
                                     </div>
                                 </div>
@@ -1022,7 +1045,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = 'copacol_remarketing_youtube';
+    let campaignKey = 'copacol_teste_local_credenciais';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);
