@@ -115,17 +115,23 @@ class CloudRunDatabaseManager:
         except Exception as e:
             logger.error(f"❌ Erro ao salvar no GCS: {e}")
 
-    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None) -> bool:
+    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None) -> bool:
         """Salvar ou atualizar uma campanha no banco de dados"""
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
+            # Adicionar coluna kpi se não existir
+            try:
+                cursor.execute('ALTER TABLE campaigns ADD COLUMN kpi TEXT')
+            except:
+                pass  # Coluna já existe
+            
             cursor.execute('''
                 INSERT OR REPLACE INTO campaigns 
-                (campaign_key, client, campaign_name, sheet_id, channel, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (campaign_key, client, campaign_name, sheet_id, channel))
+                (campaign_key, client, campaign_name, sheet_id, channel, kpi, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (campaign_key, client, campaign_name, sheet_id, channel, kpi))
             
             conn.commit()
             conn.close()
@@ -147,7 +153,7 @@ class CloudRunDatabaseManager:
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT campaign_key, client, campaign_name, sheet_id, channel, created_at, updated_at
+                SELECT campaign_key, client, campaign_name, sheet_id, channel, kpi, created_at, updated_at
                 FROM campaigns WHERE campaign_key = ?
             ''', (campaign_key,))
             
@@ -161,8 +167,9 @@ class CloudRunDatabaseManager:
                     'campaign_name': result[2],
                     'sheet_id': result[3],
                     'channel': result[4],
-                    'created_at': result[5],
-                    'updated_at': result[6]
+                    'kpi': result[5],
+                    'created_at': result[6],
+                    'updated_at': result[7]
                 }
             return None
             
@@ -775,7 +782,7 @@ def generate_dashboard_endpoint():
         campaign_key = generate_campaign_key(client, campaign_name)
         
         # Salvar campanha no banco
-        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel):
+        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi):
             return jsonify({"success": False, "message": "Erro ao salvar configuração da campanha"}), 500
         
         # Gerar dashboard
