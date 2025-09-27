@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY cloud_run_mvp.py .
 COPY real_google_sheets_extractor.py .
 COPY google_sheets_service.py .
-COPY credentials.json .
+COPY config.py .
 COPY static/ ./static/
 
 # Create non-root user
