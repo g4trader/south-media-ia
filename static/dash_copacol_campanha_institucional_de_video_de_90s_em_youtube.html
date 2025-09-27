@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - COPACOL - Campanha Institucional de Video de 90s em Youtube</title>
+<title>Dashboard - COPACOL - Campanha Institucional de Video de 90s em Youtube </title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -127,7 +127,7 @@
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Campanha Institucional de Video de 90s em Youtube</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Campanha Institucional de Video de 90s em Youtube </div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
@@ -148,7 +148,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Campanha Institucional de Video de 90s em Youtube do cliente COPACOL</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Campanha Institucional de Video de 90s em Youtube  do cliente COPACOL</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -185,7 +185,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Creative</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -635,6 +635,7 @@ class DashboardLoader {
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>R$ ${this.formatCurrency(cpm)}</td>
+                        <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');

@@ -185,7 +185,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Creative</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -635,6 +635,7 @@ class DashboardLoader {
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>R$ ${this.formatCurrency(cpm)}</td>
+                        <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
