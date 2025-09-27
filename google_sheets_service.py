@@ -189,17 +189,18 @@ class GoogleSheetsService:
             import traceback
             logger.error(f"❌ Traceback: {traceback.format_exc()}")
 
-        # Try Application Default Credentials as fallback
-        try:
-            import google.auth
-            credentials, project = google.auth.default(scopes=self.SCOPES)
-            if credentials:
-                self._credentials_source = "application_default"
-                logger.info("✅ Usando Application Default Credentials")
-                return credentials
-        except Exception as e:
-            logger.warning(f"⚠️ Application Default Credentials não disponíveis: {e}")
+        # Try Application Default Credentials as fallback (disabled for debugging)
+        # try:
+        #     import google.auth
+        #     credentials, project = google.auth.default(scopes=self.SCOPES)
+        #     if credentials:
+        #         self._credentials_source = "application_default"
+        #         logger.info("✅ Usando Application Default Credentials")
+        #         return credentials
+        # except Exception as e:
+        #     logger.warning(f"⚠️ Application Default Credentials não disponíveis: {e}")
 
+        logger.error("❌ Todas as tentativas de autenticação falharam")
         return None
 
     # ------------------------------------------------------------------
