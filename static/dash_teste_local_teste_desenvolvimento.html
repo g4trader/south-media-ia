@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard - {{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</title>
+<title>Dashboard - Teste Local - Teste Desenvolvimento</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -123,12 +123,12 @@
       <div class="logo-icon">SM</div>
       <div>
         <div style="font-weight:800;font-size:1.1rem">South Media</div>
-        <div class="muted">Dashboard - {{CLIENT_NAME}}</div>
+        <div class="muted">Dashboard - Teste Local</div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">{{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</div>
-      <div class="muted" style="text-align:right">Status: <span class="badge">{{CAMPAIGN_STATUS}}</span></div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Teste Local - Teste Desenvolvimento</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
     </div>
   </div>
 
@@ -148,7 +148,7 @@
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">{{CAMPAIGN_DESCRIPTION}}</div>
+      <div class="muted" style="margin-bottom:10px">Dashboard de performance para a campanha Teste Desenvolvimento do cliente Teste Local</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
@@ -169,7 +169,7 @@
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
         <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">{{PRIMARY_CHANNEL}}</div>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff">Video Programática</div>
       </div>
     </div>
     
@@ -181,11 +181,11 @@
     <div class="metrics" id="metrics-channel"></div>
 
     <div class="card" style="margin-top:16px">
-      <h3 style="margin-bottom:10px">Entrega diária — {{PRIMARY_CHANNEL}}</h3>
+      <h3 style="margin-bottom:10px">Entrega diária — Video Programática</h3>
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Creative</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -229,7 +229,7 @@ class DashboardLoader {
     constructor(campaignKey) {
         this.campaignKey = campaignKey;
         // Usar Cloud Run diretamente para máxima confiabilidade
-        this.apiEndpoint = `{{API_ENDPOINT}}`;
+        this.apiEndpoint = `http://localhost:5002`;
         this.loadingModal = document.getElementById('loadingModal');
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
@@ -635,7 +635,6 @@ class DashboardLoader {
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
                         <td>R$ ${this.formatCurrency(cpm)}</td>
-                        <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
@@ -1045,7 +1044,7 @@ class DashboardLoader {
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
-    let campaignKey = '{{CAMPAIGN_KEY_PLACEHOLDER}}';
+    let campaignKey = 'teste_local_teste_desenvolvimento';
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);

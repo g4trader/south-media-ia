@@ -352,49 +352,40 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="sheetId">ID da Planilha Google Sheets *</label>
-                            <input type="text" id="sheetId" name="sheetId" placeholder="1IUUSXaN0Drrdt-7B0IUiMRQK2gT-JtzhCFZvV7e5-V8" required>
-                            <div class="help-text">ID da planilha (encontrado na URL)</div>
+                            <label for="sheetUrl">URL da Planilha Google Sheets *</label>
+                            <input type="url" id="sheetUrl" name="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/1ABC.../edit" required>
+                            <div class="help-text">Cole a URL completa da planilha (o ID será extraído automaticamente)</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sheetId">ID da Planilha (Auto-extraído)</label>
+                            <input type="text" id="sheetId" name="sheetId" readonly style="background: rgba(255,255,255,.02); color: var(--muted);">
+                            <div class="help-text">ID extraído automaticamente da URL</div>
                         </div>
                         
                         <div class="form-group">
                             <label for="channel">Canal *</label>
                             <select id="channel" name="channel" required>
-                                <option value="Prográmatica">Prográmatica</option>
+                                <option value="Video Programática">Video Programática</option>
                                 <option value="YouTube">YouTube</option>
-                                <option value="Facebook">Facebook</option>
-                                <option value="Instagram">Instagram</option>
-                                <option value="TikTok">TikTok</option>
+                                <option value="Netflix">Netflix</option>
+                                <option value="Disney">Disney</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Pinterest">Pinterest</option>
+                                <option value="Spotify">Spotify</option>
                             </select>
                             <div class="help-text">Canal principal da campanha</div>
                         </div>
-                    </div>
-
-                    <h4 style="margin: 32px 0 16px 0; color: #fff;">Configuração das Abas da Planilha</h4>
-                    
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="dailyDataGid">GID - Dados Diários *</label>
-                            <input type="text" id="dailyDataGid" name="dailyDataGid" placeholder="668487440" required>
-                            <div class="help-text">Aba com dados diários (Report)</div>
-                        </div>
                         
                         <div class="form-group">
-                            <label for="contractGid">GID - Contrato *</label>
-                            <input type="text" id="contractGid" name="contractGid" placeholder="719245615" required>
-                            <div class="help-text">Aba com informações de contrato</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="strategiesGid">GID - Estratégias *</label>
-                            <input type="text" id="strategiesGid" name="strategiesGid" placeholder="511331032" required>
-                            <div class="help-text">Aba com estratégias e segmentações</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="publishersGid">GID - Publishers *</label>
-                            <input type="text" id="publishersGid" name="publishersGid" placeholder="531141406" required>
-                            <div class="help-text">Aba com lista de publishers</div>
+                            <label for="kpi">KPI Contratado *</label>
+                            <select id="kpi" name="kpi" required>
+                                <option value="CPV">CPV - Custo por View (Complete Views)</option>
+                                <option value="CPM">CPM - Custo por Mil Impressões</option>
+                                <option value="CPC">CPC - Custo por Clique</option>
+                                <option value="CPA">CPA - Custo por Aquisição</option>
+                            </select>
+                            <div class="help-text">Métrica principal contratada (define o layout do dashboard)</div>
                         </div>
                     </div>
 
@@ -498,6 +489,42 @@
 
     <script src="config.js"></script>
     <script>
+        // Função para extrair ID da planilha da URL
+        function extractSheetId(url) {
+            if (!url) return '';
+            
+            // Padrões de URL do Google Sheets
+            const patterns = [
+                /\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/,
+                /\/d\/([a-zA-Z0-9-_]+)/,
+                /id=([a-zA-Z0-9-_]+)/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            
+            return '';
+        }
+        
+        // Event listener para extrair ID automaticamente
+        document.getElementById('sheetUrl').addEventListener('input', function() {
+            const url = this.value;
+            const sheetId = extractSheetId(url);
+            const sheetIdField = document.getElementById('sheetId');
+            
+            if (sheetId) {
+                sheetIdField.value = sheetId;
+                sheetIdField.style.color = '#22c55e'; // Verde para sucesso
+            } else {
+                sheetIdField.value = '';
+                sheetIdField.style.color = 'var(--muted)';
+            }
+        });
+
         // Tab functionality
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -579,15 +606,10 @@
                 const payload = {
                     campaign_key: campaignKey,
                     client: campaignData.clientName,
-                    campaign: campaignData.campaignName,
+                    campaign_name: campaignData.campaignName,
                     sheet_id: campaignData.sheetId,
                     channel: campaignData.channel,
-                    tabs: {
-                        daily_data: campaignData.dailyDataGid,
-                        contract: campaignData.contractGid,
-                        strategies: campaignData.strategiesGid,
-                        publishers: campaignData.publishersGid
-                    },
+                    kpi: campaignData.kpi,
                     description: campaignData.description || ''
                 };
                 

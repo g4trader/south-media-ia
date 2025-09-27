@@ -16,12 +16,12 @@
         
         html {
             overflow-x: hidden;
-            width: 100%;
+      width: 100%;
         }
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
+      background: linear-gradient(135deg, #0F0F23 0%, #16213E 50%, #1A1A2E 100%);
             color: white;
             min-height: 100vh;
             overflow-x: hidden;
@@ -56,9 +56,9 @@
         }
         
         .header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
             text-align: center;
             margin-bottom: 1.5rem;
             padding: 1.5rem;
@@ -71,7 +71,7 @@
                 flex-direction: row;
                 justify-content: space-between;
                 text-align: left;
-                margin-bottom: 2rem;
+      margin-bottom: 2rem;
             }
         }
         
@@ -113,7 +113,7 @@
         
         .logo-text p {
             font-size: 0.875rem;
-            color: #9CA3AF;
+      color: #9CA3AF;
         }
         
         @media (min-width: 768px) {
@@ -123,7 +123,7 @@
         }
         
         .campaign-info {
-            text-align: center;
+      text-align: center;
             width: 100%;
         }
         
@@ -154,7 +154,7 @@
         
         .status-badge {
             background: #10B981;
-            color: white;
+      color: white;
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -180,11 +180,11 @@
         
         .tab-button {
             padding: 0.75rem 0.5rem;
-            border: none;
+      border: none;
             border-radius: 10px;
             background: rgba(26, 26, 46, 0.6);
             color: #9CA3AF;
-            cursor: pointer;
+      cursor: pointer;
             transition: all 0.3s ease;
             font-size: 0.75rem;
             text-align: center;
@@ -212,7 +212,7 @@
         .tab-button.active {
             background: linear-gradient(135deg, #8B5CF6, #EC4899);
             color: white;
-            transform: translateY(-2px);
+      transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(139, 92, 246, 0.3);
         }
         
@@ -1102,10 +1102,10 @@
                         borderWidth: 0
                     }]
                 },
-                options: {
+                options: { 
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
+                    plugins: { 
                         legend: {
                             position: 'bottom',
                             labels: {
@@ -1124,7 +1124,7 @@
                                 }
                             }
                         }
-                    }
+                    } 
                 }
             });
         }
@@ -1232,9 +1232,9 @@
             if (dailyCtx) {
                 new Chart(dailyCtx, {
                     type: 'line',
-                    data: {
+                data: {
                         labels: labels,
-                        datasets: [{
+                    datasets: [{
                             label: 'Programático',
                             data: programaticoData,
                             borderColor: '#8B5CF6',
@@ -1246,10 +1246,10 @@
                             borderColor: '#FB923C',
                             backgroundColor: 'rgba(251, 146, 60, 0.1)',
                             tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
+                    }]
+                },
+                options: { 
+                    responsive: true, 
                         maintainAspectRatio: false,
                         layout: {
                             padding: {
@@ -1259,7 +1259,7 @@
                                 bottom: 10
                             }
                         },
-                        plugins: {
+                    plugins: { 
                             legend: {
                                 labels: {
                                     color: 'white',
@@ -1267,10 +1267,10 @@
                                         size: 10
                                     }
                                 }
-                            }
-                        },
-                        scales: {
-                            y: {
+                        }
+                    },
+                    scales: {
+                        y: {
                                 ticks: {
                                     color: 'white',
                                     font: {
@@ -1292,29 +1292,29 @@
                                     color: 'rgba(255, 255, 255, 0.1)'
                                 }
                             }
-                        }
                     }
-                });
-            }
+                }
+            });
+        }
 
             // Investment daily chart
             const investmentCtx = document.getElementById('investmentDailyChart');
             if (investmentCtx) {
                 new Chart(investmentCtx, {
                     type: 'bar',
-                    data: {
+                data: {
                         labels: labels,
-                        datasets: [{
+                    datasets: [{
                             label: 'Programático',
                             data: programaticoInvestment,
-                            backgroundColor: '#8B5CF6'
+                        backgroundColor: '#8B5CF6'
                         }, {
                             label: 'Netflix',
                             data: netflixInvestment,
                             backgroundColor: '#FB923C'
-                        }]
-                    },
-                    options: {
+                    }]
+                },
+                options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         layout: {
@@ -1335,7 +1335,7 @@
                                 }
                             }
                         },
-                        scales: {
+                    scales: {
                             y: {
                                 ticks: {
                                     color: 'white',
@@ -1360,9 +1360,9 @@
                             }
                         }
                     }
-                });
-            }
+            });
         }
+    }
 
         // Initialize overview chart on page load
         document.addEventListener('DOMContentLoaded', function() {
