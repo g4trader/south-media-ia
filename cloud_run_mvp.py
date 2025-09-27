@@ -623,12 +623,18 @@ def dash_generator_pro():
             <label for="channel">Canal:</label>
             <select id="channel" name="channel">
                 <option value="Video Programática">Video Programática</option>
+                <option value="Display Programática">Display Programática</option>
+                <option value="Native Programática">Native Programática</option>
                 <option value="YouTube">YouTube</option>
+                <option value="TikTok">TikTok</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Instagram">Instagram</option>
                 <option value="Netflix">Netflix</option>
                 <option value="Disney">Disney</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="Pinterest">Pinterest</option>
                 <option value="Spotify">Spotify</option>
+                <option value="Waze">Waze</option>
             </select>
         </div>
         
