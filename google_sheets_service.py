@@ -152,15 +152,17 @@ class GoogleSheetsService:
             )
 
         # Finally, look for local development files "credentials.json" or "service-account-key.json".
-        for filename in ["credentials.json", "service-account-key.json"]:
-            default_path = os.path.join(os.getcwd(), filename)
-            if os.path.exists(default_path):
-                self._credentials_source = f"file:{default_path}"
-                logger.info(f"✅ Usando credenciais do arquivo: {filename}")
-                return service_account.Credentials.from_service_account_file(
-                    default_path,
-                    scopes=self.SCOPES,
-                )
+        # (Disabled in Cloud Run to force GCS usage)
+        if not os.path.exists('/app'):  # Only in local development
+            for filename in ["credentials.json", "service-account-key.json"]:
+                default_path = os.path.join(os.getcwd(), filename)
+                if os.path.exists(default_path):
+                    self._credentials_source = f"file:{default_path}"
+                    logger.info(f"✅ Usando credenciais do arquivo: {filename}")
+                    return service_account.Credentials.from_service_account_file(
+                        default_path,
+                        scopes=self.SCOPES,
+                    )
 
         # Try to download credentials from Google Cloud Storage (for Cloud Run)
         try:
