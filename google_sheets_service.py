@@ -301,7 +301,7 @@ class GoogleSheetsService:
 
             sheet_name = self.get_sheet_name_by_gid(sheet_id, gid)
             if sheet_name:
-            return True
+                return True
 
             logger.warning(
                 "⚠️ Aba com GID %s não encontrada na planilha %s", gid, sheet_id
