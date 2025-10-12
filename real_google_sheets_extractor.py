@@ -197,10 +197,27 @@ class RealGoogleSheetsExtractor:
                         df[col] = df[col].str.replace(',', '.', regex=False)  # Vírgula vira ponto decimal
                     df[col] = pd.to_numeric(df[col], errors='coerce')
             
-            # Converter data
+            # Converter data com correção de formato
             if 'date' in df.columns:
-                df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.strftime('%Y-%m-%d')
-                df = df.dropna(subset=['date'])
+                logger.info("🔧 Aplicando correção de datas...")
+                
+                # Importar normalizador de datas
+                try:
+                    from date_normalizer import DateNormalizer
+                    date_normalizer = DateNormalizer()
+                    
+                    # Aplicar normalização inteligente de datas
+                    df = date_normalizer.normalize_dataframe_dates(df, 'date')
+                    logger.info(f"✅ Datas corrigidas: {len(df)} registros processados")
+                    
+                except ImportError:
+                    logger.warning("⚠️ DateNormalizer não disponível, usando conversão padrão")
+                    df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.strftime('%Y-%m-%d')
+                    df = df.dropna(subset=['date'])
+                except Exception as e:
+                    logger.warning(f"⚠️ Erro na normalização de datas: {e}, usando conversão padrão")
+                    df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.strftime('%Y-%m-%d')
+                    df = df.dropna(subset=['date'])
             
             # Converter para lista de dicionários e calcular métricas
             daily_data = []

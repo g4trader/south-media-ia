@@ -19,6 +19,9 @@ COPY cloud_run_mvp.py .
 COPY real_google_sheets_extractor.py .
 COPY google_sheets_service.py .
 COPY config.py .
+COPY gunicorn.conf.py .
+COPY date_normalizer.py .
+COPY bigquery_firestore_manager.py .
 # Credenciais agora são baixadas do Google Cloud Storage
 COPY static/ ./static/
 
@@ -34,5 +37,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Run the application
-CMD ["python", "cloud_run_mvp.py"]
+# Run the application with Gunicorn for production
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "cloud_run_mvp:app"]

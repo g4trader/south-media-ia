@@ -45,3 +45,109 @@ coverage/
 tmp/
 temp/.DS_Store
 static/.DS_Store
+
+# Backups
+production_backup_*/
+backup_*/
+*.tar.gz
+20250927_*/
+
+# Test files
+test_*.py
+test_*.json
+test_*.html
+test_*.png
+selenium_*.py
+selenium_*.html
+selenium_*.json
+selenium_*.png
+*_test_*.py
+*_test_*.json
+*_test_*.html
+*_test_*.png
+
+# Debug files
+debug_*.py
+debug_*.json
+debug_*.html
+debug_*.png
+
+# Temporary scripts
+clean_*.py
+fix_*.py
+check_*.py
+verify_*.py
+compare_*.py
+analyze_*.py
+migrate_*.py
+recover_*.py
+restore_*.py
+apply_*.py
+implement_*.py
+integrate_*.py
+force_*.py
+process_*.py
+regenerate_*.py
+setup_*.py
+validate_*.py
+run_*.py
+monitor_*.py
+
+# Generated files
+*.db
+*.db-journal
+campaigns_updated_*.db
+
+# Reports
+*_report*.json
+*_results*.json
+*_summary*.json
+bug_*.json
+campaign_*.json
+dashboard_*.json
+date_*.json
+semana_*.json
+
+# Patches and fixes
+*_patch.txt
+*_fix*.txt
+
+# Scripts temporários
+*.sh.bak
+executar_*.sh
+cloud_sql_*.sh
+
+# Documentação antiga (v1.x)
+COPACOL_DASHBOARD_README.md
+DASHBOARD_APROVADO.md
+DASHBOARD_BUILDER_*.md
+DASHBOARD_MULTICANAL_README.md
+SSI_LINKEDIN_DASHBOARD_README.md
+SYNC_SEMANA_PESCADO_README.md
+README_ESTRUTURA_GENERICA.md
+README_PROTOTIPO_SEBRAE.md
+TEMPLATE_GENERIC_SUMMARY.md
+TEMPLATE_VARIABLES_UPDATE.md
+template_implementation_guide.md
+RELATORIO_QUALIDADE_*.md
+RELATORIO_TESTES_USABILIDADE.md
+SELENIUM_TEST_*.md
+TESTE_DASHBOARD_RESULTS.md
+INTEGRATION_COMPLETE.md
+INTERFACE_AMIGAVEL_README.md
+SHEETS_INTEGRATION_UPDATE.md
+PLANILHAS_DATA_SUMMARY.md
+README_PRODUCAO.md
+README_PRODUCTION.md
+TECHNICAL_SPECIFICATIONS.md
+MAPEAMENTO_VARIAVEIS_DIAGRAMA.md
+SISTEMA_COMPLETO_ENTREGUE.md
+firebase_setup.md
+test_git_automation.md
+
+# Configurações temporárias
+=3.8.0
+=4.0.0
+requirements_test.txt
+production_service_config.yaml
+gunicorn.conf.py.bak

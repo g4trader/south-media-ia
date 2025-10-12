@@ -10,8 +10,10 @@ google-auth-oauthlib==1.1.0
 google-auth-httplib2==0.1.1
 google-api-python-client==2.108.0
 
-# Google Cloud Storage (para persistência do banco)
+# Google Cloud Services (para persistência definitiva)
 google-cloud-storage==2.10.0
+google-cloud-bigquery==3.11.4
+google-cloud-firestore==2.11.1
 
 # Data Processing
 pandas==2.1.3
