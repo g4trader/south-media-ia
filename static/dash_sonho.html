@@ -219,6 +219,175 @@
   thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
   tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+  /* Componente de Barra de Filtro - Período */
+  .filter-bar {
+    background: rgba(26,26,46,.9);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-period {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  .filter-label .icon {
+    width: 18px;
+    height: 18px;
+    background: var(--grad);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  
+  .filter-dates {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .date-input {
+    padding: 8px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+  
+  .date-input:focus {
+    outline: none;
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+  }
+  
+  .date-input::placeholder {
+    color: var(--muted);
+  }
+  
+  .date-icon {
+    position: absolute;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  
+  .separator {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .quick-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .quick-filter-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .quick-filter-btn:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(148,163,184,.3);
+  }
+  
+  .quick-filter-btn.active {
+    background: var(--grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(139,92,246,.35);
+  }
+  
+  .period-display {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 8px;
+    text-align: center;
+  }
+  
+  /* Responsividade para Filter Bar */
+  @media (max-width: 768px) {
+    .filter-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .filter-period {
+      justify-content: center;
+    }
+    
+    .filter-dates {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .quick-filters {
+      justify-content: center;
+    }
+    
+    .date-input {
+      min-width: 100px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .filter-dates {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .separator {
+      display: none;
+    }
+  }
+  
+  /* Modal de Loading */
 
         @keyframes heatmap-pulse {
             0%, 100% { opacity: 0.3; }
@@ -269,6 +438,50 @@
     <div>
       <div style="font-weight:700;font-size:1rem;text-align:right">Campanha Multiplataforma</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+  <!-- Barra de Filtro -->
+  <div class="filter-bar">
+    <div class="filter-period">
+      <div class="filter-label">
+        <div class="icon">📅</div>
+        <span>Período:</span>
+      </div>
+      
+      <div class="filter-dates">
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-start-date" 
+                 class="date-input" 
+                 placeholder="Data inicial">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+        
+        <span class="separator">até</span>
+        
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-end-date" 
+                 class="date-input" 
+                 placeholder="Data final">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    
+    <div class="quick-filters">
+      <button class="quick-filter-btn active" data-filter="todos">Todos</button>
+      <button class="quick-filter-btn" data-filter="30-dias">30 dias</button>
+      <button class="quick-filter-btn" data-filter="7-dias">7 dias</button>
+      <button class="quick-filter-btn" data-filter="hoje">Hoje</button>
+    </div>
+    
+    <div class="period-display" id="period-display">
+      Período: Carregando...
     </div>
   </div>
 
@@ -767,6 +980,12 @@ const FOOTFALL_POINTS = [
   }
 ];
 
+// ==== INICIALIZAÇÃO DE FILTROS ====
+// Armazenar dados originais logo após definição de DAILY
+const ORIGINAL_DAILY = [...DAILY];
+let filteredDaily = [...DAILY];
+let currentFilterType = 'todos';
+
 // Helpers
 const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
   new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
@@ -845,12 +1064,22 @@ const channelNameSpan = document.getElementById('channelNameSpan');
 function renderChannelDailyTable(name){
   const tbody = document.getElementById('channelDailyBody');
   tbody.innerHTML = "";
-  const rows = DAILY.filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
+  
+  // Usar filteredDaily se disponível, senão DAILY
+  const dataSource = (typeof filteredDaily !== 'undefined' && filteredDaily.length >= 0) ? filteredDaily : DAILY;
+  
+  const rows = dataSource.filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
                     .sort((a,b)=>{ // date desc
                       const pa = a.date.split('/').reverse().join('-');
                       const pb = b.date.split('/').reverse().join('-');
                       return pa<pb ? 1 : pa>pb ? -1 : 0;
                     });
+  
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 2rem;">Nenhum dado disponível para o período selecionado</td></tr>';
+    return;
+  }
+  
   rows.forEach(r=>{
     tbody.insertAdjacentHTML('beforeend', `
       <tr>
@@ -928,7 +1157,13 @@ function renderChannel(name){
   if(ctvWrap) ctvWrap.classList.toggle('hidden', !showCTV);
 }
 
-sel.addEventListener('change', e=>renderChannel(e.target.value));
+sel.addEventListener('change', e=>{
+  renderChannel(e.target.value);
+  // Re-aplicar filtro ativo ao trocar de canal
+  if (typeof currentFilterType !== 'undefined' && currentFilterType !== 'todos') {
+    applyDateFilter(currentFilterType);
+  }
+});
 renderChannel(PER[0] && PER[0]['Canal'] ? PER[0]['Canal'] : '');
 
 // ==== INSIGHTS LOGIC ====
@@ -1453,6 +1688,316 @@ function initializeFootfallTopStores() {
 
   document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
 }
+
+// ==== FILTROS DE DATA ====
+// Função para converter data DD/MM/YYYY para Date object
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  return new Date(parts[2], parts[1] - 1, parts[0]);
+}
+
+// Função para aplicar filtro de data
+function applyDateFilter(filterType) {
+  currentFilterType = filterType;
+  
+  const now = new Date();
+  let startDate = null;
+  let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  
+  // Determinar período baseado no filtro
+  switch(filterType) {
+    case 'hoje':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      break;
+    case '7-dias':
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 7);
+      break;
+    case '30-dias':
+      startDate = new Date(now);
+      startDate.setDate(startDate.getDate() - 30);
+      break;
+    case 'todos':
+    default:
+      startDate = null;
+      endDate = null;
+      break;
+  }
+  
+  // Filtrar DAILY
+  if (startDate === null && endDate === null) {
+    filteredDaily = [...ORIGINAL_DAILY];
+  } else {
+    filteredDaily = ORIGINAL_DAILY.filter(row => {
+      const rowDate = parseDate(row.date);
+      if (!rowDate) return false;
+      
+      if (startDate && rowDate < startDate) return false;
+      if (endDate && rowDate > endDate) return false;
+      
+      return true;
+    });
+  }
+  
+  console.log(`Filtro aplicado: ${filterType}, ${filteredDaily.length} registros de ${ORIGINAL_DAILY.length}`);
+  
+  // Atualizar display do período
+  updatePeriodDisplay(startDate, endDate, filterType);
+  
+  // Recalcular métricas e re-renderizar
+  recalculateAndRender();
+}
+
+// Função para atualizar display do período
+function updatePeriodDisplay(startDate, endDate, filterType) {
+  const periodDisplay = document.getElementById('period-display');
+  if (!periodDisplay) return;
+  
+  if (filterType === 'todos') {
+    periodDisplay.textContent = 'Período: Todos os dados';
+  } else if (filterType === 'hoje') {
+    periodDisplay.textContent = `Período: Hoje (${endDate.toLocaleDateString('pt-BR')})`;
+  } else {
+    periodDisplay.textContent = `Período: ${startDate.toLocaleDateString('pt-BR')} até ${endDate.toLocaleDateString('pt-BR')}`;
+  }
+}
+
+// Função para recalcular métricas baseado nos dados filtrados
+function recalculateAndRender() {
+  // Atualizar tabela diária da aba "Por Canal" se estiver visível
+  const channelSelect = document.getElementById('channelSelect');
+  if (channelSelect && channelSelect.value) {
+    renderChannelDailyTableFiltered(channelSelect.value);
+    // Recalcular métricas do canal selecionado
+    recalculateChannelMetrics(channelSelect.value);
+  }
+  
+  // Recalcular métricas gerais (Visão Geral)
+  recalculateOverviewMetrics();
+}
+
+// Função para recalcular métricas gerais (aba Visão Geral)
+function recalculateOverviewMetrics() {
+  const metricsElement = document.getElementById('metrics-overview-top');
+  if (!metricsElement) return;
+  
+  // Usar filteredDaily se disponível
+  const dataSource = (typeof filteredDaily !== 'undefined' && filteredDaily.length >= 0) ? filteredDaily : DAILY;
+  
+  // Calcular Budget Utilizado somando spend de todos os dados filtrados
+  const budgetUtilizado = dataSource.reduce((sum, row) => {
+    const spend = parseFloat(row.spend) || 0;
+    return sum + spend;
+  }, 0);
+  
+  // Calcular Video Completions somando q100 de todos os dados filtrados
+  const videoCompletions = dataSource.reduce((sum, row) => {
+    const q100 = parseInt(row.q100) || 0;
+    return sum + q100;
+  }, 0);
+  
+  // Budget Contratado permanece o mesmo (é fixo)
+  const budgetContratado = CONS["Budget Contratado (R$)"];
+  
+  const topMetrics = [
+    ["💰 Orçamento Contratado", `R$ ${fmtBR(budgetContratado)}`],
+    ["💸 Orçamento Utilizado", `R$ ${fmtBR(budgetUtilizado)}`],
+    ["🎬 Video Completions", fmtInt(videoCompletions)],
+  ];
+  
+  metricsElement.innerHTML = topMetrics.map(
+    m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`
+  ).join('');
+}
+
+// Função para recalcular métricas do canal selecionado (aba Por Canal)
+function recalculateChannelMetrics(channelName) {
+  const metricsElement = document.getElementById('metrics-channel');
+  if (!metricsElement || !channelName) return;
+  
+  // Usar filteredDaily se disponível
+  const dataSource = (typeof filteredDaily !== 'undefined' && filteredDaily.length >= 0) ? filteredDaily : DAILY;
+  
+  // Filtrar dados do canal
+  const channelData = dataSource.filter(r=> (r.channel||'').toLowerCase() === (channelName||'').toLowerCase());
+  
+  if (channelData.length === 0) {
+    // Sem dados, mostrar zeros
+    const items = [
+      ['💰 Budget Utilizado', 'R$ 0,00'],
+      ['📊 Impressões', '0'],
+      ['👆 Cliques', '0'],
+      ['📈 CTR', '0,00%'],
+      ['💰 CPM', 'R$ 0,00']
+    ];
+    
+    metricsElement.innerHTML = items.map(
+      m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`
+    ).join('');
+    return;
+  }
+  
+  // Calcular métricas agregadas
+  const budgetUtilizado = channelData.reduce((sum, row) => sum + (parseFloat(row.spend) || 0), 0);
+  const totalImpressions = channelData.reduce((sum, row) => sum + (parseInt(row.impressions) || 0), 0);
+  const totalClicks = channelData.reduce((sum, row) => sum + (parseInt(row.clicks) || 0), 0);
+  const totalStarts = channelData.reduce((sum, row) => sum + (parseInt(row.starts) || 0), 0);
+  const totalQ100 = channelData.reduce((sum, row) => sum + (parseInt(row.q100) || 0), 0);
+  
+  // Calcular CTR
+  const ctr = totalImpressions > 0 ? totalClicks / totalImpressions : 0;
+  
+  // Calcular CPM
+  const cpm = totalImpressions > 0 ? (budgetUtilizado / totalImpressions) * 1000 : 0;
+  
+  // Calcular VTR
+  const vtr = totalStarts > 0 ? totalQ100 / totalStarts : 0;
+  
+  // Calcular CPV
+  const cpv = totalQ100 > 0 ? budgetUtilizado / totalQ100 : 0;
+  
+  // Buscar dados originais do PER para saber o budget contratado
+  const channelPER = PER.find(r=> (r["Canal"]||'').toLowerCase() === channelName.toLowerCase());
+  const budgetContratado = channelPER ? channelPER["Budget Contratado (R$)"] : 0;
+  
+  // Calcular Pacing
+  const pacing = budgetContratado > 0 ? budgetUtilizado / budgetContratado : 0;
+  
+  // Determinar quais métricas mostrar baseado no canal
+  let items = [
+    ['💰 Budget Contratado', `R$ ${fmtBR(budgetContratado)}`],
+    ['💸 Budget Utilizado', `R$ ${fmtBR(budgetUtilizado)}`],
+    ['⏱️ Pacing', pct(pacing)]
+  ];
+  
+  // Adicionar métricas específicas por tipo de canal
+  const isVideo = ['youtube', 'tiktok', 'netflix', 'disney', 'ctv'].includes(channelName.toLowerCase());
+  const isDisplay = channelName.toLowerCase().includes('display') || channelName.toLowerCase().includes('footfall');
+  
+  if (isVideo) {
+    items.push(
+      ['🎬 VC (100%)', fmtInt(totalQ100)],
+      ['📊 VTR (100%)', pct(vtr)],
+      ['💰 CPV', `R$ ${fmtBR(cpv)}`]
+    );
+  }
+  
+  if (isDisplay || totalImpressions > 0) {
+    items.push(
+      ['📊 Impressões', fmtInt(totalImpressions)],
+      ['👆 Cliques', fmtInt(totalClicks)],
+      ['📈 CTR', pct(ctr)],
+      ['💰 CPM', `R$ ${fmtBR(cpm)}`]
+    );
+  }
+  
+  metricsElement.innerHTML = items.map(
+    m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`
+  ).join('');
+}
+
+// Função para renderizar tabela diária com filtros
+function renderChannelDailyTableFiltered(name) {
+  const tbody = document.getElementById('channelDailyBody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = "";
+  
+  // Usar filteredDaily ao invés de DAILY
+  const rows = filteredDaily
+    .filter(r=> (r.channel||'').toLowerCase() === (name||'').toLowerCase())
+    .sort((a,b)=>{ // date desc
+      const pa = a.date.split('/').reverse().join('-');
+      const pb = b.date.split('/').reverse().join('-');
+      return pa<pb ? 1 : pa>pb ? -1 : 0;
+    });
+  
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: rgba(255, 255, 255, 0.6); padding: 2rem;">Nenhum dado disponível para o período selecionado</td></tr>';
+    return;
+  }
+  
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.starts)}</td>
+        <td>${fmtInt(r.q25)}</td>
+        <td>${fmtInt(r.q50)}</td>
+        <td>${fmtInt(r.q75)}</td>
+        <td>${fmtInt(r.q100)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+        <td>${r.visits||'—'}</td>
+      </tr>
+    `);
+  });
+}
+
+// Event listeners para filtros rápidos
+document.addEventListener('DOMContentLoaded', function() {
+  // Botões de filtro rápido
+  const quickFilterBtns = document.querySelectorAll('.quick-filter-btn');
+  quickFilterBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Remover classe active de todos
+      quickFilterBtns.forEach(b => b.classList.remove('active'));
+      // Adicionar classe active ao clicado
+      this.classList.add('active');
+      
+      // Aplicar filtro
+      const filterType = this.getAttribute('data-filter');
+      applyDateFilter(filterType);
+    });
+  });
+  
+  // Inputs de data personalizados
+  const startDateInput = document.getElementById('filter-start-date');
+  const endDateInput = document.getElementById('filter-end-date');
+  
+  if (startDateInput && endDateInput) {
+    function applyCustomDateFilter() {
+      const startValue = startDateInput.value;
+      const endValue = endDateInput.value;
+      
+      if (!startValue || !endValue) return;
+      
+      const startDate = new Date(startValue);
+      const endDate = new Date(endValue);
+      
+      // Filtrar DAILY
+      filteredDaily = ORIGINAL_DAILY.filter(row => {
+        const rowDate = parseDate(row.date);
+        if (!rowDate) return false;
+        return rowDate >= startDate && rowDate <= endDate;
+      });
+      
+      console.log(`Filtro customizado: ${startValue} até ${endValue}, ${filteredDaily.length} registros`);
+      
+      // Atualizar display
+      const periodDisplay = document.getElementById('period-display');
+      if (periodDisplay) {
+        periodDisplay.textContent = `Período: ${startDate.toLocaleDateString('pt-BR')} até ${endDate.toLocaleDateString('pt-BR')}`;
+      }
+      
+      // Remover active de todos os botões
+      document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+      
+      // Recalcular
+      recalculateAndRender();
+    }
+    
+    startDateInput.addEventListener('change', applyCustomDateFilter);
+    endDateInput.addEventListener('change', applyCustomDateFilter);
+  }
+  
+  // Aplicar filtro padrão "Todos" ao carregar
+  applyDateFilter('todos');
+});
 
 </script>
 </body>
