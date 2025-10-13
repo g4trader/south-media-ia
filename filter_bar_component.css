@@ -1,0 +1,167 @@
+/* Componente de Barra de Filtro - Período */
+.filter-bar {
+  background: rgba(26,26,46,.9);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-period {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.filter-label .icon {
+  width: 18px;
+  height: 18px;
+  background: var(--grad);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.filter-dates {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.date-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.date-input {
+  padding: 8px 12px;
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 8px;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 120px;
+  transition: all 0.3s ease;
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+}
+
+.date-input::placeholder {
+  color: var(--muted);
+}
+
+.date-icon {
+  position: absolute;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.separator {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.quick-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(148,163,184,.2);
+  border-radius: 20px;
+  background: rgba(255,255,255,.05);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.quick-filter-btn:hover {
+  background: rgba(255,255,255,.1);
+  border-color: rgba(148,163,184,.3);
+}
+
+.quick-filter-btn.active {
+  background: var(--grad);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(139,92,246,.35);
+}
+
+.period-display {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .filter-period {
+    justify-content: center;
+  }
+  
+  .filter-dates {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .quick-filters {
+    justify-content: center;
+  }
+  
+  .date-input {
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-dates {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .separator {
+    display: none;
+  }
+}

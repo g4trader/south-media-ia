@@ -1,0 +1,44 @@
+<!-- Componente de Barra de Filtro - HTML -->
+<div class="filter-bar">
+  <div class="filter-period">
+    <div class="filter-label">
+      <div class="icon">📅</div>
+      <span>Período:</span>
+    </div>
+    
+    <div class="filter-dates">
+      <div class="date-input-wrapper">
+        <input type="date" 
+               id="filter-start-date" 
+               class="date-input" 
+               placeholder="Data inicial">
+        <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+        </svg>
+      </div>
+      
+      <span class="separator">até</span>
+      
+      <div class="date-input-wrapper">
+        <input type="date" 
+               id="filter-end-date" 
+               class="date-input" 
+               placeholder="Data final">
+        <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+  
+  <div class="quick-filters">
+    <button class="quick-filter-btn" data-filter="hoje">Hoje</button>
+    <button class="quick-filter-btn" data-filter="7-dias">7 dias</button>
+    <button class="quick-filter-btn active" data-filter="30-dias">30 dias</button>
+    <button class="quick-filter-btn" data-filter="todos">Todos</button>
+  </div>
+  
+  <div class="period-display" id="period-display">
+    Período: Carregando...
+  </div>
+</div>

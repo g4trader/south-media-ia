@@ -34,6 +34,175 @@
   thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
   tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+  /* Componente de Barra de Filtro - Período */
+  .filter-bar {
+    background: rgba(26,26,46,.9);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-period {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  .filter-label .icon {
+    width: 18px;
+    height: 18px;
+    background: var(--grad);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  
+  .filter-dates {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .date-input {
+    padding: 8px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+  
+  .date-input:focus {
+    outline: none;
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+  }
+  
+  .date-input::placeholder {
+    color: var(--muted);
+  }
+  
+  .date-icon {
+    position: absolute;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  
+  .separator {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .quick-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .quick-filter-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .quick-filter-btn:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(148,163,184,.3);
+  }
+  
+  .quick-filter-btn.active {
+    background: var(--grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(139,92,246,.35);
+  }
+  
+  .period-display {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 8px;
+    text-align: center;
+  }
+  
+  /* Responsividade para Filter Bar */
+  @media (max-width: 768px) {
+    .filter-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .filter-period {
+      justify-content: center;
+    }
+    
+    .filter-dates {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .quick-filters {
+      justify-content: center;
+    }
+    
+    .date-input {
+      min-width: 100px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .filter-dates {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .separator {
+      display: none;
+    }
+  }
+  
+  /* Modal de Loading */
   
   /* Modal de Loading */
   .loading-modal {
@@ -129,6 +298,50 @@
     <div>
       <div style="font-weight:700;font-size:1rem;text-align:right">COPACOL - Remarketing - Video</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
+    </div>
+  </div>
+  <!-- Barra de Filtro -->
+  <div class="filter-bar">
+    <div class="filter-period">
+      <div class="filter-label">
+        <div class="icon">📅</div>
+        <span>Período:</span>
+      </div>
+      
+      <div class="filter-dates">
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-start-date" 
+                 class="date-input" 
+                 placeholder="Data inicial">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+        
+        <span class="separator">até</span>
+        
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-end-date" 
+                 class="date-input" 
+                 placeholder="Data final">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    
+    <div class="quick-filters">
+      <button class="quick-filter-btn" data-filter="hoje">Hoje</button>
+      <button class="quick-filter-btn" data-filter="7-dias">7 dias</button>
+      <button class="quick-filter-btn active" data-filter="30-dias">30 dias</button>
+      <button class="quick-filter-btn" data-filter="todos">Todos</button>
+    </div>
+    
+    <div class="period-display" id="period-display">
+      Período: Carregando...
     </div>
   </div>
 
@@ -1041,6 +1254,209 @@ class DashboardLoader {
     }
 }
 
+
+// Componente de Barra de Filtro - JavaScript
+class FilterBar {
+  constructor() {
+    this.startDate = null;
+    this.endDate = null;
+    this.activeFilter = 'todos';
+    this.callbacks = {
+      onDateChange: null,
+      onQuickFilter: null
+    };
+    
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.setDefaultDates();
+    this.updatePeriodDisplay();
+  }
+
+  setupEventListeners() {
+    // Event listeners para inputs de data
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    
+    if (startDateInput) {
+      startDateInput.addEventListener('change', (e) => {
+        this.startDate = e.target.value;
+        this.updatePeriodDisplay();
+        this.triggerDateChange();
+      });
+    }
+    
+    if (endDateInput) {
+      endDateInput.addEventListener('change', (e) => {
+        this.endDate = e.target.value;
+        this.updatePeriodDisplay();
+        this.triggerDateChange();
+      });
+    }
+
+    // Event listeners para botões de filtro rápido
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.handleQuickFilter(e.target.dataset.filter);
+      });
+    });
+  }
+
+  setDefaultDates() {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    this.startDate = this.formatDateForInput(thirtyDaysAgo);
+    this.endDate = this.formatDateForInput(today);
+    
+    // Atualizar inputs se existirem
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    
+    if (startDateInput) startDateInput.value = this.startDate;
+    if (endDateInput) endDateInput.value = this.endDate;
+  }
+
+  handleQuickFilter(filterType) {
+    const today = new Date();
+    let startDate;
+    
+    // Remover active de todos os botões
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    
+    // Adicionar active ao botão clicado
+    const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    switch (filterType) {
+      case 'hoje':
+        startDate = today;
+        break;
+      case '7-dias':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 7);
+        break;
+      case '30-dias':
+        startDate = new Date(today);
+        startDate.setDate(today.getDate() - 30);
+        break;
+      case 'todos':
+        startDate = null;
+        break;
+    }
+    
+    this.activeFilter = filterType;
+    
+    if (startDate) {
+      this.startDate = this.formatDateForInput(startDate);
+      this.endDate = this.formatDateForInput(today);
+      
+      // Atualizar inputs
+      const startDateInput = document.getElementById('filter-start-date');
+      const endDateInput = document.getElementById('filter-end-date');
+      
+      if (startDateInput) startDateInput.value = this.startDate;
+      if (endDateInput) endDateInput.value = this.endDate;
+    } else {
+      // Para "todos", limpar datas
+      this.startDate = null;
+      this.endDate = null;
+      
+      const startDateInput = document.getElementById('filter-start-date');
+      const endDateInput = document.getElementById('filter-end-date');
+      
+      if (startDateInput) startDateInput.value = '';
+      if (endDateInput) endDateInput.value = '';
+    }
+    
+    this.updatePeriodDisplay();
+    this.triggerDateChange();
+  }
+
+  updatePeriodDisplay() {
+    const displayElement = document.getElementById('period-display');
+    if (!displayElement) return;
+    
+    if (this.startDate && this.endDate) {
+      const startFormatted = this.formatDateForDisplay(this.startDate);
+      const endFormatted = this.formatDateForDisplay(this.endDate);
+      displayElement.textContent = `Período: ${startFormatted} até ${endFormatted}`;
+    } else {
+      displayElement.textContent = 'Período: Todos os dados';
+    }
+  }
+
+  formatDateForInput(date) {
+    if (typeof date === 'string') return date;
+    return date.toISOString().split('T')[0];
+  }
+
+  formatDateForDisplay(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  }
+
+  triggerDateChange() {
+    if (this.callbacks.onDateChange) {
+      this.callbacks.onDateChange({
+        startDate: this.startDate,
+        endDate: this.endDate,
+        activeFilter: this.activeFilter
+      });
+    }
+  }
+
+  // Método para definir callback de mudança de data
+  onDateChange(callback) {
+    this.callbacks.onDateChange = callback;
+  }
+
+  // Método para obter filtros atuais
+  getCurrentFilters() {
+    return {
+      startDate: this.startDate,
+      endDate: this.endDate,
+      activeFilter: this.activeFilter
+    };
+  }
+
+  // Método para aplicar filtros aos dados
+  applyDateFilter(data, dateField = 'date') {
+    if (!this.startDate && !this.endDate) {
+      return data;
+    }
+
+    return data.filter(item => {
+      const itemDate = new Date(item[dateField]);
+      const startDate = this.startDate ? new Date(this.startDate) : null;
+      const endDate = this.endDate ? new Date(this.endDate) : null;
+
+      if (startDate && itemDate < startDate) return false;
+      if (endDate && itemDate > endDate) return false;
+
+      return true;
+    });
+  }
+
+  // Método para filtrar dados diários
+  filterDailyData(dailyData) {
+    return this.applyDateFilter(dailyData, 'date');
+  }
+
+  // Método para recarregar dashboard com filtros aplicados
+  reloadDashboard() {
+    // Esta função será chamada quando os filtros mudarem
+    // Pode ser sobrescrita para integrar com o sistema de dados específico
+    console.log('Filtros aplicados:', this.getCurrentFilters());
+  }
+}
+
 // Inicializar dashboard quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
     // Extrair campaign key da URL ou usar padrão
@@ -1049,6 +1465,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);
     dashboard.loadDashboard();
+    
+    // Inicializar barra de filtro
+    window.filterBar = new FilterBar();
+    
+    // Configurar callback para recarregar dados quando filtros mudarem
+    window.filterBar.onDateChange((filters) => {
+      console.log('Filtros alterados:', filters);
+      
+      // Aqui você pode integrar com o sistema de dados do dashboard
+      // Por exemplo, recarregar dados da API ou filtrar dados locais
+      if (typeof window.reloadDashboardData === 'function') {
+        window.reloadDashboardData(filters);
+      }
+    });
 });
 </script>
 </body>

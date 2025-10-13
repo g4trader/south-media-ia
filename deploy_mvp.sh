@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de Deploy para MVP Dashboard Builder
-# Google Cloud Run
+# Google Cloud Run - Versão Melhorada
 
 set -e
 
@@ -26,6 +26,23 @@ if ! command -v gcloud &> /dev/null; then
     echo "❌ Google Cloud SDK não encontrado. Instale: https://cloud.google.com/sdk/docs/install"
     exit 1
 fi
+
+# Verificar se estamos no diretório correto
+if [ ! -f "cloud_run_mvp.py" ]; then
+    echo "❌ Arquivo cloud_run_mvp.py não encontrado. Execute este script no diretório raiz do projeto."
+    exit 1
+fi
+
+# Verificar se os arquivos necessários existem
+echo "🔍 Verificando arquivos necessários..."
+required_files=("cloud_run_mvp.py" "requirements.txt" "Dockerfile" "gunicorn.conf.py")
+for file in "${required_files[@]}"; do
+    if [ ! -f "$file" ]; then
+        echo "❌ Arquivo $file não encontrado."
+        exit 1
+    fi
+done
+echo "✅ Todos os arquivos necessários estão presentes."
 
 # Configurar projeto
 echo "🔧 Configurando projeto..."
@@ -62,10 +79,25 @@ echo "✅ DEPLOY CONCLUÍDO COM SUCESSO!"
 echo "================================="
 echo "🌐 URL do Serviço: $SERVICE_URL"
 echo ""
+
+# Aguardar o serviço ficar disponível
+echo "⏳ Aguardando serviço ficar disponível..."
+sleep 30
+
+# Testar health check
+echo "🏥 Testando health check..."
+if curl -f -s "$SERVICE_URL/health" > /dev/null; then
+    echo "✅ Health check passou!"
+else
+    echo "⚠️ Health check falhou. Verifique os logs:"
+    echo "gcloud logging read \"resource.type=cloud_run_revision AND resource.labels.service_name=$SERVICE_NAME\" --limit=50 --format=\"table(timestamp,severity,textPayload)\""
+fi
+
+echo ""
 echo "📋 Endpoints Disponíveis:"
 echo "  🏠 Home: $SERVICE_URL/"
 echo "  🏥 Health: $SERVICE_URL/health"
-echo "  🎯 Gerador: $SERVICE_URL/test-generator"
+echo "  🎯 Gerador: $SERVICE_URL/dash-generator-pro"
 echo "  📊 API: $SERVICE_URL/api/generate-dashboard"
 echo ""
 echo "🧪 Teste o gerador:"

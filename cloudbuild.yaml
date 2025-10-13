@@ -1,20 +1,20 @@
-# Google Cloud Build configuration for Dashboard Builder
+# Google Cloud Build configuration for Dashboard Builder - Optimized
 steps:
-  # Build the container image
+  # Build the container image with multi-stage optimization
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID', '-f', 'Dockerfile', '.']
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID']
   
-  # Deploy container image to Cloud Run
+  # Deploy container image to Cloud Run with optimized settings
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'dashboard-builder'
+      - 'mvp-dashboard-builder'
       - '--image'
       - 'gcr.io/$PROJECT_ID/dashboard-builder:$BUILD_ID'
       - '--region'
@@ -24,14 +24,17 @@ steps:
       - '--allow-unauthenticated'
       - '--port'
       - '8080'
+      # Configurações exatas da versão funcional
       - '--memory'
-      - '1Gi'
+      - '1Gi'  # Mesmo da versão funcional
       - '--cpu'
       - '1'
-      - '--max-instances'
-      - '10'
-      - '--set-env-vars'
-      - 'GOOGLE_APPLICATION_CREDENTIALS=/app/service-account-key.json'
+      - '--timeout'
+      - '300s'
+      - '--concurrency'
+      - '80'
+      - '--service-account'
+      - '609095880025-compute@developer.gserviceaccount.com'
 
 # Store images in Google Container Registry
 images:

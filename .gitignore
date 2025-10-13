@@ -72,16 +72,34 @@ debug_*.json
 debug_*.html
 debug_*.png
 
-# Temporary scripts
-clean_*.py
-fix_*.py
-check_*.py
-verify_*.py
+# Temporary scripts (EXCETO os essenciais para manutenção)
+# Scripts essenciais (NÃO ignorar):
+# - backup_production_data.py
+# - clean_and_recreate_production.py
+# - clean_and_recreate_hml.py
+# - automate_dashboard_creation.py
+# - check_all_environments.py
+# - fix_production_metadata.py
+# - fix_remaining_production_dashboards.py
+
+# Ignorar apenas scripts temporários de desenvolvimento
+clean_staging_*.py
+clean_hml_data.py
+fix_dashboard_metadata_from_csv.py
+fix_remaining_dashboards.py
+check_bigquery_*.py
+check_production_cleanup.py
+check_production_datasets.py
+check_sheets_*.py
+verify_staging_*.py
+verify_hml_*.py
+verify_templates_*.py
+verify_and_regenerate_*.py
 compare_*.py
 analyze_*.py
 migrate_*.py
 recover_*.py
-restore_*.py
+restore_backup_to_staging.py
 apply_*.py
 implement_*.py
 integrate_*.py
@@ -90,8 +108,9 @@ process_*.py
 regenerate_*.py
 setup_*.py
 validate_*.py
-run_*.py
+run_dashboard_*.py
 monitor_*.py
+debug_*.py
 
 # Generated files
 *.db

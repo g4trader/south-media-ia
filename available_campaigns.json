@@ -1,0 +1,81 @@
+[
+  {
+    "campaign_key": "copacol_video_de_30s_campanha_institucional_netflix",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "copacol_institucional_30s_programatica",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "copacol_remarketing_youtube",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "sebrae_pr_feira_do_empreendedor",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "sesi_institucional_native",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "senai_linkedin_sponsored_video",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "copacol_mestre_das_grelhas",
+    "status": "❌ Erro 404",
+    "has_data": false
+  },
+  {
+    "campaign_key": "copacol_semana_do_pescado",
+    "status": "✅ OK",
+    "has_data": true,
+    "daily_records": 0,
+    "has_campaign_summary": false,
+    "has_contract": false
+  },
+  {
+    "campaign_key": "dauher_hidrabene",
+    "status": "❌ Erro 404",
+    "has_data": false
+  },
+  {
+    "campaign_key": "iquine_pin_pinterest",
+    "status": "❌ Erro 500",
+    "has_data": false
+  }
+]

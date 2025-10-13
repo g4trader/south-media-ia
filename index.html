@@ -377,7 +377,7 @@ const dashboards = [
     icon: '💊'
   },
   {
-    file: 'dash_sebrae.html',
+    file: 'dash_sebrae_pr_institucional_setembro.html',
     name: 'Dashboard Sebrae',
     description: 'Dashboard de métricas e KPIs para campanhas Sebrae',
     status: 'active',
@@ -395,7 +395,7 @@ const dashboards = [
     icon: '🏫'
   },
   {
-    file: 'dash_unimed.html',
+    file: 'dash_unimed_curitiba_programatica_display.html',
     name: 'Dashboard Unimed',
     description: 'Dashboard de métricas para campanhas Unimed',
     status: 'active',
@@ -404,14 +404,14 @@ const dashboards = [
     icon: '🏥'
   },
   {
-    file: 'dash_semana_do_pescado_FINAL_NO_NETFLIX_20250916_172902.html', // Será atualizado dinamicamente
+    file: 'dash_semana_do_pescado.html', // Arquivo existente
     name: 'Semana Do Pescado',
     description: 'Dashboard Semana Do Pescado - Relatório analítico completo',
     status: 'active',
     category: 'Campanha',
     lastUpdate: 'Hoje',
     icon: '🐟',
-    isDynamic: true // Marcar como dinâmico para atualização automática
+    isDynamic: false // Arquivo estático existente
   }
 ];
 
@@ -569,7 +569,7 @@ async function updateSemanaPescadoFile() {
     const semanaPescado = dashboards.find(d => d.name === 'Semana Do Pescado');
     if (semanaPescado && semanaPescado.isDynamic) {
       // Buscar o arquivo mais recente do Semana do Pescado
-      const response = await fetch('https://dashboard-builder-609095880025.us-central1.run.app/api/semana-pescado/latest-file');
+      const response = await fetch('https://mvp-dashboard-builder-609095880025.us-central1.run.app/api/semana-pescado/latest-file');
       if (response.ok) {
         const data = await response.json();
         if (data.latest_file) {
@@ -1051,7 +1051,7 @@ async function syncDashboard(file) {
     // Verificar se é o dashboard Semana do Pescado
     if (file.includes('dash_semana_do_pescado_FINAL_NO_NETFLIX_')) {
       // Usar endpoint específico para Semana do Pescado
-      response = await fetch('https://dashboard-builder-609095880025.us-central1.run.app/api/semana-pescado/sync', {
+      response = await fetch('https://mvp-dashboard-builder-609095880025.us-central1.run.app/api/semana-pescado/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1059,7 +1059,7 @@ async function syncDashboard(file) {
       });
     } else {
       // Usar endpoint padrão para outros dashboards (como Sonho)
-      response = await fetch('https://dashboard-automation-609095880025.us-central1.run.app/trigger', {
+      response = await fetch('https://mvp-dashboard-builder-609095880025.us-central1.run.app/api/trigger', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

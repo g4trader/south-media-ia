@@ -1127,6 +1127,175 @@
 .tag.purple{background:linear-gradient(135deg, rgba(124,58,237,.25), rgba(236,72,153,.15));border-color:rgba(139,92,246,.45)}
 .tag.blue{background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(99,102,241,.15));border-color:rgba(59,130,246,.45)}
 .badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;background:rgba(255,255,255,.08);border:1px solid rgba(148,163,184,.2);padding:.2rem .5rem;border-radius:999px;margin-right:.4rem}
+  /* Componente de Barra de Filtro - Período */
+  .filter-bar {
+    background: rgba(26,26,46,.9);
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-period {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  
+  .filter-label .icon {
+    width: 18px;
+    height: 18px;
+    background: var(--grad);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  
+  .filter-dates {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .date-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .date-input {
+    padding: 8px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+  
+  .date-input:focus {
+    outline: none;
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+  }
+  
+  .date-input::placeholder {
+    color: var(--muted);
+  }
+  
+  .date-icon {
+    position: absolute;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  
+  .separator {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  .quick-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .quick-filter-btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(148,163,184,.2);
+    border-radius: 20px;
+    background: rgba(255,255,255,.05);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  
+  .quick-filter-btn:hover {
+    background: rgba(255,255,255,.1);
+    border-color: rgba(148,163,184,.3);
+  }
+  
+  .quick-filter-btn.active {
+    background: var(--grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(139,92,246,.35);
+  }
+  
+  .period-display {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 8px;
+    text-align: center;
+  }
+  
+  /* Responsividade para Filter Bar */
+  @media (max-width: 768px) {
+    .filter-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .filter-period {
+      justify-content: center;
+    }
+    
+    .filter-dates {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .quick-filters {
+      justify-content: center;
+    }
+    
+    .date-input {
+      min-width: 100px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .filter-dates {
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .separator {
+      display: none;
+    }
+  }
+  
+  /* Modal de Loading */
 .badge .dot{width:6px;height:6px;border-radius:999px;background:#10B981;display:inline-block}
 .section-note{color:#9CA3AF;font-size:.85rem;margin-top:.5rem}
 /* === Insights: cards similar to Planejamento === */
@@ -1378,7 +1547,52 @@
 <span class="status-badge">CONCLUÍDO</span>
 </div>
 </div>
-<div class="tabs">
+  <!-- Barra de Filtro -->
+  <div class="filter-bar">
+    <div class="filter-period">
+      <div class="filter-label">
+        <div class="icon">📅</div>
+        <span>Período:</span>
+      </div>
+      
+      <div class="filter-dates">
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-start-date" 
+                 class="date-input" 
+                 placeholder="Data inicial">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+        
+        <span class="separator">até</span>
+        
+        <div class="date-input-wrapper">
+          <input type="date" 
+                 id="filter-end-date" 
+                 class="date-input" 
+                 placeholder="Data final">
+          <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+    
+    <div class="quick-filters">
+      <button class="quick-filter-btn" data-filter="hoje">Hoje</button>
+      <button class="quick-filter-btn" data-filter="7-dias">7 dias</button>
+      <button class="quick-filter-btn active" data-filter="30-dias">30 dias</button>
+      <button class="quick-filter-btn" data-filter="todos">Todos</button>
+    </div>
+    
+    <div class="period-display" id="period-display">
+      Período: Carregando...
+    </div>
+  </div>
+
+  <div class="tabs">
 <button class="tab-button active" onclick="showTab(event,'overview')">🎬<br/>Visão
 Geral</button>
 <button class="tab-button" onclick="showTab(event,'insights')">📊<br/>Análise e
