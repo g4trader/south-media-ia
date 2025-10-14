@@ -1,0 +1,1272 @@
+{
+  "bigquery": {
+    "campaigns": [
+      {
+        "campaign_key": "senai_linkedin_sponsored_video",
+        "client": "senai",
+        "campaign_name": "Linkedin Sponsored - vídeo",
+        "sheet_id": "131nR7kjKW6Kq57_Qr2jVyGOnBSH-0tO4o-Mp6wVUpPo",
+        "channel": "linkedin",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:11:53.838962+00:00",
+        "updated_at": "2025-10-11 07:11:53.838962+00:00"
+      },
+      {
+        "campaign_key": "senai_linkedin_sponsored_display",
+        "client": "senai",
+        "campaign_name": "Linkedin Sponsored - display",
+        "sheet_id": "1gTE1FFci84AiIQPhDFo-vyD5yNl6_5ymiuKy7lpzzjE",
+        "channel": "linkedin",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:11:58.561151+00:00",
+        "updated_at": "2025-10-11 07:11:58.561151+00:00"
+      },
+      {
+        "campaign_key": "copacol_video_de_30s_campanha_institicional_netflix",
+        "client": "copacol",
+        "campaign_name": "Video de 30s Campanha Institicional Netflix",
+        "sheet_id": "1SJsug7CXeVS-IobwKdvx168TP001c79hbPrs1nCjJDY",
+        "channel": "netflix",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:02.204374+00:00",
+        "updated_at": "2025-10-11 07:12:02.204374+00:00"
+      },
+      {
+        "campaign_key": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "client": "copacol",
+        "campaign_name": "Campanha Institucional de Video de 30s em Youtube",
+        "sheet_id": "14alJQ4BTB4MABaFx7UF3shdDVIY2r-Z39tEnm9Z-u7o",
+        "channel": "youtube",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:05.962294+00:00",
+        "updated_at": "2025-10-11 07:12:05.962294+00:00"
+      },
+      {
+        "campaign_key": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "client": "copacol",
+        "campaign_name": "Campanha Institucional de Video de 90s em Youtube",
+        "sheet_id": "17eJ4Fj-80LSjAFPOwy4wipZjo2mNZXyozg8R8fRJyu0",
+        "channel": "youtube",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:09.772911+00:00",
+        "updated_at": "2025-10-11 07:12:09.772911+00:00"
+      },
+      {
+        "campaign_key": "copacol_institucional_30s_programatica",
+        "client": "copacol",
+        "campaign_name": "Institucional 30s programática",
+        "sheet_id": "1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8",
+        "channel": "video programatico",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:13.398747+00:00",
+        "updated_at": "2025-10-11 07:12:13.398747+00:00"
+      },
+      {
+        "campaign_key": "copacol_institucional_remarketing_programatica",
+        "client": "copacol",
+        "campaign_name": "Institucional REMARKETING Programática",
+        "sheet_id": "1ufjQXnXd_pXyoACqmBQrNfK5aK9mz8ERz-t7GKhev60",
+        "channel": "video programatico",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:17.066888+00:00",
+        "updated_at": "2025-10-11 07:12:17.066888+00:00"
+      },
+      {
+        "campaign_key": "copacol_remarketing_youtube",
+        "client": "copacol",
+        "campaign_name": "Remarketing youtube",
+        "sheet_id": "1nDp-VgoMn5En3k40PN4Z-7QgmVrxOGnYo3RkSqNaz_o",
+        "channel": "youtube",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:20.695000+00:00",
+        "updated_at": "2025-10-11 07:12:20.695000+00:00"
+      },
+      {
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_programatica",
+        "client": "sebrae pr",
+        "campaign_name": "Feira do Empreendedor Programática",
+        "sheet_id": "1scA5ykf49DLobPTAKSL5fNgGMiomcJmgSJqXolV679M",
+        "channel": "video programático",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:24.503458+00:00",
+        "updated_at": "2025-10-11 07:12:24.503458+00:00"
+      },
+      {
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_spotify",
+        "client": "sebrae pr",
+        "campaign_name": "Feira do Empreendedor Spotify",
+        "sheet_id": "1-rSt7tYoZFdEiGEBM3GIVt928-8OugHa5sPF2XguYp0",
+        "channel": "spotify",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:27.886884+00:00",
+        "updated_at": "2025-10-11 07:12:27.886884+00:00"
+      },
+      {
+        "campaign_key": "copacol_semana_do_pescado_programatica",
+        "client": "copacol",
+        "campaign_name": "Semana do pescado programática",
+        "sheet_id": "1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o",
+        "channel": "video programático",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:31.309496+00:00",
+        "updated_at": "2025-10-11 07:12:31.309496+00:00"
+      },
+      {
+        "campaign_key": "copacol_semana_do_pescado_youtube",
+        "client": "copacol",
+        "campaign_name": "Semana do pescado youtube",
+        "sheet_id": "1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg",
+        "channel": "youtube",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:34.744622+00:00",
+        "updated_at": "2025-10-11 07:12:34.744622+00:00"
+      },
+      {
+        "campaign_key": "sebrae_pr_institucional_setembro",
+        "client": "sebrae pr",
+        "campaign_name": "Institucional Setembro",
+        "sheet_id": "1IUUSXaN0Drrdt-7B0IUiMRQK2gT-JtzhCFZvV7e5-V8",
+        "channel": "video programático",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:38.757527+00:00",
+        "updated_at": "2025-10-11 07:12:38.757527+00:00"
+      },
+      {
+        "campaign_key": "sebrae_pr_sebrae_pr_netflix",
+        "client": "sebrae pr",
+        "campaign_name": "SEBRAE PR NETFLIX",
+        "sheet_id": "1jEJED9qiA2o_qSS1I7611MUdoycCpzTD4PCk9kVSj2o",
+        "channel": "Netflix",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:12:42.092073+00:00",
+        "updated_at": "2025-10-11 07:12:42.092073+00:00"
+      },
+      {
+        "campaign_key": "unimed_programatica_display",
+        "client": "unimed",
+        "campaign_name": "Programática display",
+        "sheet_id": "11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8",
+        "channel": "Display programática",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:46.244479+00:00",
+        "updated_at": "2025-10-11 07:12:46.244479+00:00"
+      },
+      {
+        "campaign_key": "iquine_pin_pinterest",
+        "client": "iquine",
+        "campaign_name": "Pin Pinterest",
+        "sheet_id": "1Kje2ixjZXhfeD8whVKk58Q5vdWpSUv9cABB38tsLeX8",
+        "channel": "pinterest",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:49.643548+00:00",
+        "updated_at": "2025-10-11 07:12:49.643548+00:00"
+      },
+      {
+        "campaign_key": "sesi_nr1_linkedin",
+        "client": "sesi",
+        "campaign_name": "NR1 Linkedin",
+        "sheet_id": "1XXtwYET9HMJYMopKgBpobKInPgSLcC8Wzbq2gujPvCI",
+        "channel": "linkedin",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:52.966615+00:00",
+        "updated_at": "2025-10-11 07:12:52.966615+00:00"
+      },
+      {
+        "campaign_key": "sesi_pgr_linkedin",
+        "client": "sesi",
+        "campaign_name": "PGR Linkedin",
+        "sheet_id": "1F8rq-7S6npEMNRgXHpsjOW8t5-LkvO7MrR9y_akan-c",
+        "channel": "linkedin",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:12:56.476138+00:00",
+        "updated_at": "2025-10-11 07:12:56.476138+00:00"
+      },
+      {
+        "campaign_key": "sesi_pgr_native",
+        "client": "sesi",
+        "campaign_name": "PGR Native",
+        "sheet_id": "1NyChr0Gi3p6K8uuIVFz4H_wtB-ZwALeIuQFZUqlHQKo",
+        "channel": "Native progrmática",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:00.071590+00:00",
+        "updated_at": "2025-10-11 07:13:00.071590+00:00"
+      },
+      {
+        "campaign_key": "sesi_nr1_native",
+        "client": "sesi",
+        "campaign_name": "NR1 Native",
+        "sheet_id": "1BvnI_ewczUzjnMz7NyyQ2EBPufFaprS8Ixm99_Mqg-s",
+        "channel": "Native programática",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:03.505730+00:00",
+        "updated_at": "2025-10-11 07:13:03.505730+00:00"
+      },
+      {
+        "campaign_key": "sesi_institucional_native",
+        "client": "sesi",
+        "campaign_name": "Institucional Native",
+        "sheet_id": "1B0yxLCt40BBGRWvnaOlYexmpkuYY4Nf_onyUyHcPmBA",
+        "channel": "Native programática",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:06.785022+00:00",
+        "updated_at": "2025-10-11 07:13:06.785022+00:00"
+      },
+      {
+        "campaign_key": "copacol_outubro_rosa_youtube",
+        "client": "copacol",
+        "campaign_name": "Outubro rosa youtube",
+        "sheet_id": "18dGYU_hPjQKuCwnkaqWWVYtoZ8yZZZwGwI2r90eml18",
+        "channel": "Youtube",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:10.235987+00:00",
+        "updated_at": "2025-10-11 07:13:10.235987+00:00"
+      },
+      {
+        "campaign_key": "copacol_outubro_rosa_programatica",
+        "client": "copacol",
+        "campaign_name": "Outubro rosa programática",
+        "sheet_id": "1F6Cx-VzFx_i8I2kkKI988W7ZISsxG9Gpkfa_8VPTb30",
+        "channel": "Video programática",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:13.585317+00:00",
+        "updated_at": "2025-10-11 07:13:13.585317+00:00"
+      },
+      {
+        "campaign_key": "copacol_institucional_remarketing_video_programatico_90s",
+        "client": "copacol",
+        "campaign_name": "Institucional REMARKETING Video programatico 90s",
+        "sheet_id": "1vFEXr6bEqRYazIaJZlM2zrFKZoK9YECd-7Xlz2IxYII",
+        "channel": "Video programática",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:16.954796+00:00",
+        "updated_at": "2025-10-11 07:13:16.954796+00:00"
+      },
+      {
+        "campaign_key": "senai_geofence_rich_media",
+        "client": "senai",
+        "campaign_name": "Geofence rich media",
+        "sheet_id": "1c0YAuDwK0747bhDV9FZWlcCbwRSMU6k4t_5Lu02cIXE",
+        "channel": "Geofence",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:20.412979+00:00",
+        "updated_at": "2025-10-11 07:13:20.412979+00:00"
+      },
+      {
+        "campaign_key": "senai_geofence_display",
+        "client": "Senai",
+        "campaign_name": "Geofence - display",
+        "sheet_id": "1WvZyWVcPiQQ7koivQ1lwvvDEKdT-iXf6L9OCZSHimPA",
+        "channel": "Geofence",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:23.888874+00:00",
+        "updated_at": "2025-10-11 07:13:23.888874+00:00"
+      },
+      {
+        "campaign_key": "sonho_sabao_em_po",
+        "client": "sonho",
+        "campaign_name": "Sabão em pó",
+        "sheet_id": "1P603c-yOPXZF7Pt4GzWHI1A19_FGcwxtEtoaCrCLSzQ",
+        "channel": "Tiktok",
+        "kpi": "CPM",
+        "created_at": "2025-10-11 07:13:27.216059+00:00",
+        "updated_at": "2025-10-11 07:13:27.216059+00:00"
+      },
+      {
+        "campaign_key": "sonho_sabao_em_po_yt",
+        "client": "sonho",
+        "campaign_name": "Sabão em pó YT",
+        "sheet_id": "1gbMkhXHiMqCXk-QFzSt8sUbow7rUD4TXbR7Tx0H4i3s",
+        "channel": "Youtube",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:30.585737+00:00",
+        "updated_at": "2025-10-11 07:13:30.585737+00:00"
+      },
+      {
+        "campaign_key": "sonho_sabao_em_po_netflix",
+        "client": "sonho",
+        "campaign_name": "Sabão em pó NetFlix",
+        "sheet_id": "1J2kQlhIIC4cMIvkPhkU2UwgPIcCD4zMMhL78PysBFZM",
+        "channel": "Netflix",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:34.283864+00:00",
+        "updated_at": "2025-10-11 07:13:34.283864+00:00"
+      },
+      {
+        "campaign_key": "sonho_sabao_em_po_disney",
+        "client": "sonho",
+        "campaign_name": "Sabão em pó Disney",
+        "sheet_id": "1_JYFqFZcXIFF1dtcLpdZ92HO3gm0wZX5KU02mzxCm8M",
+        "channel": "Disney",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:37.846177+00:00",
+        "updated_at": "2025-10-11 07:13:37.846177+00:00"
+      },
+      {
+        "campaign_key": "sonho_sabao_em_po_ctv",
+        "client": "sonho",
+        "campaign_name": "Sabão em pó CTV",
+        "sheet_id": "1aoVXo_Lt003_1WBlwkWdI4-kU38ZE7Rh5CcbgPtubtA",
+        "channel": "Video programática",
+        "kpi": "CPV",
+        "created_at": "2025-10-11 07:13:41.270278+00:00",
+        "updated_at": "2025-10-11 07:13:41.270278+00:00"
+      }
+    ],
+    "dashboards": [
+      {
+        "dashboard_id": "senai_linkedin_sponsored_video",
+        "campaign_key": "senai_linkedin_sponsored_video",
+        "dashboard_name": "senai - Linkedin Sponsored - vídeo",
+        "dashboard_url": "/api/dashboard/senai_linkedin_sponsored_video",
+        "file_path": "/api/dashboard/senai_linkedin_sponsored_video",
+        "created_at": "2025-10-11 07:11:55.369875+00:00"
+      },
+      {
+        "dashboard_id": "senai_linkedin_sponsored_display",
+        "campaign_key": "senai_linkedin_sponsored_display",
+        "dashboard_name": "senai - Linkedin Sponsored - display",
+        "dashboard_url": "/api/dashboard/senai_linkedin_sponsored_display",
+        "file_path": "/api/dashboard/senai_linkedin_sponsored_display",
+        "created_at": "2025-10-11 07:11:59.028611+00:00"
+      },
+      {
+        "dashboard_id": "copacol_video_de_30s_campanha_institicional_netflix",
+        "campaign_key": "copacol_video_de_30s_campanha_institicional_netflix",
+        "dashboard_name": "copacol - Video de 30s Campanha Institicional Netflix",
+        "dashboard_url": "/api/dashboard/copacol_video_de_30s_campanha_institicional_netflix",
+        "file_path": "/api/dashboard/copacol_video_de_30s_campanha_institicional_netflix",
+        "created_at": "2025-10-11 07:12:02.665926+00:00"
+      },
+      {
+        "dashboard_id": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "dashboard_name": "copacol - Campanha Institucional de Video de 30s em Youtube",
+        "dashboard_url": "/api/dashboard/copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "file_path": "/api/dashboard/copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "created_at": "2025-10-11 07:12:06.396561+00:00"
+      },
+      {
+        "dashboard_id": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "dashboard_name": "copacol - Campanha Institucional de Video de 90s em Youtube",
+        "dashboard_url": "/api/dashboard/copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "file_path": "/api/dashboard/copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "created_at": "2025-10-11 07:12:10.227895+00:00"
+      },
+      {
+        "dashboard_id": "copacol_institucional_30s_programatica",
+        "campaign_key": "copacol_institucional_30s_programatica",
+        "dashboard_name": "copacol - Institucional 30s programática",
+        "dashboard_url": "/api/dashboard/copacol_institucional_30s_programatica",
+        "file_path": "/api/dashboard/copacol_institucional_30s_programatica",
+        "created_at": "2025-10-11 07:12:13.865046+00:00"
+      },
+      {
+        "dashboard_id": "copacol_institucional_remarketing_programatica",
+        "campaign_key": "copacol_institucional_remarketing_programatica",
+        "dashboard_name": "copacol - Institucional REMARKETING Programática",
+        "dashboard_url": "/api/dashboard/copacol_institucional_remarketing_programatica",
+        "file_path": "/api/dashboard/copacol_institucional_remarketing_programatica",
+        "created_at": "2025-10-11 07:12:17.523127+00:00"
+      },
+      {
+        "dashboard_id": "copacol_remarketing_youtube",
+        "campaign_key": "copacol_remarketing_youtube",
+        "dashboard_name": "copacol - Remarketing youtube",
+        "dashboard_url": "/api/dashboard/copacol_remarketing_youtube",
+        "file_path": "/api/dashboard/copacol_remarketing_youtube",
+        "created_at": "2025-10-11 07:12:21.160425+00:00"
+      },
+      {
+        "dashboard_id": "sebrae_pr_feira_do_empreendedor_programatica",
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_programatica",
+        "dashboard_name": "sebrae pr - Feira do Empreendedor Programática",
+        "dashboard_url": "/api/dashboard/sebrae_pr_feira_do_empreendedor_programatica",
+        "file_path": "/api/dashboard/sebrae_pr_feira_do_empreendedor_programatica",
+        "created_at": "2025-10-11 07:12:24.942053+00:00"
+      },
+      {
+        "dashboard_id": "sebrae_pr_feira_do_empreendedor_spotify",
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_spotify",
+        "dashboard_name": "sebrae pr - Feira do Empreendedor Spotify",
+        "dashboard_url": "/api/dashboard/sebrae_pr_feira_do_empreendedor_spotify",
+        "file_path": "/api/dashboard/sebrae_pr_feira_do_empreendedor_spotify",
+        "created_at": "2025-10-11 07:12:28.392643+00:00"
+      },
+      {
+        "dashboard_id": "copacol_semana_do_pescado_programatica",
+        "campaign_key": "copacol_semana_do_pescado_programatica",
+        "dashboard_name": "copacol - Semana do pescado programática",
+        "dashboard_url": "/api/dashboard/copacol_semana_do_pescado_programatica",
+        "file_path": "/api/dashboard/copacol_semana_do_pescado_programatica",
+        "created_at": "2025-10-11 07:12:31.760374+00:00"
+      },
+      {
+        "dashboard_id": "copacol_semana_do_pescado_youtube",
+        "campaign_key": "copacol_semana_do_pescado_youtube",
+        "dashboard_name": "copacol - Semana do pescado youtube",
+        "dashboard_url": "/api/dashboard/copacol_semana_do_pescado_youtube",
+        "file_path": "/api/dashboard/copacol_semana_do_pescado_youtube",
+        "created_at": "2025-10-11 07:12:35.172913+00:00"
+      },
+      {
+        "dashboard_id": "sebrae_pr_institucional_setembro",
+        "campaign_key": "sebrae_pr_institucional_setembro",
+        "dashboard_name": "sebrae pr - Institucional Setembro",
+        "dashboard_url": "/api/dashboard/sebrae_pr_institucional_setembro",
+        "file_path": "/api/dashboard/sebrae_pr_institucional_setembro",
+        "created_at": "2025-10-11 07:12:39.193058+00:00"
+      },
+      {
+        "dashboard_id": "sebrae_pr_sebrae_pr_netflix",
+        "campaign_key": "sebrae_pr_sebrae_pr_netflix",
+        "dashboard_name": "sebrae pr - SEBRAE PR NETFLIX",
+        "dashboard_url": "/api/dashboard/sebrae_pr_sebrae_pr_netflix",
+        "file_path": "/api/dashboard/sebrae_pr_sebrae_pr_netflix",
+        "created_at": "2025-10-11 07:12:42.534760+00:00"
+      },
+      {
+        "dashboard_id": "unimed_programatica_display",
+        "campaign_key": "unimed_programatica_display",
+        "dashboard_name": "unimed - Programática display",
+        "dashboard_url": "/api/dashboard/unimed_programatica_display",
+        "file_path": "/api/dashboard/unimed_programatica_display",
+        "created_at": "2025-10-11 07:12:46.686997+00:00"
+      },
+      {
+        "dashboard_id": "iquine_pin_pinterest",
+        "campaign_key": "iquine_pin_pinterest",
+        "dashboard_name": "iquine - Pin Pinterest",
+        "dashboard_url": "/api/dashboard/iquine_pin_pinterest",
+        "file_path": "/api/dashboard/iquine_pin_pinterest",
+        "created_at": "2025-10-11 07:12:50.067424+00:00"
+      },
+      {
+        "dashboard_id": "sesi_nr1_linkedin",
+        "campaign_key": "sesi_nr1_linkedin",
+        "dashboard_name": "sesi - NR1 Linkedin",
+        "dashboard_url": "/api/dashboard/sesi_nr1_linkedin",
+        "file_path": "/api/dashboard/sesi_nr1_linkedin",
+        "created_at": "2025-10-11 07:12:53.434635+00:00"
+      },
+      {
+        "dashboard_id": "sesi_pgr_linkedin",
+        "campaign_key": "sesi_pgr_linkedin",
+        "dashboard_name": "sesi - PGR Linkedin",
+        "dashboard_url": "/api/dashboard/sesi_pgr_linkedin",
+        "file_path": "/api/dashboard/sesi_pgr_linkedin",
+        "created_at": "2025-10-11 07:12:56.939012+00:00"
+      },
+      {
+        "dashboard_id": "sesi_pgr_native",
+        "campaign_key": "sesi_pgr_native",
+        "dashboard_name": "sesi - PGR Native",
+        "dashboard_url": "/api/dashboard/sesi_pgr_native",
+        "file_path": "/api/dashboard/sesi_pgr_native",
+        "created_at": "2025-10-11 07:13:00.503923+00:00"
+      },
+      {
+        "dashboard_id": "sesi_nr1_native",
+        "campaign_key": "sesi_nr1_native",
+        "dashboard_name": "sesi - NR1 Native",
+        "dashboard_url": "/api/dashboard/sesi_nr1_native",
+        "file_path": "/api/dashboard/sesi_nr1_native",
+        "created_at": "2025-10-11 07:13:03.933671+00:00"
+      },
+      {
+        "dashboard_id": "sesi_institucional_native",
+        "campaign_key": "sesi_institucional_native",
+        "dashboard_name": "sesi - Institucional Native",
+        "dashboard_url": "/api/dashboard/sesi_institucional_native",
+        "file_path": "/api/dashboard/sesi_institucional_native",
+        "created_at": "2025-10-11 07:13:07.246839+00:00"
+      },
+      {
+        "dashboard_id": "copacol_outubro_rosa_youtube",
+        "campaign_key": "copacol_outubro_rosa_youtube",
+        "dashboard_name": "copacol - Outubro rosa youtube",
+        "dashboard_url": "/api/dashboard/copacol_outubro_rosa_youtube",
+        "file_path": "/api/dashboard/copacol_outubro_rosa_youtube",
+        "created_at": "2025-10-11 07:13:10.661893+00:00"
+      },
+      {
+        "dashboard_id": "copacol_outubro_rosa_programatica",
+        "campaign_key": "copacol_outubro_rosa_programatica",
+        "dashboard_name": "copacol - Outubro rosa programática",
+        "dashboard_url": "/api/dashboard/copacol_outubro_rosa_programatica",
+        "file_path": "/api/dashboard/copacol_outubro_rosa_programatica",
+        "created_at": "2025-10-11 07:13:14.018982+00:00"
+      },
+      {
+        "dashboard_id": "copacol_institucional_remarketing_video_programatico_90s",
+        "campaign_key": "copacol_institucional_remarketing_video_programatico_90s",
+        "dashboard_name": "copacol - Institucional REMARKETING Video programatico 90s",
+        "dashboard_url": "/api/dashboard/copacol_institucional_remarketing_video_programatico_90s",
+        "file_path": "/api/dashboard/copacol_institucional_remarketing_video_programatico_90s",
+        "created_at": "2025-10-11 07:13:17.386651+00:00"
+      },
+      {
+        "dashboard_id": "senai_geofence_rich_media",
+        "campaign_key": "senai_geofence_rich_media",
+        "dashboard_name": "senai - Geofence rich media",
+        "dashboard_url": "/api/dashboard/senai_geofence_rich_media",
+        "file_path": "/api/dashboard/senai_geofence_rich_media",
+        "created_at": "2025-10-11 07:13:20.854857+00:00"
+      },
+      {
+        "dashboard_id": "senai_geofence_display",
+        "campaign_key": "senai_geofence_display",
+        "dashboard_name": "Senai - Geofence - display",
+        "dashboard_url": "/api/dashboard/senai_geofence_display",
+        "file_path": "/api/dashboard/senai_geofence_display",
+        "created_at": "2025-10-11 07:13:24.344727+00:00"
+      },
+      {
+        "dashboard_id": "sonho_sabao_em_po",
+        "campaign_key": "sonho_sabao_em_po",
+        "dashboard_name": "sonho - Sabão em pó",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po",
+        "file_path": "/api/dashboard/sonho_sabao_em_po",
+        "created_at": "2025-10-11 07:13:27.651167+00:00"
+      },
+      {
+        "dashboard_id": "sonho_sabao_em_po_yt",
+        "campaign_key": "sonho_sabao_em_po_yt",
+        "dashboard_name": "sonho - Sabão em pó YT",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_yt",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_yt",
+        "created_at": "2025-10-11 07:13:31.153800+00:00"
+      },
+      {
+        "dashboard_id": "sonho_sabao_em_po_netflix",
+        "campaign_key": "sonho_sabao_em_po_netflix",
+        "dashboard_name": "sonho - Sabão em pó NetFlix",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_netflix",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_netflix",
+        "created_at": "2025-10-11 07:13:34.705359+00:00"
+      },
+      {
+        "dashboard_id": "sonho_sabao_em_po_disney",
+        "campaign_key": "sonho_sabao_em_po_disney",
+        "dashboard_name": "sonho - Sabão em pó Disney",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_disney",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_disney",
+        "created_at": "2025-10-11 07:13:38.290404+00:00"
+      },
+      {
+        "dashboard_id": "sonho_sabao_em_po_ctv",
+        "campaign_key": "sonho_sabao_em_po_ctv",
+        "dashboard_name": "sonho - Sabão em pó CTV",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_ctv",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_ctv",
+        "created_at": "2025-10-11 07:13:41.714449+00:00"
+      }
+    ]
+  },
+  "firestore": {
+    "campaigns": [
+      {
+        "updated_at": "2025-10-11T07:12:05.962294+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Campanha Institucional de Video de 30s em Youtube",
+        "client": "copacol",
+        "channel": "youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "sheet_id": "14alJQ4BTB4MABaFx7UF3shdDVIY2r-Z39tEnm9Z-u7o",
+        "created_at": "2025-10-11T07:12:05.962294+00:00",
+        "_id": "copacol_campanha_institucional_de_video_de_30s_em_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:09.772911+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Campanha Institucional de Video de 90s em Youtube",
+        "client": "copacol",
+        "channel": "youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "sheet_id": "17eJ4Fj-80LSjAFPOwy4wipZjo2mNZXyozg8R8fRJyu0",
+        "created_at": "2025-10-11T07:12:09.772911+00:00",
+        "_id": "copacol_campanha_institucional_de_video_de_90s_em_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:13.398747+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Institucional 30s programática",
+        "client": "copacol",
+        "channel": "video programatico",
+        "campaign_key": "copacol_institucional_30s_programatica",
+        "sheet_id": "1hutJ0nUM3hNYeRBSlgpowbknWnI5qu-etrHWtEoaKD8",
+        "created_at": "2025-10-11T07:12:13.398747+00:00",
+        "_id": "copacol_institucional_30s_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:17.066888+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Institucional REMARKETING Programática",
+        "client": "copacol",
+        "channel": "video programatico",
+        "campaign_key": "copacol_institucional_remarketing_programatica",
+        "sheet_id": "1ufjQXnXd_pXyoACqmBQrNfK5aK9mz8ERz-t7GKhev60",
+        "created_at": "2025-10-11T07:12:17.066888+00:00",
+        "_id": "copacol_institucional_remarketing_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:16.954796+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Institucional REMARKETING Video programatico 90s",
+        "client": "copacol",
+        "channel": "Video programática",
+        "campaign_key": "copacol_institucional_remarketing_video_programatico_90s",
+        "sheet_id": "1vFEXr6bEqRYazIaJZlM2zrFKZoK9YECd-7Xlz2IxYII",
+        "created_at": "2025-10-11T07:13:16.954796+00:00",
+        "_id": "copacol_institucional_remarketing_video_programatico_90s"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:13.585317+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Outubro rosa programática",
+        "client": "copacol",
+        "channel": "Video programática",
+        "campaign_key": "copacol_outubro_rosa_programatica",
+        "sheet_id": "1F6Cx-VzFx_i8I2kkKI988W7ZISsxG9Gpkfa_8VPTb30",
+        "created_at": "2025-10-11T07:13:13.585317+00:00",
+        "_id": "copacol_outubro_rosa_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:10.235987+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Outubro rosa youtube",
+        "client": "copacol",
+        "channel": "Youtube",
+        "campaign_key": "copacol_outubro_rosa_youtube",
+        "sheet_id": "18dGYU_hPjQKuCwnkaqWWVYtoZ8yZZZwGwI2r90eml18",
+        "created_at": "2025-10-11T07:13:10.235987+00:00",
+        "_id": "copacol_outubro_rosa_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:20.695000+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Remarketing youtube",
+        "client": "copacol",
+        "channel": "youtube",
+        "campaign_key": "copacol_remarketing_youtube",
+        "sheet_id": "1nDp-VgoMn5En3k40PN4Z-7QgmVrxOGnYo3RkSqNaz_o",
+        "created_at": "2025-10-11T07:12:20.695000+00:00",
+        "_id": "copacol_remarketing_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:31.309496+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Semana do pescado programática",
+        "client": "copacol",
+        "channel": "video programático",
+        "campaign_key": "copacol_semana_do_pescado_programatica",
+        "sheet_id": "1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o",
+        "created_at": "2025-10-11T07:12:31.309496+00:00",
+        "_id": "copacol_semana_do_pescado_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:34.744622+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Semana do pescado youtube",
+        "client": "copacol",
+        "channel": "youtube",
+        "campaign_key": "copacol_semana_do_pescado_youtube",
+        "sheet_id": "1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg",
+        "created_at": "2025-10-11T07:12:34.744622+00:00",
+        "_id": "copacol_semana_do_pescado_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:02.204374+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Video de 30s Campanha Institicional Netflix",
+        "client": "copacol",
+        "channel": "netflix",
+        "campaign_key": "copacol_video_de_30s_campanha_institicional_netflix",
+        "sheet_id": "1SJsug7CXeVS-IobwKdvx168TP001c79hbPrs1nCjJDY",
+        "created_at": "2025-10-11T07:12:02.204374+00:00",
+        "_id": "copacol_video_de_30s_campanha_institicional_netflix"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:49.643548+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Pin Pinterest",
+        "client": "iquine",
+        "channel": "pinterest",
+        "campaign_key": "iquine_pin_pinterest",
+        "sheet_id": "1Kje2ixjZXhfeD8whVKk58Q5vdWpSUv9cABB38tsLeX8",
+        "created_at": "2025-10-11T07:12:49.643548+00:00",
+        "_id": "iquine_pin_pinterest"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:24.503458+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Feira do Empreendedor Programática",
+        "client": "sebrae pr",
+        "channel": "video programático",
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_programatica",
+        "sheet_id": "1scA5ykf49DLobPTAKSL5fNgGMiomcJmgSJqXolV679M",
+        "created_at": "2025-10-11T07:12:24.503458+00:00",
+        "_id": "sebrae_pr_feira_do_empreendedor_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:27.886884+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Feira do Empreendedor Spotify",
+        "client": "sebrae pr",
+        "channel": "spotify",
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_spotify",
+        "sheet_id": "1-rSt7tYoZFdEiGEBM3GIVt928-8OugHa5sPF2XguYp0",
+        "created_at": "2025-10-11T07:12:27.886884+00:00",
+        "_id": "sebrae_pr_feira_do_empreendedor_spotify"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:38.757527+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Institucional Setembro",
+        "client": "sebrae pr",
+        "channel": "video programático",
+        "campaign_key": "sebrae_pr_institucional_setembro",
+        "sheet_id": "1IUUSXaN0Drrdt-7B0IUiMRQK2gT-JtzhCFZvV7e5-V8",
+        "created_at": "2025-10-11T07:12:38.757527+00:00",
+        "_id": "sebrae_pr_institucional_setembro"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:42.092073+00:00",
+        "kpi": "CPV",
+        "campaign_name": "SEBRAE PR NETFLIX",
+        "client": "sebrae pr",
+        "channel": "Netflix",
+        "campaign_key": "sebrae_pr_sebrae_pr_netflix",
+        "sheet_id": "1jEJED9qiA2o_qSS1I7611MUdoycCpzTD4PCk9kVSj2o",
+        "created_at": "2025-10-11T07:12:42.092073+00:00",
+        "_id": "sebrae_pr_sebrae_pr_netflix"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:23.888874+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Geofence - display",
+        "client": "Senai",
+        "channel": "Geofence",
+        "campaign_key": "senai_geofence_display",
+        "sheet_id": "1WvZyWVcPiQQ7koivQ1lwvvDEKdT-iXf6L9OCZSHimPA",
+        "created_at": "2025-10-11T07:13:23.888874+00:00",
+        "_id": "senai_geofence_display"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:20.412979+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Geofence rich media",
+        "client": "senai",
+        "channel": "Geofence",
+        "campaign_key": "senai_geofence_rich_media",
+        "sheet_id": "1c0YAuDwK0747bhDV9FZWlcCbwRSMU6k4t_5Lu02cIXE",
+        "created_at": "2025-10-11T07:13:20.412979+00:00",
+        "_id": "senai_geofence_rich_media"
+      },
+      {
+        "updated_at": "2025-10-11T07:11:58.561151+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Linkedin Sponsored - display",
+        "client": "senai",
+        "channel": "linkedin",
+        "campaign_key": "senai_linkedin_sponsored_display",
+        "sheet_id": "1gTE1FFci84AiIQPhDFo-vyD5yNl6_5ymiuKy7lpzzjE",
+        "created_at": "2025-10-11T07:11:58.561151+00:00",
+        "_id": "senai_linkedin_sponsored_display"
+      },
+      {
+        "updated_at": "2025-10-11T07:11:53.838962+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Linkedin Sponsored - vídeo",
+        "client": "senai",
+        "channel": "linkedin",
+        "campaign_key": "senai_linkedin_sponsored_video",
+        "sheet_id": "131nR7kjKW6Kq57_Qr2jVyGOnBSH-0tO4o-Mp6wVUpPo",
+        "created_at": "2025-10-11T07:11:53.838962+00:00",
+        "_id": "senai_linkedin_sponsored_video"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:06.785022+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Institucional Native",
+        "client": "sesi",
+        "channel": "Native programática",
+        "campaign_key": "sesi_institucional_native",
+        "sheet_id": "1B0yxLCt40BBGRWvnaOlYexmpkuYY4Nf_onyUyHcPmBA",
+        "created_at": "2025-10-11T07:13:06.785022+00:00",
+        "_id": "sesi_institucional_native"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:52.966615+00:00",
+        "kpi": "CPM",
+        "campaign_name": "NR1 Linkedin",
+        "client": "sesi",
+        "channel": "linkedin",
+        "campaign_key": "sesi_nr1_linkedin",
+        "sheet_id": "1XXtwYET9HMJYMopKgBpobKInPgSLcC8Wzbq2gujPvCI",
+        "created_at": "2025-10-11T07:12:52.966615+00:00",
+        "_id": "sesi_nr1_linkedin"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:03.505730+00:00",
+        "kpi": "CPM",
+        "campaign_name": "NR1 Native",
+        "client": "sesi",
+        "channel": "Native programática",
+        "campaign_key": "sesi_nr1_native",
+        "sheet_id": "1BvnI_ewczUzjnMz7NyyQ2EBPufFaprS8Ixm99_Mqg-s",
+        "created_at": "2025-10-11T07:13:03.505730+00:00",
+        "_id": "sesi_nr1_native"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:56.476138+00:00",
+        "kpi": "CPM",
+        "campaign_name": "PGR Linkedin",
+        "client": "sesi",
+        "channel": "linkedin",
+        "campaign_key": "sesi_pgr_linkedin",
+        "sheet_id": "1F8rq-7S6npEMNRgXHpsjOW8t5-LkvO7MrR9y_akan-c",
+        "created_at": "2025-10-11T07:12:56.476138+00:00",
+        "_id": "sesi_pgr_linkedin"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:00.071590+00:00",
+        "kpi": "CPM",
+        "campaign_name": "PGR Native",
+        "client": "sesi",
+        "channel": "Native progrmática",
+        "campaign_key": "sesi_pgr_native",
+        "sheet_id": "1NyChr0Gi3p6K8uuIVFz4H_wtB-ZwALeIuQFZUqlHQKo",
+        "created_at": "2025-10-11T07:13:00.071590+00:00",
+        "_id": "sesi_pgr_native"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:27.216059+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Sabão em pó",
+        "client": "sonho",
+        "channel": "Tiktok",
+        "campaign_key": "sonho_sabao_em_po",
+        "sheet_id": "1P603c-yOPXZF7Pt4GzWHI1A19_FGcwxtEtoaCrCLSzQ",
+        "created_at": "2025-10-11T07:13:27.216059+00:00",
+        "_id": "sonho_sabao_em_po"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:41.270278+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó CTV",
+        "client": "sonho",
+        "channel": "Video programática",
+        "campaign_key": "sonho_sabao_em_po_ctv",
+        "sheet_id": "1aoVXo_Lt003_1WBlwkWdI4-kU38ZE7Rh5CcbgPtubtA",
+        "created_at": "2025-10-11T07:13:41.270278+00:00",
+        "_id": "sonho_sabao_em_po_ctv"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:37.846177+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó Disney",
+        "client": "sonho",
+        "channel": "Disney",
+        "campaign_key": "sonho_sabao_em_po_disney",
+        "sheet_id": "1_JYFqFZcXIFF1dtcLpdZ92HO3gm0wZX5KU02mzxCm8M",
+        "created_at": "2025-10-11T07:13:37.846177+00:00",
+        "_id": "sonho_sabao_em_po_disney"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:34.283864+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó NetFlix",
+        "client": "sonho",
+        "channel": "Netflix",
+        "campaign_key": "sonho_sabao_em_po_netflix",
+        "sheet_id": "1J2kQlhIIC4cMIvkPhkU2UwgPIcCD4zMMhL78PysBFZM",
+        "created_at": "2025-10-11T07:13:34.283864+00:00",
+        "_id": "sonho_sabao_em_po_netflix"
+      },
+      {
+        "updated_at": "2025-10-11T07:13:30.585737+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó YT",
+        "client": "sonho",
+        "channel": "Youtube",
+        "campaign_key": "sonho_sabao_em_po_yt",
+        "sheet_id": "1gbMkhXHiMqCXk-QFzSt8sUbow7rUD4TXbR7Tx0H4i3s",
+        "created_at": "2025-10-11T07:13:30.585737+00:00",
+        "_id": "sonho_sabao_em_po_yt"
+      },
+      {
+        "updated_at": "2025-10-11T07:12:46.244479+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Programática display",
+        "client": "unimed",
+        "channel": "Display programática",
+        "campaign_key": "unimed_programatica_display",
+        "sheet_id": "11pcSI6uwdT4CuSXmkZGBeMfXbgOLH3u96P97H0jEQQ8",
+        "created_at": "2025-10-11T07:12:46.244479+00:00",
+        "_id": "unimed_programatica_display"
+      }
+    ],
+    "dashboards": [
+      {
+        "updated_at": "2025-10-11T04:13:57.382690+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Campanha Institucional de Video de 30s em Youtube",
+        "file_path": "/api/dashboard/copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "channel": "youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "client": "copacol",
+        "dashboard_id": "copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "dashboard_url": "/api/dashboard/copacol_campanha_institucional_de_video_de_30s_em_youtube",
+        "dashboard_name": "copacol - Campanha Institucional de Video de 30s em Youtube",
+        "created_at": "2025-10-11T07:12:06.396561+00:00",
+        "_id": "copacol_campanha_institucional_de_video_de_30s_em_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:02.981325+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Campanha Institucional de Video de 90s em Youtube",
+        "file_path": "/api/dashboard/copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "channel": "youtube",
+        "campaign_key": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "client": "copacol",
+        "dashboard_id": "copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "dashboard_url": "/api/dashboard/copacol_campanha_institucional_de_video_de_90s_em_youtube",
+        "dashboard_name": "copacol - Campanha Institucional de Video de 90s em Youtube",
+        "created_at": "2025-10-11T07:12:10.227895+00:00",
+        "_id": "copacol_campanha_institucional_de_video_de_90s_em_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:08.774583+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Institucional 30s programática",
+        "file_path": "/api/dashboard/copacol_institucional_30s_programatica",
+        "channel": "video programatico",
+        "campaign_key": "copacol_institucional_30s_programatica",
+        "client": "copacol",
+        "dashboard_id": "copacol_institucional_30s_programatica",
+        "dashboard_url": "/api/dashboard/copacol_institucional_30s_programatica",
+        "dashboard_name": "copacol - Institucional 30s programática",
+        "created_at": "2025-10-11T07:12:13.865046+00:00",
+        "_id": "copacol_institucional_30s_programatica"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:13.182895+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Institucional REMARKETING Programática",
+        "file_path": "/api/dashboard/copacol_institucional_remarketing_programatica",
+        "channel": "video programatico",
+        "campaign_key": "copacol_institucional_remarketing_programatica",
+        "client": "copacol",
+        "dashboard_id": "copacol_institucional_remarketing_programatica",
+        "dashboard_url": "/api/dashboard/copacol_institucional_remarketing_programatica",
+        "dashboard_name": "copacol - Institucional REMARKETING Programática",
+        "created_at": "2025-10-11T07:12:17.523127+00:00",
+        "_id": "copacol_institucional_remarketing_programatica"
+      },
+      {
+        "campaign_key": "copacol_institucional_remarketing_video_programatico_90s",
+        "dashboard_id": "copacol_institucional_remarketing_video_programatico_90s",
+        "dashboard_url": "/api/dashboard/copacol_institucional_remarketing_video_programatico_90s",
+        "dashboard_name": "copacol - Institucional REMARKETING Video programatico 90s",
+        "created_at": "2025-10-11T07:13:17.386651+00:00",
+        "file_path": "/api/dashboard/copacol_institucional_remarketing_video_programatico_90s",
+        "_id": "copacol_institucional_remarketing_video_programatico_90s"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:22.520046+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Outubro rosa programática",
+        "file_path": "/api/dashboard/copacol_outubro_rosa_programatica",
+        "channel": "Video programática",
+        "campaign_key": "copacol_outubro_rosa_programatica",
+        "client": "copacol",
+        "dashboard_id": "copacol_outubro_rosa_programatica",
+        "dashboard_url": "/api/dashboard/copacol_outubro_rosa_programatica",
+        "dashboard_name": "copacol - Outubro rosa programática",
+        "created_at": "2025-10-11T07:13:14.018982+00:00",
+        "_id": "copacol_outubro_rosa_programatica"
+      },
+      {
+        "campaign_key": "copacol_outubro_rosa_youtube",
+        "dashboard_id": "copacol_outubro_rosa_youtube",
+        "dashboard_url": "/api/dashboard/copacol_outubro_rosa_youtube",
+        "dashboard_name": "copacol - Outubro rosa youtube",
+        "created_at": "2025-10-11T07:13:10.661893+00:00",
+        "file_path": "/api/dashboard/copacol_outubro_rosa_youtube",
+        "_id": "copacol_outubro_rosa_youtube"
+      },
+      {
+        "campaign_key": "copacol_remarketing_youtube",
+        "dashboard_id": "copacol_remarketing_youtube",
+        "dashboard_url": "/api/dashboard/copacol_remarketing_youtube",
+        "dashboard_name": "copacol - Remarketing youtube",
+        "created_at": "2025-10-11T07:12:21.160425+00:00",
+        "file_path": "/api/dashboard/copacol_remarketing_youtube",
+        "_id": "copacol_remarketing_youtube"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:27.283245+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Semana do pescado programática",
+        "file_path": "/api/dashboard/copacol_semana_do_pescado_programatica",
+        "channel": "video programático",
+        "campaign_key": "copacol_semana_do_pescado_programatica",
+        "client": "copacol",
+        "dashboard_id": "copacol_semana_do_pescado_programatica",
+        "dashboard_url": "/api/dashboard/copacol_semana_do_pescado_programatica",
+        "dashboard_name": "copacol - Semana do pescado programática",
+        "created_at": "2025-10-11T07:12:31.760374+00:00",
+        "_id": "copacol_semana_do_pescado_programatica"
+      },
+      {
+        "campaign_key": "copacol_semana_do_pescado_youtube",
+        "dashboard_id": "copacol_semana_do_pescado_youtube",
+        "dashboard_url": "/api/dashboard/copacol_semana_do_pescado_youtube",
+        "dashboard_name": "copacol - Semana do pescado youtube",
+        "created_at": "2025-10-11T07:12:35.172913+00:00",
+        "file_path": "/api/dashboard/copacol_semana_do_pescado_youtube",
+        "_id": "copacol_semana_do_pescado_youtube"
+      },
+      {
+        "campaign_key": "copacol_video_de_30s_campanha_institicional_netflix",
+        "dashboard_id": "copacol_video_de_30s_campanha_institicional_netflix",
+        "dashboard_url": "/api/dashboard/copacol_video_de_30s_campanha_institicional_netflix",
+        "dashboard_name": "copacol - Video de 30s Campanha Institicional Netflix",
+        "created_at": "2025-10-11T07:12:02.665926+00:00",
+        "file_path": "/api/dashboard/copacol_video_de_30s_campanha_institicional_netflix",
+        "_id": "copacol_video_de_30s_campanha_institicional_netflix"
+      },
+      {
+        "campaign_key": "iquine_pin_pinterest",
+        "dashboard_id": "iquine_pin_pinterest",
+        "dashboard_url": "/api/dashboard/iquine_pin_pinterest",
+        "dashboard_name": "iquine - Pin Pinterest",
+        "created_at": "2025-10-11T07:12:50.067424+00:00",
+        "file_path": "/api/dashboard/iquine_pin_pinterest",
+        "_id": "iquine_pin_pinterest"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:31.716658+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Feira do Empreendedor Programática",
+        "file_path": "/api/dashboard/sebrae_pr_feira_do_empreendedor_programatica",
+        "channel": "video programático",
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_programatica",
+        "client": "sebrae pr",
+        "dashboard_id": "sebrae_pr_feira_do_empreendedor_programatica",
+        "dashboard_url": "/api/dashboard/sebrae_pr_feira_do_empreendedor_programatica",
+        "dashboard_name": "sebrae pr - Feira do Empreendedor Programática",
+        "created_at": "2025-10-11T07:12:24.942053+00:00",
+        "_id": "sebrae_pr_feira_do_empreendedor_programatica"
+      },
+      {
+        "campaign_key": "sebrae_pr_feira_do_empreendedor_spotify",
+        "dashboard_id": "sebrae_pr_feira_do_empreendedor_spotify",
+        "dashboard_url": "/api/dashboard/sebrae_pr_feira_do_empreendedor_spotify",
+        "dashboard_name": "sebrae pr - Feira do Empreendedor Spotify",
+        "created_at": "2025-10-11T07:12:28.392643+00:00",
+        "file_path": "/api/dashboard/sebrae_pr_feira_do_empreendedor_spotify",
+        "_id": "sebrae_pr_feira_do_empreendedor_spotify"
+      },
+      {
+        "campaign_key": "sebrae_pr_institucional_setembro",
+        "dashboard_id": "sebrae_pr_institucional_setembro",
+        "dashboard_url": "/api/dashboard/sebrae_pr_institucional_setembro",
+        "dashboard_name": "sebrae pr - Institucional Setembro",
+        "created_at": "2025-10-11T07:12:39.193058+00:00",
+        "file_path": "/api/dashboard/sebrae_pr_institucional_setembro",
+        "_id": "sebrae_pr_institucional_setembro"
+      },
+      {
+        "campaign_key": "sebrae_pr_sebrae_pr_netflix",
+        "dashboard_id": "sebrae_pr_sebrae_pr_netflix",
+        "dashboard_url": "/api/dashboard/sebrae_pr_sebrae_pr_netflix",
+        "dashboard_name": "sebrae pr - SEBRAE PR NETFLIX",
+        "created_at": "2025-10-11T07:12:42.534760+00:00",
+        "file_path": "/api/dashboard/sebrae_pr_sebrae_pr_netflix",
+        "_id": "sebrae_pr_sebrae_pr_netflix"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:36.281684+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Geofence - display",
+        "file_path": "/api/dashboard/senai_geofence_display",
+        "channel": "Geofence",
+        "campaign_key": "senai_geofence_display",
+        "client": "Senai",
+        "dashboard_id": "senai_geofence_display",
+        "dashboard_url": "/api/dashboard/senai_geofence_display",
+        "dashboard_name": "Senai - Geofence - display",
+        "created_at": "2025-10-11T07:13:24.344727+00:00",
+        "_id": "senai_geofence_display"
+      },
+      {
+        "campaign_key": "senai_geofence_rich_media",
+        "dashboard_id": "senai_geofence_rich_media",
+        "dashboard_url": "/api/dashboard/senai_geofence_rich_media",
+        "dashboard_name": "senai - Geofence rich media",
+        "created_at": "2025-10-11T07:13:20.854857+00:00",
+        "file_path": "/api/dashboard/senai_geofence_rich_media",
+        "_id": "senai_geofence_rich_media"
+      },
+      {
+        "updated_at": "2025-10-11T04:13:48.608718+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Linkedin Sponsored - display",
+        "file_path": "/api/dashboard/senai_linkedin_sponsored_display",
+        "channel": "linkedin",
+        "campaign_key": "senai_linkedin_sponsored_display",
+        "client": "senai",
+        "dashboard_id": "senai_linkedin_sponsored_display",
+        "dashboard_url": "/api/dashboard/senai_linkedin_sponsored_display",
+        "dashboard_name": "senai - Linkedin Sponsored - display",
+        "created_at": "2025-10-11T07:11:59.028611+00:00",
+        "_id": "senai_linkedin_sponsored_display"
+      },
+      {
+        "updated_at": "2025-10-11T04:13:52.972536+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Linkedin Sponsored - vídeo",
+        "file_path": "/api/dashboard/senai_linkedin_sponsored_video",
+        "channel": "linkedin",
+        "campaign_key": "senai_linkedin_sponsored_video",
+        "client": "senai",
+        "dashboard_id": "senai_linkedin_sponsored_video",
+        "dashboard_url": "/api/dashboard/senai_linkedin_sponsored_video",
+        "dashboard_name": "senai - Linkedin Sponsored - vídeo",
+        "created_at": "2025-10-11T07:11:55.369875+00:00",
+        "_id": "senai_linkedin_sponsored_video"
+      },
+      {
+        "campaign_key": "sesi_institucional_native",
+        "dashboard_id": "sesi_institucional_native",
+        "dashboard_url": "/api/dashboard/sesi_institucional_native",
+        "dashboard_name": "sesi - Institucional Native",
+        "created_at": "2025-10-11T07:13:07.246839+00:00",
+        "file_path": "/api/dashboard/sesi_institucional_native",
+        "_id": "sesi_institucional_native"
+      },
+      {
+        "campaign_key": "sesi_nr1_linkedin",
+        "dashboard_id": "sesi_nr1_linkedin",
+        "dashboard_url": "/api/dashboard/sesi_nr1_linkedin",
+        "dashboard_name": "sesi - NR1 Linkedin",
+        "created_at": "2025-10-11T07:12:53.434635+00:00",
+        "file_path": "/api/dashboard/sesi_nr1_linkedin",
+        "_id": "sesi_nr1_linkedin"
+      },
+      {
+        "campaign_key": "sesi_nr1_native",
+        "dashboard_id": "sesi_nr1_native",
+        "dashboard_url": "/api/dashboard/sesi_nr1_native",
+        "dashboard_name": "sesi - NR1 Native",
+        "created_at": "2025-10-11T07:13:03.933671+00:00",
+        "file_path": "/api/dashboard/sesi_nr1_native",
+        "_id": "sesi_nr1_native"
+      },
+      {
+        "campaign_key": "sesi_pgr_linkedin",
+        "dashboard_id": "sesi_pgr_linkedin",
+        "dashboard_url": "/api/dashboard/sesi_pgr_linkedin",
+        "dashboard_name": "sesi - PGR Linkedin",
+        "created_at": "2025-10-11T07:12:56.939012+00:00",
+        "file_path": "/api/dashboard/sesi_pgr_linkedin",
+        "_id": "sesi_pgr_linkedin"
+      },
+      {
+        "campaign_key": "sesi_pgr_native",
+        "dashboard_id": "sesi_pgr_native",
+        "dashboard_url": "/api/dashboard/sesi_pgr_native",
+        "dashboard_name": "sesi - PGR Native",
+        "created_at": "2025-10-11T07:13:00.503923+00:00",
+        "file_path": "/api/dashboard/sesi_pgr_native",
+        "_id": "sesi_pgr_native"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:45.421935+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Sabão em pó",
+        "file_path": "/api/dashboard/sonho_sabao_em_po",
+        "channel": "Tiktok",
+        "campaign_key": "sonho_sabao_em_po",
+        "client": "sonho",
+        "dashboard_id": "sonho_sabao_em_po",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po",
+        "dashboard_name": "sonho - Sabão em pó",
+        "created_at": "2025-10-11T07:13:27.651167+00:00",
+        "_id": "sonho_sabao_em_po"
+      },
+      {
+        "updated_at": "2025-10-11T04:15:05.712319+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó CTV",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_ctv",
+        "channel": "Video programática",
+        "campaign_key": "sonho_sabao_em_po_ctv",
+        "client": "sonho",
+        "dashboard_id": "sonho_sabao_em_po_ctv",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_ctv",
+        "dashboard_name": "sonho - Sabão em pó CTV",
+        "created_at": "2025-10-11T07:13:41.714449+00:00",
+        "_id": "sonho_sabao_em_po_ctv"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:58.790735+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó Disney",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_disney",
+        "channel": "Disney",
+        "campaign_key": "sonho_sabao_em_po_disney",
+        "client": "sonho",
+        "dashboard_id": "sonho_sabao_em_po_disney",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_disney",
+        "dashboard_name": "sonho - Sabão em pó Disney",
+        "created_at": "2025-10-11T07:13:38.290404+00:00",
+        "_id": "sonho_sabao_em_po_disney"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:54.392594+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó NetFlix",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_netflix",
+        "channel": "Netflix",
+        "campaign_key": "sonho_sabao_em_po_netflix",
+        "client": "sonho",
+        "dashboard_id": "sonho_sabao_em_po_netflix",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_netflix",
+        "dashboard_name": "sonho - Sabão em pó NetFlix",
+        "created_at": "2025-10-11T07:13:34.705359+00:00",
+        "_id": "sonho_sabao_em_po_netflix"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:49.903851+00:00",
+        "kpi": "CPV",
+        "campaign_name": "Sabão em pó YT",
+        "file_path": "/api/dashboard/sonho_sabao_em_po_yt",
+        "channel": "Youtube",
+        "campaign_key": "sonho_sabao_em_po_yt",
+        "client": "sonho",
+        "dashboard_id": "sonho_sabao_em_po_yt",
+        "dashboard_url": "/api/dashboard/sonho_sabao_em_po_yt",
+        "dashboard_name": "sonho - Sabão em pó YT",
+        "created_at": "2025-10-11T07:13:31.153800+00:00",
+        "_id": "sonho_sabao_em_po_yt"
+      },
+      {
+        "updated_at": "2025-10-11T04:14:40.941672+00:00",
+        "kpi": "CPM",
+        "campaign_name": "Programática display",
+        "file_path": "/api/dashboard/unimed_programatica_display",
+        "channel": "Display programática",
+        "campaign_key": "unimed_programatica_display",
+        "client": "unimed",
+        "dashboard_id": "unimed_programatica_display",
+        "dashboard_url": "/api/dashboard/unimed_programatica_display",
+        "dashboard_name": "unimed - Programática display",
+        "created_at": "2025-10-11T07:12:46.686997+00:00",
+        "_id": "unimed_programatica_display"
+      }
+    ]
+  }
+}
