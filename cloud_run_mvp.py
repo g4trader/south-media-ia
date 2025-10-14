@@ -1224,7 +1224,13 @@ def get_dashboard_html(campaign_key):
 def get_campaign_data(campaign_key):
     """Obter dados de uma campanha específica"""
     try:
-        campaign = db_manager.get_campaign(campaign_key)
+        # Buscar campanha do Firestore
+        campaign = None
+        if bq_fs_manager:
+            doc = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(campaign_key).get()
+            if doc.exists:
+                campaign = doc.to_dict()
+        
         if not campaign:
             return jsonify({"success": False, "message": f"Campanha '{campaign_key}' não encontrada"}), 404
         
