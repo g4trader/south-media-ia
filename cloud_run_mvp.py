@@ -46,12 +46,13 @@ except Exception as e:
 
 class CampaignConfig:
     """Configuração de uma campanha"""
-    def __init__(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, tabs: Optional[Dict] = None):
+    def __init__(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None, tabs: Optional[Dict] = None):
         self.campaign_key = campaign_key
         self.client = client
         self.campaign_name = campaign_name
         self.sheet_id = sheet_id
         self.channel = channel or "Video Programática"
+        self.kpi = kpi or "CPV"
         self.tabs = tabs or {
             'report': 'Report',
             'contract': 'Informações de contrato',
@@ -450,6 +451,9 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         elif kpi.upper() == 'CPV':
             template_path = 'static/dash_generic_template.html'
             logger.info(f"🎯 Usando template CPV para: {campaign_name} (KPI: {kpi})")
+        elif kpi.upper() == 'CPE':
+            template_path = 'static/dash_generic_cpe_template.html'
+            logger.info(f"🎯 Usando template CPE para: {campaign_name} (KPI: {kpi})")
         else:
             logger.info(f"🎯 Usando template genérico para: {campaign_name} (KPI: {kpi})")
         
@@ -992,6 +996,7 @@ def dash_generator_pro():
             <label for="kpi">KPI Contratado:</label>
             <select id="kpi" name="kpi" required>
                 <option value="CPV">CPV - Custo por View (Complete Views)</option>
+                <option value="CPE">CPE - Custo por Escuta (Audio Listens)</option>
                 <option value="CPM">CPM - Custo por Mil Impressões</option>
                 <option value="CPC">CPC - Custo por Clique</option>
                 <option value="CPA">CPA - Custo por Aquisição</option>
@@ -1191,7 +1196,8 @@ def get_dashboard_html(campaign_key):
             client=campaign['client'],
             campaign_name=campaign['campaign_name'],
             sheet_id=campaign['sheet_id'],
-            channel=campaign.get('channel')
+            channel=campaign.get('channel'),
+            kpi=campaign.get('kpi')
         )
         
         extractor = RealGoogleSheetsExtractor(config)
@@ -1224,7 +1230,8 @@ def get_campaign_data(campaign_key):
             client=campaign['client'],
             campaign_name=campaign['campaign_name'],
             sheet_id=campaign['sheet_id'],
-            channel=campaign.get('channel')
+            channel=campaign.get('channel'),
+            kpi=campaign.get('kpi')
         )
         
         extractor = RealGoogleSheetsExtractor(config)
@@ -1300,6 +1307,9 @@ def generate_dynamic_dashboard_html(campaign, data):
         if kpi == 'CPM':
             template_path = os.path.join('static', 'dash_remarketing_cpm_template.html')
             logger.info(f"🎯 Usando template CPM para dashboard dinâmico: {campaign['campaign_name']}")
+        elif kpi == 'CPE':
+            template_path = os.path.join('static', 'dash_generic_cpe_template.html')
+            logger.info(f"🎯 Usando template CPE para dashboard dinâmico: {campaign['campaign_name']}")
         else:
             template_path = os.path.join('static', 'dash_generic_template.html')
             logger.info(f"🎯 Usando template genérico para dashboard dinâmico: {campaign['campaign_name']}")
@@ -1354,6 +1364,82 @@ if __name__ == '__main__':
         logger.info("🔧 Iniciando servidor Flask para desenvolvimento")
         app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
 
+@app.route('/api/cleanup-orphans', methods=['POST'])
+def cleanup_orphans():
+    """Limpar dados órfãos - SOLUÇÃO DEFINITIVA"""
+    try:
+        logger.info("🧹 INICIANDO LIMPEZA DEFINITIVA DE DADOS ÓRFÃOS")
+        
+        # Identificar campanhas de teste
+        test_keywords = ['teste', 'test', 'debug', 'local', 'git', 'commit', 'e2e', 'validação', 'interface', 'logs']
+        
+        campaigns = bq_fs_manager.get_all_campaigns()
+        test_campaigns = []
+        production_campaigns = []
+        
+        for campaign in campaigns:
+            client = campaign.get('client', '').lower()
+            campaign_name = campaign.get('campaign_name', '').lower()
+            
+            is_test = any(keyword in client or keyword in campaign_name for keyword in test_keywords)
+            
+            if is_test:
+                test_campaigns.append(campaign)
+            else:
+                production_campaigns.append(campaign)
+        
+        logger.info(f"📊 Campanhas de teste: {len(test_campaigns)}")
+        logger.info(f"📊 Campanhas de produção: {len(production_campaigns)}")
+        
+        # Remover campanhas de teste
+        removed_count = 0
+        for campaign in test_campaigns:
+            try:
+                campaign_key = campaign.get('campaign_key')
+                if campaign_key:
+                    # Remover do Firestore
+                    bq_fs_manager.fs_client.collection('campaigns').document(campaign_key).delete()
+                    removed_count += 1
+                    logger.info(f"✅ Removida: {campaign_key}")
+            except Exception as e:
+                logger.error(f"❌ Erro ao remover {campaign_key}: {e}")
+        
+        # Corrigir KPIs das campanhas de produção
+        updated_count = 0
+        for campaign in production_campaigns:
+            try:
+                channel = campaign.get('channel', '').lower()
+                campaign_key = campaign.get('campaign_key')
+                
+                # Determinar KPI baseado no canal
+                if 'youtube' in channel or 'video programática' in channel:
+                    kpi = 'CPV'
+                elif 'display' in channel or 'native' in channel or 'linkedin' in channel or 'netflix' in channel:
+                    kpi = 'CPM'
+                else:
+                    kpi = 'CPV'
+                
+                # Atualizar KPI
+                if campaign_key:
+                    bq_fs_manager.fs_client.collection('campaigns').document(campaign_key).update({'kpi': kpi})
+                    updated_count += 1
+                    logger.info(f"✅ KPI atualizado: {campaign_key} -> {kpi}")
+            except Exception as e:
+                logger.error(f"❌ Erro ao atualizar {campaign_key}: {e}")
+        
+        logger.info(f"🎉 LIMPEZA CONCLUÍDA: {removed_count} removidas, {updated_count} atualizadas")
+        
+        return jsonify({
+            'success': True,
+            'removed_campaigns': removed_count,
+            'updated_campaigns': updated_count,
+            'message': f'Limpeza definitiva concluída: {removed_count} campanhas de teste removidas, {updated_count} KPIs corrigidos'
+        })
+    
+    except Exception as e:
+        logger.error(f"❌ Erro na limpeza: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/dashboards-list')
 def dashboards_list():
     """Página de listagem de dashboards"""
@@ -1369,9 +1455,14 @@ def dashboards_list():
                 
                 for doc in dashboard_docs:
                     data = doc.to_dict()
+                    # Filtrar dashboards de teste
+                    client = data.get('client', 'N/A')
+                    if client.lower().startswith('teste'):
+                        continue
+                    
                     dashboards.append({
                         'campaign_key': doc.id,
-                        'client': data.get('client', 'N/A'),
+                        'client': client,
                         'campaign_name': data.get('campaign_name', 'N/A'),
                         'channel': data.get('channel', 'N/A'),
                         'kpi': data.get('kpi', 'N/A'),
@@ -1753,6 +1844,7 @@ def dashboards_list():
                         <option value="">Todos os KPIs</option>
                         <option value="CPM">CPM</option>
                         <option value="CPV">CPV</option>
+                        <option value="CPE">CPE</option>
                     </select>
                 </div>
                 <div class="filter-group">
