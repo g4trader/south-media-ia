@@ -88,7 +88,7 @@ class RealGoogleSheetsExtractor:
                 "daily_data": daily_data,
                 "publishers": self._extract_publishers_data(),
                 "strategies": self._extract_strategies_data(),
-                "insights": self._generate_insights(total_metrics),
+                "insights": self._generate_insights(total_metrics, self.config.kpi),
                 "last_updated": datetime.now().isoformat(),
                 "data_source": "google_sheets_real"
             }
@@ -562,7 +562,7 @@ class RealGoogleSheetsExtractor:
         except ValueError:
             return "Erro de Data"
     
-    def _generate_insights(self, metrics: Dict) -> list:
+    def _generate_insights(self, metrics: Dict, kpi: str = 'CPV') -> list:
         """Gerar insights baseados nas métricas"""
         insights = []
         
@@ -573,10 +573,13 @@ class RealGoogleSheetsExtractor:
         else:
             insights.append("✅ Campanha está no pacing ideal")
         
+        # Determinar se é CPE ou CPV baseado no KPI
+        kpi_type = "CPE" if kpi.upper() == 'CPE' else "CPV"
+        
         if metrics['cpv'] > metrics['cpv_contracted']:
-            insights.append(f"📊 CPV atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
+            insights.append(f"📊 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
         else:
-            insights.append(f"💰 CPV atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
+            insights.append(f"💰 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
         
         if metrics['vtr'] > 70:
             insights.append("🎯 VTR excelente - audiência altamente engajada")
