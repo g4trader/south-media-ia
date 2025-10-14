@@ -1314,11 +1314,11 @@ def generate_dynamic_dashboard_html(campaign, data):
     """Gerar HTML dinâmico do dashboard (réplica da produção)"""
     try:
         # Selecionar template baseado no KPI da campanha
-        kpi = campaign.get('kpi', 'CPV').upper()
-        if kpi == 'CPM':
+        kpi = campaign.get('kpi', 'CPV')
+        if kpi.upper() == 'CPM':
             template_path = os.path.join('static', 'dash_remarketing_cpm_template.html')
             logger.info(f"🎯 Usando template CPM para dashboard dinâmico: {campaign['campaign_name']}")
-        elif kpi == 'CPE':
+        elif kpi.upper() == 'CPE':
             template_path = os.path.join('static', 'dash_generic_cpe_template.html')
             logger.info(f"🎯 Usando template CPE para dashboard dinâmico: {campaign['campaign_name']}")
         else:
