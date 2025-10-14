@@ -1336,9 +1336,11 @@ def generate_dynamic_dashboard_html(campaign, data):
         # Definir o apiEndpoint correto baseado no ambiente
         environment = os.environ.get('ENVIRONMENT', 'staging')
         if environment == 'production':
-            api_endpoint = 'https://gen-dashboard-ia-6f3ckz7c7q-uc.a.run.app'
-        else:
-            api_endpoint = 'https://stg-gen-dashboard-ia-6f3ckz7c7q-uc.a.run.app'
+            api_endpoint = 'https://gen-dashboard-ia-609095880025.us-central1.run.app'
+        elif environment == 'hml':
+            api_endpoint = 'https://hml-gen-dashboard-ia-609095880025.us-central1.run.app'
+        else:  # staging
+            api_endpoint = 'https://stg-gen-dashboard-ia-609095880025.us-central1.run.app'
         
         html_content = html_content.replace('{{API_ENDPOINT}}', api_endpoint)
         
@@ -1987,4 +1989,6 @@ def dashboards_list():
         
     except Exception as e:
         logger.error(f"❌ Erro ao carregar listagem de dashboards: {e}")
+        return f"<h1>Erro ao carregar dashboards</h1><p>Erro: {str(e)}</p>", 500
+
         return f"<h1>Erro ao carregar dashboards</h1><p>Erro: {str(e)}</p>", 500
