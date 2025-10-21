@@ -1673,19 +1673,33 @@ class FilterBar {
   }
 
   setDefaultDates() {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    
-    this.startDate = this.formatDateForInput(thirtyDaysAgo);
-    this.endDate = this.formatDateForInput(today);
-    
-    // Atualizar inputs se existirem
-    const startDateInput = document.getElementById('filter-start-date');
-    const endDateInput = document.getElementById('filter-end-date');
-    
-    if (startDateInput) startDateInput.value = this.startDate;
-    if (endDateInput) endDateInput.value = this.endDate;
+    // Se o filtro ativo é 'todos', não definir datas
+    if (this.activeFilter === 'todos') {
+      this.startDate = null;
+      this.endDate = null;
+      
+      // Limpar inputs se existirem
+      const startDateInput = document.getElementById('filter-start-date');
+      const endDateInput = document.getElementById('filter-end-date');
+      
+      if (startDateInput) startDateInput.value = '';
+      if (endDateInput) endDateInput.value = '';
+    } else {
+      // Para outros filtros, definir datas padrão
+      const today = new Date();
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      
+      this.startDate = this.formatDateForInput(thirtyDaysAgo);
+      this.endDate = this.formatDateForInput(today);
+      
+      // Atualizar inputs se existirem
+      const startDateInput = document.getElementById('filter-start-date');
+      const endDateInput = document.getElementById('filter-end-date');
+      
+      if (startDateInput) startDateInput.value = this.startDate;
+      if (endDateInput) endDateInput.value = this.endDate;
+    }
   }
 
   handleQuickFilter(filterType) {
