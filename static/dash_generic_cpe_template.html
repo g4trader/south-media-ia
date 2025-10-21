@@ -1183,13 +1183,13 @@ class DashboardLoader {
         const total_completions = summary.total_video_completions || 0;
         const vtr = summary.vtr || 0;
         
-        // Dados dos quartis - Para Spotify/Áudio, usar total_completions como base
-        const base_total = total_completions > 0 ? total_completions : (q25_total + q50_total + q75_total) / 3;
+        // Dados dos quartis - Usar total_starts como base (coluna video_starts da planilha)
+        const base_total = total_starts > 0 ? total_starts : 1; // Evitar divisão por zero
         const quartis = [
-            { label: '25% ESCUTADOS', value: q25_total, percent: base_total > 0 ? (q25_total / base_total * 100) : 0 },
-            { label: '50% ESCUTADOS', value: q50_total, percent: base_total > 0 ? (q50_total / base_total * 100) : 0 },
-            { label: '75% ESCUTADOS', value: q75_total, percent: base_total > 0 ? (q75_total / base_total * 100) : 0 },
-            { label: '100% ESCUTADOS', value: total_completions, percent: base_total > 0 ? (total_completions / base_total * 100) : 0 }
+            { label: '25% ESCUTADOS', value: q25_total, percent: (q25_total / base_total * 100) },
+            { label: '50% ESCUTADOS', value: q50_total, percent: (q50_total / base_total * 100) },
+            { label: '75% ESCUTADOS', value: q75_total, percent: (q75_total / base_total * 100) },
+            { label: '100% ESCUTADOS', value: total_completions, percent: (total_completions / base_total * 100) }
         ];
         
         quartisGrid.innerHTML = quartis.map(q => {
