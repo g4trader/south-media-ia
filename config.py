@@ -35,7 +35,7 @@ class EnvironmentConfig:
         
         if self.environment == 'production':
             return {
-                'api_endpoint': 'https://mvp-dashboard-builder-609095880025.us-central1.run.app',
+                'api_endpoint': 'https://gen-dashboard-ia-6f3ckz7c7q-uc.a.run.app',
                 'git_manager_url': None,  # Desativado para evitar instabilidade
                 'debug': False,
                 'port': int(os.environ.get('PORT', 8080))
