@@ -339,6 +339,9 @@ class RealGoogleSheetsExtractor:
                     contract_data["period_start"] = periodo
                     contract_data["period_end"] = periodo
             
+            # Debug: Log do período extraído
+            logger.info(f"📅 Período extraído da planilha: '{periodo}' -> Início: {contract_data.get('period_start')}, Fim: {contract_data.get('period_end')}")
+            
             logger.info("✅ Dados de contrato extraídos com sucesso")
             return contract_data
             
