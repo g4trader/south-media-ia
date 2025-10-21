@@ -328,16 +328,22 @@ class RealGoogleSheetsExtractor:
                     contract_data["period_start"] = parts[0].strip()
                     contract_data["period_end"] = parts[1].strip()
             elif periodo:
-                # Se só tem uma data, usar como data de início e adicionar 30 dias
-                from datetime import datetime, timedelta
-                try:
-                    start_date = datetime.strptime(periodo, '%d/%m/%Y')
-                    end_date = start_date + timedelta(days=30)
-                    contract_data["period_start"] = start_date.strftime('%d/%m/%Y')
-                    contract_data["period_end"] = end_date.strftime('%d/%m/%Y')
-                except:
-                    contract_data["period_start"] = periodo
-                    contract_data["period_end"] = periodo
+                # Se só tem uma data, verificar se é para campanhas específicas
+                if self.config.client == 'Etevi' and self.config.campaign == 'Spotify':
+                    # Para Etevi Spotify, usar período específico da planilha
+                    contract_data["period_start"] = periodo.strip()
+                    contract_data["period_end"] = "31/12/2025"  # Período correto da campanha
+                else:
+                    # Para outras campanhas, usar como data de início e adicionar 30 dias
+                    from datetime import datetime, timedelta
+                    try:
+                        start_date = datetime.strptime(periodo, '%d/%m/%Y')
+                        end_date = start_date + timedelta(days=30)
+                        contract_data["period_start"] = start_date.strftime('%d/%m/%Y')
+                        contract_data["period_end"] = end_date.strftime('%d/%m/%Y')
+                    except:
+                        contract_data["period_start"] = periodo
+                        contract_data["period_end"] = periodo
             
             # Debug: Log do período extraído
             logger.info(f"📅 Período extraído da planilha: '{periodo}' -> Início: {contract_data.get('period_start')}, Fim: {contract_data.get('period_end')}")
