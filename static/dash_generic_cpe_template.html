@@ -1016,7 +1016,17 @@ class DashboardLoader {
     updateCampaignPeriod(data) {
         const periodDisplay = document.getElementById('period-display');
         if (periodDisplay && data.campaign_summary && data.campaign_summary.period) {
-            periodDisplay.textContent = `Período: ${data.campaign_summary.period}`;
+            // Verificar se o filtro "Todos" está ativo
+            const todosButton = document.querySelector('[data-filter="todos"]');
+            const isTodosActive = todosButton && todosButton.classList.contains('active');
+            
+            if (isTodosActive) {
+                // Se "Todos" está ativo, não mostrar período específico
+                periodDisplay.textContent = 'Período: Todos os dados';
+            } else {
+                // Caso contrário, mostrar período da campanha
+                periodDisplay.textContent = `Período: ${data.campaign_summary.period}`;
+            }
         }
     }
 
