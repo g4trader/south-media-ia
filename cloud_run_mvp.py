@@ -1344,14 +1344,8 @@ def generate_dynamic_dashboard_html(campaign, data):
         html_content = html_content.replace('{{CAMPAIGN_DESCRIPTION}}', f'Dashboard de performance para a campanha {campaign_name} do cliente {client}')
         html_content = html_content.replace('{{PRIMARY_CHANNEL}}', campaign.get('channel', 'Video Programática'))
         
-        # Definir o apiEndpoint correto baseado no ambiente
-        environment = os.environ.get('ENVIRONMENT', 'staging')
-        if environment == 'production':
-            api_endpoint = 'https://gen-dashboard-ia-609095880025.us-central1.run.app'
-        elif environment == 'hml':
-            api_endpoint = 'https://hml-gen-dashboard-ia-609095880025.us-central1.run.app'
-        else:  # staging
-            api_endpoint = 'https://stg-gen-dashboard-ia-609095880025.us-central1.run.app'
+        # Usar o endpoint configurado do config.py
+        api_endpoint = get_api_endpoint()
         
         html_content = html_content.replace('{{API_ENDPOINT}}', api_endpoint)
         
