@@ -1008,6 +1008,16 @@ class DashboardLoader {
                     </div>
             `;
         }
+        
+        // Atualizar período da campanha
+        this.updateCampaignPeriod(data);
+    }
+    
+    updateCampaignPeriod(data) {
+        const periodDisplay = document.getElementById('period-display');
+        if (periodDisplay && data.campaign_summary && data.campaign_summary.period) {
+            periodDisplay.textContent = `Período: ${data.campaign_summary.period}`;
+        }
     }
 
     renderCharts(data) {

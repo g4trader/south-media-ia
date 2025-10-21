@@ -285,7 +285,7 @@ class RealGoogleSheetsExtractor:
                 # Para campanhas CPE sem aba de contrato, usar dados padrão baseados nos dados da planilha
                 return self._generate_default_contract_data()
             
-            range_name = f"{contract_sheet}!A:B"
+            range_name = f"{contract_sheet}!A:C"
             result = self.service.spreadsheets().values().get(
                 spreadsheetId=self.config.sheet_id,
                 range=range_name
@@ -304,6 +304,12 @@ class RealGoogleSheetsExtractor:
                     value = str(row[1]).strip()
                     if key and value and value.lower() != 'nan':
                         contract_dict[key] = value
+                        
+                        # Se for "Periodo de veiculação" e houver valor na coluna C, adicionar como _fim
+                        if key == "Periodo de veiculação" and len(row) >= 3:
+                            periodo_fim = str(row[2]).strip()
+                            if periodo_fim and periodo_fim.lower() != 'nan':
+                                contract_dict[f"{key}_fim"] = periodo_fim
             
             logger.info(f"📋 Dados de contrato encontrados: {list(contract_dict.keys())}")
             
@@ -320,30 +326,31 @@ class RealGoogleSheetsExtractor:
                 "period_end": None
             }
             
-            # Extrair período
+            # Extrair período - verificar se há data de fim na célula adjacente
             periodo = contract_dict.get("Periodo de veiculação", "")
+            periodo_fim = contract_dict.get("Periodo de veiculação_fim", "")  # Célula C8
+            
             if periodo and ' a ' in periodo:
+                # Formato: "13/10/2025 a 31/12/2025"
                 parts = periodo.split(' a ')
                 if len(parts) == 2:
                     contract_data["period_start"] = parts[0].strip()
                     contract_data["period_end"] = parts[1].strip()
+            elif periodo and periodo_fim:
+                # Formato: B8="13/10/2025", C8="31/12/2025"
+                contract_data["period_start"] = periodo.strip()
+                contract_data["period_end"] = periodo_fim.strip()
             elif periodo:
-                # Se só tem uma data, verificar se é para campanhas específicas
-                if self.config.client == 'Etevi' and self.config.campaign == 'Spotify':
-                    # Para Etevi Spotify, usar período específico da planilha
-                    contract_data["period_start"] = periodo.strip()
-                    contract_data["period_end"] = "31/12/2025"  # Período correto da campanha
-                else:
-                    # Para outras campanhas, usar como data de início e adicionar 30 dias
-                    from datetime import datetime, timedelta
-                    try:
-                        start_date = datetime.strptime(periodo, '%d/%m/%Y')
-                        end_date = start_date + timedelta(days=30)
-                        contract_data["period_start"] = start_date.strftime('%d/%m/%Y')
-                        contract_data["period_end"] = end_date.strftime('%d/%m/%Y')
-                    except:
-                        contract_data["period_start"] = periodo
-                        contract_data["period_end"] = periodo
+                # Se só tem uma data, usar como data de início e adicionar 30 dias
+                from datetime import datetime, timedelta
+                try:
+                    start_date = datetime.strptime(periodo, '%d/%m/%Y')
+                    end_date = start_date + timedelta(days=30)
+                    contract_data["period_start"] = start_date.strftime('%d/%m/%Y')
+                    contract_data["period_end"] = end_date.strftime('%d/%m/%Y')
+                except:
+                    contract_data["period_start"] = periodo
+                    contract_data["period_end"] = periodo
             
             # Debug: Log do período extraído
             logger.info(f"📅 Período extraído da planilha: '{periodo}' -> Início: {contract_data.get('period_start')}, Fim: {contract_data.get('period_end')}")
