@@ -87,6 +87,15 @@ function initializeFootfallOutContent() {
         initializeFootfallOutMap();
         initializeFootfallOutChart();
         updateFootfallOutTopStores();
+        // reforços em caso de atraso de layout
+        setTimeout(() => {
+            initializeFootfallOutChart();
+            updateFootfallOutTopStores();
+        }, 600);
+        setTimeout(() => {
+            initializeFootfallOutChart();
+            updateFootfallOutTopStores();
+        }, 1200);
     }, 300);
 }
 
@@ -459,6 +468,10 @@ function initializeFootfallOutMap() {
         setTimeout(()=>{
             map.invalidateSize();
             window._outMapInitInProgress = false;
+            // garantir atualização do ranking após o mapa
+            if (typeof updateFootfallOutTopStores === 'function') {
+              try { updateFootfallOutTopStores(); } catch(_){}
+            }
         }, 150);
     });
 }
@@ -492,6 +505,11 @@ function updateFootfallOutTopStores() {
     if (!container) return;
     const data = (typeof FOOTFALL_OUT_POINTS !== 'undefined' ? FOOTFALL_OUT_POINTS : []);
     const top5 = [...data].sort((a,b)=> Number(b.users) - Number(a.users)).slice(0,5);
+    if (top5.length === 0) {
+      // tenta novamente quando dados ainda não disponíveis/renderizados
+      setTimeout(updateFootfallOutTopStores, 200);
+      return;
+    }
     container.innerHTML = top5.map((store, idx) => `
       <div class="store-item" style="display:flex;justify-content:space-between;align-items:center;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
         <div style="display:flex;align-items:center;gap:0.75rem;">
@@ -1703,7 +1721,10 @@ const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFix
 
 // Tabs
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  // debounce click handler to avoid double inits
+  let tabClickLock = false;
+  const onTabClick = (t)=>{
+    if (tabClickLock) return; tabClickLock = true; setTimeout(()=>tabClickLock=false, 150);
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     const id = t.dataset.tab;
@@ -1713,18 +1734,25 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar Footfall Set quando a aba for clicada
     if (id === 'footfall-set') {
-      initializeFootfallContent();
+      if (!window._setInitDone) {
+        window._setInitDone = true;
+        requestAnimationFrame(()=>initializeFootfallContent());
+      }
     }
     
     // Inicializar Footfall Out quando a aba for clicada
     if (id === 'footfall-out') {
-      initializeFootfallOutContent();
+      if (!window._outInitDone) {
+        window._outInitDone = true;
+        requestAnimationFrame(()=>initializeFootfallOutContent());
+      }
       // Garantir inicialização do mapa mesmo se houver versões antigas da função
       if (typeof initializeFootfallOutMap === 'function') {
         setTimeout(initializeFootfallOutMap, 50);
       }
     }
-  }));
+  };
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>onTabClick(t)));
 });
 
 // OVERVIEW
@@ -2525,20 +2553,17 @@ function initializeFootfallOutContent() {
 document.addEventListener('DOMContentLoaded', function() {
     if (isInitialized) return;
     isInitialized = true;
-    
     console.log('Dashboard carregado, inicializando...');
-    
-    setTimeout(() => {
+    const runInit = () => {
         console.log('Inicializando métricas...');
-        
-        if (typeof updateFootfallMetrics === 'function') {
-            updateFootfallMetrics();
-        }
-        
-        if (typeof updateFootfallOutMetrics === 'function') {
-            updateFootfallOutMetrics();
-        }
-    }, 2000);
+        if (typeof updateFootfallMetrics === 'function') updateFootfallMetrics();
+        if (typeof updateFootfallOutMetrics === 'function') updateFootfallOutMetrics();
+    };
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(runInit, { timeout: 1000 });
+    } else {
+        requestAnimationFrame(runInit);
+    }
 });
 
 // Dados de setembro (Footfall Set)
