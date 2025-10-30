@@ -1,0 +1,97 @@
+{
+  "last_updated": "2024-10-27",
+  "source": "https://docs.google.com/spreadsheets/d/1etGnblqr5YZIqXIweKj5qTMGqmWlxL9OLbN_Ss5tzlQ/edit?gid=120680471#gid=120680471",
+  "data": [
+    {
+      "lat": -8.09233930867147,
+      "lon": -34.88847507746984,
+      "name": "Recibom - Av. Eng. Domingos Ferreira, 306 - Pina",
+      "users": 5673,
+      "rate": 12.1
+    },
+    {
+      "lat": -8.13196914950721,
+      "lon": -34.89069687730163,
+      "name": "Recibom boa viagem - R. Barão de Souza Leão, 767 - Boa Viagem, Recife - PE, 51030-300",
+      "users": 6731,
+      "rate": 12.5
+    },
+    {
+      "lat": -8.04591568467357,
+      "lon": -34.89092152269836,
+      "name": "Recibom - Torre - Rua Conde de Irajá, 632 - Torre, Recife - PE, 50710-310",
+      "users": 5101,
+      "rate": 11.9
+    },
+    {
+      "lat": -8.047434924792,
+      "lon": -34.9001621153442,
+      "name": "Recibom - Graças - Av. Rui Barbosa, 551 - Graças, Recife - PE, 52011-040",
+      "users": 4681,
+      "rate": 9.9
+    },
+    {
+      "lat": -8.02988247354862,
+      "lon": -34.9066516730163,
+      "name": "Recibom - Parnamirim - Estr. do Arraial, 2668 - Tamarineira, Recife - PE, 52051-380",
+      "users": 5693,
+      "rate": 11.5
+    },
+    {
+      "lat": -8.11993224900449,
+      "lon": -34.89009126846557,
+      "name": "Recibom - Boa Viagem - R. Prof. João Medeiros, 261 - Boa Viagem, Recife - PE, 51021-050",
+      "users": 6731,
+      "rate": 12.9
+    },
+    {
+      "lat": -8.14254391419425,
+      "lon": -34.9081091134918,
+      "name": "Recibom - Setúbal - R. João Cardoso Aires, 407 - Boa Viagem, Recife - PE, 51130-300",
+      "users": 2389,
+      "rate": 4.4
+    },
+    {
+      "lat": -8.0281307802215,
+      "lon": -34.89025068846557,
+      "name": "Recibom - Encruzilhada - Av. Norte Miguel Arraes de Alencar, S/N - Encruzilhada, Recife - PE, 52041-005",
+      "users": 3562,
+      "rate": 6.7
+    },
+    {
+      "lat": -7.9956677243255,
+      "lon": -34.88464921711639,
+      "name": "Recibom - Olinda - Av. Carlos de Lima Cavalcante, 515 - Bultrins, Olinda - PE, 53030-260",
+      "users": 5631,
+      "rate": 9.3
+    },
+    {
+      "lat": -8.18360115521895,
+      "lon": -34.8919450028836,
+      "name": "Recibom - Piedade - Av. Bernardo Vieira de Melo, 3454 - Piedade, Jaboatão dos Guararapes - PE, 54410-010",
+      "users": 3012,
+      "rate": 10.2
+    },
+    {
+      "lat": -8.18233405479681,
+      "lon": -34.9182002385581,
+      "name": "Recibom - Piedade -Av. Ayrton Senna da Silva, 2851 - Piedade, Jaboatão dos Guararapes - PE, 54410-400",
+      "users": 1121,
+      "rate": 9.31
+    },
+    {
+      "lat": -8.01836781970679,
+      "lon": -34.9962135137705,
+      "name": "Recibom - Timbi, Camaragibe - PE, 54765-290",
+      "users": 891,
+      "rate": 9.8
+    }
+  ],
+  "metrics": {
+    "total_users": 51216,
+    "active_stores": 12,
+    "avg_conversion": 10.0,
+    "best_store": "Recibom boa viagem - R. Barão de Souza Leão, 767 - Boa Viagem, Recife - PE, 51030-300",
+    "best_store_users": 6731
+  }
+}

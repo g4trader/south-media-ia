@@ -989,6 +989,7 @@ def dash_generator_pro():
                 <option value="Spotify">Spotify</option>
                 <option value="Geofence">Geofence</option>
                 <option value="Waze">Waze</option>
+                <option value="CTV">CTV</option>
             </select>
         </div>
         
@@ -1419,7 +1420,7 @@ def cleanup_orphans():
                 campaign_key = campaign.get('campaign_key')
                 
                 # Determinar KPI baseado no canal
-                if 'youtube' in channel or 'video programática' in channel:
+                if 'youtube' in channel or 'video programática' in channel or 'ctv' in channel:
                     kpi = 'CPV'
                 elif 'display' in channel or 'native' in channel or 'linkedin' in channel or 'netflix' in channel:
                     kpi = 'CPM'
