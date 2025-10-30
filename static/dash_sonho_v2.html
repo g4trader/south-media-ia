@@ -479,25 +479,59 @@ function initializeFootfallOutMap() {
 function initializeFootfallOutChart() {
     const canvas = document.getElementById('footfall-out-performanceChart');
     if (!canvas) return;
+
+    const container = canvas.parentElement;
+    const hasSize = container && container.offsetWidth > 0 && container.offsetHeight > 0;
+    if (!hasSize) {
+        // tentar novamente quando houver layout
+        setTimeout(initializeFootfallOutChart, 200);
+        return;
+    }
+
+    // Ajustar tamanho explícito para evitar altura zero
+    const desiredHeight = Math.max(300, container.offsetHeight || 300);
+    canvas.style.width = '100%';
+    canvas.style.height = desiredHeight + 'px';
+    canvas.width = container.clientWidth;
+    canvas.height = desiredHeight;
+
+    // Destruir gráfico anterior
+    if (window.footfallOutChart && typeof window.footfallOutChart.destroy === 'function') {
+        try { window.footfallOutChart.destroy(); } catch(_) {}
+        window.footfallOutChart = null;
+    }
+
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const data = (typeof FOOTFALL_OUT_POINTS !== 'undefined' ? FOOTFALL_OUT_POINTS : []);
     const chartData = data
         .filter(store => Number(store.users) > 0)
         .sort((a, b) => Number(b.users) - Number(a.users))
         .slice(0, 8);
-    new Chart(ctx, {
+
+    // Render em próximo frame para evitar forced reflow
+    window.footfallOutChart = new Chart(ctx, {
         type: 'scatter',
         data: {
             datasets: [{
                 label: 'Lojas',
                 data: chartData.map(store => ({ x: Number(store.users), y: Number(store.rate), label: (store.name.split(' - ')[1] || store.name) })),
-                backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                backgroundColor: 'rgba(139, 92, 246, 0.7)',
                 borderColor: '#8b5cf6',
-                pointRadius: ctx => Math.max(5, Math.min(15, ctx.parsed.x / 500))
+                pointRadius: function(context){ return Math.max(5, Math.min(14, (context.parsed.x||0) / 500)); }
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: 'Usuários' }, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#bbb' } },
+                y: { title: { display: true, text: 'Taxa (%)' }, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#bbb' } }
+            },
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)' } }
+        }
     });
+    // garantir resize final
+    requestAnimationFrame(()=>{ if (window.footfallOutChart) window.footfallOutChart.resize(); });
 }
 
 function updateFootfallOutTopStores() {
