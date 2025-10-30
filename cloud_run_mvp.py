@@ -30,6 +30,12 @@ from config import get_api_endpoint, get_git_manager_url, is_production, is_deve
 from bigquery_firestore_manager import BigQueryFirestoreManager
 
 app = Flask(__name__)
+@app.route('/favicon.ico')
+def favicon():
+    try:
+        return send_from_directory(os.getcwd(), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    except Exception:
+        return '', 204
 CORS(app)
 
 # Configuração do ambiente
