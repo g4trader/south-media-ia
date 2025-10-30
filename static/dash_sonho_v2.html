@@ -83,6 +83,7 @@ function initializeFootfallOutContent() {
     
     // Aguardar um pouco para garantir que os elementos estejam prontos
     setTimeout(() => {
+        setupOutChartObserver();
         updateFootfallOutMetrics();
         initializeFootfallOutMap();
         initializeFootfallOutChart();
@@ -97,6 +98,22 @@ function initializeFootfallOutContent() {
             updateFootfallOutTopStores();
         }, 1200);
     }, 300);
+}
+
+// Observador para garantir criação/atualização do gráfico quando o container ganhar tamanho
+function setupOutChartObserver() {
+    if (window._outChartObserver) return;
+    const canvas = document.getElementById('footfall-out-performanceChart');
+    const container = canvas ? canvas.parentElement : null;
+    if (!container) return;
+    window._outChartObserver = new ResizeObserver((entries)=>{
+        for (const e of entries) {
+            if (e.contentRect && e.contentRect.width > 0 && e.contentRect.height > 0) {
+                requestAnimationFrame(()=> initializeFootfallOutChart());
+            }
+        }
+    });
+    try { window._outChartObserver.observe(container); } catch(_) {}
 }
 
 
@@ -472,6 +489,8 @@ function initializeFootfallOutMap() {
             if (typeof updateFootfallOutTopStores === 'function') {
               try { updateFootfallOutTopStores(); } catch(_){}
             }
+            // e garantir render do gráfico após o mapa
+            try { setTimeout(initializeFootfallOutChart, 100); } catch(_){}
         }, 150);
     });
 }
@@ -487,6 +506,8 @@ function initializeFootfallOutChart() {
         setTimeout(initializeFootfallOutChart, 200);
         return;
     }
+
+    console.log('Inicializando gráfico footfall-out...');
 
     // Ajustar tamanho explícito para evitar altura zero
     const desiredHeight = Math.max(300, container.offsetHeight || 300);
@@ -507,6 +528,7 @@ function initializeFootfallOutChart() {
         .filter(store => Number(store.users) > 0)
         .sort((a, b) => Number(b.users) - Number(a.users))
         .slice(0, 8);
+    console.log('Dados gráfico OUT:', chartData.length, 'pontos');
 
     // Render em próximo frame para evitar forced reflow
     window.footfallOutChart = new Chart(ctx, {
@@ -531,7 +553,7 @@ function initializeFootfallOutChart() {
         }
     });
     // garantir resize final
-    requestAnimationFrame(()=>{ if (window.footfallOutChart) window.footfallOutChart.resize(); });
+    requestAnimationFrame(()=>{ if (window.footfallOutChart) { window.footfallOutChart.resize(); window.footfallOutChart.update(); console.log('Gráfico footfall-out renderizado'); } });
 }
 
 function updateFootfallOutTopStores() {
