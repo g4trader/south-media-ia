@@ -7,7 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard Multicanal — Vídeo + Display (Footfall)</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
 
 
 
@@ -83,8 +84,10 @@ function initializeFootfallOutContent() {
     // Aguardar um pouco para garantir que os elementos estejam prontos
     setTimeout(() => {
         updateFootfallOutMetrics();
-        // Adicionar outras inicializações aqui se necessário
-    }, 500);
+        initializeFootfallOutMap();
+        initializeFootfallOutChart();
+        updateFootfallOutTopStores();
+    }, 300);
 }
 
 
@@ -348,17 +351,166 @@ document.addEventListener('DOMContentLoaded', function() {
             updateFootfallMetrics();
         }
         
-        if (typeof updateFootfallOutMetrics === 'function') {
-            updateFootfallOutMetrics();
-        }
+        // Não inicializar conteúdo OUT enquanto a aba estiver oculta
     }, 2000);
 });
+
+// -------- Footfall OUT: Map, Chart, Top Stores --------
+function initializeFootfallOutMap() {
+    const mapElement = document.getElementById('footfall-out-map');
+    if (!mapElement) {
+        console.error('Elemento footfall-out-map não encontrado');
+        return;
+    }
+
+    const tab = document.getElementById('tab-footfall-out');
+    const isTabVisible = tab && !tab.classList.contains('hidden');
+    const hasSize = mapElement.offsetWidth > 0 && mapElement.offsetHeight > 0;
+    if (!isTabVisible || !hasSize) {
+        window._outMapInitAttempts = (window._outMapInitAttempts||0) + 1;
+        if (window._outMapInitAttempts % 4 === 0) {
+            console.log(`Aguardando visibilidade do mapa OUT (tentativa ${window._outMapInitAttempts})...`);
+        }
+        setTimeout(initializeFootfallOutMap, 250);
+        return;
+    }
+
+    if (window._outMapInitInProgress) return;
+    window._outMapInitInProgress = true;
+
+    // Remover mapa anterior, se existir
+    if (window.footfallOutMap && typeof window.footfallOutMap.remove === 'function') {
+        try { window.footfallOutMap.remove(); } catch (e) {}
+        window.footfallOutMap = null;
+    }
+
+    const footfallData = (typeof FOOTFALL_OUT_POINTS !== 'undefined' ? FOOTFALL_OUT_POINTS : []);
+    if (!Array.isArray(footfallData) || footfallData.length === 0) {
+        console.warn('Sem dados para mapa footfall-out');
+    }
+
+    const map = L.map('footfall-out-map').setView([-8.05, -34.9], 11);
+    window.footfallOutMap = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        spiderfyOnMaxZoom: true,
+        maxClusterRadius: 60
+    });
+
+    // Markers
+    footfallData.forEach(point => {
+        const marker = L.marker([point.lat, point.lon]);
+        marker.bindPopup(`
+            <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
+                <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${Number(point.users).toLocaleString('pt-BR')}</p>
+                <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
+            </div>
+        `);
+        markers.addLayer(marker);
+    });
+
+    // Heatmap data
+    const heatmapData = [];
+    footfallData.forEach(store => {
+        const baseIntensity = Math.max(0.1, Number(store.rate) / 20);
+        const spreadRadius = 0.005;
+        const numPoints = Math.max(3, Math.floor(Number(store.users) / 1000));
+        for (let i = 0; i < numPoints; i++) {
+            const offsetLat = (Math.random() - 0.5) * spreadRadius;
+            const offsetLng = (Math.random() - 0.5) * spreadRadius;
+            const pointIntensity = baseIntensity * (0.7 + Math.random() * 0.6);
+            heatmapData.push([store.lat + offsetLat, store.lon + offsetLng, pointIntensity]);
+        }
+        heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
+    });
+
+    map.addLayer(markers);
+    const heatmapLayer = L.heatLayer(heatmapData, {
+        radius: 50,
+        blur: 20,
+        maxZoom: 18,
+        minOpacity: 0.3,
+        gradient: {
+            0.0: 'rgba(0, 255, 136, 0.1)',
+            0.2: 'rgba(6, 182, 212, 0.4)',
+            0.4: 'rgba(139, 92, 246, 0.6)',
+            0.6: 'rgba(236, 72, 153, 0.8)',
+            0.8: 'rgba(255, 107, 53, 0.9)',
+            1.0: 'rgba(255, 107, 53, 1.0)'
+        }
+    }).addTo(map);
+
+    L.control.layers(null, {"🔥 Mapa de Calor": heatmapLayer, "📍 Marcadores": markers}, {
+        position: 'topright',
+        collapsed: false
+    }).addTo(map);
+
+    console.log(`Mapa footfall-out: ${footfallData.length} lojas, ${heatmapData.length} pontos de calor`);
+
+    requestAnimationFrame(()=>{
+        map.invalidateSize();
+        setTimeout(()=>{
+            map.invalidateSize();
+            window._outMapInitInProgress = false;
+        }, 150);
+    });
+}
+
+function initializeFootfallOutChart() {
+    const canvas = document.getElementById('footfall-out-performanceChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const data = (typeof FOOTFALL_OUT_POINTS !== 'undefined' ? FOOTFALL_OUT_POINTS : []);
+    const chartData = data
+        .filter(store => Number(store.users) > 0)
+        .sort((a, b) => Number(b.users) - Number(a.users))
+        .slice(0, 8);
+    new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Lojas',
+                data: chartData.map(store => ({ x: Number(store.users), y: Number(store.rate), label: (store.name.split(' - ')[1] || store.name) })),
+                backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                borderColor: '#8b5cf6',
+                pointRadius: ctx => Math.max(5, Math.min(15, ctx.parsed.x / 500))
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+}
+
+function updateFootfallOutTopStores() {
+    const container = document.getElementById('footfall-out-topStores');
+    if (!container) return;
+    const data = (typeof FOOTFALL_OUT_POINTS !== 'undefined' ? FOOTFALL_OUT_POINTS : []);
+    const top5 = [...data].sort((a,b)=> Number(b.users) - Number(a.users)).slice(0,5);
+    container.innerHTML = top5.map((store, idx) => `
+      <div class="store-item" style="display:flex;justify-content:space-between;align-items:center;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <span style="width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:${idx===0?'#ff6b35':idx===1?'#8b5cf6':'#06b6d4'}33;color:#fff;">${idx+1}</span>
+          <div>
+            <div style="font-weight:600;color:#fff;">${store.name.split(' - ')[1] || store.name}</div>
+            <div style="font-size:12px;color:#bbb;">${Number(store.users).toLocaleString('pt-BR')} usuários • ${store.rate}%</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+}
 
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
 
 
 
@@ -486,7 +638,7 @@ function initializeFootfallOutContent() {
 
 
 // Inicialização única e simples
-let isInitialized = false;
+
 
 document.addEventListener('DOMContentLoaded', function() {
     if (isInitialized) return;
@@ -508,7 +660,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js">
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script>
 
 
 
@@ -636,7 +789,7 @@ function initializeFootfallOutContent() {
 
 
 // Inicialização única e simples
-let isInitialized = false;
+
 
 document.addEventListener('DOMContentLoaded', function() {
     if (isInitialized) return;
@@ -658,7 +811,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js">
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
 
 
 
@@ -984,7 +1138,7 @@ function initializeFootfallOutContent() {
 
 
 // Inicialização única e simples
-let isInitialized = false;
+
 
 document.addEventListener('DOMContentLoaded', function() {
     if (isInitialized) return;
@@ -1390,7 +1544,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Mapa interativo com localização das lojas e intensidade de footfall</p>
         </div>
         <div class="card-content" style="padding: 1.5rem;">
-          <div id="footfall-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2);"></div>
+          <div id="footfall-out-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2);"></div>
           <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.8rem;">
             <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
               <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #ff6b35;"></div>
@@ -1416,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <div class="card-content" style="padding: 1.5rem;">
           <div class="chart-container" style="height: 300px; position: relative;">
-            <canvas id="footfall-performanceChart"></canvas>
+            <canvas id="footfall-out-performanceChart"></canvas>
           </div>
         </div>
       </div>
@@ -1428,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Top 5 Lojas por Footfall</h3>
         <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Ranking das lojas com maior número de usuários detectados</p>
       </div>
-      <div id="footfall-topStores">
+      <div id="footfall-out-topStores">
         <div class="loading" style="display: flex; justify-content: center; align-items: center; height: 200px; flex-direction: column; gap: 1rem;">
           <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #ff6b35; border-radius: 50%; animation: spin 1s linear infinite;"></div>
           <p>Carregando ranking...</p>
@@ -1548,25 +1702,30 @@ const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
 const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
 
 // Tabs
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  t.classList.add('active');
-  const id = t.dataset.tab;
-  ['overview','channels','insights','planning','footfall-set','footfall-out'].forEach(key=>{
-    const tabElement = document.getElementById('tab-'+key); if (tabElement) { tabElement.classList.toggle('hidden', key!==id); }
-  });
-  
-  
-  // Inicializar Footfall Set quando a aba for clicada
-  if (id === 'footfall-set') {
-    initializeFootfallContent();
-  }
-  
-  // Inicializar Footfall Out quando a aba for clicada
-  if (id === 'footfall-out') {
-    initializeFootfallOutContent();
-  }
-}));
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const id = t.dataset.tab;
+    ['overview','channels','insights','planning','footfall-set','footfall-out'].forEach(key=>{
+      const tabElement = document.getElementById('tab-'+key); if (tabElement) { tabElement.classList.toggle('hidden', key!==id); }
+    });
+    
+    // Inicializar Footfall Set quando a aba for clicada
+    if (id === 'footfall-set') {
+      initializeFootfallContent();
+    }
+    
+    // Inicializar Footfall Out quando a aba for clicada
+    if (id === 'footfall-out') {
+      initializeFootfallOutContent();
+      // Garantir inicialização do mapa mesmo se houver versões antigas da função
+      if (typeof initializeFootfallOutMap === 'function') {
+        setTimeout(initializeFootfallOutMap, 50);
+      }
+    }
+  }));
+});
 
 // OVERVIEW
 const topMetrics = [
@@ -2361,7 +2520,7 @@ function initializeFootfallOutContent() {
 
 
 // Inicialização única e simples
-let isInitialized = false;
+
 
 document.addEventListener('DOMContentLoaded', function() {
     if (isInitialized) return;
