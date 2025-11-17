@@ -404,12 +404,42 @@ class GoogleSheetsProcessor:
             if not value or str(value).lower() in ['nan', 'none', '']:
                 return 0
             
-            # Remove caracteres não numéricos
-            clean_str = str(value).replace(',', '').replace('.', '').strip()
+            clean_str = str(value).strip()
+            
+            # Se tem vírgula e ponto, assume formato brasileiro (1.234,56)
+            # Para números inteiros, precisamos remover a parte decimal
+            if ',' in clean_str and '.' in clean_str:
+                # Formato brasileiro: ponto para milhares, vírgula para decimais
+                # Para inteiros, usar apenas a parte inteira antes da vírgula
+                clean_str = clean_str.replace('.', '').split(',')[0]
+            elif ',' in clean_str and '.' not in clean_str:
+                # Se só tem vírgula, pode ser decimal brasileiro
+                parts = clean_str.split(',')
+                if len(parts) == 2:
+                    decimal_part = parts[1]
+                    # Se a parte decimal tem até 4 dígitos, é decimal brasileiro
+                    # Para inteiros, usar apenas a parte inteira
+                    if len(decimal_part) <= 4:
+                        clean_str = parts[0]
+                    else:
+                        # Mais de 4 dígitos provavelmente é separador de milhares
+                        clean_str = clean_str.replace(',', '')
+                else:
+                    # Múltiplas vírgulas - usar apenas primeira parte
+                    clean_str = parts[0] if parts else clean_str.replace(',', '')
+            else:
+                # Remover pontos de milhares se houver
+                if '.' in clean_str:
+                    # Verificar se é formato numérico com pontos de milhares
+                    parts = clean_str.split('.')
+                    # Se a última parte tem mais de 3 dígitos, provavelmente não é separador de milhares
+                    if len(parts) > 1 and len(parts[-1]) <= 3:
+                        clean_str = clean_str.replace('.', '')
+            
             return int(float(clean_str))
             
-        except (ValueError, AttributeError):
-            logger.warning(f"⚠️ Erro ao converter número: {value}")
+        except (ValueError, AttributeError, IndexError) as e:
+            logger.warning(f"⚠️ Erro ao converter número: {value} - {e}")
             return 0
     
     def get_all_channels_data(self):
