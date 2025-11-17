@@ -360,20 +360,42 @@ class GoogleSheetsProcessor:
             # Remove caracteres não numéricos exceto vírgula e ponto
             clean_str = str(value_str).replace('R$', '').replace(' ', '').strip()
             
-            # Se tem vírgula e ponto, assume formato brasileiro (1.234,56)
+            # Se tem vírgula e ponto, assume formato brasileiro (1.234,56 ou 1.234,5678)
             if ',' in clean_str and '.' in clean_str:
+                # Formato brasileiro: ponto para milhares, vírgula para decimais
                 clean_str = clean_str.replace('.', '').replace(',', '.')
             elif ',' in clean_str and '.' not in clean_str:
-                # Se só tem vírgula, pode ser decimal brasileiro
-                if len(clean_str.split(',')[1]) <= 2:  # Máximo 2 casas decimais
-                    clean_str = clean_str.replace(',', '.')
+                # Se só tem vírgula, verificar se é decimal brasileiro
+                parts = clean_str.split(',')
+                if len(parts) == 2:
+                    decimal_part = parts[1]
+                    # Se a parte decimal tem até 4 dígitos, é decimal brasileiro
+                    # (alguns valores podem ter mais de 2 casas decimais na planilha)
+                    if len(decimal_part) <= 4:
+                        clean_str = clean_str.replace(',', '.')
+                    else:
+                        # Mais de 4 dígitos após vírgula provavelmente é separador de milhares
+                        clean_str = clean_str.replace(',', '')
                 else:
-                    clean_str = clean_str.replace(',', '')  # Remove vírgula de milhares
+                    # Múltiplas vírgulas ou sem parte decimal clara
+                    clean_str = clean_str.replace(',', '')
             
-            return float(clean_str)
+            result = float(clean_str)
             
-        except (ValueError, AttributeError):
-            logger.warning(f"⚠️ Erro ao converter valor monetário: {value_str}")
+            # Validação: se o resultado for muito grande (mais de 10 milhões), 
+            # provavelmente houve erro de parsing
+            if result > 10000000:
+                logger.warning(f"⚠️ Valor monetário suspeitamente alto: {value_str} -> {result}")
+                # Tentar novamente assumindo formato brasileiro com vírgula decimal
+                if ',' in str(value_str) and '.' not in str(value_str):
+                    parts = str(value_str).replace('R$', '').replace(' ', '').strip().split(',')
+                    if len(parts) == 2:
+                        result = float(parts[0].replace('.', '') + '.' + parts[1])
+            
+            return result
+            
+        except (ValueError, AttributeError, IndexError) as e:
+            logger.warning(f"⚠️ Erro ao converter valor monetário: {value_str} - {e}")
             return 0.0
     
     def parse_number(self, value):
