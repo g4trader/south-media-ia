@@ -135,21 +135,13 @@ class DashboardAutomation:
             return 'null'
     
     def update_dashboard_data(self, daily_data):
-        """Atualiza apenas dados de canais (DAILY) dos dashboards, preservando FOOTFALL_POINTS"""
+        """Atualiza apenas dados de canais (DAILY) dos dashboards, preservando FOOTFALL_POINTS e dados existentes"""
         try:
-            logger.info(f"🔧 Atualizando dados de canais de {len(self.dashboard_files)} dashboards (preservando footfall)...")
+            logger.info(f"🔧 Atualizando dados de canais de {len(self.dashboard_files)} dashboards (preservando footfall e dados existentes)...")
             
-            # Criar string JavaScript para DAILY (uma vez para todos os arquivos)
-            daily_items = []
-            for item in daily_data:
-                item_js = "{"
-                item_pairs = []
-                for key, value in item.items():
-                    item_pairs.append(f'"{key}": {self.format_js_value(value)}')
-                item_js += ", ".join(item_pairs) + "}"
-                daily_items.append(item_js)
-            
-            new_daily_js = "const DAILY = [" + ", ".join(daily_items) + "];"
+            # Identificar canais que foram processados com sucesso
+            processed_channels = set(item['channel'] for item in daily_data)
+            logger.info(f"📊 Canais processados com sucesso: {', '.join(sorted(processed_channels))}")
             
             # Atualizar cada arquivo de dashboard
             success_count = 0
@@ -163,23 +155,93 @@ class DashboardAutomation:
                     with open(dashboard_file, 'r', encoding='utf-8') as f:
                         html_content = f.read()
                     
-                    # Substituir apenas a seção DAILY, preservando FOOTFALL_POINTS
+                    # Extrair dados existentes do DAILY
+                    # Usar padrão que captura tudo até encontrar o próximo const ou ; seguido de quebra de linha
                     daily_pattern = r'const DAILY = \[(.*?)\];'
+                    existing_match = re.search(daily_pattern, html_content, re.DOTALL)
+                    
+                    existing_daily_data = []
+                    if existing_match:
+                        try:
+                            # Tentar parsear dados existentes
+                            existing_js = existing_match.group(1).strip()
+                            if existing_js:
+                                # O formato já é JSON válido (array de objetos)
+                                # Adicionar colchetes se necessário
+                                existing_data_str = '[' + existing_js + ']'
+                                try:
+                                    # Usar json.loads para parsear
+                                    existing_daily_data = json.loads(existing_data_str)
+                                    logger.info(f"📋 Extraídos {len(existing_daily_data)} registros existentes de {os.path.basename(dashboard_file)}")
+                                    
+                                    # Estatísticas dos canais existentes
+                                    existing_channels = set(item.get('channel', '') for item in existing_daily_data)
+                                    logger.info(f"   Canais existentes: {', '.join(sorted(existing_channels))}")
+                                except json.JSONDecodeError as je:
+                                    logger.warning(f"⚠️ Erro ao parsear dados existentes como JSON: {je}")
+                                    logger.warning(f"   Usando apenas dados novos (erro na linha {je.lineno}, coluna {je.colno})")
+                                    existing_daily_data = []
+                        except Exception as e:
+                            logger.warning(f"⚠️ Erro ao extrair dados existentes: {e}")
+                            existing_daily_data = []
+                    else:
+                        logger.info(f"⚠️ Array DAILY não encontrado no arquivo {os.path.basename(dashboard_file)}, criando novo")
+                    
+                    # Criar mapa de dados novos por canal e data
+                    new_data_map = {}
+                    for item in daily_data:
+                        channel = item.get('channel', '')
+                        date = item.get('date', '')
+                        key = f"{channel}_{date}"
+                        new_data_map[key] = item
+                    
+                    # Mesclar dados: substituir dados de canais processados, preservar os demais
+                    merged_daily_data = []
+                    preserved_channels = set()
+                    
+                    # Adicionar dados existentes de canais NÃO processados
+                    for item in existing_daily_data:
+                        channel = item.get('channel', '')
+                        if channel not in processed_channels:
+                            merged_daily_data.append(item)
+                            preserved_channels.add(channel)
+                    
+                    # Adicionar dados novos (substituindo dados antigos dos canais processados)
+                    merged_daily_data.extend(daily_data)
+                    
+                    if preserved_channels:
+                        logger.info(f"✅ Preservados dados de canais não processados: {', '.join(sorted(preserved_channels))}")
+                    
+                    # Criar string JavaScript para DAILY mesclado
+                    daily_items = []
+                    for item in merged_daily_data:
+                        item_js = "{"
+                        item_pairs = []
+                        for key, value in item.items():
+                            item_pairs.append(f'"{key}": {self.format_js_value(value)}')
+                        item_js += ", ".join(item_pairs) + "}"
+                        daily_items.append(item_js)
+                    
+                    new_daily_js = "const DAILY = [" + ", ".join(daily_items) + "];"
+                    
+                    # Substituir apenas a seção DAILY, preservando FOOTFALL_POINTS
                     html_content = re.sub(daily_pattern, new_daily_js, html_content, flags=re.DOTALL)
                     
                     # Salvar HTML atualizado
                     with open(dashboard_file, 'w', encoding='utf-8') as f:
                         f.write(html_content)
                     
-                    logger.info(f"✅ Dados de canais atualizados em {os.path.basename(dashboard_file)}")
+                    logger.info(f"✅ Dados de canais atualizados em {os.path.basename(dashboard_file)}: {len(merged_daily_data)} registros totais ({len(daily_data)} novos + {len(existing_daily_data) - len(daily_data) if existing_daily_data else 0} preservados)")
                     success_count += 1
                     
                 except Exception as e:
                     logger.error(f"❌ Erro ao atualizar {dashboard_file}: {e}")
+                    import traceback
+                    logger.error(f"   Traceback: {traceback.format_exc()}")
                     continue
             
             if success_count == len(self.dashboard_files):
-                logger.info(f"✅ Dados de canais atualizados com {len(daily_data)} registros em todos os dashboards (FOOTFALL_POINTS preservado)")
+                logger.info(f"✅ Dados de canais atualizados com {len(daily_data)} registros novos em todos os dashboards (dados existentes preservados)")
                 return True
             elif success_count > 0:
                 logger.warning(f"⚠️ Dados atualizados em apenas {success_count}/{len(self.dashboard_files)} dashboards")
@@ -190,6 +252,8 @@ class DashboardAutomation:
             
         except Exception as e:
             logger.error(f"❌ Erro ao atualizar dados de canais: {e}")
+            import traceback
+            logger.error(f"   Traceback: {traceback.format_exc()}")
             return False
     
     def calculate_cons_data(self, daily_data):
