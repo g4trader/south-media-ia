@@ -339,50 +339,89 @@ class DashboardAutomation:
             # Criar dados PER
             per_data = []
             for channel_name, data in channels.items():
-                # Calcular métricas
-                budget_contratado_val = budget_contratado.get(channel_name, data['spend'] * 1.2)
-                pacing = (data['spend'] / budget_contratado_val) * 100 if budget_contratado_val > 0 else 0
-                
-                # CTR = Clicks / Impressions * 100
-                ctr = (data['clicks'] / data['impressions']) * 100 if data['impressions'] > 0 else 0
-                
-                # VTR = Video Completions / Video Starts * 100 (apenas para canais de vídeo)
-                vtr = 0
-                if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['starts'] > 0:
-                    vtr = (data['q100'] / data['starts']) * 100
-                elif channel_name == "TikTok" and data['starts'] > 0:
-                    # TikTok não tem quartis, usar starts como completions
-                    vtr = (data['starts'] / data['starts']) * 100
-                
-                # CPV = Spend / Video Completions (apenas para canais de vídeo)
-                cpv = 0
-                if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['q100'] > 0:
-                    cpv = data['spend'] / data['q100']
-                elif channel_name == "TikTok" and data['starts'] > 0:
-                    # TikTok usa starts como completions
-                    cpv = data['spend'] / data['starts']
-                
-                # CPM = Spend / (Impressions / 1000)
-                cpm = (data['spend'] / (data['impressions'] / 1000)) if data['impressions'] > 0 else 0
-                
-                channel_data = {
-                    "Canal": channel_name,
-                    "Budget Contratado (R$)": budget_contratado_val,
-                    "Budget Utilizado (R$)": data['spend'],
-                    "Impressões": data['impressions'],
-                    "Cliques": data['clicks'],
-                    "CTR (%)": ctr / 100,  # Converter para decimal para o dashboard
-                    "VC (100%)": data['q100'] if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] else data['starts'] if channel_name == "TikTok" else 0,
-                    "VTR (100%)": vtr / 100,  # Converter para decimal para o dashboard
-                    "CPV (R$)": cpv,
-                    "CPM (R$)": cpm,
-                    "Pacing (%)": pacing / 100,  # Converter para decimal para o dashboard
-                    "Criativos Únicos": len(data['creatives'])
-                }
-                
-                per_data.append(channel_data)
+                try:
+                    # Calcular métricas
+                    budget_contratado_val = budget_contratado.get(channel_name, data['spend'] * 1.2)
+                    pacing = (data['spend'] / budget_contratado_val) * 100 if budget_contratado_val > 0 else 0
+                    
+                    # CTR = Clicks / Impressions * 100
+                    ctr = (data['clicks'] / data['impressions']) * 100 if data['impressions'] > 0 else 0
+                    
+                    # VTR = Video Completions / Video Starts * 100 (apenas para canais de vídeo)
+                    vtr = 0
+                    if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['starts'] > 0:
+                        vtr = (data['q100'] / data['starts']) * 100
+                    elif channel_name == "TikTok" and data['starts'] > 0:
+                        # TikTok não tem quartis, usar starts como completions
+                        vtr = (data['starts'] / data['starts']) * 100
+                    
+                    # CPV = Spend / Video Completions (apenas para canais de vídeo)
+                    cpv = 0
+                    if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] and data['q100'] > 0:
+                        cpv = data['spend'] / data['q100']
+                    elif channel_name == "TikTok" and data['starts'] > 0:
+                        # TikTok usa starts como completions
+                        cpv = data['spend'] / data['starts']
+                    
+                    # CPM = Spend / (Impressions / 1000)
+                    cpm = (data['spend'] / (data['impressions'] / 1000)) if data['impressions'] > 0 else 0
+                    
+                    # Garantir que creatives seja um set válido
+                    creatives_count = len(data.get('creatives', set()))
+                    
+                    channel_data = {
+                        "Canal": channel_name,
+                        "Budget Contratado (R$)": budget_contratado_val,
+                        "Budget Utilizado (R$)": data['spend'],
+                        "Impressões": data['impressions'],
+                        "Cliques": data['clicks'],
+                        "CTR (%)": ctr / 100,  # Converter para decimal para o dashboard
+                        "VC (100%)": data['q100'] if channel_name in ["YouTube", "Netflix", "Disney", "CTV"] else data['starts'] if channel_name == "TikTok" else 0,
+                        "VTR (100%)": vtr / 100,  # Converter para decimal para o dashboard
+                        "CPV (R$)": cpv,
+                        "CPM (R$)": cpm,
+                        "Pacing (%)": pacing / 100,  # Converter para decimal para o dashboard
+                        "Criativos Únicos": creatives_count
+                    }
+                    
+                    per_data.append(channel_data)
+                except Exception as e:
+                    logger.error(f"❌ Erro ao processar canal {channel_name} no PER: {e}")
+                    logger.error(f"   Dados do canal: {data}")
+                    continue
             
-            logger.info(f"✅ Dados PER calculados para {len(per_data)} canais com métricas completas")
+            # Garantir que canais esperados apareçam mesmo sem dados (com valores zerados)
+            # Isso evita problemas no dashboard quando um canal não tem dados
+            expected_channels = ["YouTube", "TikTok", "Netflix", "Disney", "CTV", "Footfall Display"]
+            existing_channel_names = {item["Canal"] for item in per_data}
+            
+            for expected_channel in expected_channels:
+                if expected_channel not in existing_channel_names:
+                    logger.warning(f"⚠️ Canal {expected_channel} não encontrado nos dados, adicionando entrada zerada")
+                    budget_contratado_val = budget_contratado.get(expected_channel, 0)
+                    
+                    # Determinar se é canal de vídeo
+                    is_video = expected_channel in ["YouTube", "Netflix", "Disney", "CTV"]
+                    is_tiktok = expected_channel == "TikTok"
+                    
+                    channel_data = {
+                        "Canal": expected_channel,
+                        "Budget Contratado (R$)": budget_contratado_val,
+                        "Budget Utilizado (R$)": 0,
+                        "Impressões": 0,
+                        "Cliques": 0,
+                        "CTR (%)": 0,
+                        "VC (100%)": 0,
+                        "VTR (100%)": 0,
+                        "CPV (R$)": 0,
+                        "CPM (R$)": 0,
+                        "Pacing (%)": 0,
+                        "Criativos Únicos": 0
+                    }
+                    
+                    per_data.append(channel_data)
+            
+            logger.info(f"✅ Dados PER calculados para {len(per_data)} canais (incluindo canais sem dados)")
             return per_data
             
         except Exception as e:

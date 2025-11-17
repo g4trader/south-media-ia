@@ -147,19 +147,20 @@ GOOGLE_SHEETS_CONFIG = {
         }
     },
     "Netflix": {
-        "sheet_id": os.environ.get("NETFLIX_SHEET_ID", ""),
-        "gid": os.environ.get("NETFLIX_GID", ""),
+        "sheet_id": os.environ.get("NETFLIX_SHEET_ID", "1sU0Y9XZP-wi2ayd_IxYwS0pe8ITmW9oNKDDIKQOv6Fo"),
+        "gid": os.environ.get("NETFLIX_GID", "1743413064"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
+            "date": "Day",
+            "spend": "Valor investido",
+            "impressions": "",  # Netflix não tem coluna de impressões
+            "clicks": "",  # Netflix não tem coluna de cliques
             "starts": "Video Starts",
-            "q25": "25%",
-            "q50": "50%",
-            "q75": "75%",
-            "q100": "100%"
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete",
+            "q75": "75% Video Complete",
+            "q100": "100% Complete",
+            "creative": "Criativo"
         }
     },
     "Disney": {

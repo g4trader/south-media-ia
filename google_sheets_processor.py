@@ -260,10 +260,17 @@ class GoogleSheetsProcessor:
                     spend = self.parse_currency(spend_str)
                     
                     # Processa outros campos
-                    creative = str(row.get(columns['creative'], ''))
-                    impressions = self.parse_number(row.get(columns['impressions'], 0))
-                    clicks = self.parse_number(row.get(columns['clicks'], 0))
-                    visits = str(row.get(columns['visits'], ''))
+                    creative = str(row.get(columns.get('creative', ''), ''))
+                    
+                    # Impressions e clicks podem não existir em alguns canais (ex: Netflix)
+                    impressions_key = columns.get('impressions', '')
+                    impressions = self.parse_number(row.get(impressions_key, 0)) if impressions_key else 0
+                    
+                    clicks_key = columns.get('clicks', '')
+                    clicks = self.parse_number(row.get(clicks_key, 0)) if clicks_key else 0
+                    
+                    visits_key = columns.get('visits', '')
+                    visits = str(row.get(visits_key, '')) if visits_key else ''
                     
                     # Processa campos específicos do YouTube e Netflix
                     starts = self.parse_number(row.get(columns.get('starts', ''), 0))
@@ -389,20 +396,38 @@ class GoogleSheetsProcessor:
         
         all_daily_data = []
         successful_channels = 0
+        failed_channels = []
         
         for channel_name, channel_config in GOOGLE_SHEETS_CONFIG.items():
             try:
+                # Verificar se sheet_id está configurado
+                sheet_id = channel_config.get('sheet_id', '').strip()
+                if not sheet_id:
+                    logger.warning(f"⚠️ Canal {channel_name} não tem sheet_id configurado, pulando...")
+                    failed_channels.append(f"{channel_name} (sem sheet_id)")
+                    continue
+                
+                logger.info(f"📊 Processando canal: {channel_name} (sheet_id: {sheet_id[:20]}...)")
                 channel_data = self.process_channel_data(channel_name, channel_config)
-                all_daily_data.extend(channel_data)
                 
                 if channel_data:
+                    all_daily_data.extend(channel_data)
                     successful_channels += 1
+                    logger.info(f"✅ Canal {channel_name}: {len(channel_data)} registros coletados")
+                else:
+                    logger.warning(f"⚠️ Canal {channel_name}: nenhum dado coletado")
+                    failed_channels.append(f"{channel_name} (sem dados)")
                     
             except Exception as e:
                 logger.error(f"❌ Erro no canal {channel_name}: {e}")
+                import traceback
+                logger.error(f"   Traceback: {traceback.format_exc()}")
+                failed_channels.append(f"{channel_name} (erro: {str(e)[:50]})")
                 continue
         
-        logger.info(f"✅ Coleta concluída: {successful_channels}/{len(GOOGLE_SHEETS_CONFIG)} canais processados")
+        logger.info(f"✅ Coleta concluída: {successful_channels}/{len(GOOGLE_SHEETS_CONFIG)} canais processados com sucesso")
+        if failed_channels:
+            logger.warning(f"⚠️ Canais com problemas: {', '.join(failed_channels)}")
         logger.info(f"📊 Total de registros coletados: {len(all_daily_data)}")
         
         return all_daily_data
