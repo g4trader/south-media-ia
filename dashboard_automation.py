@@ -291,15 +291,62 @@ class DashboardAutomation:
                         'q100': 0
                     }
                 
-                channels[channel]['spend'] += item['spend']
-                channels[channel]['impressions'] += item['impressions']
-                channels[channel]['clicks'] += item['clicks']
-                channels[channel]['starts'] += item.get('starts', 0) if item.get('starts', '') != '' else 0
-                channels[channel]['q25'] += item.get('q25', 0) if item.get('q25', '') != '' else 0
-                channels[channel]['q50'] += item.get('q50', 0) if item.get('q50', '') != '' else 0
-                channels[channel]['q75'] += item.get('q75', 0) if item.get('q75', '') != '' else 0
-                channels[channel]['q100'] += item.get('q100', 0) if item.get('q100', '') != '' else 0
-                if item['visits'] and str(item['visits']).isdigit():
+                # Garantir que spend seja sempre numérico
+                try:
+                    spend_val = float(item.get('spend', 0)) if item.get('spend', 0) else 0
+                    channels[channel]['spend'] += spend_val
+                except (ValueError, TypeError):
+                    logger.warning(f"⚠️ Erro ao converter spend: {item.get('spend')}")
+                
+                # Garantir que impressões e cliques sejam sempre numéricos
+                try:
+                    channels[channel]['impressions'] += int(item.get('impressions', 0) or 0)
+                    channels[channel]['clicks'] += int(item.get('clicks', 0) or 0)
+                except (ValueError, TypeError):
+                    pass
+                
+                # Garantir que valores de vídeo sejam sempre numéricos (converter strings para números)
+                starts_val = item.get('starts', '')
+                if starts_val != '' and starts_val is not None:
+                    try:
+                        starts_num = int(float(starts_val))
+                        channels[channel]['starts'] += starts_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter starts: {starts_val} para número")
+                
+                q25_val = item.get('q25', '')
+                if q25_val != '' and q25_val is not None:
+                    try:
+                        q25_num = int(float(q25_val))
+                        channels[channel]['q25'] += q25_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q25: {q25_val} para número")
+                
+                q50_val = item.get('q50', '')
+                if q50_val != '' and q50_val is not None:
+                    try:
+                        q50_num = int(float(q50_val))
+                        channels[channel]['q50'] += q50_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q50: {q50_val} para número")
+                
+                q75_val = item.get('q75', '')
+                if q75_val != '' and q75_val is not None:
+                    try:
+                        q75_num = int(float(q75_val))
+                        channels[channel]['q75'] += q75_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q75: {q75_val} para número")
+                
+                q100_val = item.get('q100', '')
+                if q100_val != '' and q100_val is not None:
+                    try:
+                        q100_num = int(float(q100_val))
+                        channels[channel]['q100'] += q100_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q100: {q100_val} para número")
+                
+                if item.get('visits') and str(item['visits']).isdigit():
                     channels[channel]['visits'] += int(item['visits'])
             
             # Calcular totais
@@ -388,17 +435,67 @@ class DashboardAutomation:
                         'creatives': set()
                     }
                 
-                channels[channel]['spend'] += item['spend']
-                channels[channel]['impressions'] += item['impressions']
-                channels[channel]['clicks'] += item['clicks']
-                channels[channel]['starts'] += item.get('starts', 0) if item.get('starts', '') != '' else 0
-                channels[channel]['q25'] += item.get('q25', 0) if item.get('q25', '') != '' else 0
-                channels[channel]['q50'] += item.get('q50', 0) if item.get('q50', '') != '' else 0
-                channels[channel]['q75'] += item.get('q75', 0) if item.get('q75', '') != '' else 0
-                channels[channel]['q100'] += item.get('q100', 0) if item.get('q100', '') != '' else 0
-                if item['visits'] and str(item['visits']).isdigit():
+                # Garantir que spend seja sempre numérico
+                try:
+                    spend_val = float(item.get('spend', 0)) if item.get('spend', 0) else 0
+                    channels[channel]['spend'] += spend_val
+                except (ValueError, TypeError):
+                    logger.warning(f"⚠️ Erro ao converter spend: {item.get('spend')}")
+                
+                # Garantir que impressões e cliques sejam sempre numéricos
+                try:
+                    channels[channel]['impressions'] += int(item.get('impressions', 0) or 0)
+                    channels[channel]['clicks'] += int(item.get('clicks', 0) or 0)
+                except (ValueError, TypeError):
+                    pass
+                
+                # Garantir que valores de vídeo sejam sempre numéricos (converter strings para números)
+                starts_val = item.get('starts', '')
+                if starts_val != '' and starts_val is not None:
+                    try:
+                        starts_num = int(float(starts_val))
+                        channels[channel]['starts'] += starts_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter starts: {starts_val} para número")
+                
+                q25_val = item.get('q25', '')
+                if q25_val != '' and q25_val is not None:
+                    try:
+                        q25_num = int(float(q25_val))
+                        channels[channel]['q25'] += q25_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q25: {q25_val} para número")
+                
+                q50_val = item.get('q50', '')
+                if q50_val != '' and q50_val is not None:
+                    try:
+                        q50_num = int(float(q50_val))
+                        channels[channel]['q50'] += q50_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q50: {q50_val} para número")
+                
+                q75_val = item.get('q75', '')
+                if q75_val != '' and q75_val is not None:
+                    try:
+                        q75_num = int(float(q75_val))
+                        channels[channel]['q75'] += q75_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q75: {q75_val} para número")
+                
+                q100_val = item.get('q100', '')
+                if q100_val != '' and q100_val is not None:
+                    try:
+                        q100_num = int(float(q100_val))
+                        channels[channel]['q100'] += q100_num
+                    except (ValueError, TypeError):
+                        logger.warning(f"⚠️ Erro ao converter q100: {q100_val} para número")
+                
+                if item.get('visits') and str(item['visits']).isdigit():
                     channels[channel]['visits'] += int(item['visits'])
-                channels[channel]['creatives'].add(item['creative'])
+                
+                creative = item.get('creative', '')
+                if creative:
+                    channels[channel]['creatives'].add(creative)
             
             # Criar dados PER
             per_data = []
