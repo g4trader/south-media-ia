@@ -100,9 +100,136 @@ def is_debug() -> bool:
     """Verificar se debug está habilitado"""
     return config.is_debug()
 
+# Configuração do Google Sheets (pode ser sobrescrita por variáveis de ambiente)
+GOOGLE_SHEETS_CONFIG = {
+    "YouTube": {
+        "sheet_id": os.environ.get("YOUTUBE_SHEET_ID", "1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg"),
+        "gid": os.environ.get("YOUTUBE_GID", "304137877"),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts",
+            "q25": "25%",
+            "q50": "50%",
+            "q75": "75%",
+            "q100": "100%"
+        }
+    },
+    "Programática Video": {
+        "sheet_id": os.environ.get("PROG_VIDEO_SHEET_ID", "1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o"),
+        "gid": os.environ.get("PROG_VIDEO_GID", "1489416055"),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts",
+            "q25": "25%",
+            "q50": "50%",
+            "q75": "75%",
+            "q100": "100%"
+        }
+    },
+    "TikTok": {
+        "sheet_id": os.environ.get("TIKTOK_SHEET_ID", ""),
+        "gid": os.environ.get("TIKTOK_GID", ""),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts"
+        }
+    },
+    "Netflix": {
+        "sheet_id": os.environ.get("NETFLIX_SHEET_ID", ""),
+        "gid": os.environ.get("NETFLIX_GID", ""),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts",
+            "q25": "25%",
+            "q50": "50%",
+            "q75": "75%",
+            "q100": "100%"
+        }
+    },
+    "Disney": {
+        "sheet_id": os.environ.get("DISNEY_SHEET_ID", ""),
+        "gid": os.environ.get("DISNEY_GID", ""),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts",
+            "q25": "25%",
+            "q50": "50%",
+            "q75": "75%",
+            "q100": "100%"
+        }
+    },
+    "CTV": {
+        "sheet_id": os.environ.get("CTV_SHEET_ID", ""),
+        "gid": os.environ.get("CTV_GID", ""),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "starts": "Video Starts",
+            "q25": "25%",
+            "q50": "50%",
+            "q75": "75%",
+            "q100": "100%"
+        }
+    },
+    "Footfall Display": {
+        "sheet_id": os.environ.get("FOOTFALL_SHEET_ID", ""),
+        "gid": os.environ.get("FOOTFALL_GID", ""),
+        "sheet_name": None,
+        "columns": {
+            "date": "Date",
+            "spend": "Spend",
+            "impressions": "Impressions",
+            "clicks": "Clicks",
+            "visits": "Visits"
+        }
+    }
+}
+
+# Filtrar canais vazios (sem sheet_id configurado)
+GOOGLE_SHEETS_CONFIG = {
+    k: v for k, v in GOOGLE_SHEETS_CONFIG.items() 
+    if v.get("sheet_id") and v["sheet_id"].strip()
+}
+
+# Configuração de automação
+AUTOMATION_CONFIG = {
+    "dashboard_files": os.environ.get(
+        "AUTOMATION_DASHBOARD_FILES",
+        "static/dash_sonho.html,static/dash_sonho_v3.html"
+    ).split(","),
+    "dashboard_file": os.environ.get("AUTOMATION_DASHBOARD_FILE", "static/dash_sonho.html"),
+    "backup_enabled": os.environ.get("AUTOMATION_BACKUP_ENABLED", "true").lower() == "true",
+    "backup_dir": os.environ.get("AUTOMATION_BACKUP_DIR", "backups"),
+    "update_interval_hours": int(os.environ.get("AUTOMATION_UPDATE_INTERVAL_HOURS", "3"))
+}
+
 # Log da configuração
 if __name__ == "__main__":
     print(f"🌍 Ambiente detectado: {config.environment}")
     print(f"🔗 API Endpoint: {config.get_api_endpoint()}")
     print(f"🔧 Debug: {config.is_debug()}")
     print(f"🚪 Porta: {config.get_port()}")
+    print(f"📊 Canais configurados: {len(GOOGLE_SHEETS_CONFIG)}")
