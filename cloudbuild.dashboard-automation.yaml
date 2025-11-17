@@ -1,0 +1,52 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'Dockerfile.dashboard-automation', '-t', 'gcr.io/$PROJECT_ID/dashboard-automation:$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/dashboard-automation:latest', '.']
+  
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-automation:$BUILD_ID']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/dashboard-automation:latest']
+  
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dashboard-automation'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dashboard-automation:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--memory'
+      - '1Gi'
+      - '--cpu'
+      - '1'
+      - '--timeout'
+      - '540s'
+      - '--max-instances'
+      - '5'
+      - '--concurrency'
+      - '10'
+      - '--service-account'
+      - '609095880025-compute@developer.gserviceaccount.com'
+
+# Store images in Google Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/dashboard-automation:$BUILD_ID'
+  - 'gcr.io/$PROJECT_ID/dashboard-automation:latest'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
+

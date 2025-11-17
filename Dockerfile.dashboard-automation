@@ -23,6 +23,10 @@ COPY config.py .
 COPY footfall_config.py .
 COPY gunicorn.conf.py .
 
+# Copy required modules
+COPY static/generator/processors/ ./static/generator/processors/
+COPY static/generator/config/ ./static/generator/config/
+
 # Create logs directory
 RUN mkdir -p logs && chmod 777 logs
 
