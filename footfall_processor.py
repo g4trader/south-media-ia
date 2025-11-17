@@ -21,28 +21,40 @@ class FootfallProcessor:
         self.processor = None
         
     def download_dashboard_from_github(self):
-        """Baixa o arquivo do dashboard do GitHub"""
+        """Baixa os arquivos do dashboard do GitHub"""
         try:
-            # URL do arquivo no GitHub (raw)
-            github_url = "https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/dash_sonho.html"
+            # Lista de dashboards para atualizar
+            dashboard_files = ["dash_sonho.html", "dash_sonho_v3.html"]
+            success_count = 0
             
-            logger.info(f"📥 Baixando dashboard de: {github_url}")
+            for filename in dashboard_files:
+                # URL do arquivo no GitHub (raw)
+                github_url = f"https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/{filename}"
+                
+                logger.info(f"📥 Baixando dashboard de: {github_url}")
+                
+                response = requests.get(github_url, timeout=30)
+                response.raise_for_status()
+                
+                # Criar diretório se não existir
+                os.makedirs("static", exist_ok=True)
+                
+                # Salvar arquivo
+                with open(f"static/{filename}", "w", encoding="utf-8") as f:
+                    f.write(response.text)
+                
+                logger.info(f"✅ Dashboard {filename} baixado com sucesso do GitHub")
+                success_count += 1
             
-            response = requests.get(github_url, timeout=30)
-            response.raise_for_status()
-            
-            # Criar diretório se não existir
-            os.makedirs("static", exist_ok=True)
-            
-            # Salvar arquivo
-            with open("static/dash_sonho.html", "w", encoding="utf-8") as f:
-                f.write(response.text)
-            
-            logger.info("✅ Dashboard baixado com sucesso do GitHub")
-            return True
+            if success_count == len(dashboard_files):
+                logger.info(f"✅ Todos os dashboards ({success_count}) baixados com sucesso")
+                return True
+            else:
+                logger.warning(f"⚠️ Apenas {success_count}/{len(dashboard_files)} dashboards foram baixados")
+                return False
             
         except Exception as e:
-            logger.error(f"❌ Erro ao baixar dashboard do GitHub: {e}")
+            logger.error(f"❌ Erro ao baixar dashboards do GitHub: {e}")
             return False
         
     def authenticate(self):
@@ -210,52 +222,76 @@ class FootfallProcessor:
         return True
     
     def update_dashboard_footfall(self, footfall_data):
-        """Atualiza apenas a seção FOOTFALL_POINTS do dashboard"""
+        """Atualiza apenas a seção FOOTFALL_POINTS dos dashboards"""
         try:
-            dashboard_file = "static/dash_sonho.html"
+            # Lista de dashboards para atualizar
+            dashboard_files = ["static/dash_sonho.html", "static/dash_sonho_v3.html"]
             
-            # Sempre baixar arquivo atualizado do GitHub primeiro
-            logger.info("📥 Baixando versão mais recente do dashboard do GitHub...")
+            # Sempre baixar arquivos atualizados do GitHub primeiro
+            logger.info("📥 Baixando versão mais recente dos dashboards do GitHub...")
             if not self.download_dashboard_from_github():
-                logger.error(f"❌ Falha ao baixar arquivo do dashboard")
+                logger.error(f"❌ Falha ao baixar arquivos dos dashboards")
                 return False
-            
-            # Ler arquivo atual
-            with open(dashboard_file, 'r', encoding='utf-8') as f:
-                content = f.read()
             
             # Validar dados antes de atualizar
             if not self.validate_footfall_data(footfall_data):
                 logger.error("❌ Dados de footfall inválidos, abortando atualização")
                 return False
             
-            # Converter dados para JSON
+            # Converter dados para JSON (uma vez para todos os arquivos)
             footfall_json = json.dumps(footfall_data, ensure_ascii=False, indent=2)
             
-            # Substituir FOOTFALL_POINTS no arquivo
+            # Atualizar cada arquivo de dashboard
             import re
-            # Padrão mais robusto para capturar desde const FOOTFALL_POINTS até ]; (com quebras de linha)
-            pattern = r'const FOOTFALL_POINTS = \[.*?\];'
-            replacement = f'const FOOTFALL_POINTS = {footfall_json};'
+            success_count = 0
             
-            new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+            for dashboard_file in dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    logger.warning(f"⚠️ Arquivo não encontrado: {dashboard_file}, pulando...")
+                    continue
+                
+                try:
+                    # Ler arquivo atual
+                    with open(dashboard_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Substituir FOOTFALL_POINTS no arquivo
+                    # Padrão mais robusto para capturar desde const FOOTFALL_POINTS até ]; (com quebras de linha)
+                    pattern = r'const FOOTFALL_POINTS = \[.*?\];'
+                    replacement = f'const FOOTFALL_POINTS = {footfall_json};'
+                    
+                    new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+                    
+                    # Se não encontrou, tentar padrão mais específico
+                    if new_content == content:
+                        # Padrão para capturar até o primeiro ]; após const FOOTFALL_POINTS
+                        pattern = r'(const FOOTFALL_POINTS = \[)(.*?)(\];)'
+                        new_content = re.sub(pattern, r'\1' + footfall_json + r'\3', content, flags=re.DOTALL)
+                    
+                    if new_content == content:
+                        logger.warning(f"⚠️ FOOTFALL_POINTS não encontrado em {dashboard_file}")
+                        continue
+                    
+                    # Salvar arquivo atualizado
+                    with open(dashboard_file, 'w', encoding='utf-8') as f:
+                        f.write(new_content)
+                    
+                    logger.info(f"✅ Dashboard {os.path.basename(dashboard_file)} footfall atualizado com {len(footfall_data)} pontos")
+                    success_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"❌ Erro ao atualizar {dashboard_file}: {e}")
+                    continue
             
-            # Se não encontrou, tentar padrão mais específico
-            if new_content == content:
-                # Padrão para capturar até o primeiro ]; após const FOOTFALL_POINTS
-                pattern = r'(const FOOTFALL_POINTS = \[)(.*?)(\];)'
-                new_content = re.sub(pattern, r'\1' + footfall_json + r'\3', content, flags=re.DOTALL)
-            
-            if new_content == content:
-                logger.warning("⚠️ FOOTFALL_POINTS não encontrado no arquivo")
+            if success_count == len(dashboard_files):
+                logger.info(f"✅ Todos os dashboards ({success_count}) atualizados com footfall")
+                return True
+            elif success_count > 0:
+                logger.warning(f"⚠️ Apenas {success_count}/{len(dashboard_files)} dashboards foram atualizados")
+                return True
+            else:
+                logger.error("❌ Nenhum dashboard foi atualizado")
                 return False
-            
-            # Salvar arquivo atualizado
-            with open(dashboard_file, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            
-            logger.info(f"✅ Dashboard footfall atualizado com {len(footfall_data)} pontos")
-            return True
             
         except Exception as e:
             logger.error(f"❌ Erro ao atualizar dashboard footfall: {e}")
@@ -293,24 +329,8 @@ class FootfallProcessor:
     def commit_and_push(self):
         """Faz commit e push das mudanças via GitHub API com validação"""
         try:
-            # TemplateValidator removido na limpeza - validação simplificada
-            
-            # Ler arquivo atualizado
-            dashboard_file = "static/dash_sonho.html"
-            with open(dashboard_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # Validação simplificada - verificar se arquivo não está vazio
-            if not content.strip():
-                logger.error("❌ Arquivo vazio, commit de footfall cancelado")
-                return False
-            
-            logger.info("✅ Template validado, prosseguindo com commit seguro de footfall...")
-            
-            # Fazer commit direto via GitHub API
-            import base64
-            import requests
-            from datetime import datetime
+            # Lista de dashboards para fazer commit
+            dashboard_files = ["static/dash_sonho.html", "static/dash_sonho_v3.html"]
             
             # Configurar token do GitHub
             token = os.getenv('GITHUB_TOKEN')
@@ -318,36 +338,74 @@ class FootfallProcessor:
                 logger.error("❌ Token do GitHub não configurado")
                 return False
             
-            # Fazer commit
-            url = "https://api.github.com/repos/g4trader/south-media-ia/contents/static/dash_sonho.html"
+            # Fazer commit direto via GitHub API
+            import base64
+            import requests
+            from datetime import datetime
+            
             headers = {
                 "Authorization": f"token {token}",
                 "Accept": "application/vnd.github.v3+json"
             }
             
-            # Obter SHA do arquivo atual
-            response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                logger.error(f"❌ Erro ao obter SHA do arquivo: {response.status_code}")
-                return False
+            # Fazer commit de cada arquivo
+            success_count = 0
+            for dashboard_file in dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    logger.warning(f"⚠️ Arquivo não encontrado: {dashboard_file}, pulando commit...")
+                    continue
+                
+                try:
+                    # Ler arquivo atualizado
+                    with open(dashboard_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Validação simplificada - verificar se arquivo não está vazio
+                    if not content.strip():
+                        logger.error(f"❌ Arquivo vazio: {dashboard_file}, commit de footfall cancelado")
+                        continue
+                    
+                    # Extrair nome do arquivo (sem o diretório)
+                    filename = os.path.basename(dashboard_file)
+                    
+                    # URL do arquivo no GitHub
+                    url = f"https://api.github.com/repos/g4trader/south-media-ia/contents/static/{filename}"
+                    
+                    # Obter SHA do arquivo atual
+                    response = requests.get(url, headers=headers)
+                    if response.status_code != 200:
+                        logger.error(f"❌ Erro ao obter SHA do arquivo {filename}: {response.status_code}")
+                        continue
+                    
+                    current_sha = response.json()["sha"]
+                    
+                    # Fazer commit
+                    data = {
+                        "message": f"🗺️ Atualização automática de footfall {filename} - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+                        "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
+                        "sha": current_sha
+                    }
+                    
+                    response = requests.put(url, headers=headers, json=data)
+                    if response.status_code == 200:
+                        logger.info(f"✅ Dashboard {filename} footfall atualizado no GitHub com sucesso")
+                        success_count += 1
+                    else:
+                        logger.error(f"❌ Erro no commit de {filename}: {response.status_code} - {response.text}")
+                
+                except Exception as e:
+                    logger.error(f"❌ Erro ao fazer commit de {dashboard_file}: {e}")
+                    continue
             
-            current_sha = response.json()["sha"]
-            
-            # Fazer commit
-            data = {
-                "message": f"🗺️ Atualização automática de footfall - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-                "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
-                "sha": current_sha
-            }
-            
-            response = requests.put(url, headers=headers, json=data)
-            if response.status_code == 200:
-                logger.info("✅ Dashboard footfall atualizado no GitHub com sucesso")
+            if success_count == len(dashboard_files):
+                logger.info(f"✅ Todos os dashboards ({success_count}) atualizados no GitHub com footfall")
+                return True
+            elif success_count > 0:
+                logger.warning(f"⚠️ Apenas {success_count}/{len(dashboard_files)} dashboards foram atualizados no GitHub")
                 return True
             else:
-                logger.error(f"❌ Erro no commit: {response.status_code} - {response.text}")
+                logger.error("❌ Nenhum dashboard foi atualizado no GitHub")
                 return False
-            
                 
         except Exception as e:
             logger.error(f"❌ Erro ao fazer commit/push de footfall: {e}")

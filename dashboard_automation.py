@@ -33,9 +33,27 @@ class DashboardAutomation:
     """Classe principal para automação do dashboard"""
     
     def __init__(self):
-        self.dashboard_file = AUTOMATION_CONFIG['dashboard_file']
-        self.backup_enabled = AUTOMATION_CONFIG['backup_enabled']
-        self.backup_dir = AUTOMATION_CONFIG['backup_dir']
+        # Suportar múltiplos arquivos de dashboard
+        try:
+            self.dashboard_files = AUTOMATION_CONFIG.get('dashboard_files', ['static/dash_sonho.html'])
+        except:
+            # Se AUTOMATION_CONFIG não estiver definido, usar lista padrão
+            self.dashboard_files = ['static/dash_sonho.html', 'static/dash_sonho_v3.html']
+        
+        # Se for uma string única, converter para lista para compatibilidade
+        if isinstance(self.dashboard_files, str):
+            self.dashboard_files = [self.dashboard_files]
+        
+        # Manter compatibilidade com código existente
+        self.dashboard_file = self.dashboard_files[0]
+        
+        try:
+            self.backup_enabled = AUTOMATION_CONFIG['backup_enabled']
+            self.backup_dir = AUTOMATION_CONFIG['backup_dir']
+        except:
+            self.backup_enabled = True
+            self.backup_dir = 'backups'
+        
         self.processor = None
         
         # Criar diretório de backup se necessário
@@ -43,40 +61,59 @@ class DashboardAutomation:
             os.makedirs(self.backup_dir, exist_ok=True)
     
     def download_dashboard_from_github(self):
-        """Baixa o arquivo do dashboard do GitHub antes de fazer atualizações"""
+        """Baixa os arquivos do dashboard do GitHub antes de fazer atualizações"""
         try:
-            github_url = "https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/dash_sonho.html"
-            logger.info(f"📥 Baixando dashboard atualizado de: {github_url}")
+            success_count = 0
             
-            response = requests.get(github_url, timeout=30)
-            response.raise_for_status()
+            for dashboard_file in self.dashboard_files:
+                # Extrair nome do arquivo (sem o diretório)
+                filename = os.path.basename(dashboard_file)
+                github_url = f"https://raw.githubusercontent.com/g4trader/south-media-ia/main/static/{filename}"
+                
+                logger.info(f"📥 Baixando dashboard atualizado de: {github_url}")
+                
+                response = requests.get(github_url, timeout=30)
+                response.raise_for_status()
+                
+                # Criar diretório static se não existir
+                os.makedirs("static", exist_ok=True)
+                
+                # Salvar arquivo
+                with open(dashboard_file, "w", encoding="utf-8") as f:
+                    f.write(response.text)
+                
+                logger.info(f"✅ Dashboard {filename} baixado com sucesso do GitHub")
+                success_count += 1
             
-            # Criar diretório static se não existir
-            os.makedirs("static", exist_ok=True)
-            
-            # Salvar arquivo
-            with open(self.dashboard_file, "w", encoding="utf-8") as f:
-                f.write(response.text)
-            
-            logger.info("✅ Dashboard baixado com sucesso do GitHub")
-            return True
+            if success_count == len(self.dashboard_files):
+                logger.info(f"✅ Todos os dashboards ({success_count}) baixados com sucesso")
+                return True
+            else:
+                logger.warning(f"⚠️ Apenas {success_count}/{len(self.dashboard_files)} dashboards foram baixados")
+                return False
             
         except Exception as e:
-            logger.error(f"❌ Erro ao baixar dashboard do GitHub: {e}")
+            logger.error(f"❌ Erro ao baixar dashboards do GitHub: {e}")
             return False
     
     def create_backup(self):
-        """Cria backup do dashboard atual"""
+        """Cria backup dos dashboards atuais"""
         if not self.backup_enabled:
             return
         
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            backup_filename = f"dash_sonho_backup_{timestamp}.html"
-            backup_path = os.path.join(self.backup_dir, backup_filename)
             
-            shutil.copy2(self.dashboard_file, backup_path)
-            logger.info(f"✅ Backup criado: {backup_filename}")
+            for dashboard_file in self.dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    continue
+                
+                filename = os.path.basename(dashboard_file)
+                backup_filename = f"{filename.replace('.html', '')}_backup_{timestamp}.html"
+                backup_path = os.path.join(self.backup_dir, backup_filename)
+                
+                shutil.copy2(dashboard_file, backup_path)
+                logger.info(f"✅ Backup criado: {backup_filename}")
             
         except Exception as e:
             logger.error(f"❌ Erro ao criar backup: {e}")
@@ -98,15 +135,11 @@ class DashboardAutomation:
             return 'null'
     
     def update_dashboard_data(self, daily_data):
-        """Atualiza apenas dados de canais (DAILY) do dashboard, preservando FOOTFALL_POINTS"""
+        """Atualiza apenas dados de canais (DAILY) dos dashboards, preservando FOOTFALL_POINTS"""
         try:
-            logger.info("🔧 Atualizando dados de canais do dashboard (preservando footfall)...")
+            logger.info(f"🔧 Atualizando dados de canais de {len(self.dashboard_files)} dashboards (preservando footfall)...")
             
-            # Ler HTML atual
-            with open(self.dashboard_file, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Criar string JavaScript para DAILY
+            # Criar string JavaScript para DAILY (uma vez para todos os arquivos)
             daily_items = []
             for item in daily_data:
                 item_js = "{"
@@ -118,16 +151,42 @@ class DashboardAutomation:
             
             new_daily_js = "const DAILY = [" + ", ".join(daily_items) + "];"
             
-            # Substituir apenas a seção DAILY, preservando FOOTFALL_POINTS
-            daily_pattern = r'const DAILY = \[(.*?)\];'
-            html_content = re.sub(daily_pattern, new_daily_js, html_content, flags=re.DOTALL)
+            # Atualizar cada arquivo de dashboard
+            success_count = 0
+            for dashboard_file in self.dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    logger.warning(f"⚠️ Arquivo não encontrado: {dashboard_file}, pulando...")
+                    continue
+                
+                try:
+                    # Ler HTML atual
+                    with open(dashboard_file, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+                    
+                    # Substituir apenas a seção DAILY, preservando FOOTFALL_POINTS
+                    daily_pattern = r'const DAILY = \[(.*?)\];'
+                    html_content = re.sub(daily_pattern, new_daily_js, html_content, flags=re.DOTALL)
+                    
+                    # Salvar HTML atualizado
+                    with open(dashboard_file, 'w', encoding='utf-8') as f:
+                        f.write(html_content)
+                    
+                    logger.info(f"✅ Dados de canais atualizados em {os.path.basename(dashboard_file)}")
+                    success_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"❌ Erro ao atualizar {dashboard_file}: {e}")
+                    continue
             
-            # Salvar HTML atualizado
-            with open(self.dashboard_file, 'w', encoding='utf-8') as f:
-                f.write(html_content)
-            
-            logger.info(f"✅ Dados de canais atualizados com {len(daily_data)} registros (FOOTFALL_POINTS preservado)")
-            return True
+            if success_count == len(self.dashboard_files):
+                logger.info(f"✅ Dados de canais atualizados com {len(daily_data)} registros em todos os dashboards (FOOTFALL_POINTS preservado)")
+                return True
+            elif success_count > 0:
+                logger.warning(f"⚠️ Dados atualizados em apenas {success_count}/{len(self.dashboard_files)} dashboards")
+                return True
+            else:
+                logger.error("❌ Nenhum dashboard foi atualizado")
+                return False
             
         except Exception as e:
             logger.error(f"❌ Erro ao atualizar dados de canais: {e}")
@@ -331,11 +390,11 @@ class DashboardAutomation:
             return []
     
     def update_cons_and_per_data(self, daily_data):
-        """Atualiza dados CONS e PER no dashboard, preservando FOOTFALL_POINTS"""
+        """Atualiza dados CONS e PER nos dashboards, preservando FOOTFALL_POINTS"""
         try:
-            logger.info("🔧 Atualizando dados CONS e PER (preservando footfall)...")
+            logger.info(f"🔧 Atualizando dados CONS e PER em {len(self.dashboard_files)} dashboards (preservando footfall)...")
             
-            # Calcular dados
+            # Calcular dados (uma vez para todos os arquivos)
             cons_data = self.calculate_cons_data(daily_data)
             per_data = self.calculate_per_data(daily_data)
             
@@ -343,26 +402,50 @@ class DashboardAutomation:
                 logger.error("❌ Erro ao calcular dados CONS/PER")
                 return False
             
-            # Ler HTML atual
-            with open(self.dashboard_file, 'r', encoding='utf-8') as f:
-                html_content = f.read()
-            
-            # Atualizar CONS
+            # Preparar strings JavaScript
             cons_js = "const CONS = " + json.dumps(cons_data, indent=2, ensure_ascii=False) + ";"
-            cons_pattern = r'const CONS = \{.*?\};'
-            html_content = re.sub(cons_pattern, cons_js, html_content, flags=re.DOTALL)
-            
-            # Atualizar PER
             per_js = "const PER = " + json.dumps(per_data, indent=2, ensure_ascii=False) + ";"
-            per_pattern = r'const PER = \[.*?\];'
-            html_content = re.sub(per_pattern, per_js, html_content, flags=re.DOTALL)
             
-            # Salvar HTML atualizado
-            with open(self.dashboard_file, 'w', encoding='utf-8') as f:
-                f.write(html_content)
+            # Atualizar cada arquivo de dashboard
+            success_count = 0
+            for dashboard_file in self.dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    logger.warning(f"⚠️ Arquivo não encontrado: {dashboard_file}, pulando...")
+                    continue
+                
+                try:
+                    # Ler HTML atual
+                    with open(dashboard_file, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+                    
+                    # Atualizar CONS
+                    cons_pattern = r'const CONS = \{.*?\};'
+                    html_content = re.sub(cons_pattern, cons_js, html_content, flags=re.DOTALL)
+                    
+                    # Atualizar PER
+                    per_pattern = r'const PER = \[.*?\];'
+                    html_content = re.sub(per_pattern, per_js, html_content, flags=re.DOTALL)
+                    
+                    # Salvar HTML atualizado
+                    with open(dashboard_file, 'w', encoding='utf-8') as f:
+                        f.write(html_content)
+                    
+                    logger.info(f"✅ Dados CONS e PER atualizados em {os.path.basename(dashboard_file)}")
+                    success_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"❌ Erro ao atualizar {dashboard_file}: {e}")
+                    continue
             
-            logger.info("✅ Dados CONS e PER atualizados (FOOTFALL_POINTS preservado)")
-            return True
+            if success_count == len(self.dashboard_files):
+                logger.info("✅ Dados CONS e PER atualizados em todos os dashboards (FOOTFALL_POINTS preservado)")
+                return True
+            elif success_count > 0:
+                logger.warning(f"⚠️ Dados atualizados em apenas {success_count}/{len(self.dashboard_files)} dashboards")
+                return True
+            else:
+                logger.error("❌ Nenhum dashboard foi atualizado")
+                return False
             
         except Exception as e:
             logger.error(f"❌ Erro ao atualizar dados CONS/PER: {e}")
@@ -371,25 +454,7 @@ class DashboardAutomation:
     def commit_and_push_to_github(self):
         """Faz commit e push das alterações para o GitHub usando API com validação"""
         try:
-            logger.info("📤 Fazendo commit e push para o GitHub...")
-            
-            # Importar validador de template
-            # TemplateValidator removido na limpeza - validação simplificada
-            
-            # Ler o arquivo atualizado
-            with open(self.dashboard_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # Validação simplificada - verificar se arquivo não está vazio
-            if not content.strip():
-                logger.error("❌ Arquivo vazio, commit cancelado")
-                return False
-            
-            logger.info("✅ Template validado, prosseguindo com commit seguro...")
-            
-            # Fazer commit direto via GitHub API
-            import base64
-            import requests
+            logger.info(f"📤 Fazendo commit e push de {len(self.dashboard_files)} dashboards para o GitHub...")
             
             # Configurar token do GitHub
             token = os.getenv('GITHUB_TOKEN')
@@ -397,34 +462,71 @@ class DashboardAutomation:
                 logger.error("❌ Token do GitHub não configurado")
                 return False
             
-            # Fazer commit
-            url = "https://api.github.com/repos/g4trader/south-media-ia/contents/static/dash_sonho.html"
+            import base64
+            import requests
+            
             headers = {
                 "Authorization": f"token {token}",
                 "Accept": "application/vnd.github.v3+json"
             }
             
-            # Obter SHA do arquivo atual
-            response = requests.get(url, headers=headers)
-            if response.status_code != 200:
-                logger.error(f"❌ Erro ao obter SHA do arquivo: {response.status_code}")
-                return False
+            # Fazer commit de cada arquivo
+            success_count = 0
+            for dashboard_file in self.dashboard_files:
+                if not os.path.exists(dashboard_file):
+                    logger.warning(f"⚠️ Arquivo não encontrado: {dashboard_file}, pulando commit...")
+                    continue
+                
+                try:
+                    # Ler o arquivo atualizado
+                    with open(dashboard_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Validação simplificada - verificar se arquivo não está vazio
+                    if not content.strip():
+                        logger.error(f"❌ Arquivo vazio: {dashboard_file}, commit cancelado")
+                        continue
+                    
+                    # Extrair nome do arquivo (sem o diretório)
+                    filename = os.path.basename(dashboard_file)
+                    
+                    # URL do arquivo no GitHub
+                    url = f"https://api.github.com/repos/g4trader/south-media-ia/contents/static/{filename}"
+                    
+                    # Obter SHA do arquivo atual
+                    response = requests.get(url, headers=headers)
+                    if response.status_code != 200:
+                        logger.error(f"❌ Erro ao obter SHA do arquivo {filename}: {response.status_code}")
+                        continue
+                    
+                    current_sha = response.json()["sha"]
+                    
+                    # Fazer commit
+                    data = {
+                        "message": f"🤖 Atualização automática do dashboard {filename} - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+                        "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
+                        "sha": current_sha
+                    }
+                    
+                    response = requests.put(url, headers=headers, json=data)
+                    if response.status_code == 200:
+                        logger.info(f"✅ Dashboard {filename} atualizado no GitHub com sucesso")
+                        success_count += 1
+                    else:
+                        logger.error(f"❌ Erro no commit de {filename}: {response.status_code} - {response.text}")
+                
+                except Exception as e:
+                    logger.error(f"❌ Erro ao fazer commit de {dashboard_file}: {e}")
+                    continue
             
-            current_sha = response.json()["sha"]
-            
-            # Fazer commit
-            data = {
-                "message": f"🤖 Atualização automática do dashboard - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
-                "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
-                "sha": current_sha
-            }
-            
-            response = requests.put(url, headers=headers, json=data)
-            if response.status_code == 200:
-                logger.info("✅ Dashboard atualizado no GitHub com sucesso")
+            if success_count == len(self.dashboard_files):
+                logger.info(f"✅ Todos os dashboards ({success_count}) atualizados no GitHub com sucesso")
+                return True
+            elif success_count > 0:
+                logger.warning(f"⚠️ Apenas {success_count}/{len(self.dashboard_files)} dashboards foram atualizados no GitHub")
                 return True
             else:
-                logger.error(f"❌ Erro no commit: {response.status_code} - {response.text}")
+                logger.error("❌ Nenhum dashboard foi atualizado no GitHub")
                 return False
             
         except Exception as e:
