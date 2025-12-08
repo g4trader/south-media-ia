@@ -41,6 +41,7 @@ class GoogleSheetsProcessor:
         """Autentica com a API do Google Sheets"""
         try:
             from google.oauth2 import service_account
+            import json
             
             # Se está no Cloud Run (variável de ambiente definida), usa service account
             if os.environ.get('GOOGLE_CREDENTIALS_FILE'):
@@ -52,7 +53,6 @@ class GoogleSheetsProcessor:
                 # Verifica se é um JSON válido (começa com {)
                 if credentials_path.strip().startswith('{'):
                     logger.info("📁 Credenciais em formato JSON detectadas")
-                    import json
                     credentials_dict = json.loads(credentials_path)
                     creds = service_account.Credentials.from_service_account_info(
                         credentials_dict,
@@ -66,31 +66,73 @@ class GoogleSheetsProcessor:
                         scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
                     )
             else:
-                # Modo local - usa OAuth flow
-                logger.info("🔐 Usando autenticação OAuth (modo local)")
-                SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
-                creds = None
-                
-                # Verifica se já existe token salvo
-                if os.path.exists('token.pickle'):
-                    with open('token.pickle', 'rb') as token:
-                        creds = pickle.load(token)
-                
-                # Se não há credenciais válidas, faz login
-                if not creds or not creds.valid:
-                    if creds and creds.expired and creds.refresh_token:
-                        creds.refresh(Request())
-                    else:
-                        if not os.path.exists(self.credentials_file):
-                            raise FileNotFoundError(f"Arquivo de credenciais {self.credentials_file} não encontrado")
-                        
-                        flow = InstalledAppFlow.from_client_secrets_file(
-                            self.credentials_file, SCOPES)
-                        creds = flow.run_local_server(port=0)
+                # Modo local - prioriza Application Default Credentials (gcloud)
+                logger.info("🔐 Modo local: tentando usar Application Default Credentials (gcloud)")
+                try:
+                    from google.auth import default
+                    creds, project = default(scopes=['https://www.googleapis.com/auth/spreadsheets.readonly'])
+                    logger.info("✅ Usando Application Default Credentials")
+                except Exception as adc_error:
+                    logger.warning(f"⚠️ Application Default Credentials não disponível: {adc_error}")
+                    # Fallback: tenta usar arquivo de credenciais local
+                    if not os.path.exists(self.credentials_file):
+                        raise FileNotFoundError(f"Arquivo de credenciais {self.credentials_file} não encontrado e Application Default Credentials não disponível")
                     
-                    # Salva as credenciais para próxima execução
-                    with open('token.pickle', 'wb') as token:
-                        pickle.dump(creds, token)
+                    # Lê o arquivo para detectar o tipo
+                    try:
+                        with open(self.credentials_file, 'r') as f:
+                            creds_data = json.load(f)
+                        
+                        # Verifica se é service account
+                        if creds_data.get('type') == 'service_account':
+                            logger.info("🔐 Usando autenticação por Service Account (arquivo local)")
+                            creds = service_account.Credentials.from_service_account_file(
+                                self.credentials_file,
+                                scopes=['https://www.googleapis.com/auth/spreadsheets.readonly']
+                            )
+                        else:
+                            # É OAuth client secrets
+                            logger.info("🔐 Usando autenticação OAuth (modo local)")
+                            SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+                            creds = None
+                            
+                            # Verifica se já existe token salvo
+                            if os.path.exists('token.pickle'):
+                                with open('token.pickle', 'rb') as token:
+                                    creds = pickle.load(token)
+                            
+                            # Se não há credenciais válidas, faz login
+                            if not creds or not creds.valid:
+                                if creds and creds.expired and creds.refresh_token:
+                                    creds.refresh(Request())
+                                else:
+                                    flow = InstalledAppFlow.from_client_secrets_file(
+                                        self.credentials_file, SCOPES)
+                                    creds = flow.run_local_server(port=0)
+                                
+                                # Salva as credenciais para próxima execução
+                                with open('token.pickle', 'wb') as token:
+                                    pickle.dump(creds, token)
+                    except json.JSONDecodeError:
+                        # Se não é JSON válido, tenta OAuth
+                        logger.info("🔐 Arquivo não é JSON válido, tentando OAuth")
+                        SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+                        creds = None
+                        
+                        if os.path.exists('token.pickle'):
+                            with open('token.pickle', 'rb') as token:
+                                creds = pickle.load(token)
+                        
+                        if not creds or not creds.valid:
+                            if creds and creds.expired and creds.refresh_token:
+                                creds.refresh(Request())
+                            else:
+                                flow = InstalledAppFlow.from_client_secrets_file(
+                                    self.credentials_file, SCOPES)
+                                creds = flow.run_local_server(port=0)
+                            
+                            with open('token.pickle', 'wb') as token:
+                                pickle.dump(creds, token)
             
             self.service = build('sheets', 'v4', credentials=creds)
             logger.info("✅ Autenticação com Google Sheets realizada com sucesso")
@@ -246,38 +288,205 @@ class GoogleSheetsProcessor:
                 logger.info(f"✅ {len(daily_data)} registros processados para {channel_name}")
                 return daily_data
             
-            for _, row in df.iterrows():
+            # Detecção automática de data se a coluna date não estiver configurada
+            date_column = None
+            configured_date_col = columns.get('date', '').strip()
+            
+            if not configured_date_col:
+                # Tenta encontrar coluna de data automaticamente
+                for col in df.columns:
+                    col_str = str(col).strip()
+                    # Verifica se a coluna parece ser uma data (primeira coluna ou contém palavras-chave)
+                    if col_str == '' or col_str.lower() in ['date', 'day', 'dia', 'data']:
+                        date_column = col
+                        logger.info(f"🔍 Coluna de data detectada automaticamente: '{col}' (índice {list(df.columns).index(col)})")
+                        break
+                # Se não encontrou, usa a primeira coluna
+                if date_column is None and len(df.columns) > 0:
+                    date_column = df.columns[0]
+                    logger.info(f"🔍 Usando primeira coluna como data: '{date_column}'")
+            else:
+                # Tenta usar a coluna configurada
+                if configured_date_col in df.columns:
+                    date_column = configured_date_col
+                    logger.info(f"🔍 Usando coluna de data configurada: '{date_column}'")
+                else:
+                    # Se a coluna configurada não existe, tenta detectar automaticamente
+                    logger.warning(f"⚠️ Coluna de data configurada '{configured_date_col}' não encontrada. Tentando detecção automática...")
+                    for col in df.columns:
+                        col_str = str(col).strip()
+                        if col_str.lower() in ['date', 'day', 'dia', 'data']:
+                            date_column = col
+                            logger.info(f"🔍 Coluna de data detectada automaticamente: '{col}'")
+                            break
+                    # Se ainda não encontrou, usa a primeira coluna
+                    if date_column is None and len(df.columns) > 0:
+                        date_column = df.columns[0]
+                        logger.info(f"🔍 Usando primeira coluna como data: '{date_column}'")
+            
+            # Detecção automática de TrueViews ou Video Starts para YouTube
+            starts_column = None
+            q25_col = None
+            q50_col = None
+            q75_col = None
+            q100_col = None
+            
+            if channel_name == "YouTube":
+                # Verifica se existe TrueViews (prioridade para True View)
+                for col in df.columns:
+                    col_str = str(col).strip()
+                    if col_str.lower() == 'trueviews':
+                        starts_column = col
+                        logger.info(f"🔍 TrueViews detectado para YouTube: '{col}'")
+                        break
+                
+                # Se não encontrou TrueViews, tenta Video Starts ou Starts (Video)
+                if starts_column is None:
+                    for col in df.columns:
+                        col_str = str(col).strip().lower()
+                        if 'starts' in col_str or 'video starts' in col_str:
+                            starts_column = col
+                            logger.info(f"🔍 Video Starts detectado para YouTube: '{col}'")
+                            break
+                
+                # Se ainda não encontrou, usa a coluna configurada
+                if starts_column is None and columns.get('starts'):
+                    starts_column = columns['starts']
+                    logger.info(f"🔍 Usando coluna configurada para starts: '{starts_column}'")
+                
+                # Detecção automática de colunas de quartis para YouTube (True View)
+                # Primeiro tenta usar as colunas configuradas
+                q25_col = columns.get('q25', '')
+                q50_col = columns.get('q50', '')
+                q75_col = columns.get('q75', '')
+                q100_col = columns.get('q100', '')
+                
+                # Se não encontrou as colunas configuradas, tenta detectar automaticamente
+                # Suporta múltiplos formatos: "25% Video Complete", "First-Quartile Views (Video)", etc.
+                if not q25_col or q25_col not in df.columns:
+                    for col in df.columns:
+                        col_str = str(col).strip().lower()
+                        if ('25%' in col_str or 'first-quartile' in col_str or 'first quartile' in col_str) and \
+                           ('video' in col_str or 'complete' in col_str or 'views' in col_str):
+                            q25_col = col
+                            logger.info(f"🔍 Coluna Q25 detectada automaticamente: '{col}'")
+                            break
+                
+                if not q50_col or q50_col not in df.columns:
+                    for col in df.columns:
+                        col_str = str(col).strip().lower()
+                        if ('50%' in col_str or 'midpoint' in col_str or 'mid point' in col_str) and \
+                           ('video' in col_str or 'complete' in col_str or 'views' in col_str):
+                            q50_col = col
+                            logger.info(f"🔍 Coluna Q50 detectada automaticamente: '{col}'")
+                            break
+                
+                if not q75_col or q75_col not in df.columns:
+                    for col in df.columns:
+                        col_str = str(col).strip().lower()
+                        if ('75%' in col_str or 'third-quartile' in col_str or 'third quartile' in col_str) and \
+                           ('video' in col_str or 'complete' in col_str or 'views' in col_str):
+                            q75_col = col
+                            logger.info(f"🔍 Coluna Q75 detectada automaticamente: '{col}'")
+                            break
+                
+                if not q100_col or q100_col not in df.columns:
+                    for col in df.columns:
+                        col_str = str(col).strip().lower()
+                        if ('100%' in col_str or 'complete views' in col_str or 'complete' in col_str) and \
+                           ('video' in col_str or 'views' in col_str or 'complete' in col_str):
+                            q100_col = col
+                            logger.info(f"🔍 Coluna Q100 detectada automaticamente: '{col}'")
+                            break
+            else:
+                # Para outros canais, usa as colunas configuradas
+                q25_col = columns.get('q25', '')
+                q50_col = columns.get('q50', '')
+                q75_col = columns.get('q75', '')
+                q100_col = columns.get('q100', '')
+            
+            skipped_count = 0
+            skip_reasons = {}
+            
+            for idx, row in df.iterrows():
                 try:
                     # Processa data
-                    date_str = str(row.get(columns['date'], ''))
+                    date_str = str(row.get(date_column, ''))
+                    if not date_str or date_str == 'nan' or date_str.strip() == '':
+                        skipped_count += 1
+                        reason = "Data vazia"
+                        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+                        continue
+                    
                     formatted_date = self.format_date(date_str)
                     
                     if not formatted_date:
+                        skipped_count += 1
+                        reason = f"Data inválida: '{date_str}'"
+                        skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+                        if idx < 3:  # Log apenas as primeiras 3 para não poluir
+                            logger.warning(f"⚠️ Linha {idx + 1}: Data não formatada: '{date_str}'")
                         continue
                     
-                    # Processa valor investido
-                    spend_str = str(row.get(columns['spend'], '0'))
+                    # Processa valor investido (detecção automática se não configurado)
+                    spend_key = columns.get('spend', '')
+                    if not spend_key or spend_key not in df.columns:
+                        # Tenta detectar automaticamente
+                        for col in df.columns:
+                            col_str = str(col).strip().lower()
+                            if 'valor investido' in col_str or 'spend' in col_str or 'investido' in col_str:
+                                spend_key = col
+                                break
+                    spend_str = str(row.get(spend_key, '0')) if spend_key else '0'
                     spend = self.parse_currency(spend_str)
                     
-                    # Processa outros campos
-                    creative = str(row.get(columns.get('creative', ''), ''))
+                    # Processa outros campos (detecção automática de creative)
+                    creative_key = columns.get('creative', '')
+                    if not creative_key or creative_key not in df.columns:
+                        # Tenta detectar automaticamente
+                        for col in df.columns:
+                            col_str = str(col).strip().lower()
+                            if 'creative' in col_str or 'criativo' in col_str:
+                                creative_key = col
+                                break
+                    creative = str(row.get(creative_key, '')) if creative_key else ''
                     
                     # Impressions e clicks podem não existir em alguns canais (ex: Netflix)
                     impressions_key = columns.get('impressions', '')
+                    if impressions_key and impressions_key not in df.columns:
+                        # Tenta detectar automaticamente
+                        for col in df.columns:
+                            col_str = str(col).strip().lower()
+                            if 'impressions' in col_str or 'imps' in col_str:
+                                impressions_key = col
+                                break
                     impressions = self.parse_number(row.get(impressions_key, 0)) if impressions_key else 0
                     
                     clicks_key = columns.get('clicks', '')
+                    if clicks_key and clicks_key not in df.columns:
+                        # Tenta detectar automaticamente
+                        for col in df.columns:
+                            col_str = str(col).strip().lower()
+                            if 'clicks' in col_str:
+                                clicks_key = col
+                                break
                     clicks = self.parse_number(row.get(clicks_key, 0)) if clicks_key else 0
                     
                     visits_key = columns.get('visits', '')
                     visits = str(row.get(visits_key, '')) if visits_key else ''
                     
                     # Processa campos específicos do YouTube e Netflix
-                    starts = self.parse_number(row.get(columns.get('starts', ''), 0))
-                    q25 = self.parse_number(row.get(columns.get('q25', ''), 0))
-                    q50 = self.parse_number(row.get(columns.get('q50', ''), 0))
-                    q75 = self.parse_number(row.get(columns.get('q75', ''), 0))
-                    q100 = self.parse_number(row.get(columns.get('q100', ''), 0))
+                    # Para YouTube, usa TrueViews se disponível, senão usa Video Starts
+                    if channel_name == "YouTube" and starts_column:
+                        starts = self.parse_number(row.get(starts_column, 0))
+                    else:
+                        starts = self.parse_number(row.get(columns.get('starts', ''), 0))
+                    
+                    # Usa as colunas de quartis detectadas (já foram detectadas antes do loop)
+                    q25 = self.parse_number(row.get(q25_col, 0)) if q25_col else 0
+                    q50 = self.parse_number(row.get(q50_col, 0)) if q50_col else 0
+                    q75 = self.parse_number(row.get(q75_col, 0)) if q75_col else 0
+                    q100 = self.parse_number(row.get(q100_col, 0)) if q100_col else 0
                     
                     # Cria registro
                     record = {
@@ -298,8 +507,15 @@ class GoogleSheetsProcessor:
                     daily_data.append(record)
                     
                 except Exception as e:
-                    logger.warning(f"⚠️ Erro ao processar linha do {channel_name}: {e}")
+                    skipped_count += 1
+                    reason = f"Erro: {str(e)[:50]}"
+                    skip_reasons[reason] = skip_reasons.get(reason, 0) + 1
+                    logger.warning(f"⚠️ Erro ao processar linha {idx + 1} do {channel_name}: {e}")
                     continue
+            
+            # Log de resumo
+            if skipped_count > 0:
+                logger.warning(f"⚠️ {skipped_count} linhas puladas para {channel_name} / Motivos: {skip_reasons}")
             
             logger.info(f"✅ {len(daily_data)} registros processados para {channel_name}")
             return daily_data

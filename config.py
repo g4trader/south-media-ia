@@ -103,19 +103,20 @@ def is_debug() -> bool:
 # Configuração do Google Sheets (pode ser sobrescrita por variáveis de ambiente)
 GOOGLE_SHEETS_CONFIG = {
     "YouTube": {
-        "sheet_id": os.environ.get("YOUTUBE_SHEET_ID", "1jApuNZO-Y7TF67_yiF3R6yLez6_z9q8_Rt3pDSItOZg"),
-        "gid": os.environ.get("YOUTUBE_GID", "304137877"),
+        "sheet_id": os.environ.get("YOUTUBE_SHEET_ID", "1KOh1NpFION9q7434LTEcQ4_s2jAK6tzpghqBVVHKYjo"),
+        "gid": os.environ.get("YOUTUBE_GID", "1863167182"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
-            "starts": "Video Starts",
-            "q25": "25%",
-            "q50": "50%",
-            "q75": "75%",
-            "q100": "100%"
+            "date": "Day",  # Suporta "Day" ou "Date"
+            "spend": "Valor investido",
+            "impressions": "Imps",  # YouTube True View tem Imps
+            "clicks": "Clicks",  # YouTube True View tem Clicks
+            "starts": "",  # Será detectado automaticamente: TrueViews ou Video Starts
+            "q25": "25% Video Complete",  # Formato True View
+            "q50": "50% Video Complete",  # Formato True View
+            "q75": "75% Video Complete",  # Formato True View
+            "q100": "100% Complete",  # Formato True View
+            "creative": "Creative"  # Suporta "Creative" ou "criativo"
         }
     },
     "Programática Video": {
@@ -123,25 +124,26 @@ GOOGLE_SHEETS_CONFIG = {
         "gid": os.environ.get("PROG_VIDEO_GID", "1489416055"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
+            "date": "Day",
+            "spend": "Valor investido",
+            "impressions": "Imps",
             "clicks": "Clicks",
             "starts": "Video Starts",
-            "q25": "25%",
-            "q50": "50%",
-            "q75": "75%",
-            "q100": "100%"
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete",
+            "q75": "75% Video Complete",
+            "q100": "100% Complete",
+            "creative": "Creative"
         }
     },
     "TikTok": {
-        "sheet_id": os.environ.get("TIKTOK_SHEET_ID", ""),
-        "gid": os.environ.get("TIKTOK_GID", ""),
+        "sheet_id": os.environ.get("TIKTOK_SHEET_ID", "1ZWA8SOvS_vYT_tIk8Wt4ZgxtMmzk9B8MAsLQ1fBMWsk"),
+        "gid": os.environ.get("TIKTOK_GID", "1727929489"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
+            "date": "By Day",
+            "spend": "Valor Investido",
+            "impressions": "Imps",
             "clicks": "Clicks",
             "starts": "Video Starts"
         }
@@ -164,40 +166,40 @@ GOOGLE_SHEETS_CONFIG = {
         }
     },
     "Disney": {
-        "sheet_id": os.environ.get("DISNEY_SHEET_ID", ""),
-        "gid": os.environ.get("DISNEY_GID", ""),
+        "sheet_id": os.environ.get("DISNEY_SHEET_ID", "1-uRCKHOeXsBdGt4qdD2z7fZHR_nLQdNAPLUtMaH5O1o"),
+        "gid": os.environ.get("DISNEY_GID", "1743413064"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
+            "date": "Day",
+            "spend": "Valor investido",
+            "impressions": "Imps",
+            "clicks": "",
             "starts": "Video Starts",
-            "q25": "25%",
-            "q50": "50%",
-            "q75": "75%",
-            "q100": "100%"
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete",
+            "q75": "75% Video Complete",
+            "q100": "100% Complete"
         }
     },
     "CTV": {
-        "sheet_id": os.environ.get("CTV_SHEET_ID", ""),
-        "gid": os.environ.get("CTV_GID", ""),
+        "sheet_id": os.environ.get("CTV_SHEET_ID", "1TGAG1RyOqJRUUYXL52ltayf4MlOYrwvJwolMxToD69U"),
+        "gid": os.environ.get("CTV_GID", "1743413064"),
         "sheet_name": None,
         "columns": {
-            "date": "Date",
-            "spend": "Spend",
-            "impressions": "Impressions",
-            "clicks": "Clicks",
+            "date": "",  # Primeira coluna (sem nome de cabeçalho)
+            "spend": "Valor investido",
+            "impressions": "Imps",
+            "clicks": "",
             "starts": "Video Starts",
-            "q25": "25%",
-            "q50": "50%",
-            "q75": "75%",
-            "q100": "100%"
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete",
+            "q75": "75% Video Complete",
+            "q100": "100% Complete"
         }
     },
     "Footfall Display": {
-        "sheet_id": os.environ.get("FOOTFALL_SHEET_ID", ""),
-        "gid": os.environ.get("FOOTFALL_GID", ""),
+        "sheet_id": os.environ.get("FOOTFALL_SHEET_ID", "10ttYM3BoqEnEnP0maENnOrE-XrRtC3uvqRTIJr2_pxA"),
+        "gid": os.environ.get("FOOTFALL_GID", "1743413064"),
         "sheet_name": None,
         "columns": {
             "date": "Date",
@@ -219,7 +221,7 @@ GOOGLE_SHEETS_CONFIG = {
 AUTOMATION_CONFIG = {
     "dashboard_files": os.environ.get(
         "AUTOMATION_DASHBOARD_FILES",
-        "static/dash_sonho.html,static/dash_sonho_v3.html"
+        "static/dash_sonho.html,static/dash_sonho_v2.html,static/dash_sonho_v3.html"
     ).split(","),
     "dashboard_file": os.environ.get("AUTOMATION_DASHBOARD_FILE", "static/dash_sonho.html"),
     "backup_enabled": os.environ.get("AUTOMATION_BACKUP_ENABLED", "true").lower() == "true",

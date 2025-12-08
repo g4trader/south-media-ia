@@ -38,7 +38,7 @@ class DashboardAutomation:
             self.dashboard_files = AUTOMATION_CONFIG.get('dashboard_files', ['static/dash_sonho.html'])
         except:
             # Se AUTOMATION_CONFIG não estiver definido, usar lista padrão
-            self.dashboard_files = ['static/dash_sonho.html', 'static/dash_sonho_v3.html']
+            self.dashboard_files = ['static/dash_sonho.html', 'static/dash_sonho_v2.html', 'static/dash_sonho_v3.html']
         
         # Se for uma string única, converter para lista para compatibilidade
         if isinstance(self.dashboard_files, str):
