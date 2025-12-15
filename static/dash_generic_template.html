@@ -1149,38 +1149,173 @@ class DashboardLoader {
     }
 
     renderMetrics(data) {
-        // Renderizar métricas principais
+        // Renderizar métricas principais compatíveis com os KPIs dos canais
         const metricsContainer = document.getElementById('metrics-overview-top');
-        if (metricsContainer && data.campaign_summary) {
-            const summary = data.campaign_summary;
-            const contract = data.contract || {};
-            metricsContainer.innerHTML = `
-                <div class="metric" data-metric="investment">
-                    <div class="label">💰 Investimento</div>
-                    <div class="value">${this.formatCurrency(summary.investment || 0)}</div>
-                </div>
-                <div class="metric" data-metric="budget">
-                    <div class="label">💸 Budget Utilizado</div>
-                    <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
-                </div>
+        if (!metricsContainer || !data.campaign_summary) return;
+        
+        const summary = data.campaign_summary;
+        const contract = data.contract || {};
+        
+        // Detectar KPIs presentes nos canais
+        const channelKpis = new Set();
+        const isMultichannel = data.channels && data.channels.length > 0;
+        
+        if (isMultichannel) {
+            // Coletar KPIs de todos os canais
+            data.channels.forEach(ch => {
+                const kpi = ch.kpi || contract.kpi || 'CPV';
+                channelKpis.add(kpi.toUpperCase());
+            });
+        } else {
+            // Canal único: usar KPI do contrato
+            const kpi = contract.kpi || 'CPV';
+            channelKpis.add(kpi.toUpperCase());
+        }
+        
+        // Calcular métricas adicionais
+        const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+        const ctr = summary.ctr || 0;
+        const vtr = summary.vtr || 0;
+        const cpm = summary.cpm || (summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0);
+        const cpv = contract.cpv_contracted || (summary.total_video_completions > 0 ? (summary.total_spend / summary.total_video_completions) : 0);
+        const cpc = summary.total_clicks > 0 ? (summary.total_spend / summary.total_clicks) : 0;
+        
+        // Construir HTML das métricas
+        let metricsHtml = `
+            <div class="metric" data-metric="investment">
+                <div class="label">💰 Investimento</div>
+                <div class="value">${this.formatCurrency(contract.investment || summary.investment || 0)}</div>
+            </div>
+            <div class="metric" data-metric="budget">
+                <div class="label">💸 Budget Utilizado</div>
+                <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
+            </div>
+            <div class="metric">
+                <div class="label">📈 Pacing</div>
+                <div class="value">${this.formatPercentage(pacing)}</div>
+            </div>
+        `;
+        
+        // Adicionar métricas específicas baseadas nos KPIs presentes
+        if (channelKpis.has('CPV')) {
+            // Métricas para CPV (Custo por View)
+            metricsHtml += `
                 <div class="metric" data-metric="vc-contracted">
                     <div class="label">🎯 VC Contratadas</div>
-                    <div class="value">${this.formatNumber(summary.complete_views_contracted || 0)}</div>
+                    <div class="value">${this.formatNumber(summary.complete_views_contracted || contract.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric" data-metric="video-completions">
                     <div class="label">📺 VC Entregue</div>
                     <div class="value">${this.formatNumber(summary.total_video_completions || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📈 Pacing</div>
-                    <div class="value">${this.formatPercentage(summary.pacing || 0)}</div>
+                    <div class="label">📊 VTR</div>
+                    <div class="value">${this.formatPercentage(vtr)}</div>
                 </div>
-                    <div class="metric">
-                        <div class="label">💵 CPV</div>
-                        <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
-                    </div>
+                <div class="metric">
+                    <div class="label">💵 CPV</div>
+                    <div class="value">R$ ${this.formatCurrency(cpv)}</div>
+                </div>
             `;
         }
+        
+        if (channelKpis.has('CPE')) {
+            // Métricas para CPE (Custo por Escuta/Engajamento)
+            const total_engagements = summary.total_engagements || summary.total_audio_listens || summary.total_video_completions || 0;
+            const cpe = total_engagements > 0 ? (summary.total_spend / total_engagements) : 0;
+            metricsHtml += `
+                <div class="metric">
+                    <div class="label">🎧 Engajamentos</div>
+                    <div class="value">${this.formatNumber(total_engagements)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💵 CPE</div>
+                    <div class="value">R$ ${this.formatCurrency(cpe)}</div>
+                </div>
+            `;
+        }
+        
+        if (channelKpis.has('CPM')) {
+            // Métricas para CPM (Custo por Mil Impressões)
+            metricsHtml += `
+                <div class="metric">
+                    <div class="label">👁️ Impressões</div>
+                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">📊 CTR</div>
+                    <div class="value">${this.formatPercentage(ctr)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💵 CPM</div>
+                    <div class="value">R$ ${this.formatCurrency(cpm)}</div>
+                </div>
+            `;
+        }
+        
+        if (channelKpis.has('CPC')) {
+            // Métricas para CPC (Custo por Clique)
+            metricsHtml += `
+                <div class="metric">
+                    <div class="label">🖱️ Cliques</div>
+                    <div class="value">${this.formatNumber(summary.total_clicks || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">📊 CTR</div>
+                    <div class="value">${this.formatPercentage(ctr)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💵 CPC</div>
+                    <div class="value">R$ ${this.formatCurrency(cpc)}</div>
+                </div>
+            `;
+        }
+        
+        if (channelKpis.has('CPA')) {
+            // Métricas para CPA (Custo por Aquisição)
+            const total_conversions = summary.total_conversions || 0;
+            const cpa = total_conversions > 0 ? (summary.total_spend / total_conversions) : 0;
+            metricsHtml += `
+                <div class="metric">
+                    <div class="label">🎯 Conversões</div>
+                    <div class="value">${this.formatNumber(total_conversions)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">💵 CPA</div>
+                    <div class="value">R$ ${this.formatCurrency(cpa)}</div>
+                </div>
+            `;
+        }
+        
+        // Se houver múltiplos KPIs, mostrar métricas comuns adicionais
+        if (channelKpis.size > 1) {
+            if (summary.total_impressions > 0) {
+                metricsHtml += `
+                    <div class="metric">
+                        <div class="label">👁️ Impressões</div>
+                        <div class="value">${this.formatNumber(summary.total_impressions)}</div>
+                    </div>
+                `;
+            }
+            if (summary.total_clicks > 0) {
+                metricsHtml += `
+                    <div class="metric">
+                        <div class="label">🖱️ Cliques</div>
+                        <div class="value">${this.formatNumber(summary.total_clicks)}</div>
+                    </div>
+                `;
+            }
+            if (summary.total_video_completions > 0) {
+                metricsHtml += `
+                    <div class="metric">
+                        <div class="label">📺 VC</div>
+                        <div class="value">${this.formatNumber(summary.total_video_completions)}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        metricsContainer.innerHTML = metricsHtml;
     }
 
     renderCharts(data) {
