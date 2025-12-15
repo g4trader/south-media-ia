@@ -2353,12 +2353,12 @@ def dash_generator_pro_multicanal():
         <form id="generatorForm">
             <div class="form-group">
                 <label for="clientName">Cliente:</label>
-                <input type="text" id="clientName" name="client" required>
+                <input type="text" id="clientName" name="client" required autocomplete="off" data-lpignore="true">
             </div>
             
             <div class="form-group">
                 <label for="campaignName">Nome da Campanha:</label>
-                <input type="text" id="campaignName" name="campaign_name" required>
+                <input type="text" id="campaignName" name="campaign_name" required autocomplete="off" data-lpignore="true">
             </div>
             
             <div class="channels-container">
@@ -2405,7 +2405,7 @@ def dash_generator_pro_multicanal():
                 <div class="channel-grid">
                     <div class="form-group">
                         <label>Nome do Canal:</label>
-                        <input type="text" name="channels[${channelCount}][channel_name]" placeholder="Ex: YouTube, TikTok, Display" required>
+                        <input type="text" name="channels[${channelCount}][channel_name]" placeholder="Ex: YouTube, TikTok, Display" required autocomplete="off" data-lpignore="true">
                     </div>
                     <div class="form-group">
                         <label>KPI:</label>
@@ -2419,11 +2419,11 @@ def dash_generator_pro_multicanal():
                     </div>
                     <div class="form-group">
                         <label>URL da Planilha:</label>
-                        <input type="url" name="channels[${channelCount}][sheet_url]" placeholder="https://docs.google.com/spreadsheets/d/..." required oninput="updateSheetId(${channelCount}, this.value)">
+                        <input type="url" name="channels[${channelCount}][sheet_url]" placeholder="https://docs.google.com/spreadsheets/d/..." required oninput="updateSheetId(${channelCount}, this.value)" autocomplete="off" data-lpignore="true" data-form-type="other">
                     </div>
                     <div class="form-group">
                         <label>ID da Planilha (Auto):</label>
-                        <input type="text" name="channels[${channelCount}][sheet_id]" readonly>
+                        <input type="text" name="channels[${channelCount}][sheet_id]" readonly autocomplete="off" data-lpignore="true">
                     </div>
                 </div>
             `;
