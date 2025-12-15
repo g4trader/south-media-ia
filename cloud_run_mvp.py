@@ -2405,7 +2405,25 @@ def dash_generator_pro_multicanal():
                 <div class="channel-grid">
                     <div class="form-group">
                         <label>Nome do Canal:</label>
-                        <input type="text" name="channels[${channelCount}][channel_name]" placeholder="Ex: YouTube, TikTok, Display" required autocomplete="off" data-lpignore="true">
+                        <select name="channels[${channelCount}][channel_name]" required>
+                            <option value="">Selecione um canal</option>
+                            <option value="Video Programática">Video Programática</option>
+                            <option value="Display Programática">Display Programática</option>
+                            <option value="Native Programática">Native Programática</option>
+                            <option value="YouTube">YouTube</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Netflix">Netflix</option>
+                            <option value="Disney">Disney</option>
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="Pinterest">Pinterest</option>
+                            <option value="Spotify">Spotify</option>
+                            <option value="Geofence">Geofence</option>
+                            <option value="Waze">Waze</option>
+                            <option value="CTV">CTV</option>
+                            <option value="Footfall Display">Footfall Display</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>KPI:</label>
@@ -2482,7 +2500,7 @@ def dash_generator_pro_multicanal():
                 // Coletar dados dos canais
                 const channelInputs = document.querySelectorAll('.channel-card');
                 channelInputs.forEach(card => {
-                    const channelName = card.querySelector('input[name*="[channel_name]"]').value;
+                    const channelName = card.querySelector('select[name*="[channel_name]"]').value;
                     const kpi = card.querySelector('select[name*="[kpi]"]').value;
                     const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
                     
