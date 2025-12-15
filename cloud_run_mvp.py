@@ -469,6 +469,42 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         with open(template_path, 'r', encoding='utf-8') as f:
             dashboard_content = f.read()
         
+        # Extrair dados da planilha e popular no dashboard
+        logger.info(f"📊 Extraindo dados da planilha para popular o dashboard...")
+        try:
+            config = CampaignConfig(
+                campaign_key=campaign_key,
+                client=client,
+                campaign_name=campaign_name,
+                sheet_id=sheet_id,
+                channel=channel,
+                kpi=kpi
+            )
+            extractor = RealGoogleSheetsExtractor(config)
+            extracted_data = extractor.extract_data()
+            
+            if extracted_data:
+                # Converter dados para JSON e inserir no HTML
+                data_json = json.dumps(extracted_data, ensure_ascii=False, default=str)
+                embedded_data_script = f'<script>window.EMBEDDED_CAMPAIGN_DATA = {data_json};</script>'
+                
+                # Inserir dados embutidos antes do fechamento do </head> ou no início do <body>
+                if '</head>' in dashboard_content:
+                    dashboard_content = dashboard_content.replace('</head>', f'{embedded_data_script}\n</head>')
+                elif '<body>' in dashboard_content:
+                    dashboard_content = dashboard_content.replace('<body>', f'<body>\n{embedded_data_script}')
+                else:
+                    # Se não encontrar, inserir antes do primeiro <script>
+                    first_script_pos = dashboard_content.find('<script')
+                    if first_script_pos > 0:
+                        dashboard_content = dashboard_content[:first_script_pos] + embedded_data_script + '\n' + dashboard_content[first_script_pos:]
+                
+                logger.info(f"✅ Dados da planilha extraídos e embutidos no dashboard ({len(extracted_data.get('daily_data', []))} registros diários)")
+            else:
+                logger.warning(f"⚠️ Não foi possível extrair dados da planilha, dashboard usará API dinâmica")
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao extrair dados da planilha: {e}. Dashboard usará API dinâmica como fallback")
+        
         # Substituir placeholders
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
         dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)

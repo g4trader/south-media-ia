@@ -505,6 +505,14 @@ class DashboardLoader {
     }
 
     async fetchData() {
+        // Verificar se há dados embutidos no HTML (populados durante a geração)
+        if (window.EMBEDDED_CAMPAIGN_DATA) {
+            console.log('✅ Usando dados embutidos da planilha (extraídos durante a geração)');
+            return window.EMBEDDED_CAMPAIGN_DATA;
+        }
+        
+        // Fallback: buscar dados via API dinâmica
+        console.log('📡 Buscando dados via API dinâmica...');
         const apiUrl = `${this.apiEndpoint}/api/${this.campaignKey}/data`;
         const response = await fetch(apiUrl);
         if (!response.ok) {

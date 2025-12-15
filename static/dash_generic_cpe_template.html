@@ -412,7 +412,7 @@
           <thead>
             <tr>
               <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
-              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Escutas (100%)</th><th>VTR (100%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>Escutas (100%)</th><th>VTR (100%)</th>
               <th>CPE (R$)</th><th>CPM (R$)</th>
             </tr>
           </thead>
@@ -443,7 +443,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Escutas</th><th>VTR</th><th>CPE</th><th>CPM</th><th>Criativo</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>Escutas</th><th>VTR</th><th>CPE</th><th>CPM</th><th>Criativo</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -550,6 +550,14 @@ class DashboardLoader {
     }
 
     async fetchData() {
+        // Verificar se há dados embutidos no HTML (populados durante a geração)
+        if (window.EMBEDDED_CAMPAIGN_DATA) {
+            console.log('✅ Usando dados embutidos da planilha (extraídos durante a geração)');
+            return window.EMBEDDED_CAMPAIGN_DATA;
+        }
+        
+        // Fallback: buscar dados via API dinâmica
+        console.log('📡 Buscando dados via API dinâmica...');
         const apiUrl = `${this.apiEndpoint}/api/${this.campaignKey}/data`;
         const response = await fetch(apiUrl);
         if (!response.ok) {
@@ -1120,6 +1128,14 @@ class DashboardLoader {
             // Calcular pacing
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             
+            // Calcular quartis agregados do daily_data
+            let q25_total = 0, q50_total = 0, q75_total = 0;
+            if (data.daily_data && data.daily_data.length > 0) {
+                q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
+                q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
+                q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
+            }
+            
             // Usar sempre o canal do contract (correto)
             let realChannel = contract.canal || 'Video Programática';
             
@@ -1132,6 +1148,9 @@ class DashboardLoader {
                     <td>${this.formatNumber(summary.total_impressions || 0)}</td>
                     <td>${this.formatNumber(summary.total_clicks || 0)}</td>
                     <td>${this.formatPercentage(summary.ctr || 0)}</td>
+                    <td>${this.formatNumber(q25_total)}</td>
+                    <td>${this.formatNumber(q50_total)}</td>
+                    <td>${this.formatNumber(q75_total)}</td>
                     <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
                     <td>${this.formatPercentage(summary.vtr || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
@@ -1163,6 +1182,9 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.impressions)}</td>
                         <td>${this.formatNumber(record.clicks)}</td>
                         <td>${this.formatPercentage(record.ctr)}</td>
+                        <td>${this.formatNumber(record.video_25 || 0)}</td>
+                        <td>${this.formatNumber(record.video_50 || 0)}</td>
+                        <td>${this.formatNumber(record.video_75 || 0)}</td>
                         <td>${this.formatNumber(record.video_completions)}</td>
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
