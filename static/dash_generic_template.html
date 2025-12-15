@@ -426,8 +426,9 @@
   <div id="tab-channels" class="hidden">
     <div class="card" style="margin-bottom:12px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-        <div style="font-weight:800">Canal:</div>
-        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff" id="channelDisplay">Carregando...</div>
+        <div style="font-weight:800">Selecione o canal:</div>
+        <select id="channelSelect" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff;min-width:200px;"></select>
+        <div style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff;display:none;" id="channelDisplay">Carregando...</div>
       </div>
     </div>
     
@@ -955,11 +956,36 @@ class DashboardLoader {
 
     updateChannelTabElements(channelName) {
         // Atualizar o display do canal na aba "Por Canal"
+        const channelSelect = document.getElementById('channelSelect');
         const channelDisplay = document.getElementById('channelDisplay');
         const channelTitle = document.getElementById('channelTitle');
         
-        if (channelDisplay) {
-            channelDisplay.textContent = channelName;
+        // Se for multicanal, usar o select; caso contrário, usar o display
+        const isMultichannel = this.originalData && this.originalData.channels && this.originalData.channels.length > 0;
+        
+        if (isMultichannel && channelSelect) {
+            // Popular o select com os canais disponíveis
+            if (channelSelect.options.length === 0) {
+                const channels = this.originalData.channels || [];
+                channels.forEach(ch => {
+                    const option = document.createElement('option');
+                    option.value = ch.channel_name || ch.name || '';
+                    option.textContent = ch.channel_name || ch.name || '';
+                    channelSelect.appendChild(option);
+                });
+            }
+            
+            // Selecionar o canal atual
+            channelSelect.value = channelName;
+            channelSelect.style.display = 'block';
+            if (channelDisplay) channelDisplay.style.display = 'none';
+        } else {
+            // Para canal único, usar o display
+            if (channelSelect) channelSelect.style.display = 'none';
+            if (channelDisplay) {
+                channelDisplay.textContent = channelName;
+                channelDisplay.style.display = 'block';
+            }
         }
         
         if (channelTitle) {
@@ -967,6 +993,141 @@ class DashboardLoader {
         }
         
         console.log(`🎯 Canal atualizado para: ${channelName}`);
+    }
+    
+    filterChannelData(selectedChannel) {
+        // Filtrar dados por canal selecionado
+        if (!this.originalData) return;
+        
+        const isMultichannel = this.originalData.channels && this.originalData.channels.length > 0;
+        
+        if (!isMultichannel || !selectedChannel) {
+            // Se não for multicanal ou nenhum canal selecionado, usar dados originais
+            this.filteredData = JSON.parse(JSON.stringify(this.originalData));
+            return;
+        }
+        
+        // Filtrar daily_data pelo canal selecionado
+        const filteredDaily = (this.originalData.daily_data || []).filter(record => {
+            const recordChannel = record.channel || '';
+            return recordChannel.toLowerCase() === selectedChannel.toLowerCase();
+        });
+        
+        // Calcular métricas do canal selecionado
+        const channelSummary = {
+            total_spend: filteredDaily.reduce((sum, r) => sum + (r.spend || 0), 0),
+            total_impressions: filteredDaily.reduce((sum, r) => sum + (r.impressions || 0), 0),
+            total_clicks: filteredDaily.reduce((sum, r) => sum + (r.clicks || 0), 0),
+            total_video_completions: filteredDaily.reduce((sum, r) => sum + (r.video_completions || 0), 0),
+            total_video_starts: filteredDaily.reduce((sum, r) => sum + (r.video_starts || 0), 0),
+        };
+        
+        channelSummary.ctr = channelSummary.total_impressions > 0 ? 
+            (channelSummary.total_clicks / channelSummary.total_impressions * 100) : 0;
+        channelSummary.vtr = channelSummary.total_video_starts > 0 ? 
+            (channelSummary.total_video_completions / channelSummary.total_video_starts * 100) : 0;
+        channelSummary.cpm = channelSummary.total_impressions > 0 ? 
+            (channelSummary.total_spend / channelSummary.total_impressions * 1000) : 0;
+        
+        // Encontrar dados do contrato do canal
+        const channelData = (this.originalData.channels || []).find(ch => 
+            (ch.channel_name || ch.name || '').toLowerCase() === selectedChannel.toLowerCase()
+        );
+        
+        // Criar dados filtrados
+        this.filteredData = {
+            ...this.originalData,
+            daily_data: filteredDaily,
+            campaign_summary: {
+                ...this.originalData.campaign_summary,
+                ...channelSummary
+            },
+            contract: channelData?.data?.contract || this.originalData.contract
+        };
+        
+        // Re-renderizar tabela e métricas
+        this.renderChannelDailyTable();
+        this.renderChannelSummaryCards(this.filteredData);
+        this.renderChannelMetrics(this.filteredData);
+    }
+    
+    renderChannelDailyTable() {
+        // Renderizar apenas a tabela de entrega diária (filtrada)
+        const channelDailyBody = document.getElementById('channelDailyBody');
+        const channelHeader = document.getElementById('channelHeader');
+        
+        if (!channelDailyBody || !this.filteredData) return;
+        
+        const data = this.filteredData;
+        const contract = data.contract || {};
+        const isMultichannel = data.channels && data.channels.length > 0;
+        
+        // Ocultar coluna de canal quando filtrado por um canal específico
+        if (channelHeader) {
+            channelHeader.style.display = 'none';
+        }
+        
+        if (data.daily_data && data.daily_data.length > 0) {
+            channelDailyBody.innerHTML = data.daily_data.map(record => {
+                const vtr = record.video_completions && record.video_starts ? 
+                    (record.video_completions / record.video_starts * 100) : 0;
+                const cpm = record.impressions ? 
+                    (record.spend / record.impressions * 1000) : 0;
+                
+                return `
+                    <tr>
+                        <td>${record.date}</td>
+                        <td>R$ ${this.formatCurrency(record.spend)}</td>
+                        <td>${this.formatNumber(record.impressions)}</td>
+                        <td>${this.formatNumber(record.clicks)}</td>
+                        <td>${this.formatPercentage(record.ctr)}</td>
+                        <td>${this.formatNumber(record.video_25 || 0)}</td>
+                        <td>${this.formatNumber(record.video_50 || 0)}</td>
+                        <td>${this.formatNumber(record.video_75 || 0)}</td>
+                        <td>${this.formatNumber(record.video_completions)}</td>
+                        <td>${this.formatPercentage(vtr)}</td>
+                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
+                        <td>R$ ${this.formatCurrency(cpm)}</td>
+                        <td>${record.creative || 'N/A'}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            channelDailyBody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;">Nenhum dado encontrado para este canal</td></tr>';
+        }
+    }
+    
+    renderChannelMetrics(data) {
+        // Renderizar métricas específicas do canal na aba "Por Canal"
+        const metricsChannel = document.getElementById('metrics-channel');
+        if (!metricsChannel || !data.campaign_summary) return;
+        
+        const summary = data.campaign_summary;
+        const contract = data.contract || {};
+        const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+        
+        metricsChannel.innerHTML = `
+            <div class="metric" data-metric="spend">
+                <div class="label">💰 Investimento</div>
+                <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
+            </div>
+            <div class="metric" data-metric="impressions">
+                <div class="label">👁️ Impressões</div>
+                <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+            </div>
+            <div class="metric" data-metric="clicks">
+                <div class="label">🖱️ Cliques</div>
+                <div class="value">${this.formatNumber(summary.total_clicks || 0)}</div>
+            </div>
+            <div class="metric" data-metric="ctr">
+                <div class="label">📊 CTR</div>
+                <div class="value">${this.formatPercentage(summary.ctr || 0)}</div>
+            </div>
+            <div class="metric" data-metric="pacing">
+                <div class="label">⏱️ Pacing</div>
+                <div class="value">${this.formatPercentage(pacing)}</div>
+            </div>
+        `;
     }
 
     async renderDashboard(data) {
@@ -1246,45 +1407,15 @@ class DashboardLoader {
         // Renderizar quartis de vídeo
         this.renderVideoQuartis(data);
 
-        // Renderizar tabela de entrega diária por canal
-        const channelDailyBody = document.getElementById('channelDailyBody');
-        const channelHeader = document.getElementById('channelHeader');
-        if (channelDailyBody && data.daily_data && data.daily_data.length > 0) {
-            const contract = data.contract || {};
-            const isMultichannel = data.channels && data.channels.length > 0;
-            
-            // Mostrar/ocultar coluna de canal baseado no tipo de dashboard
-            if (channelHeader) {
-                channelHeader.style.display = isMultichannel ? 'table-cell' : 'none';
-            }
-            
-            channelDailyBody.innerHTML = data.daily_data.map(record => {
-                const vtr = record.video_completions && record.video_starts ? 
-                    (record.video_completions / record.video_starts * 100) : 0;
-                const cpm = record.impressions ? 
-                    (record.spend / record.impressions * 1000) : 0;
-                
-                const channelCell = isMultichannel ? `<td>${record.channel || 'N/A'}</td>` : '';
-                
-                return `
-                    <tr>
-                        <td>${record.date}</td>
-                        ${channelCell}
-                        <td>R$ ${this.formatCurrency(record.spend)}</td>
-                        <td>${this.formatNumber(record.impressions)}</td>
-                        <td>${this.formatNumber(record.clicks)}</td>
-                        <td>${this.formatPercentage(record.ctr)}</td>
-                        <td>${this.formatNumber(record.video_25 || 0)}</td>
-                        <td>${this.formatNumber(record.video_50 || 0)}</td>
-                        <td>${this.formatNumber(record.video_75 || 0)}</td>
-                        <td>${this.formatNumber(record.video_completions)}</td>
-                        <td>${this.formatPercentage(vtr)}</td>
-                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        <td>R$ ${this.formatCurrency(cpm)}</td>
-                        <td>${record.creative || 'N/A'}</td>
-                    </tr>
-                `;
-            }).join('');
+        // Para dashboards multicanal, inicializar com o primeiro canal selecionado
+        const isMultichannel = data.channels && data.channels.length > 0;
+        if (isMultichannel && data.channels.length > 0) {
+            const firstChannel = data.channels[0].channel_name || data.channels[0].name || '';
+            this.filterChannelData(firstChannel);
+            this.updateChannelTabElements(firstChannel);
+        } else {
+            // Para canal único, renderizar tabela normalmente
+            this.renderChannelDailyTable();
         }
     }
     
@@ -1714,6 +1845,18 @@ class DashboardLoader {
                 });
             });
         });
+        
+        // Configurar select de canal para dashboards multicanal
+        const channelSelect = document.getElementById('channelSelect');
+        if (channelSelect) {
+            channelSelect.addEventListener('change', (e) => {
+                const selectedChannel = e.target.value;
+                if (selectedChannel) {
+                    this.filterChannelData(selectedChannel);
+                    this.updateChannelTabElements(selectedChannel);
+                }
+            });
+        }
     }
 
     // Funções auxiliares de formatação
