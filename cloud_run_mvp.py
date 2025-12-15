@@ -1237,7 +1237,46 @@ def get_dashboard_html(campaign_key):
         if not campaign:
             return f"<html><body><h1>Campanha '{campaign_key}' não encontrada</h1></body></html>", 404
         
-        # Extrair dados frescos da planilha (mesma lógica do get_campaign_data)
+        # Verificar se é dashboard multicanal
+        is_multicanal = (
+            campaign.get('channel') == 'Multicanal' or 
+            not campaign.get('sheet_id') or 
+            campaign.get('sheet_id') == ''
+        )
+        
+        if is_multicanal:
+            # Para dashboards multicanal, tentar carregar do GCS
+            try:
+                from google.cloud import storage
+                client_storage = storage.Client()
+                bucket = client_storage.bucket('south-media-ia-database-452311')
+                
+                dashboard_filename = f"dash_{campaign_key}.html"
+                gcs_path = f"dashboards/{dashboard_filename}"
+                blob = bucket.blob(gcs_path)
+                
+                if blob.exists():
+                    html_content = blob.download_as_text()
+                    logger.info(f"✅ Dashboard multicanal carregado do GCS: {gcs_path}")
+                    return html_content, 200, {'Content-Type': 'text/html; charset=utf-8'}
+                else:
+                    logger.warning(f"⚠️ Dashboard multicanal não encontrado no GCS: {gcs_path}")
+                    return f"""<html><body>
+                        <h1>Dashboard Multicanal</h1>
+                        <p>Este dashboard multicanal não foi encontrado.</p>
+                        <p>Por favor, use o endpoint <code>/api/generate-dashboard-multicanal</code> para gerar o dashboard novamente.</p>
+                        <p><strong>Campanha:</strong> {campaign.get('campaign_name', 'N/A')}</p>
+                        <p><strong>Cliente:</strong> {campaign.get('client', 'N/A')}</p>
+                    </body></html>""", 404, {'Content-Type': 'text/html; charset=utf-8'}
+            except Exception as e:
+                logger.error(f"❌ Erro ao carregar dashboard multicanal do GCS: {e}")
+                return f"""<html><body>
+                    <h1>Erro ao Carregar Dashboard Multicanal</h1>
+                    <p>Erro: {str(e)}</p>
+                    <p>Por favor, use o endpoint <code>/api/generate-dashboard-multicanal</code> para gerar o dashboard novamente.</p>
+                </body></html>""", 500, {'Content-Type': 'text/html; charset=utf-8'}
+        
+        # Para dashboards normais, extrair dados frescos da planilha
         logger.info(f"🔄 Extraindo dados frescos da planilha para: {campaign_key}")
         config = CampaignConfig(
             campaign_key=campaign_key,
@@ -1261,6 +1300,8 @@ def get_dashboard_html(campaign_key):
         
     except Exception as e:
         logger.error(f"❌ Erro ao gerar dashboard HTML para {campaign_key}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return f"<html><body><h1>Erro ao carregar dashboard</h1><p>{str(e)}</p></body></html>", 500
 
 @app.route('/api/<campaign_key>/data', methods=['GET'])
@@ -2590,11 +2631,31 @@ def generate_dashboard_multicanal():
                     logger.warning(f"⚠️ Nenhum dado extraído do canal {channel_name}")
                     
             except Exception as e:
-                logger.error(f"❌ Erro ao processar canal {channel_name}: {e}")
+                error_msg = str(e)
+                logger.error(f"❌ Erro ao processar canal {channel_name}: {error_msg}")
+                import traceback
+                logger.error(f"📋 Traceback: {traceback.format_exc()}")
+                
+                # Se for o primeiro erro e não houver canais processados, retornar erro detalhado
+                if len(all_channels_data) == 0:
+                    # Verificar se é erro de planilha não encontrada
+                    if "404" in error_msg or "not found" in error_msg.lower() or "Requested entity was not found" in error_msg:
+                        return jsonify({
+                            "success": False, 
+                            "message": f"Planilha não encontrada para o canal '{channel_name}'. Verifique se o ID da planilha ({sheet_id}) está correto e se a planilha está acessível."
+                        }), 400
+                    else:
+                        return jsonify({
+                            "success": False, 
+                            "message": f"Erro ao processar canal '{channel_name}': {error_msg}"
+                        }), 500
                 continue
         
         if len(all_channels_data) == 0:
-            return jsonify({"success": False, "message": "Nenhum canal foi processado com sucesso"}), 500
+            return jsonify({
+                "success": False, 
+                "message": "Nenhum canal foi processado com sucesso. Verifique os logs para mais detalhes."
+            }), 500
         
         # Calcular métricas consolidadas
         total_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0.0
@@ -2699,6 +2760,23 @@ def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')
         dashboard_content = dashboard_content.replace('{{CAMPAIGN_DESCRIPTION}}', f'Dashboard multicanal de performance para a campanha {campaign_name} do cliente {client}')
         dashboard_content = dashboard_content.replace('{{PRIMARY_CHANNEL}}', 'Multicanal')
+        
+        # Salvar no Google Cloud Storage (backup)
+        try:
+            from google.cloud import storage
+            client_storage = storage.Client()
+            bucket = client_storage.bucket('south-media-ia-database-452311')
+            
+            # Upload do dashboard para GCS como backup
+            dashboard_filename = f"dash_{campaign_key}.html"
+            gcs_path = f"dashboards/{dashboard_filename}"
+            blob = bucket.blob(gcs_path)
+            blob.upload_from_string(dashboard_content, content_type='text/html')
+            
+            logger.info(f"💾 Dashboard multicanal persistido no GCS: {gcs_path}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Não foi possível salvar dashboard multicanal no GCS: {e}")
         
         logger.info(f"✅ Dashboard multicanal configurado para: {campaign_key}")
         
