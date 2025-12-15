@@ -2595,6 +2595,7 @@ def generate_dashboard_multicanal():
         total_clicks = 0
         total_video_completions = 0
         total_video_starts = 0
+        total_complete_views_contracted = 0
         total_q25 = 0
         total_q50 = 0
         total_q75 = 0
@@ -2642,6 +2643,7 @@ def generate_dashboard_multicanal():
                     total_clicks += summary.get('total_clicks', 0) or 0
                     total_video_completions += summary.get('total_video_completions', 0) or 0
                     total_video_starts += summary.get('total_video_starts', 0) or 0
+                    total_complete_views_contracted += contract.get('complete_views_contracted', 0) or 0
                     
                     # Quartis
                     for record in daily_data:
@@ -2717,6 +2719,7 @@ def generate_dashboard_multicanal():
                 "client": client,
                 "campaign": campaign_name,
                 "investment": total_investment,
+                "complete_views_contracted": total_complete_views_contracted,
                 "canal": "Multicanal",
                 "kpi": primary_kpi
             },
