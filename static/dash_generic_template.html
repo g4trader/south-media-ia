@@ -443,7 +443,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Criativo</th></tr>
+            <tr><th>Data</th><th id="channelHeader" style="display:none;">Canal</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>VC</th><th>VTR</th><th>CPV</th><th>CPM</th><th>Criativo</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -1105,41 +1105,142 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Calcular pacing
-            const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+            // Verificar se é dashboard multicanal
+            const isMultichannel = data.channels && data.channels.length > 0;
             
-            // Calcular quartis agregados do daily_data
-            let q25_total = 0, q50_total = 0, q75_total = 0;
-            if (data.daily_data && data.daily_data.length > 0) {
-                q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
-                q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
-                q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
+            if (isMultichannel) {
+                // Renderizar múltiplos canais
+                let rowsHtml = '';
+                
+                // Calcular métricas por canal
+                const channelsMetrics = {};
+                if (data.daily_data && data.daily_data.length > 0) {
+                    data.daily_data.forEach(record => {
+                        const channel = record.channel || 'Canal';
+                        if (!channelsMetrics[channel]) {
+                            channelsMetrics[channel] = {
+                                spend: 0,
+                                impressions: 0,
+                                clicks: 0,
+                                video_25: 0,
+                                video_50: 0,
+                                video_75: 0,
+                                video_completions: 0,
+                                video_starts: 0
+                            };
+                        }
+                        channelsMetrics[channel].spend += record.spend || 0;
+                        channelsMetrics[channel].impressions += record.impressions || 0;
+                        channelsMetrics[channel].clicks += record.clicks || 0;
+                        channelsMetrics[channel].video_25 += record.video_25 || 0;
+                        channelsMetrics[channel].video_50 += record.video_50 || 0;
+                        channelsMetrics[channel].video_75 += record.video_75 || 0;
+                        channelsMetrics[channel].video_completions += record.video_completions || 0;
+                        channelsMetrics[channel].video_starts += record.video_starts || 0;
+                    });
+                }
+                
+                // Buscar dados de contrato por canal
+                data.channels.forEach(channelData => {
+                    const channelName = channelData.channel_name;
+                    const channelMetrics = channelsMetrics[channelName] || {};
+                    const channelContract = channelData.data?.contract || {};
+                    const channelSummary = channelData.data?.campaign_summary || {};
+                    
+                    const channelSpend = channelSummary.total_spend || channelMetrics.spend || 0;
+                    const channelInvestment = channelContract.investment || 0;
+                    const channelPacing = channelInvestment > 0 ? (channelSpend / channelInvestment * 100) : 0;
+                    const channelCtr = channelSummary.ctr || (channelMetrics.impressions > 0 ? (channelMetrics.clicks / channelMetrics.impressions * 100) : 0);
+                    const channelVtr = channelSummary.vtr || (channelMetrics.video_starts > 0 ? (channelMetrics.video_completions / channelMetrics.video_starts * 100) : 0);
+                    const channelCpm = channelSummary.cpm || (channelMetrics.impressions > 0 ? (channelSpend / channelMetrics.impressions * 1000) : 0);
+                    
+                    rowsHtml += `
+                        <tr>
+                            <td>${channelName}</td>
+                            <td>R$ ${this.formatCurrency(channelInvestment)}</td>
+                            <td>R$ ${this.formatCurrency(channelSpend)}</td>
+                            <td>${this.formatPercentage(channelPacing)}</td>
+                            <td>${this.formatNumber(channelMetrics.impressions || channelSummary.total_impressions || 0)}</td>
+                            <td>${this.formatNumber(channelMetrics.clicks || channelSummary.total_clicks || 0)}</td>
+                            <td>${this.formatPercentage(channelCtr)}</td>
+                            <td>${this.formatNumber(channelMetrics.video_25)}</td>
+                            <td>${this.formatNumber(channelMetrics.video_50)}</td>
+                            <td>${this.formatNumber(channelMetrics.video_75)}</td>
+                            <td>${this.formatNumber(channelMetrics.video_completions || channelSummary.total_video_completions || 0)}</td>
+                            <td>${this.formatPercentage(channelVtr)}</td>
+                            <td>R$ ${channelContract.cpv_contracted ? channelContract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
+                            <td>R$ ${this.formatCurrency(channelCpm)}</td>
+                        </tr>
+                    `;
+                });
+                
+                // Adicionar linha de total consolidado
+                const totalPacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+                let q25_total = 0, q50_total = 0, q75_total = 0;
+                if (data.daily_data && data.daily_data.length > 0) {
+                    q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
+                    q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
+                    q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
+                }
+                
+                rowsHtml += `
+                    <tr style="background: rgba(139,92,246,.1); font-weight: 700; border-top: 2px solid rgba(139,92,246,.3);">
+                        <td><strong>TOTAL</strong></td>
+                        <td><strong>R$ ${this.formatCurrency(contract.investment || 0)}</strong></td>
+                        <td><strong>R$ ${this.formatCurrency(summary.total_spend || 0)}</strong></td>
+                        <td><strong>${this.formatPercentage(totalPacing)}</strong></td>
+                        <td><strong>${this.formatNumber(summary.total_impressions || 0)}</strong></td>
+                        <td><strong>${this.formatNumber(summary.total_clicks || 0)}</strong></td>
+                        <td><strong>${this.formatPercentage(summary.ctr || 0)}</strong></td>
+                        <td><strong>${this.formatNumber(q25_total)}</strong></td>
+                        <td><strong>${this.formatNumber(q50_total)}</strong></td>
+                        <td><strong>${this.formatNumber(q75_total)}</strong></td>
+                        <td><strong>${this.formatNumber(summary.total_video_completions || 0)}</strong></td>
+                        <td><strong>${this.formatPercentage(summary.vtr || 0)}</strong></td>
+                        <td><strong>—</strong></td>
+                        <td><strong>R$ ${this.formatCurrency(summary.cpm || 0)}</strong></td>
+                    </tr>
+                `;
+                
+                tbodyChannels.innerHTML = rowsHtml;
+                this.updateChannelTabElements('Multicanal');
+            } else {
+                // Renderização para canal único (comportamento original)
+                const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+                
+                // Calcular quartis agregados do daily_data
+                let q25_total = 0, q50_total = 0, q75_total = 0;
+                if (data.daily_data && data.daily_data.length > 0) {
+                    q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
+                    q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
+                    q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
+                }
+                
+                // Usar sempre o canal do contract (correto)
+                let realChannel = contract.canal || 'Video Programática';
+                
+                tbodyChannels.innerHTML = `
+                    <tr>
+                        <td>${realChannel}</td>
+                        <td>R$ ${this.formatCurrency(contract.investment || 0)}</td>
+                        <td>R$ ${this.formatCurrency(summary.total_spend || 0)}</td>
+                        <td>${this.formatPercentage(pacing)}</td>
+                        <td>${this.formatNumber(summary.total_impressions || 0)}</td>
+                        <td>${this.formatNumber(summary.total_clicks || 0)}</td>
+                        <td>${this.formatPercentage(summary.ctr || 0)}</td>
+                        <td>${this.formatNumber(q25_total)}</td>
+                        <td>${this.formatNumber(q50_total)}</td>
+                        <td>${this.formatNumber(q75_total)}</td>
+                        <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
+                        <td>${this.formatPercentage(summary.vtr || 0)}</td>
+                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
+                        <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
+                    </tr>
+                `;
+                
+                // Atualizar elementos da aba "Por Canal" com o canal correto
+                this.updateChannelTabElements(realChannel);
             }
-            
-            // Usar sempre o canal do contract (correto)
-            let realChannel = contract.canal || 'Video Programática';
-            
-            tbodyChannels.innerHTML = `
-                <tr>
-                    <td>${realChannel}</td>
-                    <td>R$ ${this.formatCurrency(contract.investment || 0)}</td>
-                    <td>R$ ${this.formatCurrency(summary.total_spend || 0)}</td>
-                    <td>${this.formatPercentage(pacing)}</td>
-                    <td>${this.formatNumber(summary.total_impressions || 0)}</td>
-                    <td>${this.formatNumber(summary.total_clicks || 0)}</td>
-                    <td>${this.formatPercentage(summary.ctr || 0)}</td>
-                    <td>${this.formatNumber(q25_total)}</td>
-                    <td>${this.formatNumber(q50_total)}</td>
-                    <td>${this.formatNumber(q75_total)}</td>
-                    <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
-                    <td>${this.formatPercentage(summary.vtr || 0)}</td>
-                    <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                    <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
-                </tr>
-            `;
-            
-            // Atualizar elementos da aba "Por Canal" com o canal correto
-            this.updateChannelTabElements(realChannel);
         }
         
         // Renderizar quartis de vídeo
@@ -1147,17 +1248,28 @@ class DashboardLoader {
 
         // Renderizar tabela de entrega diária por canal
         const channelDailyBody = document.getElementById('channelDailyBody');
+        const channelHeader = document.getElementById('channelHeader');
         if (channelDailyBody && data.daily_data && data.daily_data.length > 0) {
             const contract = data.contract || {};
+            const isMultichannel = data.channels && data.channels.length > 0;
+            
+            // Mostrar/ocultar coluna de canal baseado no tipo de dashboard
+            if (channelHeader) {
+                channelHeader.style.display = isMultichannel ? 'table-cell' : 'none';
+            }
+            
             channelDailyBody.innerHTML = data.daily_data.map(record => {
                 const vtr = record.video_completions && record.video_starts ? 
                     (record.video_completions / record.video_starts * 100) : 0;
                 const cpm = record.impressions ? 
                     (record.spend / record.impressions * 1000) : 0;
                 
+                const channelCell = isMultichannel ? `<td>${record.channel || 'N/A'}</td>` : '';
+                
                 return `
                     <tr>
                         <td>${record.date}</td>
+                        ${channelCell}
                         <td>R$ ${this.formatCurrency(record.spend)}</td>
                         <td>${this.formatNumber(record.impressions)}</td>
                         <td>${this.formatNumber(record.clicks)}</td>

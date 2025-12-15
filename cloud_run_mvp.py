@@ -2039,4 +2039,679 @@ def dashboards_list():
         logger.error(f"❌ Erro ao carregar listagem de dashboards: {e}")
         return f"<h1>Erro ao carregar dashboards</h1><p>Erro: {str(e)}</p>", 500
 
-        return f"<h1>Erro ao carregar dashboards</h1><p>Erro: {str(e)}</p>", 500
+@app.route('/dash-generator-pro-multicanal', methods=['GET'])
+def dash_generator_pro_multicanal():
+    """Interface do gerador multicanal - permite múltiplos canais com planilhas distintas"""
+    return render_template_string(r'''
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Dashboards - Multicanal</title>
+    <style>
+        :root {
+            --bg: #0F1023;
+            --bg2: #16213E;
+            --panel: #1A1A2E;
+            --muted: #9CA3AF;
+            --stroke: rgba(139,92,246,.28);
+            --grad: linear-gradient(135deg,#8B5CF6,#EC4899);
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color: #fff;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 50%, var(--panel) 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(26,26,46,.8);
+            border: 1px solid var(--stroke);
+            border-radius: 14px;
+            padding: 2rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: var(--grad);
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+        
+        h1 {
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            font-weight: 800;
+        }
+        
+        .subtitle {
+            color: var(--muted);
+            font-size: 1rem;
+        }
+        
+        .multichannel-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(139,92,246,.15);
+            border: 1px solid rgba(139,92,246,.3);
+            border-radius: 8px;
+            color: #8B5CF6;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-size: 0.82rem;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(148,163,184,.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,.04);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139,92,246,.1);
+        }
+        
+        small {
+            color: var(--muted);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        .channels-container {
+            margin: 2rem 0;
+        }
+        
+        .channel-card {
+            background: rgba(0,0,0,.2);
+            border: 1px solid rgba(148,163,184,.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .channel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .channel-title {
+            color: #8B5CF6;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .remove-channel {
+            background: rgba(239,68,68,.2);
+            border: 1px solid rgba(239,68,68,.4);
+            color: #EF4444;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        
+        .remove-channel:hover {
+            background: rgba(239,68,68,.3);
+        }
+        
+        .channel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .channel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .add-channel-btn {
+            background: rgba(16,185,129,.2);
+            border: 1px solid rgba(16,185,129,.4);
+            color: #10B981;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+        }
+        
+        .add-channel-btn:hover {
+            background: rgba(16,185,129,.3);
+            transform: translateY(-2px);
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 1rem;
+            background: var(--grad);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 2rem;
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139,92,246,.35);
+        }
+        
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 12px;
+            display: none;
+        }
+        
+        .success {
+            background: rgba(16,185,129,.1);
+            border: 1px solid rgba(16,185,129,.3);
+            color: #10B981;
+        }
+        
+        .error {
+            background: rgba(239,68,68,.1);
+            border: 1px solid rgba(239,68,68,.3);
+            color: #EF4444;
+        }
+        
+        .loading {
+            background: rgba(59,130,246,.1);
+            border: 1px solid rgba(59,130,246,.3);
+            color: #3B82F6;
+        }
+        
+        .result h3 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        
+        .result a {
+            color: #10B981;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .result a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">SM</div>
+            <h1>Gerador de Dashboards Multicanal</h1>
+            <p class="subtitle">Configure múltiplos canais, cada um com sua própria planilha</p>
+            <div class="multichannel-badge">🔗 Múltiplos Canais - Planilhas Independentes</div>
+        </div>
+        
+        <form id="generatorForm">
+            <div class="form-group">
+                <label for="clientName">Cliente:</label>
+                <input type="text" id="clientName" name="client" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="campaignName">Nome da Campanha:</label>
+                <input type="text" id="campaignName" name="campaign_name" required>
+            </div>
+            
+            <div class="channels-container">
+                <label style="margin-bottom: 1rem;">Canais:</label>
+                <div id="channelsList"></div>
+                <div class="add-channel-btn" onclick="addChannel()">+ Adicionar Canal</div>
+            </div>
+            
+            <button type="submit" id="generateButton">🚀 Gerar Dashboard Multicanal</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+    
+    <script>
+        let channelCount = 0;
+        
+        function extractSheetId(url) {
+            if (!url) return '';
+            const patterns = [
+                /\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/,
+                /\\/d\\/([a-zA-Z0-9-_]+)/,
+                /id=([a-zA-Z0-9-_]+)/
+            ];
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) return match[1];
+            }
+            return '';
+        }
+        
+        function addChannel() {
+            channelCount++;
+            const channelsList = document.getElementById('channelsList');
+            const channelCard = document.createElement('div');
+            channelCard.className = 'channel-card';
+            channelCard.id = `channel-${channelCount}`;
+            channelCard.innerHTML = `
+                <div class="channel-header">
+                    <div class="channel-title">Canal ${channelCount}</div>
+                    <button type="button" class="remove-channel" onclick="removeChannel(${channelCount})">Remover</button>
+                </div>
+                <div class="channel-grid">
+                    <div class="form-group">
+                        <label>Nome do Canal:</label>
+                        <input type="text" name="channels[${channelCount}][channel_name]" placeholder="Ex: YouTube, TikTok, Display" required>
+                    </div>
+                    <div class="form-group">
+                        <label>KPI:</label>
+                        <select name="channels[${channelCount}][kpi]" required>
+                            <option value="CPV">CPV - Custo por View</option>
+                            <option value="CPE">CPE - Custo por Escuta</option>
+                            <option value="CPM">CPM - Custo por Mil Impressões</option>
+                            <option value="CPC">CPC - Custo por Clique</option>
+                            <option value="CPA">CPA - Custo por Aquisição</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>URL da Planilha:</label>
+                        <input type="url" name="channels[${channelCount}][sheet_url]" placeholder="https://docs.google.com/spreadsheets/d/..." required oninput="updateSheetId(${channelCount}, this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>ID da Planilha (Auto):</label>
+                        <input type="text" name="channels[${channelCount}][sheet_id]" readonly>
+                    </div>
+                </div>
+            `;
+            channelsList.appendChild(channelCard);
+        }
+        
+        function removeChannel(id) {
+            const channelCard = document.getElementById(`channel-${id}`);
+            if (channelCard) {
+                channelCard.remove();
+            }
+        }
+        
+        function updateSheetId(channelId, url) {
+            const sheetIdInput = document.querySelector(`#channel-${channelId} input[name*="[sheet_id]"]`);
+            if (sheetIdInput) {
+                const sheetId = extractSheetId(url);
+                sheetIdInput.value = sheetId;
+                sheetIdInput.style.color = sheetId ? '#10B981' : '#666';
+            }
+        }
+        
+        // Adicionar primeiro canal por padrão
+        addChannel();
+        
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            const generateButton = document.getElementById('generateButton');
+            
+            resultDiv.innerHTML = '<div class="loading">🔄 Gerando dashboard multicanal...</div>';
+            resultDiv.style.display = 'block';
+            generateButton.disabled = true;
+            
+            try {
+                const formData = new FormData(this);
+                const data = {
+                    client: formData.get('client'),
+                    campaign_name: formData.get('campaign_name'),
+                    channels: []
+                };
+                
+                // Coletar dados dos canais
+                const channelInputs = document.querySelectorAll('.channel-card');
+                channelInputs.forEach(card => {
+                    const channelName = card.querySelector('input[name*="[channel_name]"]').value;
+                    const kpi = card.querySelector('select[name*="[kpi]"]').value;
+                    const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
+                    
+                    if (channelName && sheetId) {
+                        data.channels.push({
+                            channel_name: channelName,
+                            kpi: kpi,
+                            sheet_id: sheetId
+                        });
+                    }
+                });
+                
+                if (data.channels.length === 0) {
+                    throw new Error('Adicione pelo menos um canal');
+                }
+                
+                const response = await fetch('/api/generate-dashboard-multicanal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Dashboard Multicanal Gerado com Sucesso!</h3>
+                            <p><strong>Campanha:</strong> ${result.campaign_key}</p>
+                            <p><strong>Nome:</strong> ${result.dashboard_name}</p>
+                            <p><strong>Canais:</strong> ${result.channels_count}</p>
+                            <p><strong>URL:</strong> <a href="${result.dashboard_url}" target="_blank">${result.dashboard_url}</a></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Erro ao Gerar Dashboard</h3>
+                            <p>${result.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Erro de Conexão</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                generateButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+    ''')
+
+@app.route('/api/generate-dashboard-multicanal', methods=['POST'])
+def generate_dashboard_multicanal():
+    """Gerar dashboard multicanal com múltiplos canais e planilhas distintas"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "message": "Dados não fornecidos"}), 400
+        
+        # Validar campos obrigatórios
+        if not data.get('client') or not data.get('campaign_name'):
+            return jsonify({"success": False, "message": "Cliente e nome da campanha são obrigatórios"}), 400
+        
+        if not data.get('channels') or len(data.get('channels', [])) == 0:
+            return jsonify({"success": False, "message": "Adicione pelo menos um canal"}), 400
+        
+        client = data['client']
+        campaign_name = data['campaign_name']
+        channels_config = data['channels']
+        
+        # Gerar campaign_key
+        campaign_key = generate_campaign_key(client, campaign_name)
+        
+        logger.info(f"🔄 Gerando dashboard multicanal: {client} - {campaign_name}")
+        logger.info(f"📊 Canais configurados: {len(channels_config)}")
+        
+        # Extrair dados de cada canal
+        all_daily_data = []
+        all_channels_data = []
+        total_investment = 0.0
+        total_spend = 0.0
+        total_impressions = 0
+        total_clicks = 0
+        total_video_completions = 0
+        total_video_starts = 0
+        total_q25 = 0
+        total_q50 = 0
+        total_q75 = 0
+        
+        for channel_config in channels_config:
+            channel_name = channel_config.get('channel_name', 'Canal')
+            sheet_id = channel_config.get('sheet_id')
+            kpi = channel_config.get('kpi', 'CPV')
+            
+            if not sheet_id:
+                logger.warning(f"⚠️ Canal {channel_name} sem sheet_id, pulando...")
+                continue
+            
+            try:
+                logger.info(f"📊 Extraindo dados do canal: {channel_name} (KPI: {kpi})")
+                
+                # Criar config para este canal
+                config = CampaignConfig(
+                    campaign_key=f"{campaign_key}_{channel_name.lower().replace(' ', '_')}",
+                    client=client,
+                    campaign_name=campaign_name,
+                    sheet_id=sheet_id,
+                    channel=channel_name,
+                    kpi=kpi
+                )
+                
+                # Extrair dados
+                extractor = RealGoogleSheetsExtractor(config)
+                channel_data = extractor.extract_data()
+                
+                if channel_data:
+                    # Adicionar nome do canal aos dados diários
+                    daily_data = channel_data.get('daily_data', [])
+                    for record in daily_data:
+                        record['channel'] = channel_name
+                        all_daily_data.append(record)
+                    
+                    # Agregar métricas
+                    summary = channel_data.get('campaign_summary', {})
+                    contract = channel_data.get('contract', {})
+                    
+                    total_investment += contract.get('investment', 0) or 0
+                    total_spend += summary.get('total_spend', 0) or 0
+                    total_impressions += summary.get('total_impressions', 0) or 0
+                    total_clicks += summary.get('total_clicks', 0) or 0
+                    total_video_completions += summary.get('total_video_completions', 0) or 0
+                    total_video_starts += summary.get('total_video_starts', 0) or 0
+                    
+                    # Quartis
+                    for record in daily_data:
+                        total_q25 += record.get('video_25', 0) or 0
+                        total_q50 += record.get('video_50', 0) or 0
+                        total_q75 += record.get('video_75', 0) or 0
+                    
+                    # Armazenar dados do canal
+                    all_channels_data.append({
+                        'channel_name': channel_name,
+                        'kpi': kpi,
+                        'sheet_id': sheet_id,
+                        'data': channel_data
+                    })
+                    
+                    logger.info(f"✅ Canal {channel_name} processado: {len(daily_data)} registros")
+                else:
+                    logger.warning(f"⚠️ Nenhum dado extraído do canal {channel_name}")
+                    
+            except Exception as e:
+                logger.error(f"❌ Erro ao processar canal {channel_name}: {e}")
+                continue
+        
+        if len(all_channels_data) == 0:
+            return jsonify({"success": False, "message": "Nenhum canal foi processado com sucesso"}), 500
+        
+        # Calcular métricas consolidadas
+        total_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0.0
+        total_vtr = (total_video_completions / total_video_starts * 100) if total_video_starts > 0 else 0.0
+        total_cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0.0
+        pacing = (total_spend / total_investment * 100) if total_investment > 0 else 0.0
+        
+        # Determinar KPI principal (usar o primeiro canal como referência)
+        primary_kpi = channels_config[0].get('kpi', 'CPV')
+        
+        # Preparar dados consolidados
+        consolidated_data = {
+            "campaign_summary": {
+                "client": client,
+                "campaign": campaign_name,
+                "status": "Ativa",
+                "total_spend": total_spend,
+                "total_impressions": total_impressions,
+                "total_clicks": total_clicks,
+                "total_video_completions": total_video_completions,
+                "total_video_starts": total_video_starts,
+                "ctr": total_ctr,
+                "vtr": total_vtr,
+                "cpm": total_cpm,
+                "pacing": pacing
+            },
+            "contract": {
+                "client": client,
+                "campaign": campaign_name,
+                "investment": total_investment,
+                "canal": "Multicanal",
+                "kpi": primary_kpi
+            },
+            "daily_data": all_daily_data,
+            "channels": all_channels_data,
+            "last_updated": datetime.now().isoformat(),
+            "data_source": "google_sheets_multicanal"
+        }
+        
+        # Gerar dashboard
+        result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
+        
+        if not result['success']:
+            return jsonify({"success": False, "message": f"Erro ao gerar dashboard: {result.get('error')}"}), 500
+        
+        # Salvar campanha no banco
+        if bq_fs_manager:
+            try:
+                bq_fs_manager.save_campaign(campaign_key, client, campaign_name, "", "Multicanal", primary_kpi)
+                logger.info(f"✅ Campanha multicanal {campaign_key} salva no BigQuery + Firestore")
+            except Exception as e:
+                logger.warning(f"⚠️ Erro ao salvar no BigQuery/Firestore: {e}")
+        
+        return jsonify({
+            "success": True,
+            "message": "Dashboard multicanal gerado com sucesso",
+            "campaign_key": campaign_key,
+            "dashboard_name": f"{client} - {campaign_name}",
+            "dashboard_url": result['dashboard_url'],
+            "dashboard_url_full": result['dashboard_url_full'],
+            "channels_count": len(all_channels_data),
+            "channels": [ch['channel_name'] for ch in all_channels_data]
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no endpoint /api/generate-dashboard-multicanal: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
+
+def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
+    """Gerar HTML do dashboard multicanal"""
+    try:
+        # Determinar template baseado no KPI principal
+        template_path = 'static/dash_generic_template.html'
+        if kpi.upper() == 'CPM':
+            template_path = 'static/dash_remarketing_cpm_template.html'
+        elif kpi.upper() == 'CPE':
+            template_path = 'static/dash_generic_cpe_template.html'
+        
+        if not os.path.exists(template_path):
+            raise Exception(f"Template não encontrado: {template_path}")
+        
+        with open(template_path, 'r', encoding='utf-8') as f:
+            dashboard_content = f.read()
+        
+        # Converter dados para JSON e inserir no HTML
+        data_json = json.dumps(consolidated_data, ensure_ascii=False, default=str)
+        embedded_data_script = f'<script>window.EMBEDDED_CAMPAIGN_DATA = {data_json};</script>'
+        
+        # Inserir dados embutidos
+        if '</head>' in dashboard_content:
+            dashboard_content = dashboard_content.replace('</head>', f'{embedded_data_script}\n</head>')
+        elif '<body>' in dashboard_content:
+            dashboard_content = dashboard_content.replace('<body>', f'<body>\n{embedded_data_script}')
+        
+        # Substituir placeholders
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_KEY_PLACEHOLDER}}', campaign_key)
+        dashboard_content = dashboard_content.replace('{{CLIENT_NAME}}', client)
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_NAME}}', campaign_name)
+        dashboard_content = dashboard_content.replace('{{API_ENDPOINT}}', get_api_endpoint())
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_STATUS}}', 'Ativa')
+        dashboard_content = dashboard_content.replace('{{CAMPAIGN_DESCRIPTION}}', f'Dashboard multicanal de performance para a campanha {campaign_name} do cliente {client}')
+        dashboard_content = dashboard_content.replace('{{PRIMARY_CHANNEL}}', 'Multicanal')
+        
+        logger.info(f"✅ Dashboard multicanal configurado para: {campaign_key}")
+        
+        return {
+            "success": True,
+            "campaign_key": campaign_key,
+            "dashboard_url": f"/api/dashboard/{campaign_key}",
+            "dashboard_url_full": f"{get_api_endpoint()}/api/dashboard/{campaign_key}"
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao gerar dashboard multicanal: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
