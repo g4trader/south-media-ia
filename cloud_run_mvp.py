@@ -2378,10 +2378,11 @@ def dash_generator_pro_multicanal():
         
         function extractSheetId(url) {
             if (!url) return '';
+            // Usar strings e RegExp para evitar problemas de escape
             const patterns = [
-                /\\/spreadsheets\\/d\\/([a-zA-Z0-9-_]+)/,
-                /\\/d\\/([a-zA-Z0-9-_]+)/,
-                /id=([a-zA-Z0-9-_]+)/
+                new RegExp('/spreadsheets/d/([a-zA-Z0-9-_]+)'),
+                new RegExp('/d/([a-zA-Z0-9-_]+)'),
+                new RegExp('id=([a-zA-Z0-9-_]+)')
             ];
             for (const pattern of patterns) {
                 const match = url.match(pattern);
@@ -2445,8 +2446,20 @@ def dash_generator_pro_multicanal():
             }
         }
         
-        // Adicionar primeiro canal por padrão
-        addChannel();
+        // Garantir que as funções estejam no escopo global
+        window.addChannel = addChannel;
+        window.removeChannel = removeChannel;
+        window.updateSheetId = updateSheetId;
+        window.extractSheetId = extractSheetId;
+        
+        // Adicionar primeiro canal por padrão quando o DOM estiver pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                addChannel();
+            });
+        } else {
+            addChannel();
+        }
         
         document.getElementById('generatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
