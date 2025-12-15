@@ -997,7 +997,11 @@ class DashboardLoader {
     
     filterChannelData(selectedChannel) {
         // Filtrar dados por canal selecionado
-        if (!this.originalData) return;
+        if (!this.originalData) {
+            // Se não há dados originais, tentar usar filteredData
+            if (!this.filteredData) return;
+            return;
+        }
         
         const isMultichannel = this.originalData.channels && this.originalData.channels.length > 0;
         
@@ -1414,7 +1418,10 @@ class DashboardLoader {
             this.filterChannelData(firstChannel);
             this.updateChannelTabElements(firstChannel);
         } else {
-            // Para canal único, renderizar tabela normalmente
+            // Para canal único, garantir que filteredData está definido e renderizar tabela
+            if (!this.filteredData) {
+                this.filteredData = JSON.parse(JSON.stringify(data));
+            }
             this.renderChannelDailyTable();
         }
     }
