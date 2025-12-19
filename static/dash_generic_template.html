@@ -969,8 +969,10 @@ class DashboardLoader {
                 const channels = this.originalData.channels || [];
                 channels.forEach(ch => {
                     const option = document.createElement('option');
-                    option.value = ch.channel_name || ch.name || '';
-                    option.textContent = ch.channel_name || ch.name || '';
+                    // Usar channel_display_name se disponível, senão channel_name
+                    const displayName = ch.channel_display_name || ch.channel_name || ch.name || '';
+                    option.value = displayName;
+                    option.textContent = displayName;
                     channelSelect.appendChild(option);
                 });
             }
@@ -1033,10 +1035,11 @@ class DashboardLoader {
         channelSummary.cpm = channelSummary.total_impressions > 0 ? 
             (channelSummary.total_spend / channelSummary.total_impressions * 1000) : 0;
         
-        // Encontrar dados do contrato do canal
-        const channelData = (this.originalData.channels || []).find(ch => 
-            (ch.channel_name || ch.name || '').toLowerCase() === selectedChannel.toLowerCase()
-        );
+        // Encontrar dados do contrato do canal (buscar por channel_display_name ou channel_name)
+        const channelData = (this.originalData.channels || []).find(ch => {
+            const displayName = ch.channel_display_name || ch.channel_name || ch.name || '';
+            return displayName.toLowerCase() === selectedChannel.toLowerCase();
+        });
         
         // Criar dados filtrados
         this.filteredData = {
@@ -1443,7 +1446,9 @@ class DashboardLoader {
                 // Buscar dados de contrato por canal
                 data.channels.forEach(channelData => {
                     const channelName = channelData.channel_name;
-                    const channelMetrics = channelsMetrics[channelName] || {};
+                    const channelDisplayName = channelData.channel_display_name || channelName;
+                    // Os dados diários usam channel_display_name, então buscar métricas por esse nome
+                    const channelMetrics = channelsMetrics[channelDisplayName] || channelsMetrics[channelName] || {};
                     const channelContract = channelData.data?.contract || {};
                     const channelSummary = channelData.data?.campaign_summary || {};
                     
@@ -1456,7 +1461,7 @@ class DashboardLoader {
                     
                     rowsHtml += `
                         <tr>
-                            <td>${channelName}</td>
+                            <td>${channelDisplayName}</td>
                             <td>R$ ${this.formatCurrency(channelInvestment)}</td>
                             <td>R$ ${this.formatCurrency(channelSpend)}</td>
                             <td>${this.formatPercentage(channelPacing)}</td>
@@ -1549,7 +1554,7 @@ class DashboardLoader {
         // Para dashboards multicanal, inicializar com o primeiro canal selecionado
         const isMultichannel = data.channels && data.channels.length > 0;
         if (isMultichannel && data.channels.length > 0) {
-            const firstChannel = data.channels[0].channel_name || data.channels[0].name || '';
+            const firstChannel = data.channels[0].channel_display_name || data.channels[0].channel_name || data.channels[0].name || '';
             this.filterChannelData(firstChannel);
             this.updateChannelTabElements(firstChannel);
         } else {

@@ -2426,6 +2426,10 @@ def dash_generator_pro_multicanal():
                         </select>
                     </div>
                     <div class="form-group">
+                        <label>Descrição da Ação:</label>
+                        <input type="text" name="channels[${channelCount}][action_description]" placeholder="Ex: Ação 1, Inverno 2025, etc." autocomplete="off" data-lpignore="true">
+                    </div>
+                    <div class="form-group">
                         <label>KPI:</label>
                         <select name="channels[${channelCount}][kpi]" required>
                             <option value="CPV">CPV - Custo por View</option>
@@ -2501,12 +2505,14 @@ def dash_generator_pro_multicanal():
                 const channelInputs = document.querySelectorAll('.channel-card');
                 channelInputs.forEach(card => {
                     const channelName = card.querySelector('select[name*="[channel_name]"]').value;
+                    const actionDescription = card.querySelector('input[name*="[action_description]"]').value || '';
                     const kpi = card.querySelector('select[name*="[kpi]"]').value;
                     const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
                     
                     if (channelName && sheetId) {
                         data.channels.push({
                             channel_name: channelName,
+                            action_description: actionDescription,
                             kpi: kpi,
                             sheet_id: sheetId
                         });
@@ -2602,6 +2608,7 @@ def generate_dashboard_multicanal():
         
         for channel_config in channels_config:
             channel_name = channel_config.get('channel_name', 'Canal')
+            action_description = channel_config.get('action_description', '').strip()
             sheet_id = channel_config.get('sheet_id')
             kpi = channel_config.get('kpi', 'CPV')
             
@@ -2610,7 +2617,9 @@ def generate_dashboard_multicanal():
                 continue
             
             try:
-                logger.info(f"📊 Extraindo dados do canal: {channel_name} (KPI: {kpi})")
+                # Criar label do canal: "Canal - Descrição" ou apenas "Canal" se não houver descrição
+                channel_display_name = f"{channel_name} - {action_description}" if action_description else channel_name
+                logger.info(f"📊 Extraindo dados do canal: {channel_display_name} (KPI: {kpi})")
                 
                 # Criar config para este canal
                 config = CampaignConfig(
@@ -2627,10 +2636,10 @@ def generate_dashboard_multicanal():
                 channel_data = extractor.extract_data()
                 
                 if channel_data:
-                    # Adicionar nome do canal aos dados diários
+                    # Adicionar nome do canal (com descrição) aos dados diários
                     daily_data = channel_data.get('daily_data', [])
                     for record in daily_data:
-                        record['channel'] = channel_name
+                        record['channel'] = channel_display_name
                         all_daily_data.append(record)
                     
                     # Agregar métricas
@@ -2651,9 +2660,11 @@ def generate_dashboard_multicanal():
                         total_q50 += record.get('video_50', 0) or 0
                         total_q75 += record.get('video_75', 0) or 0
                     
-                    # Armazenar dados do canal
+                    # Armazenar dados do canal (incluindo display_name)
                     all_channels_data.append({
                         'channel_name': channel_name,
+                        'channel_display_name': channel_display_name,
+                        'action_description': action_description,
                         'kpi': kpi,
                         'sheet_id': sheet_id,
                         'data': channel_data
