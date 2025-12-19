@@ -984,8 +984,8 @@ class DashboardLoader {
         } else {
             // Para canal único, usar o display
             if (channelSelect) channelSelect.style.display = 'none';
-            if (channelDisplay) {
-                channelDisplay.textContent = channelName;
+        if (channelDisplay) {
+            channelDisplay.textContent = channelName;
                 channelDisplay.style.display = 'block';
             }
         }
@@ -1156,8 +1156,8 @@ class DashboardLoader {
         const metricsContainer = document.getElementById('metrics-overview-top');
         if (!metricsContainer || !data.campaign_summary) return;
         
-        const summary = data.campaign_summary;
-        const contract = data.contract || {};
+            const summary = data.campaign_summary;
+            const contract = data.contract || {};
         
         // Detectar KPIs presentes nos canais
         const channelKpis = new Set();
@@ -1185,14 +1185,14 @@ class DashboardLoader {
         
         // Construir HTML das métricas
         let metricsHtml = `
-            <div class="metric" data-metric="investment">
-                <div class="label">💰 Investimento</div>
+                <div class="metric" data-metric="investment">
+                    <div class="label">💰 Investimento</div>
                 <div class="value">${this.formatCurrency(contract.investment || summary.investment || 0)}</div>
-            </div>
-            <div class="metric" data-metric="budget">
-                <div class="label">💸 Budget Utilizado</div>
-                <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
-            </div>
+                </div>
+                <div class="metric" data-metric="budget">
+                    <div class="label">💸 Budget Utilizado</div>
+                    <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
+                </div>
             <div class="metric">
                 <div class="label">📈 Pacing</div>
                 <div class="value">${this.formatPercentage(pacing)}</div>
@@ -1215,10 +1215,10 @@ class DashboardLoader {
                     <div class="label">📊 VTR</div>
                     <div class="value">${this.formatPercentage(vtr)}</div>
                 </div>
-                <div class="metric">
-                    <div class="label">💵 CPV</div>
+                    <div class="metric">
+                        <div class="label">💵 CPV</div>
                     <div class="value">R$ ${this.formatCurrency(cpv)}</div>
-                </div>
+                    </div>
             `;
         }
         
@@ -1511,7 +1511,7 @@ class DashboardLoader {
                 this.updateChannelTabElements('Multicanal');
             } else {
                 // Renderização para canal único (comportamento original)
-                const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
+            const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
                 
                 // Calcular quartis agregados do daily_data
                 let q25_total = 0, q50_total = 0, q75_total = 0;
@@ -1520,31 +1520,31 @@ class DashboardLoader {
                     q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
                     q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
                 }
-                
-                // Usar sempre o canal do contract (correto)
-                let realChannel = contract.canal || 'Video Programática';
-                
-                tbodyChannels.innerHTML = `
-                    <tr>
-                        <td>${realChannel}</td>
-                        <td>R$ ${this.formatCurrency(contract.investment || 0)}</td>
-                        <td>R$ ${this.formatCurrency(summary.total_spend || 0)}</td>
-                        <td>${this.formatPercentage(pacing)}</td>
-                        <td>${this.formatNumber(summary.total_impressions || 0)}</td>
-                        <td>${this.formatNumber(summary.total_clicks || 0)}</td>
-                        <td>${this.formatPercentage(summary.ctr || 0)}</td>
+            
+            // Usar sempre o canal do contract (correto)
+            let realChannel = contract.canal || 'Video Programática';
+            
+            tbodyChannels.innerHTML = `
+                <tr>
+                    <td>${realChannel}</td>
+                    <td>R$ ${this.formatCurrency(contract.investment || 0)}</td>
+                    <td>R$ ${this.formatCurrency(summary.total_spend || 0)}</td>
+                    <td>${this.formatPercentage(pacing)}</td>
+                    <td>${this.formatNumber(summary.total_impressions || 0)}</td>
+                    <td>${this.formatNumber(summary.total_clicks || 0)}</td>
+                    <td>${this.formatPercentage(summary.ctr || 0)}</td>
                         <td>${this.formatNumber(q25_total)}</td>
                         <td>${this.formatNumber(q50_total)}</td>
                         <td>${this.formatNumber(q75_total)}</td>
-                        <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
-                        <td>${this.formatPercentage(summary.vtr || 0)}</td>
-                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
-                    </tr>
-                `;
-                
-                // Atualizar elementos da aba "Por Canal" com o canal correto
-                this.updateChannelTabElements(realChannel);
+                    <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
+                    <td>${this.formatPercentage(summary.vtr || 0)}</td>
+                    <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
+                    <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
+                </tr>
+            `;
+            
+            // Atualizar elementos da aba "Por Canal" com o canal correto
+            this.updateChannelTabElements(realChannel);
             }
         }
         
@@ -1683,7 +1683,11 @@ class DashboardLoader {
     renderInsights(data) {
         // Renderizar aba de análise e insights
         const insightsContainer = document.getElementById('insights-content');
-        if (insightsContainer && data.contract && data.strategies) {
+        if (insightsContainer && data.contract) {
+            // Se não houver strategies, usar array vazio
+            if (!data.strategies) {
+                data.strategies = [];
+            }
             const summary = data.campaign_summary || {};
             const contract = data.contract;
             
@@ -1770,7 +1774,14 @@ class DashboardLoader {
     renderPlanning(data) {
         // Renderizar aba de planejamento com dados reais
         const planningContainer = document.getElementById('planning-content');
-        if (planningContainer && data.contract && data.publishers && data.strategies) {
+        if (planningContainer && data.contract) {
+            // Se não houver publishers ou strategies, usar arrays vazios
+            if (!data.publishers) {
+                data.publishers = [];
+            }
+            if (!data.strategies) {
+                data.strategies = [];
+            }
             const summary = data.campaign_summary || {};
             const contract = data.contract;
             
@@ -1778,7 +1789,7 @@ class DashboardLoader {
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             
             // Renderizar publishers em grid
-            const publishersHtml = data.publishers.map(publisher => `
+            const publishersHtml = data.publishers && data.publishers.length > 0 ? data.publishers.map(publisher => `
                 <div style="
                     padding: 12px 16px;
                     border-radius: 12px;
@@ -1805,10 +1816,10 @@ class DashboardLoader {
                    title="${publisher.publisher || publisher.name || 'N/A'}">
                     ${publisher.publisher || publisher.name || 'N/A'}
                 </div>
-            `).join('');
+            `).join('') : '<div style="padding: 20px; text-align: center; color: #9CA3AF;">Nenhum publisher encontrado</div>';
             
             // Renderizar estratégias
-            const strategiesHtml = data.strategies.map(strategy => `
+            const strategiesHtml = data.strategies && data.strategies.length > 0 ? data.strategies.map(strategy => `
                 <div style="
                     padding: 16px;
                     border-radius: 12px;
@@ -1821,7 +1832,7 @@ class DashboardLoader {
                     </div>
                     ${strategy.type ? `<div style="color: #9CA3AF; font-size: 14px">${strategy.type}</div>` : ''}
                 </div>
-            `).join('');
+            `).join('') : '<div style="padding: 20px; text-align: center; color: #9CA3AF;">Nenhuma estratégia encontrada</div>';
 
             planningContainer.innerHTML = `
                 <div style="max-width: 1200px; margin: 0 auto;">

@@ -2595,6 +2595,9 @@ def generate_dashboard_multicanal():
         # Extrair dados de cada canal
         all_daily_data = []
         all_channels_data = []
+        all_publishers = []
+        all_strategies = []
+        all_insights = []
         total_investment = 0.0
         total_spend = 0.0
         total_impressions = 0
@@ -2660,6 +2663,19 @@ def generate_dashboard_multicanal():
                         total_q50 += record.get('video_50', 0) or 0
                         total_q75 += record.get('video_75', 0) or 0
                     
+                    # Agregar publishers, strategies e insights
+                    channel_publishers = channel_data.get('publishers', [])
+                    if channel_publishers:
+                        all_publishers.extend(channel_publishers)
+                    
+                    channel_strategies = channel_data.get('strategies', [])
+                    if channel_strategies:
+                        all_strategies.extend(channel_strategies)
+                    
+                    channel_insights = channel_data.get('insights', [])
+                    if channel_insights:
+                        all_insights.extend(channel_insights)
+                    
                     # Armazenar dados do canal (incluindo display_name)
                     all_channels_data.append({
                         'channel_name': channel_name,
@@ -2710,6 +2726,23 @@ def generate_dashboard_multicanal():
         # Determinar KPI principal (usar o primeiro canal como referência)
         primary_kpi = channels_config[0].get('kpi', 'CPV')
         
+        # Remover duplicatas de publishers e strategies (usando set com tuplas)
+        unique_publishers = []
+        seen_publishers = set()
+        for pub in all_publishers:
+            pub_key = (pub.get('publisher') or pub.get('name') or '', pub.get('channel') or '')
+            if pub_key not in seen_publishers:
+                seen_publishers.add(pub_key)
+                unique_publishers.append(pub)
+        
+        unique_strategies = []
+        seen_strategies = set()
+        for strat in all_strategies:
+            strat_key = (strat.get('strategy') or strat.get('name') or '', strat.get('type') or '')
+            if strat_key not in seen_strategies:
+                seen_strategies.add(strat_key)
+                unique_strategies.append(strat)
+        
         # Preparar dados consolidados
         consolidated_data = {
             "campaign_summary": {
@@ -2736,6 +2769,9 @@ def generate_dashboard_multicanal():
             },
             "daily_data": all_daily_data,
             "channels": all_channels_data,
+            "publishers": unique_publishers if unique_publishers else [],
+            "strategies": unique_strategies if unique_strategies else [],
+            "insights": all_insights if all_insights else [],
             "last_updated": datetime.now().isoformat(),
             "data_source": "google_sheets_multicanal"
         }
