@@ -591,12 +591,19 @@ def persistence_status():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check"""
-    return jsonify({
-        "status": "healthy",
-        "service": "mvp-dashboard-builder",
-        "timestamp": datetime.now().isoformat()
-    })
+    """Health check endpoint para Cloud Run"""
+    try:
+        # Verificar se o serviço está funcionando
+        status = {
+            "status": "healthy",
+            "service": "mvp-dashboard-builder",
+            "timestamp": datetime.now().isoformat(),
+            "bq_fs_manager": bq_fs_manager is not None
+        }
+        return jsonify(status), 200
+    except Exception as e:
+        logger.error(f"Erro no health check: {e}")
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
 
 # Endpoint persistence-status já definido acima
 
@@ -1542,42 +1549,54 @@ def dashboards_list():
         if bq_fs_manager:
             try:
                 # Buscar diretamente do Firestore usando a coleção correta do ambiente
-                dashboard_docs = bq_fs_manager.fs_client.collection(bq_fs_manager.dashboards_collection).stream()
+                # Limitar a 500 dashboards para evitar timeout e melhorar performance
+                dashboard_docs = bq_fs_manager.fs_client.collection(bq_fs_manager.dashboards_collection).limit(500).stream()
+                
+                for doc in dashboard_docs:
+                    try:
+                        data = doc.to_dict()
+                        # Filtrar dashboards de teste
+                        client = data.get('client', 'N/A')
+                        if client and str(client).lower().startswith('teste'):
+                            continue
+                        
+                        dashboards.append({
+                            'campaign_key': doc.id,
+                            'client': client or 'N/A',
+                            'campaign_name': data.get('campaign_name', 'N/A'),
+                            'channel': data.get('channel', 'N/A'),
+                            'kpi': data.get('kpi', 'N/A'),
+                            'created_at': data.get('created_at', 'N/A')
+                        })
+                    except Exception as doc_error:
+                        logger.warning(f"Erro ao processar documento {doc.id}: {doc_error}")
+                        continue
+            except Exception as e:
+                logger.error(f"Erro ao buscar dashboards do Firestore: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        else:
+            # Fallback para Firestore de produção (quando bq_fs_manager não está disponível)
+            try:
+                from google.cloud import firestore
+                firestore_client = firestore.Client()
+                
+                dashboard_docs = firestore_client.collection('dashboards').limit(100).stream()
                 
                 for doc in dashboard_docs:
                     data = doc.to_dict()
-                    # Filtrar dashboards de teste
-                    client = data.get('client', 'N/A')
-                    if client.lower().startswith('teste'):
-                        continue
-                    
                     dashboards.append({
                         'campaign_key': doc.id,
-                        'client': client,
+                        'client': data.get('client', 'N/A'),
                         'campaign_name': data.get('campaign_name', 'N/A'),
                         'channel': data.get('channel', 'N/A'),
                         'kpi': data.get('kpi', 'N/A'),
                         'created_at': data.get('created_at', 'N/A')
                     })
             except Exception as e:
-                logger.error(f"Erro ao buscar dashboards do Firestore: {e}")
-        else:
-            # Fallback para Firestore de produção (quando bq_fs_manager não está disponível)
-            from google.cloud import firestore
-            firestore_client = firestore.Client()
-            
-            dashboard_docs = firestore_client.collection('dashboards').stream()
-            
-            for doc in dashboard_docs:
-                data = doc.to_dict()
-                dashboards.append({
-                    'campaign_key': doc.id,
-                    'client': data.get('client', 'N/A'),
-                    'campaign_name': data.get('campaign_name', 'N/A'),
-                    'channel': data.get('channel', 'N/A'),
-                    'kpi': data.get('kpi', 'N/A'),
-                    'created_at': data.get('created_at', 'N/A')
-                })
+                logger.error(f"Erro ao buscar dashboards do Firestore (fallback): {e}")
+                import traceback
+                logger.error(traceback.format_exc())
         
         # Gerar HTML da página
         html_content = f"""
