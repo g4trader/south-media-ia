@@ -224,6 +224,42 @@ def calcular_totais(daily_array):
     }
 
 
+def parse_coordinate(val_str):
+    """Converte coordenada com pontos como separadores para float"""
+    if not val_str or val_str == '':
+        return None
+    try:
+        val_clean = str(val_str).strip().replace('.', '').replace(',', '.')
+        # Coordenadas geográficas: formato -XX.XXXX...
+        # Se tem muitos dígitos, inserir ponto após o segundo dígito após o sinal
+        if val_clean.startswith('-'):
+            digits = val_clean[1:].replace('.', '')
+            if len(digits) > 2:
+                coord = float('-' + digits[:2] + '.' + digits[2:])
+            else:
+                coord = float(val_clean)
+        else:
+            digits = val_clean.replace('.', '')
+            if len(digits) > 2:
+                coord = float(digits[:2] + '.' + digits[2:])
+            else:
+                coord = float(val_clean)
+        return coord
+    except Exception as e:
+        return None
+
+
+def parse_rate(rate_str):
+    """Converte taxa percentual (ex: '8,5' ou '8.5') para float"""
+    if not rate_str or rate_str == '':
+        return 0.0
+    try:
+        val_clean = str(rate_str).replace(',', '.').replace('%', '').strip()
+        return float(val_clean)
+    except:
+        return 0.0
+
+
 def processar_dados_footfall(df):
     """Processa os dados da aba Footfall e retorna lista de pontos"""
     import pandas as pd
@@ -231,64 +267,84 @@ def processar_dados_footfall(df):
     footfall_points = []
     
     for idx, row in df.iterrows():
-        if len(row) < 4:  # Mínimo necessário: lat, lon, name, users
-            continue
-        
         try:
-            # Tentar diferentes estruturas de colunas
-            # Estrutura esperada: lat, lon, name, users, rate (ou similar)
-            lat = None
-            lon = None
+            lat_val = None
+            lon_val = None
             name = None
             users = 0
             rate = 0.0
             
-            # Tentar encontrar colunas por índice ou nome
-            if len(row) >= 1:
+            # Tentar encontrar por nome de coluna primeiro
+            if 'lat' in df.columns:
+                lat_val = row.get('lat')
+            elif len(row) >= 1:
                 lat_val = row.iloc[0] if pd.notna(row.iloc[0]) else None
-                if lat_val is not None:
-                    try:
-                        lat = float(lat_val)
-                    except:
-                        pass
-            
-            if len(row) >= 2:
+                
+            if 'long' in df.columns:
+                lon_val = row.get('long')
+            elif 'lon' in df.columns:
+                lon_val = row.get('lon')
+            elif len(row) >= 2:
                 lon_val = row.iloc[1] if pd.notna(row.iloc[1]) else None
-                if lon_val is not None:
-                    try:
-                        lon = float(lon_val)
-                    except:
-                        pass
-            
-            if len(row) >= 3:
-                name = str(row.iloc[2]) if pd.notna(row.iloc[2]) else ""
-            
-            if len(row) >= 4:
+                
+            if 'name' in df.columns:
+                name = row.get('name')
+            elif len(row) >= 4:
+                name = row.iloc[3] if pd.notna(row.iloc[3]) else None
+            elif len(row) >= 3:
+                name = row.iloc[2] if pd.notna(row.iloc[2]) else None
+                
+            if 'Footfall Users' in df.columns:
+                users_val = row.get('Footfall Users')
+                try:
+                    users = int(float(users_val)) if pd.notna(users_val) else 0
+                except:
+                    users = 0
+            elif len(row) >= 5:
+                users_val = row.iloc[4] if pd.notna(row.iloc[4]) else 0
+                try:
+                    users = int(float(users_val))
+                except:
+                    users = 0
+            elif len(row) >= 4:
                 users_val = row.iloc[3] if pd.notna(row.iloc[3]) else 0
                 try:
                     users = int(float(users_val))
                 except:
                     users = 0
-            
-            if len(row) >= 5:
+                    
+            if 'Footfall Rate %' in df.columns:
+                rate_val = row.get('Footfall Rate %')
+                rate = parse_rate(rate_val) if pd.notna(rate_val) else 0.0
+            elif len(row) >= 6:
+                rate_val = row.iloc[5] if pd.notna(row.iloc[5]) else 0
+                rate = parse_rate(rate_val)
+            elif len(row) >= 5:
                 rate_val = row.iloc[4] if pd.notna(row.iloc[4]) else 0
-                try:
-                    rate = float(rate_val)
-                except:
-                    rate = 0.0
+                rate = parse_rate(rate_val)
+            
+            # Processar coordenadas
+            lat = parse_coordinate(lat_val) if lat_val is not None else None
+            lon = parse_coordinate(lon_val) if lon_val is not None else None
             
             # Validar dados
-            if lat is None or lon is None or not name or name == '' or name == 'nan':
+            if lat is None or lon is None:
+                print(f"⚠️  Linha {idx}: coordenadas inválidas (lat={lat_val}, lon={lon_val})")
                 continue
-            
-            # Validar coordenadas
+                
+            if not name or name == '' or str(name) == 'nan':
+                print(f"⚠️  Linha {idx}: nome inválido ({name})")
+                continue
+                
+            # Validar coordenadas geográficas
             if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+                print(f"⚠️  Linha {idx}: coordenadas fora do range (lat={lat}, lon={lon})")
                 continue
             
             footfall_points.append({
                 "lat": lat,
                 "lon": lon,
-                "name": name.strip(),
+                "name": str(name).strip(),
                 "users": users,
                 "rate": rate
             })
