@@ -1033,6 +1033,7 @@ def dash_generator_pro():
                 <option value="Instagram">Instagram</option>
                 <option value="Netflix">Netflix</option>
                 <option value="Disney">Disney</option>
+                <option value="HBO">HBO</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="Pinterest">Pinterest</option>
                 <option value="Spotify">Spotify</option>
@@ -1510,7 +1511,7 @@ def cleanup_orphans():
                 campaign_key = campaign.get('campaign_key')
                 
                 # Determinar KPI baseado no canal
-                if 'youtube' in channel or 'video programática' in channel or 'ctv' in channel:
+                if 'youtube' in channel or 'video programática' in channel or 'ctv' in channel or 'hbo' in channel:
                     kpi = 'CPV'
                 elif 'display' in channel or 'native' in channel or 'linkedin' in channel or 'netflix' in channel:
                     kpi = 'CPM'
@@ -2435,6 +2436,7 @@ def dash_generator_pro_multicanal():
                             <option value="Instagram">Instagram</option>
                             <option value="Netflix">Netflix</option>
                             <option value="Disney">Disney</option>
+                            <option value="HBO">HBO</option>
                             <option value="LinkedIn">LinkedIn</option>
                             <option value="Pinterest">Pinterest</option>
                             <option value="Spotify">Spotify</option>

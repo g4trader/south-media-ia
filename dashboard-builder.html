@@ -298,6 +298,17 @@
           </div>
 
           <div class="channel-item">
+            <input type="checkbox" id="channel_hbo" class="channel-checkbox" value="hbo">
+            <label for="channel_hbo" class="channel-label">🎬 HBO</label>
+            <div class="channel-config">
+              <input type="text" id="hbo_sheet" class="channel-sheet-input" placeholder="ID da planilha Google Sheets" disabled>
+              <input type="text" id="hbo_gid" class="channel-sheet-input" placeholder="GID da aba (opcional)" disabled>
+              <input type="number" id="hbo_budget" class="channel-budget-input" placeholder="Orçamento (R$)" step="0.01" min="0" disabled>
+              <input type="number" id="hbo_quantity" class="channel-quantity-input" placeholder="Quantidade" min="0" disabled>
+            </div>
+          </div>
+
+          <div class="channel-item">
             <input type="checkbox" id="channel_ctv" class="channel-checkbox" value="ctv">
             <label for="channel_ctv" class="channel-label">📺 CTV (Connected TV)</label>
             <div class="channel-config">

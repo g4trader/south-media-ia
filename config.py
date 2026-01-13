@@ -119,20 +119,15 @@ GOOGLE_SHEETS_CONFIG = {
             "creative": "Creative"  # Suporta "Creative" ou "criativo"
         }
     },
-    "Programática Video": {
-        "sheet_id": os.environ.get("PROG_VIDEO_SHEET_ID", "1VRJrgwKYTxF_QUrJRKeeo6npsTO_AhgrDDBZ4CF4T5o"),
-        "gid": os.environ.get("PROG_VIDEO_GID", "1489416055"),
+    "Bonificação Ifood": {
+        "sheet_id": os.environ.get("BONIF_IFOOD_SHEET_ID", "15nVEKCC7MX0gWPmZ1h6QtbT1krlkImQWILZvJH8Tw4M"),
+        "gid": os.environ.get("BONIF_IFOOD_GID", "1743413064"),
         "sheet_name": None,
         "columns": {
-            "date": "Day",
-            "spend": "Valor investido",
-            "impressions": "Imps",
+            "date": "Date",
+            "spend": "Valor Investido",
+            "impressions": "Impressions",
             "clicks": "Clicks",
-            "starts": "Video Starts",
-            "q25": "25% Video Complete",
-            "q50": "50% Video Complete",
-            "q75": "75% Video Complete",
-            "q100": "100% Complete",
             "creative": "Creative"
         }
     },
@@ -188,13 +183,13 @@ GOOGLE_SHEETS_CONFIG = {
         "columns": {
             "date": "",  # Primeira coluna (sem nome de cabeçalho)
             "spend": "Valor investido",
-            "impressions": "Imps",
-            "clicks": "",
-            "starts": "Video Starts",
-            "q25": "25% Video Complete",
-            "q50": "50% Video Complete",
-            "q75": "75% Video Complete",
-            "q100": "100% Complete"
+            "impressions": "",  # CTV não tem coluna de impressões
+            "clicks": "",  # CTV não tem coluna de cliques
+            "starts": "Starts (Video)",
+            "q25": "First-Quartile Views (Video)",
+            "q50": "Midpoint Views (Video)",
+            "q75": "Third-Quartile Views (Video)",
+            "q100": "Complete Views (Video)"
         }
     },
     "Footfall Display": {
@@ -203,10 +198,27 @@ GOOGLE_SHEETS_CONFIG = {
         "sheet_name": None,
         "columns": {
             "date": "Date",
-            "spend": "Spend",
+            "spend": "VALOR DO INVESTIMENTO",
             "impressions": "Impressions",
             "clicks": "Clicks",
             "visits": "Visits"
+        }
+    },
+    "HBO": {
+        "sheet_id": os.environ.get("HBO_SHEET_ID", ""),
+        "gid": os.environ.get("HBO_GID", "1743413064"),
+        "sheet_name": None,
+        "columns": {
+            "date": "Day",
+            "spend": "Valor investido",
+            "impressions": "",
+            "clicks": "",
+            "starts": "Video Starts",
+            "q25": "25% Video Complete",
+            "q50": "50% Video Complete",
+            "q75": "75% Video Complete",
+            "q100": "100% Complete",
+            "creative": "Criativo"
         }
     }
 }

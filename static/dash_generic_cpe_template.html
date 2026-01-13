@@ -1125,6 +1125,32 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
+            // Detectar se o KPI principal é CPV
+            const isMultichannel = data.channels && data.channels.length > 0;
+            let isCpvKpi = false;
+            if (isMultichannel && data.channels) {
+                data.channels.forEach(ch => {
+                    const kpi = ch.kpi || contract.kpi || 'CPE';
+                    if (kpi.toUpperCase() === 'CPV') {
+                        isCpvKpi = true;
+                    }
+                });
+            } else {
+                const kpi = contract.kpi || 'CPE';
+                if (kpi.toUpperCase() === 'CPV') {
+                    isCpvKpi = true;
+                }
+            }
+            
+            // Ocultar coluna CPM do cabeçalho se KPI for CPV
+            const tableHeader = document.querySelector('#tableChannels thead tr');
+            if (tableHeader && isCpvKpi) {
+                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.includes('CPM'));
+                if (cpmHeader) {
+                    cpmHeader.style.display = 'none';
+                }
+            }
+            
             // Calcular pacing
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             
@@ -1154,7 +1180,7 @@ class DashboardLoader {
                     <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
                     <td>${this.formatPercentage(summary.vtr || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                    <td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>
+                    ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>` : ''}
                 </tr>
             `;
             
@@ -1169,6 +1195,33 @@ class DashboardLoader {
         const channelDailyBody = document.getElementById('channelDailyBody');
         if (channelDailyBody && data.daily_data && data.daily_data.length > 0) {
             const contract = data.contract || {};
+            
+            // Detectar se o KPI principal é CPV (usar mesmo valor já calculado)
+            const isMultichannel = data.channels && data.channels.length > 0;
+            let isCpvKpi = false;
+            if (isMultichannel && data.channels) {
+                data.channels.forEach(ch => {
+                    const kpi = ch.kpi || contract.kpi || 'CPE';
+                    if (kpi.toUpperCase() === 'CPV') {
+                        isCpvKpi = true;
+                    }
+                });
+            } else {
+                const kpi = contract.kpi || 'CPE';
+                if (kpi.toUpperCase() === 'CPV') {
+                    isCpvKpi = true;
+                }
+            }
+            
+            // Ocultar coluna CPM do cabeçalho se KPI for CPV
+            const tableHeader = document.querySelector('#channelDailyTable thead tr');
+            if (tableHeader && isCpvKpi) {
+                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent === 'CPM');
+                if (cpmHeader) {
+                    cpmHeader.style.display = 'none';
+                }
+            }
+            
             channelDailyBody.innerHTML = data.daily_data.map(record => {
                 const vtr = record.video_completions && record.video_starts ? 
                     (record.video_completions / record.video_starts * 100) : 0;
@@ -1188,7 +1241,7 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.video_completions)}</td>
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        <td>R$ ${this.formatCurrency(cpm)}</td>
+                        ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(cpm)}</td>` : ''}
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
@@ -1251,6 +1304,23 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
+            // Detectar se o KPI principal é CPV
+            const isMultichannel = data.channels && data.channels.length > 0;
+            let isCpvKpi = false;
+            if (isMultichannel && data.channels) {
+                data.channels.forEach(ch => {
+                    const kpi = ch.kpi || contract.kpi || 'CPE';
+                    if (kpi.toUpperCase() === 'CPV') {
+                        isCpvKpi = true;
+                    }
+                });
+            } else {
+                const kpi = contract.kpi || 'CPE';
+                if (kpi.toUpperCase() === 'CPV') {
+                    isCpvKpi = true;
+                }
+            }
+            
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_video_completions / contract.complete_views_contracted * 100) : 0;
@@ -1303,10 +1373,12 @@ class DashboardLoader {
                     <div class="label">💵 CPE Contratado</div>
                     <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                 </div>
+                ${!isCpvKpi ? `
                 <div class="metric">
                     <div class="label">📊 CPM Médio</div>
                     <div class="value">${this.formatCurrency(cpm)}</div>
                 </div>
+                ` : ''}
             `;
         }
     }
