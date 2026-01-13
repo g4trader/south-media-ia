@@ -1103,8 +1103,8 @@ class DashboardLoader {
             channelDailyBody.innerHTML = data.daily_data.map(record => {
                 const vtr = record.video_completions && record.video_starts ? 
                     (record.video_completions / record.video_starts * 100) : 0;
-                const cpm = record.impressions ? 
-                    (record.spend / record.impressions * 1000) : 0;
+                // Usar CPM contratado sempre (não calcular dinamicamente)
+                const cpmContracted = contract.cpv_contracted || 0;
                 
                 return `
                     <tr>
@@ -1119,7 +1119,7 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.video_completions)}</td>
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(cpm)}</td>` : ''}
+                        ${!isCpvKpi ? `<td>R$ ${cpmContracted.toFixed(2).replace('.', ',')}</td>` : ''}
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;

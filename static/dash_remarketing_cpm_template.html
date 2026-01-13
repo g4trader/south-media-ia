@@ -1060,10 +1060,9 @@ class DashboardLoader {
             
             if (data.daily_data && data.daily_data.length > 0) {
             const contract = data.contract || {};
+            // Usar CPM contratado sempre (não calcular dinamicamente)
+            const cpmContracted = contract.cpv_contracted || 0;
             channelDailyBody.innerHTML = data.daily_data.map(record => {
-                const cpm = record.impressions ? 
-                    (record.spend / record.impressions * 1000) : 0;
-                
                 return `
                     <tr>
                         <td>${record.date}</td>
@@ -1071,7 +1070,7 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.impressions)}</td>
                         <td>${this.formatNumber(record.clicks)}</td>
                         <td>${this.formatPercentage(record.ctr)}</td>
-                        <td>R$ ${this.formatCurrency(cpm)}</td>
+                        <td>R$ ${cpmContracted.toFixed(2).replace('.', ',')}</td>
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
