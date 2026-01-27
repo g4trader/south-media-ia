@@ -256,7 +256,7 @@ class CloudRunDatabaseManager:
         
         return status
 
-    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None) -> bool:
+    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None, use_quartiles: bool = False) -> bool:
         """Salvar ou atualizar uma campanha no banco de dados"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -268,11 +268,17 @@ class CloudRunDatabaseManager:
             except:
                 pass  # Coluna já existe
             
+            # Adicionar coluna use_quartiles se não existir
+            try:
+                cursor.execute('ALTER TABLE campaigns ADD COLUMN use_quartiles INTEGER DEFAULT 0')
+            except:
+                pass  # Coluna já existe
+            
             cursor.execute('''
                 INSERT OR REPLACE INTO campaigns 
-                (campaign_key, client, campaign_name, sheet_id, channel, kpi, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (campaign_key, client, campaign_name, sheet_id, channel, kpi))
+                (campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (campaign_key, client, campaign_name, sheet_id, channel, kpi, 1 if use_quartiles else 0))
             
             conn.commit()
             conn.close()
@@ -298,7 +304,7 @@ class CloudRunDatabaseManager:
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT campaign_key, client, campaign_name, sheet_id, channel, kpi, created_at, updated_at
+                SELECT campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, created_at, updated_at
                 FROM campaigns WHERE campaign_key = ?
             ''', (campaign_key,))
             
@@ -306,16 +312,27 @@ class CloudRunDatabaseManager:
             conn.close()
             
             if result:
-                return {
+                # Mapear resultado considerando que use_quartiles pode não existir em campanhas antigas
+                campaign_dict = {
                     'campaign_key': result[0],
                     'client': result[1],
                     'campaign_name': result[2],
                     'sheet_id': result[3],
                     'channel': result[4],
-                    'kpi': result[5],
-                    'created_at': result[6],
-                    'updated_at': result[7]
+                    'kpi': result[5] if len(result) > 5 else None,
                 }
+                
+                # use_quartiles está na posição 6 se existir, senão default 0
+                if len(result) > 6:
+                    campaign_dict['use_quartiles'] = result[6]
+                    campaign_dict['created_at'] = result[7] if len(result) > 7 else None
+                    campaign_dict['updated_at'] = result[8] if len(result) > 8 else None
+                else:
+                    campaign_dict['use_quartiles'] = 0
+                    campaign_dict['created_at'] = result[6] if len(result) > 6 else None
+                    campaign_dict['updated_at'] = result[7] if len(result) > 7 else None
+                
+                return campaign_dict
             return None
             
         except Exception as e:
@@ -444,7 +461,7 @@ def generate_campaign_key(client: str, campaign_name: str) -> str:
     
     return f"{client_clean}_{campaign_clean}"
 
-def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática", kpi: str = "CPV") -> Dict[str, Any]:
+def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática", kpi: str = "CPV", use_quartiles: bool = False) -> Dict[str, Any]:
     """Gerar dashboard a partir do template"""
     try:
         # Determinar template baseado no KPI
@@ -452,14 +469,21 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         
         # Selecionar template baseado no KPI
         if kpi.upper() == 'CPM':
-            template_path = 'static/dash_remarketing_cpm_template.html'
-            logger.info(f"🎯 Usando template CPM para: {campaign_name} (KPI: {kpi})")
+            if use_quartiles:
+                template_path = 'static/dash_cpm_with_quartiles_template.html'
+                logger.info(f"🎯 Usando template CPM com quartis para: {campaign_name} (KPI: {kpi})")
+            else:
+                template_path = 'static/dash_remarketing_cpm_template.html'
+                logger.info(f"🎯 Usando template CPM para: {campaign_name} (KPI: {kpi})")
         elif kpi.upper() == 'CPV':
             template_path = 'static/dash_generic_template.html'
             logger.info(f"🎯 Usando template CPV para: {campaign_name} (KPI: {kpi})")
         elif kpi.upper() == 'CPE':
             template_path = 'static/dash_generic_cpe_template.html'
             logger.info(f"🎯 Usando template CPE para: {campaign_name} (KPI: {kpi})")
+        elif kpi.upper() == 'CPD':
+            template_path = 'static/dash_generic_cpd_template.html'
+            logger.info(f"🎯 Usando template CPD para: {campaign_name} (KPI: {kpi})")
         else:
             logger.info(f"🎯 Usando template genérico para: {campaign_name} (KPI: {kpi})")
         
@@ -1040,6 +1064,8 @@ def dash_generator_pro():
                 <option value="Geofence">Geofence</option>
                 <option value="Waze">Waze</option>
                 <option value="CTV">CTV</option>
+                <option value="Push">Push</option>
+                <option value="Richmedia">Richmedia</option>
             </select>
         </div>
         
@@ -1048,11 +1074,20 @@ def dash_generator_pro():
             <select id="kpi" name="kpi" required>
                 <option value="CPV">CPV - Custo por View (Complete Views)</option>
                 <option value="CPE">CPE - Custo por Escuta (Audio Listens)</option>
+                <option value="CPD">CPD - Custo por Download</option>
                 <option value="CPM">CPM - Custo por Mil Impressões</option>
                 <option value="CPC">CPC - Custo por Clique</option>
                 <option value="CPA">CPA - Custo por Aquisição</option>
             </select>
             <small>Métrica principal contratada (define o layout do dashboard)</small>
+        </div>
+        
+        <div class="form-group" id="quartilesGroup" style="display: none;">
+            <label>
+                <input type="checkbox" id="useQuartiles" name="use_quartiles" value="1">
+                Usar quartis de vídeo/escuta (quando KPI for CPM mas a campanha for de vídeo/escuta)
+            </label>
+            <small>Marque esta opção se a campanha CPM utiliza métricas de quartis de vídeo/escuta</small>
         </div>
         
         <button type="submit" id="generateButton">🚀 Gerar Dashboard</button>
@@ -1097,6 +1132,17 @@ def dash_generator_pro():
                 sheetIdField.style.color = '#666';
             }
         });
+        
+        // Mostrar/ocultar opção de quartis quando KPI for CPM
+        document.getElementById('kpi').addEventListener('change', function() {
+            const quartilesGroup = document.getElementById('quartilesGroup');
+            if (this.value === 'CPM') {
+                quartilesGroup.style.display = 'block';
+            } else {
+                quartilesGroup.style.display = 'none';
+                document.getElementById('useQuartiles').checked = false;
+            }
+        });
 
         document.getElementById('generatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1111,6 +1157,9 @@ def dash_generator_pro():
             try {
                 const formData = new FormData(this);
                 const data = Object.fromEntries(formData);
+                
+                // Adicionar flag de quartis se checkbox estiver marcado
+                data.use_quartiles = document.getElementById('useQuartiles').checked ? '1' : '0';
                 
                 const response = await fetch('/api/generate-dashboard', {
                     method: 'POST',
@@ -1176,12 +1225,13 @@ def generate_dashboard_endpoint():
         sheet_id = data['sheet_id']
         channel = data.get('channel', 'Video Programática')
         kpi = data.get('kpi', 'CPV')
+        use_quartiles = data.get('use_quartiles', '0') == '1' or data.get('use_quartiles', False) == True
         
         # Gerar campaign_key automaticamente
         campaign_key = generate_campaign_key(client, campaign_name)
         
         # Salvar campanha no banco (SQLite + GCS)
-        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi):
+        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles):
             return jsonify({"success": False, "message": "Erro ao salvar configuração da campanha"}), 500
         
         # Salvar também no BigQuery + Firestore se disponível
@@ -1193,7 +1243,7 @@ def generate_dashboard_endpoint():
                 logger.warning(f"⚠️ Erro ao salvar no BigQuery/Firestore: {e}")
         
         # Gerar dashboard
-        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel, kpi)
+        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles)
         
         if not result['success']:
             return jsonify({"success": False, "message": f"Erro ao gerar dashboard: {result['error']}"}), 500
@@ -1235,15 +1285,53 @@ def generate_dashboard_endpoint():
 def get_dashboard_html(campaign_key):
     """Obter dashboard HTML dinâmico (réplica da produção)"""
     try:
-        # Obter dados da campanha do Firestore
+        # Obter dados da campanha do Firestore primeiro
         campaign = None
         if bq_fs_manager:
             doc = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(campaign_key).get()
             if doc.exists:
                 campaign = doc.to_dict()
         
+        # Se não encontrou no Firestore ou não tem use_quartiles, buscar do SQLite local
+        if not campaign or 'use_quartiles' not in campaign:
+            logger.info(f"🔄 Buscando campanha {campaign_key} no SQLite local...")
+            campaign_local = db_manager.get_campaign(campaign_key)
+            if campaign_local:
+                # Merge: Firestore tem prioridade, mas SQLite complementa campos faltantes
+                if campaign:
+                    # Obter use_quartiles do SQLite (pode ser int ou string)
+                    use_quartiles_sqlite = campaign_local.get('use_quartiles', 0)
+                    # Converter para int se for string
+                    if isinstance(use_quartiles_sqlite, str):
+                        use_quartiles_sqlite = 1 if use_quartiles_sqlite == '1' or use_quartiles_sqlite == 1 else 0
+                    campaign['use_quartiles'] = int(use_quartiles_sqlite)
+                    logger.info(f"✅ use_quartiles obtido do SQLite: {campaign['use_quartiles']} (tipo: {type(campaign['use_quartiles'])})")
+                else:
+                    campaign = campaign_local
+                    # Garantir que use_quartiles é int
+                    if 'use_quartiles' in campaign:
+                        use_quartiles_val = campaign.get('use_quartiles', 0)
+                        if isinstance(use_quartiles_val, str):
+                            campaign['use_quartiles'] = 1 if use_quartiles_val == '1' or use_quartiles_val == 1 else 0
+                        else:
+                            campaign['use_quartiles'] = int(use_quartiles_val)
+                    logger.info(f"✅ Campanha encontrada no SQLite local, use_quartiles: {campaign.get('use_quartiles', 0)}")
+        
         if not campaign:
             return f"<html><body><h1>Campanha '{campaign_key}' não encontrada</h1></body></html>", 404
+        
+        # Garantir que use_quartiles existe e é int (default 0 se não existir)
+        if 'use_quartiles' not in campaign:
+            campaign['use_quartiles'] = 0
+        else:
+            # Converter para int se necessário
+            use_quartiles_val = campaign.get('use_quartiles', 0)
+            if isinstance(use_quartiles_val, str):
+                campaign['use_quartiles'] = 1 if use_quartiles_val == '1' or use_quartiles_val == 1 else 0
+            else:
+                campaign['use_quartiles'] = int(use_quartiles_val)
+        
+        logger.info(f"🔍 DEBUG: Campanha {campaign_key} - KPI: {campaign.get('kpi')}, use_quartiles: {campaign.get('use_quartiles')} (tipo: {type(campaign.get('use_quartiles'))})")
         
         # Verificar se é dashboard multicanal
         is_multicanal = (
@@ -1301,6 +1389,12 @@ def get_dashboard_html(campaign_key):
         if not data:
             return f"<html><body><h1>Falha ao extrair dados da planilha para '{campaign_key}'</h1></body></html>", 500
         
+        # Garantir que o KPI da campanha sobrescreva o do contrato
+        campaign_kpi = campaign.get('kpi')
+        if campaign_kpi and data.get('contract'):
+            data['contract']['kpi'] = campaign_kpi
+            logger.info(f"✅ KPI da campanha ({campaign_kpi}) aplicado ao contrato")
+        
         # Gerar HTML dinâmico baseado no template
         html_content = generate_dynamic_dashboard_html(campaign, data)
         
@@ -1342,6 +1436,12 @@ def get_campaign_data(campaign_key):
         
         if not extracted_data:
             return jsonify({"success": False, "message": "Falha ao extrair dados da planilha"}), 500
+        
+        # Garantir que o KPI da campanha sobrescreva o do contrato (CRÍTICO!)
+        campaign_kpi = campaign.get('kpi')
+        if campaign_kpi and extracted_data.get('contract'):
+            extracted_data['contract']['kpi'] = campaign_kpi
+            logger.info(f"✅ KPI da campanha ({campaign_kpi}) aplicado ao contrato na API /data")
         
         return jsonify({"success": True, "data": extracted_data})
     except Exception as e:
@@ -1405,14 +1505,30 @@ def serve_static(filename):
 def generate_dynamic_dashboard_html(campaign, data):
     """Gerar HTML dinâmico do dashboard (réplica da produção)"""
     try:
-        # Selecionar template baseado no KPI da campanha
+        # Selecionar template baseado no KPI da campanha e use_quartiles
         kpi = campaign.get('kpi', 'CPV')
+        # Converter use_quartiles para boolean de forma robusta
+        use_quartiles_val = campaign.get('use_quartiles', 0)
+        if isinstance(use_quartiles_val, str):
+            use_quartiles = use_quartiles_val == '1' or use_quartiles_val == 1
+        else:
+            use_quartiles = int(use_quartiles_val) == 1 or use_quartiles_val == True
+        
+        logger.info(f"🔍 DEBUG generate_dynamic_dashboard_html: KPI={kpi}, use_quartiles={use_quartiles} (valor original: {use_quartiles_val}, tipo: {type(use_quartiles_val)})")
+        
         if kpi.upper() == 'CPM':
-            template_path = os.path.join('static', 'dash_remarketing_cpm_template.html')
-            logger.info(f"🎯 Usando template CPM para dashboard dinâmico: {campaign['campaign_name']}")
+            if use_quartiles:
+                template_path = os.path.join('static', 'dash_cpm_with_quartiles_template.html')
+                logger.info(f"🎯 Usando template CPM com quartis para dashboard dinâmico: {campaign['campaign_name']}")
+            else:
+                template_path = os.path.join('static', 'dash_remarketing_cpm_template.html')
+                logger.info(f"🎯 Usando template CPM para dashboard dinâmico: {campaign['campaign_name']}")
         elif kpi.upper() == 'CPE':
             template_path = os.path.join('static', 'dash_generic_cpe_template.html')
             logger.info(f"🎯 Usando template CPE para dashboard dinâmico: {campaign['campaign_name']}")
+        elif kpi.upper() == 'CPD':
+            template_path = os.path.join('static', 'dash_generic_cpd_template.html')
+            logger.info(f"🎯 Usando template CPD para dashboard dinâmico: {campaign['campaign_name']}")
         else:
             template_path = os.path.join('static', 'dash_generic_template.html')
             logger.info(f"🎯 Usando template genérico para dashboard dinâmico: {campaign['campaign_name']}")
@@ -1513,7 +1629,7 @@ def cleanup_orphans():
                 # Determinar KPI baseado no canal
                 if 'youtube' in channel or 'video programática' in channel or 'ctv' in channel or 'hbo' in channel:
                     kpi = 'CPV'
-                elif 'display' in channel or 'native' in channel or 'linkedin' in channel or 'netflix' in channel:
+                elif 'display' in channel or 'native' in channel or 'linkedin' in channel or 'netflix' in channel or 'push' in channel or 'richmedia' in channel:
                     kpi = 'CPM'
                 else:
                     kpi = 'CPV'
@@ -1956,6 +2072,7 @@ def dashboards_list():
                         <option value="CPM">CPM</option>
                         <option value="CPV">CPV</option>
                         <option value="CPE">CPE</option>
+                        <option value="CPD">CPD</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -2444,6 +2561,8 @@ def dash_generator_pro_multicanal():
                             <option value="Waze">Waze</option>
                             <option value="CTV">CTV</option>
                             <option value="Footfall Display">Footfall Display</option>
+                            <option value="Push">Push</option>
+                            <option value="Richmedia">Richmedia</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -2455,6 +2574,7 @@ def dash_generator_pro_multicanal():
                         <select name="channels[${channelCount}][kpi]" required>
                             <option value="CPV">CPV - Custo por View</option>
                             <option value="CPE">CPE - Custo por Escuta</option>
+                            <option value="CPD">CPD - Custo por Download</option>
                             <option value="CPM">CPM - Custo por Mil Impressões</option>
                             <option value="CPC">CPC - Custo por Clique</option>
                             <option value="CPA">CPA - Custo por Aquisição</option>

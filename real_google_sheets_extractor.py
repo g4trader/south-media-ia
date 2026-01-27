@@ -280,9 +280,9 @@ class RealGoogleSheetsExtractor:
                 # Listar todas as abas para debug
                 available_sheets = [sheet['properties']['title'] for sheet in sheets]
                 logger.warning(f"⚠️ Aba 'Informações de contrato' não encontrada. Abas disponíveis: {available_sheets}")
-                logger.info("📋 Usando dados padrão para contrato CPE")
+                logger.info("📋 Usando dados padrão para contrato CPE/CPD")
                 
-                # Para campanhas CPE sem aba de contrato, usar dados padrão baseados nos dados da planilha
+                # Para campanhas CPE/CPD sem aba de contrato, usar dados padrão baseados nos dados da planilha
                 return self._generate_default_contract_data()
             
             range_name = f"{contract_sheet}!A:C"
@@ -313,13 +313,32 @@ class RealGoogleSheetsExtractor:
             
             logger.info(f"📋 Dados de contrato encontrados: {list(contract_dict.keys())}")
             
+            # Detectar KPI para mapear corretamente
+            kpi = getattr(self.config, 'kpi', None)
+            is_cpm = kpi and kpi.upper() == 'CPM'
+            
+            # Mapear impressões/views contratadas baseado no KPI
+            # Se CPM: "Impressões Contrado" vai para impressions_contracted
+            # Se CPV: "Complete Views Contrado" vai para complete_views_contracted
+            if is_cpm:
+                # Para CPM, priorizar "Impressões Contrado"
+                imp_contracted_str = contract_dict.get("Impressões Contrado", contract_dict.get("Impressões contratadas", "0"))
+                impressions_contracted = int(imp_contracted_str.replace('.', '').replace(',', '')) if imp_contracted_str and imp_contracted_str != "0" else 0
+                # Também mapear para complete_views_contracted para compatibilidade
+                complete_views_contracted = impressions_contracted
+            else:
+                # Para CPV/CPE/CPD, priorizar "Complete Views Contrado", "Escutas Contrado" ou "Downloads Contratados"
+                complete_views_contracted = int(contract_dict.get("Complete Views Contrado", contract_dict.get("Escutas Contrado", contract_dict.get("Downloads Contratados", "0"))).replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") or contract_dict.get("Escutas Contrado") or contract_dict.get("Downloads Contratados") else 0
+                impressions_contracted = 0
+            
             # Mapear para estrutura padrão (usando as chaves reais da planilha)
             contract_data = {
                 "client": self.config.client,
                 "campaign": getattr(self.config, 'campaign', getattr(self.config, 'campaign_name', 'N/A')),
                 "investment": float(contract_dict.get("Investimento:", "0").replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')) if contract_dict.get("Investimento:") else 0.0,
-                "complete_views_contracted": int(contract_dict.get("Complete Views Contrado", contract_dict.get("Impressões Contrado", contract_dict.get("Escutas Contrado", "0"))).replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") or contract_dict.get("Impressões Contrado") or contract_dict.get("Escutas Contrado") else 0,
-                "cpv_contracted": float(contract_dict.get("CPV contratado:", contract_dict.get("CPM contratado:", contract_dict.get("CPE contratado:", "0"))).replace('R$', '').replace(' ', '').replace(',', '.')) if contract_dict.get("CPV contratado:") or contract_dict.get("CPM contratado:") or contract_dict.get("CPE contratado:") else 0.0,
+                "complete_views_contracted": complete_views_contracted,
+                "impressions_contracted": impressions_contracted,  # Adicionado para CPM
+                "cpv_contracted": float(contract_dict.get("CPV contratado:", contract_dict.get("CPM contratado:", contract_dict.get("CPE contratado:", contract_dict.get("CPD contratado:", "0")))).replace('R$', '').replace(' ', '').replace(',', '.')) if contract_dict.get("CPV contratado:") or contract_dict.get("CPM contratado:") or contract_dict.get("CPE contratado:") or contract_dict.get("CPD contratado:") else 0.0,
                 "canal": contract_dict.get("Canal:", "").strip() or contract_dict.get("Canal", "").strip(),
                 "tipo_criativo": contract_dict.get("Tipo de criativo:", "").strip() or contract_dict.get("Tipo de criativo", "").strip() or contract_dict.get("Tipo de Criativo:", "").strip() or contract_dict.get("Tipo de Criativo", "").strip() or contract_dict.get("Criativo", "").strip(),
                 "period_start": None,
@@ -592,13 +611,21 @@ class RealGoogleSheetsExtractor:
         else:
             insights.append("✅ Campanha está no pacing ideal")
         
-        # Determinar se é CPE ou CPV baseado no KPI
-        kpi_type = "CPE" if kpi.upper() == 'CPE' else "CPV"
-        
-        if metrics['cpv'] > metrics['cpv_contracted']:
-            insights.append(f"📊 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
+        # Determinar tipo de KPI baseado no KPI
+        kpi_upper = kpi.upper()
+        if kpi_upper == 'CPE':
+            kpi_type = "CPE"
+        elif kpi_upper == 'CPD':
+            kpi_type = "CPD"
         else:
-            insights.append(f"💰 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
+            kpi_type = "CPV"
+        
+        # Não gerar insight sobre CPM/CPV atual vs contratado quando KPI é CPM (CPM é fixo, não faz sentido analisar)
+        if kpi_upper != 'CPM':
+            if metrics['cpv'] > metrics['cpv_contracted']:
+                insights.append(f"📊 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
+            else:
+                insights.append(f"💰 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
         
         if metrics['vtr'] > 70:
             insights.append("🎯 VTR excelente - audiência altamente engajada")
@@ -648,9 +675,9 @@ if __name__ == "__main__":
         print(f"❌ Erro: {e}")
 
     def _generate_default_contract_data(self) -> Dict[str, Any]:
-        """Gerar dados de contrato padrão para campanhas CPE sem aba de contrato"""
+        """Gerar dados de contrato padrão para campanhas CPE/CPD sem aba de contrato"""
         try:
-            logger.info("📋 Gerando dados de contrato padrão para CPE")
+            logger.info("📋 Gerando dados de contrato padrão para CPE/CPD")
             
             # Extrair dados da planilha principal para calcular valores padrão
             range_name = "A:Z"  # Usar a primeira aba (padrão)
