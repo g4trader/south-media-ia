@@ -1074,7 +1074,7 @@ def dash_generator_pro():
             <select id="kpi" name="kpi" required>
                 <option value="CPV">CPV - Custo por View (Complete Views)</option>
                 <option value="CPE">CPE - Custo por Escuta (Audio Listens)</option>
-                <option value="CPD">CPD - Custo por Download</option>
+                <option value="CPD">CPD - Custo por Disparo</option>
                 <option value="CPM">CPM - Custo por Mil Impressões</option>
                 <option value="CPC">CPC - Custo por Clique</option>
                 <option value="CPA">CPA - Custo por Aquisição</option>
@@ -2574,7 +2574,7 @@ def dash_generator_pro_multicanal():
                         <select name="channels[${channelCount}][kpi]" required>
                             <option value="CPV">CPV - Custo por View</option>
                             <option value="CPE">CPE - Custo por Escuta</option>
-                            <option value="CPD">CPD - Custo por Download</option>
+                            <option value="CPD">CPD - Custo por Disparo</option>
                             <option value="CPM">CPM - Custo por Mil Impressões</option>
                             <option value="CPC">CPC - Custo por Clique</option>
                             <option value="CPA">CPA - Custo por Aquisição</option>

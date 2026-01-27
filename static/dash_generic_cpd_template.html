@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Dashboard CPD - {{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</title>
+<title>Dashboard CPD - {{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -34,6 +34,7 @@
   thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
   tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
   .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+  
   /* Componente de Barra de Filtro - Período */
   .filter-bar {
     background: rgba(26,26,46,.9);
@@ -203,8 +204,6 @@
   }
   
   /* Modal de Loading */
-  
-  /* Modal de Loading */
   .loading-modal {
     position: fixed;
     top: 0;
@@ -283,42 +282,6 @@
     font-size: 14px;
     font-weight: 600;
   }
-  
-  /* Quartis de Vídeo */
-  .quartis-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  @media (min-width: 768px) {
-    .quartis-grid {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-    }
-  }
-  
-  .quartil-item {
-    text-align: center;
-    padding: 1rem;
-    box-sizing: border-box;
-  }
-  
-  .circle-progress {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 0.75rem;
-    position: relative;
-  }
-  
-  @media (min-width: 768px) {
-    .circle-progress {
-      width: 80px;
-      height: 80px;
-    }
-  }
 </style>
 </head>
 <body>
@@ -333,9 +296,10 @@
     </div>
     <div>
       <div style="font-weight:700;font-size:1rem;text-align:right">{{CLIENT_NAME}} - {{CAMPAIGN_NAME}}</div>
-      <div class="muted" style="text-align:right">Status: <span class="badge">Ativa</span></div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">{{CAMPAIGN_STATUS}}</span></div>
     </div>
   </div>
+
   <!-- Barra de Filtro -->
   <div class="filter-bar">
     <div class="filter-period">
@@ -349,7 +313,7 @@
           <input type="date" 
                  id="filter-start-date" 
                  class="date-input" 
-                 placeholder="dd/mm/aaaa">
+                 placeholder="Data inicial">
           <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
           </svg>
@@ -361,7 +325,7 @@
           <input type="date" 
                  id="filter-end-date" 
                  class="date-input" 
-                 placeholder="dd/mm/aaaa">
+                 placeholder="Data final">
           <svg class="date-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
           </svg>
@@ -391,29 +355,20 @@
   <!-- OVERVIEW -->
   <div id="tab-overview">
     <div class="metrics" id="metrics-overview-top" style="margin-bottom: 24px;"></div>
-    
-    <!-- Quartis de Download -->
-    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem;" id="quartisCard">
-      <h3 style="font-size: 1rem; font-weight: bold; color: white; margin-bottom: 1rem;">MÉTRICAS DE QUARTIS DE DOWNLOAD</h3>
-      <div class="quartis-grid" id="quartisGrid">
-        <!-- Será preenchido dinamicamente pelo JavaScript -->
-      </div>
-    </div>
-    
     <div class="kpis">
       <div class="card"><canvas id="chartSpendShare"></canvas></div>
       <div class="card"><canvas id="chartResults"></canvas></div>
     </div>
     <div class="card" style="margin-top:16px">
       <h3 style="margin-bottom:10px">Resumo da Campanha</h3>
-      <div class="muted" style="margin-bottom:10px">Dashboard CPD - Performance de Downloads para a campanha {{CAMPAIGN_NAME}} do cliente {{CLIENT_NAME}}</div>
+      <div class="muted" style="margin-bottom:10px">{{CAMPAIGN_DESCRIPTION}}</div>
       <div style="overflow:auto">
         <table id="tableChannels">
           <thead>
             <tr>
               <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
-              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>Downloads (100%)</th><th>VTR (100%)</th>
-              <th>CPD (R$)</th><th>CPM (R$)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Imp Entregue</th>
+              <th>CPD Contratado (R$)</th>
             </tr>
           </thead>
           <tbody id="tbodyChannels"></tbody>
@@ -443,7 +398,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Q25</th><th>Q50</th><th>Q75</th><th>Downloads</th><th>VTR</th><th>CPD</th><th>CPM</th><th>Criativo</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Disparos</th><th>CPD</th><th>CPM</th><th>Criativo</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -496,8 +451,8 @@ class DashboardLoader {
         this.currentStep = 0;
         
         // Propriedades para filtros
-        this.originalData = null;  // Armazena todos os dados originais
-        this.filteredData = null;  // Armazena dados filtrados
+        this.originalData = null;
+        this.filteredData = null;
         this.currentStartDate = null;
         this.currentEndDate = null;
     }
@@ -511,22 +466,22 @@ class DashboardLoader {
             this.updateProgress(25, "Acessando dados da planilha...");
             const data = await this.fetchData();
             
-            // Armazenar dados originais para filtros
-            this.originalData = JSON.parse(JSON.stringify(data));
-            this.filteredData = JSON.parse(JSON.stringify(data));
-            
             // 3. Dados recebidos
             this.updateProgress(50, "Dados recebidos com sucesso!");
             
             // 4. Calculando métricas
             this.updateProgress(60, "Calculando métricas...");
             
-            // Recalcular métricas por canal na inicialização
-            this.recalculateChannelMetrics();
+            // 5. Armazenar dados originais para filtros
+            this.originalData = JSON.parse(JSON.stringify(data));
+            this.filteredData = JSON.parse(JSON.stringify(data));
             
-            // 5. Atualizando dashboard
+            // 6. Atualizando dashboard
             this.updateProgress(80, "Atualizando dashboard...");
             await this.renderDashboard(data);
+            
+            // Calcular métricas por canal
+            this.recalculateChannelMetrics();
             
             // 6. Finalizando
             this.updateProgress(95, "Finalizando...");
@@ -678,208 +633,6 @@ class DashboardLoader {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Método para aplicar filtros de data aos dados
-    applyDateFilter(startDate, endDate) {
-        console.log('🔄 Aplicando filtro de data:', { startDate, endDate });
-        
-        // Armazenar datas para uso posterior
-        this.currentStartDate = startDate;
-        this.currentEndDate = endDate;
-        
-        if (!this.originalData || !this.originalData.daily_data) {
-            console.error('❌ Dados originais não disponíveis');
-            return;
-        }
-        
-        // Criar cópia profunda dos dados originais
-        this.filteredData = JSON.parse(JSON.stringify(this.originalData));
-        
-        // Filtrar daily_data
-        if (startDate && endDate) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            
-            this.filteredData.daily_data = this.filteredData.daily_data.filter(item => {
-                const itemDate = new Date(item.date);
-                return itemDate >= start && itemDate <= end;
-            });
-        }
-        
-        console.log(`📊 Dados filtrados: ${this.filteredData.daily_data.length} registros`);
-        
-        // Recalcular métricas com base nos dados filtrados
-        this.recalculateMetrics();
-        
-        // Recalcular métricas por canal
-        this.recalculateChannelMetrics();
-        
-        // Renderizar dashboard com dados filtrados
-        this.renderDashboard(this.filteredData);
-        
-        // Atualizar cards visuais das métricas APÓS renderização com delay
-        setTimeout(() => {
-            this.recalculateOverviewMetrics();
-        }, 100);
-        
-        // Forçar atualização da tabela "Entrega diária" após renderização
-        setTimeout(() => {
-            const channelDailyBody = document.getElementById('channelDailyBody');
-            if (channelDailyBody && this.filteredData.daily_data.length === 0) {
-                const currentContent = channelDailyBody.innerHTML;
-                if (!currentContent.includes('Nenhum dado disponível') || channelDailyBody.querySelectorAll('tr').length > 1) {
-                    console.log('⚠️ Forçando atualização da tabela "Entrega diária"');
-                    channelDailyBody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--muted);">Nenhum dado disponível para o período selecionado</td></tr>';
-                }
-            }
-        }, 100);
-    }
-    
-    // Recalcular métricas totais
-    recalculateMetrics() {
-        if (!this.filteredData || !this.filteredData.daily_data) return;
-        
-        let totalSpend = 0;
-        let totalImpressions = 0;
-        let totalClicks = 0;
-        let totalVideoCompletions = 0;
-        let totalVideoStarts = 0;
-        
-        this.filteredData.daily_data.forEach(day => {
-            totalSpend += parseFloat(day.spend) || 0;
-            totalImpressions += parseInt(day.impressions) || 0;
-            totalClicks += parseInt(day.clicks) || 0;
-            totalVideoCompletions += parseInt(day.video_completions) || 0;
-            totalVideoStarts += parseInt(day.video_starts) || 0;
-        });
-        
-        // Recalcular métricas derivadas
-        const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-        const vtr = totalVideoStarts > 0 ? (totalVideoCompletions / totalVideoStarts) * 100 : 0;
-        const cpm = totalImpressions > 0 ? (totalSpend / totalImpressions) * 1000 : 0;
-        const cpc = totalClicks > 0 ? totalSpend / totalClicks : 0;
-        const cpv = totalVideoCompletions > 0 ? totalSpend / totalVideoCompletions : 0;
-        
-        // Atualizar campaign_summary com novos totais
-        if (!this.filteredData.campaign_summary) {
-            this.filteredData.campaign_summary = {};
-        }
-        
-        this.filteredData.campaign_summary.total_spend = totalSpend;
-        this.filteredData.campaign_summary.total_impressions = totalImpressions;
-        this.filteredData.campaign_summary.total_clicks = totalClicks;
-        this.filteredData.campaign_summary.total_video_completions = totalVideoCompletions;
-        this.filteredData.campaign_summary.total_video_starts = totalVideoStarts;
-        this.filteredData.campaign_summary.ctr = ctr;
-        this.filteredData.campaign_summary.vtr = vtr;
-        this.filteredData.campaign_summary.cpm = cpm;
-        this.filteredData.campaign_summary.cpc = cpc;
-        this.filteredData.campaign_summary.cpv = cpv;
-        
-        console.log('📈 Métricas recalculadas:', this.filteredData.campaign_summary);
-    }
-    
-    // Atualizar cards visuais das métricas
-    recalculateOverviewMetrics() {
-        console.log('🔍 recalculateOverviewMetrics chamada');
-        
-        if (!this.filteredData || !this.filteredData.campaign_summary) {
-            console.log('❌ filteredData ou campaign_summary não existe');
-            return;
-        }
-        
-        const summary = this.filteredData.campaign_summary;
-        console.log('📊 Dados do summary:', summary);
-        
-        // Atualizar Budget Utilizado
-        const budgetElement = document.querySelector('[data-metric="budget"] .value');
-        console.log('🔍 Budget element:', budgetElement);
-        if (budgetElement) {
-            const newValue = this.formatCurrency(summary.total_spend || 0);
-            console.log('💰 Atualizando Budget:', budgetElement.textContent, '→', newValue);
-            budgetElement.textContent = newValue;
-        } else {
-            console.log('❌ Budget element não encontrado');
-        }
-        
-        // Atualizar Downloads Entregues
-        const listensElement = document.querySelector('[data-metric="listens-delivered"] .value');
-        console.log('🔍 Listens element:', listensElement);
-        if (listensElement) {
-            const newValue = this.formatNumber(summary.total_video_completions || 0);
-            console.log('📥 Atualizando Downloads:', downloadsElement.textContent, '→', newValue);
-            listensElement.textContent = newValue;
-        } else {
-            console.log('❌ Listens element não encontrado');
-        }
-        
-        // Atualizar Downloads Contratados
-        const listensContractedElement = document.querySelector('[data-metric="listens-contracted"] .value');
-        if (listensContractedElement) {
-            listensContractedElement.textContent = this.formatNumber(summary.complete_views_contracted || 0);
-        }
-        
-        // Atualizar Pacing
-        const pacingElement = document.querySelector('[data-metric="pacing"] .value');
-        if (pacingElement) {
-            pacingElement.textContent = this.formatPercentage(summary.pacing || 0);
-        }
-        
-        console.log('✅ recalculateOverviewMetrics concluída');
-    }
-    
-    // Recalcular métricas por canal
-    recalculateChannelMetrics() {
-        const dailyData = this.filteredData?.daily_data || this.originalData?.daily_data || [];
-        
-        if (dailyData.length === 0) {
-            this.filteredData.channel_metrics = [];
-            return;
-        }
-        
-        // Agrupar por criativo/canal
-        const channelGroups = {};
-        
-        dailyData.forEach(day => {
-            const channel = day.creative || day.canal || 'Desconhecido';
-            
-            if (!channelGroups[channel]) {
-                channelGroups[channel] = {
-                    channel: channel,
-                    spend: 0,
-                    impressions: 0,
-                    clicks: 0,
-                    video_completions: 0,
-                    video_starts: 0
-                };
-            }
-            
-            channelGroups[channel].spend += parseFloat(day.spend) || 0;
-            channelGroups[channel].impressions += parseInt(day.impressions) || 0;
-            channelGroups[channel].clicks += parseInt(day.clicks) || 0;
-            channelGroups[channel].video_completions += parseInt(day.video_completions) || 0;
-            channelGroups[channel].video_starts += parseInt(day.video_starts) || 0;
-        });
-        
-        // Calcular métricas derivadas para cada canal
-        this.filteredData.channel_metrics = Object.values(channelGroups).map(channel => {
-            const ctr = channel.impressions > 0 ? (channel.clicks / channel.impressions) * 100 : 0;
-            const vtr = channel.video_starts > 0 ? (channel.video_completions / channel.video_starts) * 100 : 0;
-            const cpm = channel.impressions > 0 ? (channel.spend / channel.impressions) * 1000 : 0;
-            const cpc = channel.clicks > 0 ? channel.spend / channel.clicks : 0;
-            const cpv = channel.video_completions > 0 ? channel.spend / channel.video_completions : 0;
-            
-            return {
-                ...channel,
-                ctr,
-                vtr,
-                cpm,
-                cpc,
-                cpv
-            };
-        });
-        
-        console.log('📊 Métricas por canal recalculadas:', this.filteredData.channel_metrics.length, 'canais');
-    }
 
     hideLoadingScreen() {
         // Esconder modal de loading
@@ -969,6 +722,142 @@ class DashboardLoader {
         console.log(`🎯 Canal atualizado para: ${channelName}`);
     }
 
+    async applyDateFilter(startDate, endDate) {
+        console.log('🔄 Aplicando filtro de data:', { startDate, endDate });
+        
+        // Armazenar datas para uso posterior
+        this.currentStartDate = startDate;
+        this.currentEndDate = endDate;
+        
+        if (!this.originalData || !this.originalData.daily_data) {
+            console.error('❌ Dados originais não disponíveis');
+            return;
+        }
+        
+        // Criar cópia profunda dos dados originais
+        this.filteredData = JSON.parse(JSON.stringify(this.originalData));
+        
+        // Filtrar daily_data
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            this.filteredData.daily_data = this.filteredData.daily_data.filter(item => {
+                const itemDate = new Date(item.date);
+                return itemDate >= start && itemDate <= end;
+            });
+        }
+        
+        // Recalcular métricas
+        this.recalculateMetrics();
+        
+        // Recalcular métricas por canal
+        this.recalculateChannelMetrics();
+        
+        // Renderizar dashboard com dados filtrados
+        await this.renderDashboard(this.filteredData);
+        
+        // Forçar verificação da tabela de entrega diária após renderização
+        setTimeout(() => {
+            const channelDailyBody = document.getElementById('channelDailyBody');
+            if (channelDailyBody && this.filteredData.daily_data.length === 0) {
+                const existingContent = channelDailyBody.innerHTML;
+                if (!existingContent.includes('Nenhum dado') && existingContent.trim() !== '') {
+                    channelDailyBody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999">Nenhum dado disponível para o período selecionado</td></tr>';
+                    console.log('🔧 Forçada correção da tabela de entrega diária');
+                }
+            }
+        }, 100);
+        
+        console.log('✅ Filtro aplicado:', {
+            originalDataLength: this.originalData.daily_data.length,
+            filteredDataLength: this.filteredData.daily_data.length,
+            dateRange: { startDate, endDate }
+        });
+    }
+
+    recalculateMetrics() {
+        if (!this.filteredData || !this.filteredData.daily_data) return;
+        
+        const summary = {
+            total_spend: 0,
+            total_impressions: 0,
+            total_clicks: 0,
+            total_disparos: 0
+        };
+        
+        // Somar métricas dos dados filtrados
+        this.filteredData.daily_data.forEach(item => {
+            summary.total_spend += parseFloat(item.spend || 0);
+            summary.total_impressions += parseInt(item.impressions || 0);
+            summary.total_clicks += parseInt(item.clicks || 0);
+            summary.total_disparos += parseInt(item.disparos || item.video_completions || 0);
+        });
+        
+        // Recalcular métricas derivadas
+        summary.ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
+        summary.cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
+        summary.cpc = summary.total_clicks > 0 ? (summary.total_spend / summary.total_clicks) : 0;
+        summary.cpd = summary.total_disparos > 0 ? (summary.total_spend / summary.total_disparos) : 0;
+        
+        // Atualizar campaign_summary
+        this.filteredData.campaign_summary = {
+            ...this.filteredData.campaign_summary,
+            ...summary
+        };
+        
+        console.log('📊 Métricas recalculadas:', summary);
+    }
+
+    recalculateChannelMetrics() {
+        const dailyData = this.filteredData?.daily_data || this.originalData?.daily_data || [];
+        
+        if (dailyData.length === 0) {
+            this.filteredData.channel_metrics = [];
+            return;
+        }
+        
+        // Agrupar por criativo/canal
+        const channelGroups = {};
+        
+        dailyData.forEach(day => {
+            const channel = day.creative || day.canal || 'Desconhecido';
+            
+            if (!channelGroups[channel]) {
+                channelGroups[channel] = {
+                    channel: channel,
+                    spend: 0,
+                    impressions: 0,
+                    clicks: 0,
+                    disparos: 0
+                };
+            }
+            
+            channelGroups[channel].spend += parseFloat(day.spend) || 0;
+            channelGroups[channel].impressions += parseInt(day.impressions) || 0;
+            channelGroups[channel].clicks += parseInt(day.clicks) || 0;
+            channelGroups[channel].disparos += parseInt(day.disparos || day.video_completions || 0);
+        });
+        
+        // Calcular métricas derivadas para cada canal
+        this.filteredData.channel_metrics = Object.values(channelGroups).map(channel => {
+            const ctr = channel.impressions > 0 ? (channel.clicks / channel.impressions) * 100 : 0;
+            const cpm = channel.impressions > 0 ? (channel.spend / channel.impressions) * 1000 : 0;
+            const cpc = channel.clicks > 0 ? channel.spend / channel.clicks : 0;
+            const cpd = channel.disparos > 0 ? channel.spend / channel.disparos : 0;
+            
+            return {
+                ...channel,
+                ctr,
+                cpm,
+                cpc,
+                cpd
+            };
+        });
+        
+        console.log('📊 Métricas por canal recalculadas:', this.filteredData.channel_metrics.length, 'canais');
+    }
+
     async renderDashboard(data) {
         // Renderizar dados diretamente no HTML existente
         this.renderMetrics(data);
@@ -990,51 +879,31 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract || {};
             metricsContainer.innerHTML = `
-                <div class="metric" data-metric="investment">
+                <div class="metric">
                     <div class="label">💰 Investimento</div>
                     <div class="value">${this.formatCurrency(summary.investment || 0)}</div>
                 </div>
-                <div class="metric" data-metric="budget">
+                <div class="metric">
                     <div class="label">💸 Budget Utilizado</div>
                     <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
                 </div>
-                <div class="metric" data-metric="listens-contracted">
-                    <div class="label">🎯 Downloads Contratados</div>
+                <div class="metric">
+                    <div class="label">🎯 Imp Contratadas</div>
                     <div class="value">${this.formatNumber(summary.complete_views_contracted || 0)}</div>
                 </div>
-                <div class="metric" data-metric="listens-delivered">
-                    <div class="label">📥 Downloads Entregues</div>
-                    <div class="value">${this.formatNumber(summary.total_video_completions || 0)}</div>
+                <div class="metric">
+                    <div class="label">📺 Imp Entregue</div>
+                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">📈 Pacing</div>
                     <div class="value">${this.formatPercentage(summary.pacing || 0)}</div>
                 </div>
                     <div class="metric">
-                        <div class="label">💵 CPD</div>
+                        <div class="label">💵 CPD Contratado</div>
                         <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                     </div>
             `;
-        }
-        
-        // Atualizar período da campanha
-        this.updateCampaignPeriod(data);
-    }
-    
-    updateCampaignPeriod(data) {
-        const periodDisplay = document.getElementById('period-display');
-        if (periodDisplay && data.campaign_summary && data.campaign_summary.period) {
-            // Verificar se o filtro "Todos" está ativo
-            const todosButton = document.querySelector('[data-filter="todos"]');
-            const isTodosActive = todosButton && todosButton.classList.contains('active');
-            
-            if (isTodosActive) {
-                // Se "Todos" está ativo, não mostrar período específico
-                periodDisplay.textContent = 'Período: Todos os dados';
-            } else {
-                // Caso contrário, mostrar período da campanha
-                periodDisplay.textContent = `Período da campanha: ${data.campaign_summary.period}`;
-            }
         }
     }
 
@@ -1085,15 +954,14 @@ class DashboardLoader {
             new Chart(resultsCtx, {
                 type: 'bar',
                 data: {
-                    labels: ['Impressões', 'Cliques', 'Downloads'],
+                    labels: ['Impressões', 'Cliques'],
                     datasets: [{
                         label: 'Performance',
                         data: [
                             data.campaign_summary.total_impressions || 0,
-                            data.campaign_summary.total_clicks || 0,
-                            data.campaign_summary.total_video_completions || 0
+                            data.campaign_summary.total_clicks || 0
                         ],
-                        backgroundColor: ['#8B5CF6', '#EC4899', '#10B981']
+                        backgroundColor: ['#8B5CF6', '#EC4899']
                     }]
                 },
                 options: {
@@ -1119,115 +987,77 @@ class DashboardLoader {
     }
 
     renderTables(data) {
+        // Verificar se há dados diários (considerando filtros)
+        const hasDailyData = (data.daily_data && data.daily_data.length > 0);
+        
         // Renderizar tabela de resumo consolidado
         const tbodyChannels = document.getElementById('tbodyChannels');
         if (tbodyChannels && data.campaign_summary && data.contract) {
+            // Se não há dados diários, mostrar mensagem
+            if (!hasDailyData) {
+                tbodyChannels.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999">Nenhum dado disponível para o período selecionado</td></tr>';
+                return;
+            }
+            
             const summary = data.campaign_summary;
             const contract = data.contract;
-            
-            // Detectar se o KPI principal é CPV
-            const isMultichannel = data.channels && data.channels.length > 0;
-            let isCpvKpi = false;
-            if (isMultichannel && data.channels) {
-                data.channels.forEach(ch => {
-                    const kpi = ch.kpi || contract.kpi || 'CPD';
-                    if (kpi.toUpperCase() === 'CPV') {
-                        isCpvKpi = true;
-                    }
-                });
-            } else {
-                const kpi = contract.kpi || 'CPD';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
-                }
-            }
-            
-            // Ocultar coluna CPM do cabeçalho se KPI for CPV
-            const tableHeader = document.querySelector('#tableChannels thead tr');
-            if (tableHeader && isCpvKpi) {
-                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.includes('CPM'));
-                if (cpmHeader) {
-                    cpmHeader.style.display = 'none';
-                }
-            }
             
             // Calcular pacing
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             
-            // Calcular quartis agregados do daily_data
-            let q25_total = 0, q50_total = 0, q75_total = 0;
-            if (data.daily_data && data.daily_data.length > 0) {
-                q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
-                q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
-                q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
-            }
-            
-            // Usar sempre o canal do contract (correto)
+            // Sempre renderizar uma linha única com o nome do canal (não importa se há filtros)
+            // Usar o canal do contract (correto)
             let realChannel = contract.canal || 'Video Programática';
             
+            // Calcular métricas consolidadas se há channel_metrics (dados filtrados)
+            let consolidatedMetrics = summary;
+            if (data.channel_metrics && data.channel_metrics.length > 0) {
+                // Somar métricas de todos os criativos
+                consolidatedMetrics = {
+                    total_spend: data.channel_metrics.reduce((sum, channel) => sum + (channel.spend || 0), 0),
+                    total_impressions: data.channel_metrics.reduce((sum, channel) => sum + (channel.impressions || 0), 0),
+                    total_clicks: data.channel_metrics.reduce((sum, channel) => sum + (channel.clicks || 0), 0),
+                    total_disparos: data.channel_metrics.reduce((sum, channel) => sum + (channel.disparos || 0), 0)
+                };
+                
+                // Calcular CTR consolidado
+                consolidatedMetrics.ctr = consolidatedMetrics.total_impressions > 0 ? 
+                    (consolidatedMetrics.total_clicks / consolidatedMetrics.total_impressions * 100) : 0;
+            }
+            
+            // Renderizar linha única consolidada
             tbodyChannels.innerHTML = `
                 <tr>
                     <td>${realChannel}</td>
                     <td>R$ ${this.formatCurrency(contract.investment || 0)}</td>
-                    <td>R$ ${this.formatCurrency(summary.total_spend || 0)}</td>
+                    <td>R$ ${this.formatCurrency(consolidatedMetrics.total_spend || 0)}</td>
                     <td>${this.formatPercentage(pacing)}</td>
-                    <td>${this.formatNumber(summary.total_impressions || 0)}</td>
-                    <td>${this.formatNumber(summary.total_clicks || 0)}</td>
-                    <td>${this.formatPercentage(summary.ctr || 0)}</td>
-                    <td>${this.formatNumber(q25_total)}</td>
-                    <td>${this.formatNumber(q50_total)}</td>
-                    <td>${this.formatNumber(q75_total)}</td>
-                    <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
-                    <td>${this.formatPercentage(summary.vtr || 0)}</td>
+                    <td>${this.formatNumber(consolidatedMetrics.total_impressions || 0)}</td>
+                    <td>${this.formatNumber(consolidatedMetrics.total_clicks || 0)}</td>
+                    <td>${this.formatPercentage(consolidatedMetrics.ctr || 0)}</td>
+                    <td>${this.formatNumber(consolidatedMetrics.total_impressions || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                    ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>` : ''}
                 </tr>
             `;
             
-            // Atualizar elementos da aba "Por Canal" com o canal correto
+            // Atualizar elementos da aba "Por Canal" com o nome do canal
             this.updateChannelTabElements(realChannel);
         }
-        
-        // Renderizar quartis de vídeo
-        this.renderVideoQuartis(data);
 
         // Renderizar tabela de entrega diária por canal
         const channelDailyBody = document.getElementById('channelDailyBody');
-        if (channelDailyBody && data.daily_data && data.daily_data.length > 0) {
+        if (channelDailyBody) {
+            // Limpar conteúdo anterior
+            channelDailyBody.innerHTML = '';
+            
+            if (data.daily_data && data.daily_data.length > 0) {
             const contract = data.contract || {};
-            
-            // Detectar se o KPI principal é CPV (usar mesmo valor já calculado)
-            const isMultichannel = data.channels && data.channels.length > 0;
-            let isCpvKpi = false;
-            if (isMultichannel && data.channels) {
-                data.channels.forEach(ch => {
-                    const kpi = ch.kpi || contract.kpi || 'CPD';
-                    if (kpi.toUpperCase() === 'CPV') {
-                        isCpvKpi = true;
-                    }
-                });
-            } else {
-                const kpi = contract.kpi || 'CPD';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
-                }
-            }
-            
-            // Ocultar coluna CPM do cabeçalho se KPI for CPV
-            const tableHeader = document.querySelector('#channelDailyTable thead tr');
-            if (tableHeader && isCpvKpi) {
-                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent === 'CPM');
-                if (cpmHeader) {
-                    cpmHeader.style.display = 'none';
-                }
-            }
-            
+            // Usar CPD contratado sempre (não calcular dinamicamente)
+            const cpdContracted = contract.cpv_contracted || 0;
             channelDailyBody.innerHTML = data.daily_data.map(record => {
-                const vtr = record.video_completions && record.video_starts ? 
-                    (record.video_completions / record.video_starts * 100) : 0;
-                // Usar CPM contratado sempre (não calcular dinamicamente)
-                const cpmContracted = contract.cpv_contracted || 0;
-                
+                const disparos = record.disparos || record.video_completions || 0;
+                const cpd = disparos > 0 ? (record.spend / disparos) : 0;
+                const cpm = record.impressions > 0 ? (record.spend / record.impressions * 1000) : 0;
                 return `
                     <tr>
                         <td>${record.date}</td>
@@ -1235,66 +1065,18 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.impressions)}</td>
                         <td>${this.formatNumber(record.clicks)}</td>
                         <td>${this.formatPercentage(record.ctr)}</td>
-                        <td>${this.formatNumber(record.video_25 || 0)}</td>
-                        <td>${this.formatNumber(record.video_50 || 0)}</td>
-                        <td>${this.formatNumber(record.video_75 || 0)}</td>
-                        <td>${this.formatNumber(record.video_completions)}</td>
-                        <td>${this.formatPercentage(vtr)}</td>
-                        <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        ${!isCpvKpi ? `<td>R$ ${cpmContracted.toFixed(2).replace('.', ',')}</td>` : ''}
+                        <td>${this.formatNumber(disparos)}</td>
+                        <td>R$ ${cpd.toFixed(2).replace('.', ',')}</td>
+                        <td>R$ ${cpm.toFixed(2).replace('.', ',')}</td>
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
+            } else {
+                // Mostrar mensagem quando não há dados
+                channelDailyBody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999">Nenhum dado disponível para o período selecionado</td></tr>';
+            }
         }
-    }
-    
-    renderVideoQuartis(data) {
-        // Renderizar quartis de vídeo (25%, 50%, 75%, 100%)
-        const quartisGrid = document.getElementById('quartisGrid');
-        if (!quartisGrid) return;
-        
-        // Calcular quartis agregados do daily_data se não existirem no summary
-        let q25_total = 0, q50_total = 0, q75_total = 0;
-        
-        if (data.daily_data && data.daily_data.length > 0) {
-            q25_total = data.daily_data.reduce((sum, record) => sum + (record.video_25 || 0), 0);
-            q50_total = data.daily_data.reduce((sum, record) => sum + (record.video_50 || 0), 0);
-            q75_total = data.daily_data.reduce((sum, record) => sum + (record.video_75 || 0), 0);
-        }
-        
-        const summary = data.campaign_summary || {};
-        const total_starts = summary.total_video_starts || 0;
-        const total_completions = summary.total_video_completions || 0;
-        const vtr = summary.vtr || 0;
-        
-        // Dados dos quartis - Usar total_starts como base (coluna video_starts da planilha)
-        const base_total = total_starts > 0 ? total_starts : 1; // Evitar divisão por zero
-        const quartis = [
-            { label: '25% BAIXADOS', value: q25_total, percent: (q25_total / base_total * 100) },
-            { label: '50% BAIXADOS', value: q50_total, percent: (q50_total / base_total * 100) },
-            { label: '75% BAIXADOS', value: q75_total, percent: (q75_total / base_total * 100) },
-            { label: '100% BAIXADOS', value: total_completions, percent: (total_completions / base_total * 100) }
-        ];
-        
-        quartisGrid.innerHTML = quartis.map(q => {
-            // Calcular stroke-dashoffset (283 é a circunferência completa)
-            const dashOffset = 283 - (283 * q.percent / 100);
-            
-            return `
-                <div class="quartil-item">
-                    <div class="circle-progress">
-                        <svg height="100%" viewBox="0 0 100 100" width="100%">
-                            <circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8"></circle>
-                            <circle cx="50" cy="50" fill="none" r="45" stroke="#8B5CF6" stroke-dasharray="283" stroke-dashoffset="${dashOffset}" stroke-width="8" transform="rotate(-90 50 50)"></circle>
-                            <text fill="white" font-size="16" font-weight="bold" text-anchor="middle" x="50" y="55">${q.percent.toFixed(1)}%</text>
-                        </svg>
-                    </div>
-                    <div style="font-size: 0.75rem; color: #9CA3AF; margin-bottom: 0.25rem;">${q.label}</div>
-                    <div style="font-size: 0.875rem; color: white; font-weight: bold;">${this.formatNumber(q.value)}</div>
-                </div>
-            `;
-        }).join('');
     }
 
     renderChannelSummaryCards(data) {
@@ -1304,29 +1086,12 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Detectar se o KPI principal é CPV
-            const isMultichannel = data.channels && data.channels.length > 0;
-            let isCpvKpi = false;
-            if (isMultichannel && data.channels) {
-                data.channels.forEach(ch => {
-                    const kpi = ch.kpi || contract.kpi || 'CPD';
-                    if (kpi.toUpperCase() === 'CPV') {
-                        isCpvKpi = true;
-                    }
-                });
-            } else {
-                const kpi = contract.kpi || 'CPD';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
-                }
-            }
-            
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
-            const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_video_completions / contract.complete_views_contracted * 100) : 0;
-            const vtr = summary.total_video_starts > 0 ? (summary.total_video_completions / summary.total_video_starts * 100) : 0;
+            const imp_pacing = contract.complete_views_contracted > 0 ? (summary.total_impressions / contract.complete_views_contracted * 100) : 0;
             const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
             const cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
+            const cpd = summary.total_disparos > 0 ? (summary.total_spend / summary.total_disparos) : 0;
             
             summaryContainer.innerHTML = `
                 <div class="metric">
@@ -1342,20 +1107,16 @@ class DashboardLoader {
                     <div class="value">${this.formatPercentage(pacing)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎯 Downloads Contratados</div>
+                    <div class="label">🎯 Imp Contratadas</div>
                     <div class="value">${this.formatNumber(contract.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📥 Downloads Entregues</div>
-                    <div class="value">${this.formatNumber(summary.total_video_completions || 0)}</div>
-                </div>
-                <div class="metric">
-                    <div class="label">📊 Pacing Downloads</div>
-                    <div class="value">${this.formatPercentage(vc_pacing)}</div>
-                </div>
-                <div class="metric">
-                    <div class="label">👁️ Total Impressões</div>
+                    <div class="label">📺 Imp Entregue</div>
                     <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+                </div>
+                <div class="metric">
+                    <div class="label">📊 Pacing Imp</div>
+                    <div class="value">${this.formatPercentage(imp_pacing)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">🖱️ Total Cliques</div>
@@ -1366,19 +1127,17 @@ class DashboardLoader {
                     <div class="value">${this.formatPercentage(ctr)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎬 VTR Médio</div>
-                    <div class="value">${this.formatPercentage(vtr)}</div>
+                    <div class="label">🎯 Disparos</div>
+                    <div class="value">${this.formatNumber(summary.total_disparos || 0)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">💵 CPD Contratado</div>
                     <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                 </div>
-                ${!isCpvKpi ? `
                 <div class="metric">
-                    <div class="label">📊 CPM Médio</div>
-                    <div class="value">${this.formatCurrency(cpm)}</div>
+                    <div class="label">💵 CPD Atual</div>
+                    <div class="value">${this.formatCurrency(summary.cpd || 0)}</div>
                 </div>
-                ` : ''}
             `;
         }
     }
@@ -1391,11 +1150,14 @@ class DashboardLoader {
             const contract = data.contract;
             
             // Renderizar insights dinâmicos
+            // Calcular CPM atual baseado em impressões
+            const current_cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
+            const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
+            
             const insightsList = data.insights && data.insights.length > 0 ? data.insights : [
-                "A campanha está performando conforme o esperado.",
-                `O pacing da campanha está em ${summary.pacing ? summary.pacing.toFixed(1) : '0.0'}%.`,
-                `CPD contratado de R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2) : '0.00'} está sendo cumprido conforme planejado.`,
-                "Recomenda-se monitorar a performance diariamente para otimizações."
+                "Campanha tem espaço para acelerar o investimento.",
+                `Impressões entregues (${summary.total_impressions ? summary.total_impressions.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_impressions > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
+                `CTR ${ctr > 0.5 ? 'excelente' : ctr > 0.2 ? 'bom' : 'baixo'} (${ctr.toFixed(2)}%) - ${ctr > 0.5 ? 'audiência altamente engajada' : ctr > 0.2 ? 'audiência moderadamente engajada' : 'revisar targeting e criativos para melhorar engajamento'}.`
             ];
 
             insightsContainer.innerHTML = `
@@ -1429,12 +1191,6 @@ class DashboardLoader {
                                     ${contract.cpv_contracted ? 'R$ ' + contract.cpv_contracted.toFixed(2).replace('.', ',') : 'R$ 0,00'}
                                 </div>
                                 <div style="color: #9CA3AF; font-size: 14px;">CPD Contratado</div>
-                            </div>
-                            <div style="padding: 20px; background: linear-gradient(135deg, rgba(245,158,11,.1), rgba(217,119,6,.1)); border-radius: 12px; border: 1px solid rgba(245,158,11,.3); text-align: center;">
-                                <div style="font-size: 32px; font-weight: 700; color: #F59E0B; margin-bottom: 8px;">
-                                    ${summary.vtr ? summary.vtr.toFixed(1) : '0.0'}%
-                                </div>
-                                <div style="color: #9CA3AF; font-size: 14px;">VTR (View-Through Rate)</div>
                             </div>
                             <div style="padding: 20px; background: linear-gradient(135deg, rgba(59,130,246,.1), rgba(37,99,235,.1)); border-radius: 12px; border: 1px solid rgba(59,130,246,.3); text-align: center;">
                                 <div style="font-size: 32px; font-weight: 700; color: #3B82F6; margin-bottom: 8px;">
@@ -1564,7 +1320,7 @@ class DashboardLoader {
                             border-radius: 12px;
                             border: 1px solid rgba(139,92,246,.2);
                         ">
-                            Campanha institucional da ${contract.client || 'Cliente'} no ${contract.canal || 'Video Programática'} com foco em Complete View para fortalecer a marca e comunicar valores de qualidade, sustentabilidade e cooperativismo.
+                            Campanha institucional da ${contract.client || 'Cliente'} no ${contract.canal || 'Video Programática'} com foco em Alcance para fortalecer a marca e comunicar valores de qualidade, sustentabilidade e cooperativismo.
                         </p>
                     </div>
 
@@ -1604,19 +1360,19 @@ class DashboardLoader {
                                 </h4>
                                 <div style="display: grid; gap: 12px;">
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Meta Downloads:</span>
+                                        <span style="color: #9CA3AF;">Meta Imp:</span>
                                         <span style="color: #fff; font-weight: 600;">${this.formatNumber(contract.complete_views_contracted || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Downloads Entregues:</span>
-                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_video_completions || 0)}</span>
+                                        <span style="color: #9CA3AF;">Imp Entregue:</span>
+                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_impressions || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Pacing Downloads:</span>
-                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_video_completions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
+                                        <span style="color: #9CA3AF;">Pacing Imp:</span>
+                                        <span style="color: #8B5CF6; font-weight: 600;">${contract.complete_views_contracted > 0 ? this.formatPercentage((summary.total_impressions / contract.complete_views_contracted * 100) || 0) : '0,00%'}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">CPD Contratado:</span>
+                                        <span style="color: #9CA3AF;">CPM Contratado:</span>
                                         <span style="color: #F59E0B; font-weight: 600;">R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</span>
                                     </div>
                                 </div>
@@ -1716,7 +1472,6 @@ class DashboardLoader {
     }
 }
 
-
 // Componente de Barra de Filtro - JavaScript
 class FilterBar {
   constructor() {
@@ -1767,33 +1522,19 @@ class FilterBar {
   }
 
   setDefaultDates() {
-    // Se o filtro ativo é 'todos', não definir datas
-    if (this.activeFilter === 'todos') {
-      this.startDate = null;
-      this.endDate = null;
-      
-      // Limpar inputs se existirem
-      const startDateInput = document.getElementById('filter-start-date');
-      const endDateInput = document.getElementById('filter-end-date');
-      
-      if (startDateInput) startDateInput.value = '';
-      if (endDateInput) endDateInput.value = '';
-    } else {
-      // Para outros filtros, definir datas padrão
-      const today = new Date();
-      const thirtyDaysAgo = new Date(today);
-      thirtyDaysAgo.setDate(today.getDate() - 30);
-      
-      this.startDate = this.formatDateForInput(thirtyDaysAgo);
-      this.endDate = this.formatDateForInput(today);
-      
-      // Atualizar inputs se existirem
-      const startDateInput = document.getElementById('filter-start-date');
-      const endDateInput = document.getElementById('filter-end-date');
-      
-      if (startDateInput) startDateInput.value = this.startDate;
-      if (endDateInput) endDateInput.value = this.endDate;
-    }
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    this.startDate = this.formatDateForInput(thirtyDaysAgo);
+    this.endDate = this.formatDateForInput(today);
+    
+    // Atualizar inputs se existirem
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    
+    if (startDateInput) startDateInput.value = this.startDate;
+    if (endDateInput) endDateInput.value = this.endDate;
   }
 
   handleQuickFilter(filterType) {
@@ -1940,24 +1681,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Criar e carregar dashboard
     const dashboard = new DashboardLoader(campaignKey);
-    window.dashboard = dashboard; // Tornar dashboard acessível globalmente
     dashboard.loadDashboard();
+    
+    // Tornar dashboard globalmente acessível
+    window.dashboard = dashboard;
     
     // Inicializar barra de filtro
     window.filterBar = new FilterBar();
     
-    // Configurar callback para aplicar filtros quando mudarem
+    // Configurar callback para recarregar dados quando filtros mudarem
     window.filterBar.onDateChange((filters) => {
-      console.log('🔄 Filtros alterados:', filters);
-      console.log('🔍 Dashboard disponível:', !!window.dashboard);
-      console.log('🔍 Método applyDateFilter existe:', typeof window.dashboard?.applyDateFilter);
+      console.log('Filtros alterados:', filters);
       
-      // Aplicar filtros no dashboard
+      // Aplicar filtro nos dados do dashboard
       if (window.dashboard && typeof window.dashboard.applyDateFilter === 'function') {
-        console.log('✅ Chamando window.dashboard.applyDateFilter');
-        window.dashboard.applyDateFilter(filters.startDate, filters.endDate);
-      } else {
-        console.error('❌ Dashboard não disponível ou método applyDateFilter não existe');
+        window.dashboard.applyDateFilter(filters.startDate, filters.endDate).catch(console.error);
       }
     });
 });

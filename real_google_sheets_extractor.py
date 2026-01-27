@@ -327,8 +327,8 @@ class RealGoogleSheetsExtractor:
                 # Também mapear para complete_views_contracted para compatibilidade
                 complete_views_contracted = impressions_contracted
             else:
-                # Para CPV/CPE/CPD, priorizar "Complete Views Contrado", "Escutas Contrado" ou "Downloads Contratados"
-                complete_views_contracted = int(contract_dict.get("Complete Views Contrado", contract_dict.get("Escutas Contrado", contract_dict.get("Downloads Contratados", "0"))).replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") or contract_dict.get("Escutas Contrado") or contract_dict.get("Downloads Contratados") else 0
+                # Para CPV/CPE/CPD, priorizar "Complete Views Contrado", "Escutas Contrado" ou "Disparos Contratados"
+                complete_views_contracted = int(contract_dict.get("Complete Views Contrado", contract_dict.get("Escutas Contrado", contract_dict.get("Disparos Contratados", contract_dict.get("Downloads Contratados", "0")))).replace('.', '').replace(',', '')) if contract_dict.get("Complete Views Contrado") or contract_dict.get("Escutas Contrado") or contract_dict.get("Disparos Contratados") or contract_dict.get("Downloads Contratados") else 0
                 impressions_contracted = 0
             
             # Mapear para estrutura padrão (usando as chaves reais da planilha)
