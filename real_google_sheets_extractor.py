@@ -667,19 +667,23 @@ class RealGoogleSheetsExtractor:
         else:
             kpi_type = "CPV"
         
-        # Não gerar insight sobre CPM/CPV atual vs contratado quando KPI é CPM (CPM é fixo, não faz sentido analisar)
-        if kpi_upper != 'CPM':
+        # Não gerar insight de "KPI atual vs contratado" para:
+        # - CPM: fixo, não faz sentido comparar
+        # - CPD: user pediu para remover essa análise no quadro de Insights Principais
+        if kpi_upper not in ('CPM', 'CPD'):
             if metrics['cpv'] > metrics['cpv_contracted']:
                 insights.append(f"📊 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
             else:
                 insights.append(f"💰 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
         
-        if metrics['vtr'] > 70:
-            insights.append("🎯 VTR excelente - audiência altamente engajada")
-        elif metrics['vtr'] > 50:
-            insights.append("📺 VTR boa - audiência moderadamente engajada")
-        else:
-            insights.append("⚠️ VTR baixa - revisar targeting e criativos")
+        # Insights de VTR só fazem sentido para campanhas com vídeo (CPV/CPE)
+        if kpi_upper in ('CPV', 'CPE'):
+            if metrics['vtr'] > 70:
+                insights.append("🎯 VTR excelente - audiência altamente engajada")
+            elif metrics['vtr'] > 50:
+                insights.append("📺 VTR boa - audiência moderadamente engajada")
+            else:
+                insights.append("⚠️ VTR baixa - revisar targeting e criativos")
         
         return insights
 
