@@ -532,10 +532,20 @@ class RealGoogleSheetsExtractor:
         total_spend = df['spend'].sum()
         total_impressions = df['impressions'].sum()
         total_clicks = df['clicks'].sum()
-        total_completions = df['video_completions'].sum()
-        total_starts = df['video_starts'].sum()
+        total_completions = df['video_completions'].sum() if 'video_completions' in df.columns else 0
+        total_starts = df['video_starts'].sum() if 'video_starts' in df.columns else 0
+        
+        # Para campanhas CPD, podemos ter uma coluna explícita de disparos; se não tiver,
+        # reusamos video_completions como proxy para disparos.
+        if 'disparos' in df.columns:
+            total_disparos = df['disparos'].sum()
+        elif 'video_completions' in df.columns:
+            total_disparos = df['video_completions'].sum()
+        else:
+            total_disparos = 0
         
         cpv = total_spend / total_completions if total_completions > 0 else 0
+        cpd = total_spend / total_disparos if total_disparos > 0 else 0
         ctr = total_clicks / total_impressions * 100 if total_impressions > 0 else 0
         vtr = total_completions / total_starts * 100 if total_starts > 0 else 0
         
@@ -570,7 +580,9 @@ class RealGoogleSheetsExtractor:
             "total_clicks": int(total_clicks),
             "total_video_completions": int(total_completions),
             "total_video_starts": int(total_starts),
+            "total_disparos": int(total_disparos),
             "cpv": float(cpv),
+            "cpd": float(cpd),
             "ctr": float(ctr),
             "vtr": float(vtr),
             "pacing": float(pacing),
