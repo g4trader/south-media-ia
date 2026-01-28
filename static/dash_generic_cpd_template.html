@@ -367,7 +367,7 @@
           <thead>
             <tr>
               <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
-              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Imp Entregue</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>Disparos Entregues</th>
               <th>CPD Contratado (R$)</th>
             </tr>
           </thead>
@@ -888,11 +888,11 @@ class DashboardLoader {
                     <div class="value">${this.formatCurrency(summary.total_spend || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎯 Imp Contratadas</div>
+                    <div class="label">🎯 Disparos Contratados</div>
                     <div class="value">${this.formatNumber(summary.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📺 Imp Entregue</div>
+                    <div class="label">📥 Disparos Entregues</div>
                     <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
                 </div>
                 <div class="metric">
@@ -1107,12 +1107,12 @@ class DashboardLoader {
                     <div class="value">${this.formatPercentage(pacing)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">🎯 Imp Contratadas</div>
+                    <div class="label">🎯 Disparos Contratados</div>
                     <div class="value">${this.formatNumber(contract.complete_views_contracted || 0)}</div>
                 </div>
                 <div class="metric">
-                    <div class="label">📺 Imp Entregue</div>
-                    <div class="value">${this.formatNumber(summary.total_impressions || 0)}</div>
+                    <div class="label">📥 Disparos Entregues</div>
+                    <div class="value">${this.formatNumber(summary.total_disparos || 0)}</div>
                 </div>
                 <div class="metric">
                     <div class="label">📊 Pacing Imp</div>
@@ -1156,7 +1156,7 @@ class DashboardLoader {
             
             const insightsList = data.insights && data.insights.length > 0 ? data.insights : [
                 "Campanha tem espaço para acelerar o investimento.",
-                `Impressões entregues (${summary.total_impressions ? summary.total_impressions.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_impressions > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
+                `Disparos entregues (${summary.total_disparos ? summary.total_disparos.toLocaleString() : '0'}) estão ${contract.complete_views_contracted > 0 ? (summary.total_disparos > contract.complete_views_contracted ? 'acima' : 'abaixo') : 'dentro'} do contratado (${contract.complete_views_contracted ? contract.complete_views_contracted.toLocaleString() : '0'}).`,
                 `CTR ${ctr > 0.5 ? 'excelente' : ctr > 0.2 ? 'bom' : 'baixo'} (${ctr.toFixed(2)}%) - ${ctr > 0.5 ? 'audiência altamente engajada' : ctr > 0.2 ? 'audiência moderadamente engajada' : 'revisar targeting e criativos para melhorar engajamento'}.`
             ];
 
@@ -1360,12 +1360,12 @@ class DashboardLoader {
                                 </h4>
                                 <div style="display: grid; gap: 12px;">
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Meta Imp:</span>
+                                        <span style="color: #9CA3AF;">Disparos Contratados:</span>
                                         <span style="color: #fff; font-weight: 600;">${this.formatNumber(contract.complete_views_contracted || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
-                                        <span style="color: #9CA3AF;">Imp Entregue:</span>
-                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_impressions || 0)}</span>
+                                        <span style="color: #9CA3AF;">Disparos Entregues:</span>
+                                        <span style="color: #10B981; font-weight: 600;">${this.formatNumber(summary.total_disparos || 0)}</span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; padding: 12px; background: rgba(139,92,246,.1); border-radius: 8px;">
                                         <span style="color: #9CA3AF;">Pacing Imp:</span>
