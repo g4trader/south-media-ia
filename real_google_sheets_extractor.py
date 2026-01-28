@@ -171,6 +171,7 @@ class RealGoogleSheetsExtractor:
                 'Creative': 'creative',
                 'Valor investido': 'spend',  # Corrigido: minúscula
                 'Imps': 'impressions',
+                'Disparos': 'disparos',
                 'Clicks': 'clicks',
                 'CPV': 'cpv',
                 'CPC': 'cpc',
@@ -186,7 +187,7 @@ class RealGoogleSheetsExtractor:
             df = df.rename(columns=column_mapping)
             
             # Converter tipos de dados
-            for col in ['spend', 'impressions', 'clicks', 'cpv', 'cpc', 'ctr', 
+            for col in ['spend', 'impressions', 'disparos', 'clicks', 'cpv', 'cpc', 'ctr', 
                        'video_25', 'video_50', 'video_75', 'video_completions', 'video_starts']:
                 if col in df.columns:
                     if col == 'spend':  # Tratamento especial para valores monetários brasileiros
@@ -223,14 +224,19 @@ class RealGoogleSheetsExtractor:
             daily_data = []
             for _, row in df.iterrows():
                 spend = float(row.get('spend', 0)) if pd.notna(row.get('spend')) else 0.0
-                impressions = int(row.get('impressions', 0)) if pd.notna(row.get('impressions')) else 0
+                # Para campanhas CPD (como Push), pode não existir coluna de impressões.
+                # Nesse caso, usamos "disparos" como proxy de impressões.
+                raw_imps = row.get('impressions', row.get('disparos', 0))
+                impressions = int(raw_imps) if pd.notna(raw_imps) else 0
                 clicks = int(row.get('clicks', 0)) if pd.notna(row.get('clicks')) else 0
                 video_completions = int(row.get('video_completions', 0)) if pd.notna(row.get('video_completions')) else 0
+                disparos = int(row.get('disparos', video_completions)) if pd.notna(row.get('disparos', video_completions)) else 0
                 
                 # Calcular métricas dinamicamente
                 cpv = spend / video_completions if video_completions > 0 else 0.0
                 cpc = spend / clicks if clicks > 0 else 0.0
                 ctr = (clicks / impressions * 100) if impressions > 0 else 0.0
+                cpd = spend / disparos if disparos > 0 else 0.0
                 
                 daily_data.append({
                     "date": str(row.get('date', '')),
@@ -238,9 +244,11 @@ class RealGoogleSheetsExtractor:
                     "creative": str(row.get('creative', '')),
                     "spend": spend,
                     "impressions": impressions,
+                    "disparos": disparos,
                     "clicks": clicks,
                     "cpv": round(cpv, 4),
                     "cpc": round(cpc, 2),
+                    "cpd": round(cpd, 4),
                     "ctr": round(ctr, 2),
                     "video_25": int(row.get('video_25', 0)) if pd.notna(row.get('video_25')) else 0,
                     "video_50": int(row.get('video_50', 0)) if pd.notna(row.get('video_50')) else 0,
@@ -530,7 +538,13 @@ class RealGoogleSheetsExtractor:
         df = pd.DataFrame(daily_data)
         
         total_spend = df['spend'].sum()
-        total_impressions = df['impressions'].sum()
+        # Em campanhas CPD, não há coluna de impressões; usamos disparos como proxy.
+        if 'impressions' in df.columns:
+            total_impressions = df['impressions'].sum()
+        elif 'disparos' in df.columns:
+            total_impressions = df['disparos'].sum()
+        else:
+            total_impressions = 0
         total_clicks = df['clicks'].sum()
         total_completions = df['video_completions'].sum() if 'video_completions' in df.columns else 0
         total_starts = df['video_starts'].sum() if 'video_starts' in df.columns else 0
