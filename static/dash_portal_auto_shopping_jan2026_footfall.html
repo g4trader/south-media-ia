@@ -308,7 +308,7 @@
             <tr>
               <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
               <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
-              <th>CPV (R$)</th><th>CPM (R$)</th>
+              <th>CPV (R$)</th><th id="th-cpm" style="display:none;">CPM (R$)</th>
             </tr>
           </thead>
           <tbody id="tbodyChannels"></tbody>
@@ -551,16 +551,17 @@
 // Dados serão extraídos da planilha: https://docs.google.com/spreadsheets/d/1L9rzKij4eFNhRxFVTQbcaT_73WfD3nTaBkHOQXSWvxE/edit?gid=304137877#gid=304137877
 const CONS = {
   "Budget Contratado (R$)": 3750.0,
-  "Budget Utilizado (R$)": 3900.10,
-  "Impressões": 155998,
-  "Cliques": 1139,
-  "CTR (%)": 0.007301,
+  "Budget Utilizado (R$)": 4503.78,
+  "Impressões": 180144,
+  "Cliques": 1521,
+  "CTR (%)": 0.008443,
   "VC (100%)": 0,
   "VTR (100%)": 0,
   "CPV (R$)": 0,
   "CPM (R$)": 25.0,
-  "Pacing (%)": 1.04003
+  "Pacing (%)": 1.20101
 };
+
 
 
 
@@ -577,18 +578,19 @@ const PER = [
   {
     "Canal": "Footfall Display",
     "Budget Contratado (R$)": 3750.0,
-    "Budget Utilizado (R$)": 3900.10,
-    "Impressões": 155998,
-    "Cliques": 1139,
-    "CTR (%)": 0.007301,
+    "Budget Utilizado (R$)": 4503.78,
+    "Impressões": 180144,
+    "Cliques": 1521,
+    "CTR (%)": 0.008443,
     "VC (100%)": 0,
     "VTR (100%)": 0,
     "CPV (R$)": 0,
     "CPM (R$)": 25.0,
-    "Pacing (%)": 1.04003,
+    "Pacing (%)": 1.20101,
     "Criativos Únicos": 4
   }
 ];
+
 
 
 
@@ -657,7 +659,19 @@ const DAILY = [
   {"date":"28/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x250","spend":108.03,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":4321,"clicks":71,"visits":0},
   {"date":"28/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x50px_v1","spend":69.1,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":2764,"clicks":68,"visits":0},
   {"date":"28/01/2026","channel":"Footfall Display","creative":"Drive-to-store_320x480","spend":35.75,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":1430,"clicks":7,"visits":0},
-  {"date":"28/01/2026","channel":"Footfall Display","creative":"Drive-to-store_360x300","spend":39.95,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":1598,"clicks":74,"visits":0}
+  {"date":"28/01/2026","channel":"Footfall Display","creative":"Drive-to-store_360x300","spend":39.95,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":1598,"clicks":74,"visits":0},
+  {"date":"29/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x250","spend":60.43,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":2417,"clicks":69,"visits":0},
+  {"date":"29/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x50px_v1","spend":20.3,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":812,"clicks":11,"visits":0},
+  {"date":"29/01/2026","channel":"Footfall Display","creative":"Drive-to-store_320x480","spend":31.53,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":1261,"clicks":56,"visits":0},
+  {"date":"29/01/2026","channel":"Footfall Display","creative":"Drive-to-store_360x300","spend":1.08,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":43,"clicks":1,"visits":0},
+  {"date":"30/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x250","spend":27.28,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":1091,"clicks":49,"visits":0},
+  {"date":"30/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x50px_v1","spend":7.08,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":283,"clicks":13,"visits":0},
+  {"date":"30/01/2026","channel":"Footfall Display","creative":"Drive-to-store_320x480","spend":105.05,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":4202,"clicks":105,"visits":0},
+  {"date":"30/01/2026","channel":"Footfall Display","creative":"Drive-to-store_360x300","spend":0.05,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":2,"clicks":0,"visits":0},
+  {"date":"31/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x250","spend":147.5,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":5900,"clicks":31,"visits":0},
+  {"date":"31/01/2026","channel":"Footfall Display","creative":"Drive-to-store_300x50px_v1","spend":110.25,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":4410,"clicks":21,"visits":0},
+  {"date":"31/01/2026","channel":"Footfall Display","creative":"Drive-to-store_320x480","spend":92.98,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":3719,"clicks":26,"visits":0},
+  {"date":"31/01/2026","channel":"Footfall Display","creative":"Drive-to-store_360x300","spend":0.15,"starts":0,"q25":0,"q50":0,"q75":0,"q100":0,"impressions":6,"clicks":0,"visits":0}
 ];
 // Dados de footfall (aba Footfall da planilha)
 // Fonte: aba Footfall da planilha Portal Auto Shopping — Drive to store
@@ -668,8 +682,8 @@ const FOOTFALL_POINTS = [
     "lat": -19.9077882899644,
     "lon": -43.9592569000019,
     "name": "Av. Dom Pedro II, 1900 - Carlos Prates, Belo Horizonte - MG, 30710-010",
-    "users": 121,
-    "rate": 11.8
+    "users": 182,
+    "rate": 11.99
   }
 ];
 // Helpers
@@ -704,9 +718,19 @@ const topMetrics = [
 document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
   m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
 
+// Detectar KPI do dashboard (baseado no título ou contexto)
+// Este dashboard é Footfall Display, então não é CPM
+const dashboardKpi = 'DISPLAY'; // Pode ser 'CPM', 'CPV', 'CPE', 'CPD', 'DISPLAY', etc.
+
 // Overview table
 const tbody = document.getElementById('tbodyChannels');
+const thCpm = document.getElementById('th-cpm');
+if (thCpm) {
+  thCpm.style.display = dashboardKpi === 'CPM' ? '' : 'none';
+}
+
 PER.forEach(r=>{
+  const cpmCell = dashboardKpi === 'CPM' ? `<td>R$ ${fmtBR(r["CPM (R$)"])}</td>` : '';
   tbody.insertAdjacentHTML('beforeend', `
     <tr>
       <td>${r["Canal"]||"—"}</td>
@@ -719,7 +743,7 @@ PER.forEach(r=>{
       <td>${fmtInt(r["VC (100%)"])}</td>
       <td>${pct(r["VTR (100%)"])}</td>
       <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
-      <td>R$ ${fmtBR(r["CPM (R$)"])}</td>
+      ${cpmCell}
     </tr>`)
 });
 
@@ -827,10 +851,6 @@ function renderChannel(name){
   const isDisplayChannel = nm === 'Footfall Display';
   const isMixedChannel = nm === 'TikTok';
   
-  // Detectar KPI do dashboard (baseado no título ou contexto)
-  // Este dashboard é Footfall Display, então não é CPM
-  const dashboardKpi = 'DISPLAY'; // Pode ser 'CPM', 'CPV', 'CPE', 'CPD', 'DISPLAY', etc.
-  
   const items = [
     ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
     ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
@@ -846,24 +866,28 @@ function renderChannel(name){
       ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])]
     );
   } else if (isDisplayChannel) {
-    // Canal de display: CPM
+    // Canal de display: CPM apenas se KPI for CPM
     items.push(
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR (%)'])],
-      ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
+      ['📈 CTR', pct(r['CTR (%)'])]
     );
+    if (dashboardKpi === 'CPM') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
   } else if (isMixedChannel) {
-    // Canal misto (TikTok): VTR, CPV e CPM
+    // Canal misto (TikTok): VTR, CPV e CPM (apenas se KPI for CPM)
     items.push(
       ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
       ['📉 VTR100', pct(r['VTR (100%)'])],
       ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
       ['🖨️ Impressões', fmtInt(r['Impressões'])],
       ['👆 Cliques', fmtInt(r['Cliques'])],
-      ['📈 CTR', pct(r['CTR (%)'])],
-      ['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]
+      ['📈 CTR', pct(r['CTR (%)'])]
     );
+    if (dashboardKpi === 'CPM') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
   }
   
   // Calcular CPM médio a partir dos dados diários apenas se o KPI for CPM
