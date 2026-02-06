@@ -1289,15 +1289,11 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Template CPE sempre oculta CPM (este template é usado apenas para KPI CPE)
-            const shouldHideCpmCards = true;
-            
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             const vc_pacing = contract.complete_views_contracted > 0 ? (summary.total_video_completions / contract.complete_views_contracted * 100) : 0;
             const vtr = summary.total_video_starts > 0 ? (summary.total_video_completions / summary.total_video_starts * 100) : 0;
             const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
-            const cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
             
             summaryContainer.innerHTML = `
                 <div class="metric">
@@ -1344,12 +1340,6 @@ class DashboardLoader {
                     <div class="label">💵 CPE Contratado</div>
                     <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                 </div>
-                ${!shouldHideCpmCards ? `
-                <div class="metric">
-                    <div class="label">📊 CPM Médio</div>
-                    <div class="value">${this.formatCurrency(cpm)}</div>
-                </div>
-                ` : ''}
             `;
         }
     }
