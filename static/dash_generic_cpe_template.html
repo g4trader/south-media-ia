@@ -1125,28 +1125,10 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Detectar se o KPI principal é CPV, CPE ou CPD (ocultar CPM nesses casos)
-            const isMultichannel = data.channels && data.channels.length > 0;
-            let shouldHideCpm = false;
-            let kpiValue = 'CPE';
-            if (isMultichannel && data.channels) {
-                data.channels.forEach(ch => {
-                    const kpi = ch.kpi || contract.kpi || 'CPE';
-                    kpiValue = kpi.toUpperCase();
-                    if (['CPV', 'CPE', 'CPD'].includes(kpiValue)) {
-                        shouldHideCpm = true;
-                    }
-                });
-            } else {
-                kpiValue = (contract.kpi || 'CPE').toUpperCase();
-                if (['CPV', 'CPE', 'CPD'].includes(kpiValue)) {
-                    shouldHideCpm = true;
-                }
-            }
-            
-            // Ocultar coluna CPM do cabeçalho se KPI for CPV, CPE ou CPD
+            // Template CPE sempre oculta CPM (este template é usado apenas para KPI CPE)
+            // Ocultar coluna CPM do cabeçalho
             const tableHeader = document.querySelector('#tableChannels thead tr');
-            if (tableHeader && shouldHideCpm) {
+            if (tableHeader) {
                 const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.includes('CPM'));
                 if (cpmHeader) {
                     cpmHeader.style.display = 'none';
@@ -1182,7 +1164,6 @@ class DashboardLoader {
                     <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
                     <td>${this.formatPercentage(summary.vtr || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                    ${!shouldHideCpm ? `<td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>` : ''}
                 </tr>
             `;
             

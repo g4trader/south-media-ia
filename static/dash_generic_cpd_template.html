@@ -1096,7 +1096,6 @@ class DashboardLoader {
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
             const imp_pacing = contract.complete_views_contracted > 0 ? (summary.total_impressions / contract.complete_views_contracted * 100) : 0;
             const ctr = summary.total_impressions > 0 ? (summary.total_clicks / summary.total_impressions * 100) : 0;
-            const cpm = summary.total_impressions > 0 ? (summary.total_spend / summary.total_impressions * 1000) : 0;
             const cpd = summary.total_disparos > 0 ? (summary.total_spend / summary.total_disparos) : 0;
             
             summaryContainer.innerHTML = `
