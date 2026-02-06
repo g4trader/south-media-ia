@@ -261,14 +261,15 @@ class DashboardAutomation:
         try:
             logger.info("📊 Calculando dados consolidados...")
             
-            # Valores de orçamento contratado por canal
+            # Valores de orçamento contratado por canal (valores corretos das planilhas)
             budget_contratado = {
-                "YouTube": 25000.00,
-                "TikTok": 25000.00,
-                "Netflix": 25000.00,
-                "Disney": 25000.00,
-                "CTV": 12000.00,
-                "Footfall Display": 10000.00
+                "YouTube": 19333.32,
+                "TikTok": 13655.27,
+                "Netflix": 18643.04,
+                "Disney": 18516.65,
+                "CTV": 10332.96,
+                "Footfall Display": 8470.59,
+                "Bonificação Ifood": 5000.00
             }
             
             # Agrupar por canal
@@ -404,14 +405,15 @@ class DashboardAutomation:
         try:
             logger.info("📊 Calculando dados por canal...")
             
-            # Valores de orçamento contratado por canal
+            # Valores de orçamento contratado por canal (valores corretos das planilhas)
             budget_contratado = {
-                "YouTube": 25000.00,
-                "TikTok": 25000.00,
-                "Netflix": 25000.00,
-                "Disney": 25000.00,
-                "CTV": 12000.00,
-                "Footfall Display": 10000.00
+                "YouTube": 19333.32,
+                "TikTok": 13655.27,
+                "Netflix": 18643.04,
+                "Disney": 18516.65,
+                "CTV": 10332.96,
+                "Footfall Display": 8470.59,
+                "Bonificação Ifood": 5000.00
             }
             
             # Agrupar por canal

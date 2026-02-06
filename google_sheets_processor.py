@@ -213,9 +213,37 @@ class GoogleSheetsProcessor:
                             break
             
             if header_row is not None:
-                # Usa o cabeçalho encontrado
-                df = pd.DataFrame(values[data_start_row:], columns=values[header_row])
-                logger.info(f"✅ Usando linha {header_row + 1} como cabeçalho")
+                # Usa o cabeçalho encontrado, mas alinha número de colunas entre header e dados.
+                # Algumas planilhas (ex: Netflix) podem ter colunas extras em linhas de dados.
+                header = list(values[header_row])
+                data_rows = values[data_start_row:]
+
+                # Descobrir o maior número de colunas observado
+                max_cols = max(
+                    len(header),
+                    max((len(r) for r in data_rows if r), default=0)
+                )
+
+                # Ajustar header para max_cols
+                if len(header) < max_cols:
+                    header = header + [f"Coluna_Extra_{i}" for i in range(len(header), max_cols)]
+                elif len(header) > max_cols:
+                    header = header[:max_cols]
+
+                # Ajustar cada linha de dados para max_cols
+                aligned_data = []
+                for r in data_rows:
+                    if not r:
+                        continue
+                    row = list(r)
+                    if len(row) < max_cols:
+                        row = row + [''] * (max_cols - len(row))
+                    else:
+                        row = row[:max_cols]
+                    aligned_data.append(row)
+
+                df = pd.DataFrame(aligned_data, columns=header)
+                logger.info(f"✅ Usando linha {header_row + 1} como cabeçalho (alinhado: {len(header)} colunas)")
             else:
                 # Fallback: tenta usar primeira linha como cabeçalho normalmente
                 if len(values) > 0 and values[0]:
