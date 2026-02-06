@@ -1069,19 +1069,19 @@ class DashboardLoader {
         const contract = data.contract || {};
         const isMultichannel = data.channels && data.channels.length > 0;
         
-        // Detectar se o KPI principal é CPV
-        let isCpvKpi = false;
+        // Detectar se o KPI principal é CPV, CPE ou CPD (ocultar CPM nesses casos)
+        let shouldHideCpm = false;
         if (isMultichannel && data.channels) {
             data.channels.forEach(ch => {
                 const kpi = ch.kpi || contract.kpi || 'CPV';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
+                if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
+                    shouldHideCpm = true;
                 }
             });
         } else {
-            const kpi = contract.kpi || 'CPV';
-            if (kpi.toUpperCase() === 'CPV') {
-                isCpvKpi = true;
+            const kpi = (contract.kpi || 'CPV').toUpperCase();
+            if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
+                shouldHideCpm = true;
             }
         }
         
@@ -1090,9 +1090,9 @@ class DashboardLoader {
             channelHeader.style.display = 'none';
         }
         
-        // Ocultar coluna CPM do cabeçalho se KPI for CPV
+        // Ocultar coluna CPM do cabeçalho se KPI for CPV, CPE ou CPD
         const tableHeader = document.querySelector('#channelDailyTable thead tr');
-        if (tableHeader && isCpvKpi) {
+        if (tableHeader && shouldHideCpm) {
             const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent === 'CPM');
             if (cpmHeader) {
                 cpmHeader.style.display = 'none';
@@ -1119,13 +1119,13 @@ class DashboardLoader {
                         <td>${this.formatNumber(record.video_completions)}</td>
                         <td>${this.formatPercentage(vtr)}</td>
                         <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                        ${!isCpvKpi ? `<td>R$ ${cpmContracted.toFixed(2).replace('.', ',')}</td>` : ''}
+                        ${!shouldHideCpm ? `<td>R$ ${cpmContracted.toFixed(2).replace('.', ',')}</td>` : ''}
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
         } else {
-            const colspan = isCpvKpi ? '12' : '13';
+            const colspan = shouldHideCpm ? '12' : '13';
             channelDailyBody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center;padding:20px;">Nenhum dado encontrado para este canal</td></tr>`;
         }
     }
@@ -1188,23 +1188,23 @@ class DashboardLoader {
         // Detectar KPIs presentes nos canais
         const channelKpis = new Set();
         const isMultichannel = data.channels && data.channels.length > 0;
-        let isCpvKpi = false;
+        let shouldHideCpmTables = false;
         
         if (isMultichannel) {
             // Coletar KPIs de todos os canais
             data.channels.forEach(ch => {
                 const kpi = ch.kpi || contract.kpi || 'CPV';
                 channelKpis.add(kpi.toUpperCase());
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
+                if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
+                    shouldHideCpmTables = true;
                 }
             });
         } else {
             // Canal único: usar KPI do contrato
-            const kpi = contract.kpi || 'CPV';
-            channelKpis.add(kpi.toUpperCase());
-            if (kpi.toUpperCase() === 'CPV') {
-                isCpvKpi = true;
+            const kpi = (contract.kpi || 'CPV').toUpperCase();
+            channelKpis.add(kpi);
+            if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
+                shouldHideCpmTables = true;
             }
         }
         
@@ -1271,7 +1271,7 @@ class DashboardLoader {
             `;
         }
         
-        if (channelKpis.has('CPM') && !isCpvKpi) {
+        if (channelKpis.has('CPM') && !shouldHideCpmTables) {
             // Métricas para CPM (Custo por Mil Impressões) - apenas se o KPI principal NÃO for CPV
             metricsHtml += `
                 <div class="metric">
@@ -1444,25 +1444,25 @@ class DashboardLoader {
             // Verificar se é dashboard multicanal
             const isMultichannel = data.channels && data.channels.length > 0;
             
-            // Detectar se o KPI principal é CPV
-            let isCpvKpi = false;
+            // Detectar se o KPI principal é CPV, CPE ou CPD (ocultar CPM nesses casos)
+            let shouldHideCpmSummary = false;
             if (isMultichannel && data.channels) {
                 data.channels.forEach(ch => {
                     const kpi = ch.kpi || contract.kpi || 'CPV';
-                    if (kpi.toUpperCase() === 'CPV') {
-                        isCpvKpi = true;
+                    if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
+                        shouldHideCpmSummary = true;
                     }
                 });
             } else {
-                const kpi = contract.kpi || 'CPV';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
+                const kpi = (contract.kpi || 'CPV').toUpperCase();
+                if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
+                    shouldHideCpmSummary = true;
                 }
             }
             
-            // Ocultar coluna CPM do cabeçalho se KPI for CPV
+            // Ocultar coluna CPM do cabeçalho se KPI for CPV, CPE ou CPD
             const tableHeader = document.querySelector('#tableChannels thead tr');
-            if (tableHeader && isCpvKpi) {
+            if (tableHeader && shouldHideCpmSummary) {
                 const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.includes('CPM'));
                 if (cpmHeader) {
                     cpmHeader.style.display = 'none';
@@ -1532,7 +1532,7 @@ class DashboardLoader {
                             <td>${this.formatNumber(channelMetrics.video_completions || channelSummary.total_video_completions || 0)}</td>
                             <td>${this.formatPercentage(channelVtr)}</td>
                             <td>R$ ${channelContract.cpv_contracted ? channelContract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                            ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(channelCpm)}</td>` : ''}
+                            ${!shouldHideCpmSummary ? `<td>R$ ${this.formatCurrency(channelCpm)}</td>` : ''}
                         </tr>
                     `;
                 });
@@ -1561,7 +1561,7 @@ class DashboardLoader {
                         <td><strong>${this.formatNumber(summary.total_video_completions || 0)}</strong></td>
                         <td><strong>${this.formatPercentage(summary.vtr || 0)}</strong></td>
                         <td><strong>—</strong></td>
-                        ${!isCpvKpi ? `<td><strong>R$ ${this.formatCurrency(summary.cpm || 0)}</strong></td>` : ''}
+                        ${!shouldHideCpmSummary ? `<td><strong>R$ ${this.formatCurrency(summary.cpm || 0)}</strong></td>` : ''}
                     </tr>
                 `;
                 
@@ -1597,7 +1597,7 @@ class DashboardLoader {
                     <td>${this.formatNumber(summary.total_video_completions || 0)}</td>
                     <td>${this.formatPercentage(summary.vtr || 0)}</td>
                     <td>R$ ${contract.cpv_contracted ? contract.cpv_contracted.toFixed(2).replace('.', ',') : '0,00'}</td>
-                    ${!isCpvKpi ? `<td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>` : ''}
+                    ${!shouldHideCpmSummary ? `<td>R$ ${this.formatCurrency(summary.cpm || 0)}</td>` : ''}
                 </tr>
             `;
             
@@ -1678,20 +1678,20 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Detectar se o KPI principal é CPV
+            // Detectar se o KPI principal é CPV, CPE ou CPD (ocultar CPM nesses casos)
             const isMultichannel = data.channels && data.channels.length > 0;
-            let isCpvKpi = false;
+            let shouldHideCpmCards = false;
             if (isMultichannel && data.channels) {
                 data.channels.forEach(ch => {
                     const kpi = ch.kpi || contract.kpi || 'CPV';
-                    if (kpi.toUpperCase() === 'CPV') {
-                        isCpvKpi = true;
+                    if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
+                        shouldHideCpmCards = true;
                     }
                 });
             } else {
-                const kpi = contract.kpi || 'CPV';
-                if (kpi.toUpperCase() === 'CPV') {
-                    isCpvKpi = true;
+                const kpi = (contract.kpi || 'CPV').toUpperCase();
+                if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
+                    shouldHideCpmCards = true;
                 }
             }
             
@@ -1747,7 +1747,7 @@ class DashboardLoader {
                     <div class="label">💵 CPV Contratado</div>
                     <div class="value">${this.formatCurrency(contract.cpv_contracted || 0)}</div>
                 </div>
-                ${!isCpvKpi ? `
+                ${!shouldHideCpmCards ? `
                 <div class="metric">
                     <div class="label">📊 CPM Médio</div>
                     <div class="value">${this.formatCurrency(cpm)}</div>

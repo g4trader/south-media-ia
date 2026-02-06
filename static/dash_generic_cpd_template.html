@@ -398,7 +398,7 @@
       <div style="overflow:auto">
         <table id="channelDailyTable">
           <thead>
-            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Disparos</th><th>CPD</th><th>CPM</th><th>Criativo</th></tr>
+            <tr><th>Data</th><th>Budget (R$)</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Disparos</th><th>CPD</th><th id="th-cpm-cpd" style="display:none;">CPM</th><th>Criativo</th></tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
         </table>
@@ -1047,6 +1047,13 @@ class DashboardLoader {
         // Renderizar tabela de entrega diária por canal
         const channelDailyBody = document.getElementById('channelDailyBody');
         if (channelDailyBody) {
+            // Ocultar coluna CPM do cabeçalho (template CPD sempre usa KPI CPD)
+            const tableHeader = document.querySelector('#channelDailyTable thead tr');
+            const thCpmCpd = document.getElementById('th-cpm-cpd');
+            if (thCpmCpd) {
+                thCpmCpd.style.display = 'none';
+            }
+            
             // Limpar conteúdo anterior
             channelDailyBody.innerHTML = '';
             
@@ -1057,7 +1064,7 @@ class DashboardLoader {
             channelDailyBody.innerHTML = data.daily_data.map(record => {
                 const disparos = record.disparos || record.video_completions || 0;
                 const cpd = disparos > 0 ? (record.spend / disparos) : 0;
-                const cpm = record.impressions > 0 ? (record.spend / record.impressions * 1000) : 0;
+                // CPM não será exibido para KPI CPD
                 return `
                     <tr>
                         <td>${record.date}</td>
@@ -1067,14 +1074,13 @@ class DashboardLoader {
                         <td>${this.formatPercentage(record.ctr)}</td>
                         <td>${this.formatNumber(disparos)}</td>
                         <td>R$ ${cpd.toFixed(2).replace('.', ',')}</td>
-                        <td>R$ ${cpm.toFixed(2).replace('.', ',')}</td>
                         <td>${record.creative || 'N/A'}</td>
                     </tr>
                 `;
             }).join('');
             } else {
-                // Mostrar mensagem quando não há dados
-                channelDailyBody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#999">Nenhum dado disponível para o período selecionado</td></tr>';
+                // Mostrar mensagem quando não há dados (colspan ajustado para 8 sem CPM)
+                channelDailyBody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999">Nenhum dado disponível para o período selecionado</td></tr>';
             }
         }
     }
