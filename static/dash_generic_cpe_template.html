@@ -1199,14 +1199,32 @@ class DashboardLoader {
             const contract = data.contract || {};
             
             // Template CPE sempre oculta CPM (este template é usado apenas para KPI CPE)
-            const shouldHideCpmDaily = true;
+            // Ocultar coluna CPM do cabeçalho - usar múltiplas tentativas para garantir
+            setTimeout(() => {
+                const tableHeader = document.querySelector('#channelDailyTable thead tr');
+                if (tableHeader) {
+                    const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.trim() === 'CPM');
+                    if (cpmHeader) {
+                        cpmHeader.style.display = 'none';
+                    }
+                    // Também tentar pelo ID
+                    const cpmHeaderById = document.getElementById('th-cpm-daily');
+                    if (cpmHeaderById) {
+                        cpmHeaderById.style.display = 'none';
+                    }
+                }
+            }, 0);
             
-            // Ocultar coluna CPM do cabeçalho
+            // Ocultar imediatamente também
             const tableHeader = document.querySelector('#channelDailyTable thead tr');
             if (tableHeader) {
-                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent === 'CPM');
+                const cpmHeader = Array.from(tableHeader.querySelectorAll('th')).find(th => th.textContent.trim() === 'CPM');
                 if (cpmHeader) {
                     cpmHeader.style.display = 'none';
+                }
+                const cpmHeaderById = document.getElementById('th-cpm-daily');
+                if (cpmHeaderById) {
+                    cpmHeaderById.style.display = 'none';
                 }
             }
             
