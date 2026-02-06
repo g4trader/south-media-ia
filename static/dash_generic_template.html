@@ -1180,27 +1180,21 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract || {};
         
+        // Template genérico usado para CPV - sempre ocultar CPM
         // Detectar KPIs presentes nos canais
         const channelKpis = new Set();
         const isMultichannel = data.channels && data.channels.length > 0;
-        let shouldHideCpmTables = false;
         
         if (isMultichannel) {
             // Coletar KPIs de todos os canais
             data.channels.forEach(ch => {
                 const kpi = ch.kpi || contract.kpi || 'CPV';
                 channelKpis.add(kpi.toUpperCase());
-                if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
-                    shouldHideCpmTables = true;
-                }
             });
         } else {
             // Canal único: usar KPI do contrato
             const kpi = (contract.kpi || 'CPV').toUpperCase();
             channelKpis.add(kpi);
-            if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
-                shouldHideCpmTables = true;
-            }
         }
         
         // Calcular métricas adicionais
@@ -1266,7 +1260,8 @@ class DashboardLoader {
             `;
         }
         
-        if (channelKpis.has('CPM') && !shouldHideCpmTables) {
+        // Template genérico não mostra CPM (usado para CPV)
+        if (false) {
             // Métricas para CPM (Custo por Mil Impressões) - apenas se o KPI principal NÃO for CPV
             metricsHtml += `
                 <div class="metric">
