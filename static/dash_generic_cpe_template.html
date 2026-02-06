@@ -1308,22 +1308,8 @@ class DashboardLoader {
             const summary = data.campaign_summary;
             const contract = data.contract;
             
-            // Detectar se o KPI principal é CPV, CPE ou CPD (ocultar CPM nesses casos)
-            const isMultichannel = data.channels && data.channels.length > 0;
-            let shouldHideCpmCards = false;
-            if (isMultichannel && data.channels) {
-                data.channels.forEach(ch => {
-                    const kpi = ch.kpi || contract.kpi || 'CPE';
-                    if (['CPV', 'CPE', 'CPD'].includes(kpi.toUpperCase())) {
-                        shouldHideCpmCards = true;
-                    }
-                });
-            } else {
-                const kpi = (contract.kpi || 'CPE').toUpperCase();
-                if (['CPV', 'CPE', 'CPD'].includes(kpi)) {
-                    shouldHideCpmCards = true;
-                }
-            }
+            // Template CPE sempre oculta CPM (este template é usado apenas para KPI CPE)
+            const shouldHideCpmCards = true;
             
             // Calcular métricas adicionais
             const pacing = contract.investment > 0 ? (summary.total_spend / contract.investment * 100) : 0;
