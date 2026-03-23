@@ -94,6 +94,37 @@ def is_super_admin() -> bool:
     return bool(user and user.get("role") == "super_admin")
 
 
+def get_fallback_superadmin(email: str, password: str) -> Optional[Dict[str, Any]]:
+    """
+    Emergency fallback auth for bootstrap superadmins when Firestore users are inconsistent.
+    Format env SUPERADMIN_FALLBACKS: email:password:name;email2:password2:name2
+    """
+    entries = os.getenv(
+        "SUPERADMIN_FALLBACKS",
+        "g4trader.news@gmail.com:south#media@26:Super Admin;"
+        "operacional@southmedia.com.br:south#media@26:Super Admin Operacional",
+    )
+    for raw in entries.split(";"):
+        item = raw.strip()
+        if not item:
+            continue
+        parts = item.split(":")
+        if len(parts) < 2:
+            continue
+        sa_email = parts[0].strip().lower()
+        sa_password = parts[1]
+        sa_name = parts[2].strip() if len(parts) > 2 else "Super Admin"
+        if email == sa_email and password == sa_password:
+            return {
+                "user_id": f"fallback-superadmin-{sa_email}",
+                "email": sa_email,
+                "name": sa_name,
+                "role": "super_admin",
+                "client_id": None,
+            }
+    return None
+
+
 def login_required_api(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -1044,6 +1075,8 @@ def api_auth_login():
             return jsonify({"success": False, "message": "E-mail e senha são obrigatórios"}), 400
 
         user = bq_fs_manager.verify_user_credentials(email=email, password=password)
+        if not user:
+            user = get_fallback_superadmin(email=email, password=password)
         if not user:
             return jsonify({"success": False, "message": "Credenciais inválidas"}), 401
 
