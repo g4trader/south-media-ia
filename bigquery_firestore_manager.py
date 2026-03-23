@@ -9,6 +9,7 @@ import json
 import logging
 import re
 import uuid
+import hashlib
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from google.cloud import bigquery
@@ -363,6 +364,42 @@ class BigQueryFirestoreManager:
         docs = list(query.stream())
         return docs[0] if docs else None
 
+    def _user_collections(self) -> List[str]:
+        # Backward compatibility for legacy environments/data migrations.
+        base = [self.users_collection, "users", "users_hml", "users_staging"]
+        deduped = []
+        for name in base:
+            if name not in deduped:
+                deduped.append(name)
+        return deduped
+
+    def _check_password_compat(self, stored_hash: str, password: str) -> bool:
+        if not stored_hash:
+            return False
+
+        # Werkzeug hashes (pbkdf2/scrypt) from current stack.
+        try:
+            if check_password_hash(stored_hash, password):
+                return True
+        except Exception:
+            pass
+
+        # Legacy plaintext or deterministic hash fallback.
+        if stored_hash == password:
+            return True
+        if hashlib.sha256(password.encode("utf-8")).hexdigest() == stored_hash:
+            return True
+
+        # Optional bcrypt fallback for legacy rows.
+        try:
+            import bcrypt  # type: ignore
+            if stored_hash.startswith("$2") and bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
+                return True
+        except Exception:
+            pass
+
+        return False
+
     def ensure_superadmin_user(self, email: str, password: str, name: str = "Super Admin") -> str:
         email_norm = self._normalize_email(email)
         existing = self._query_first_by_field(self.users_collection, "email", email_norm)
@@ -395,33 +432,28 @@ class BigQueryFirestoreManager:
 
     def verify_user_credentials(self, email: str, password: str) -> Optional[Dict[str, Any]]:
         email_norm = self._normalize_email(email)
-        doc = self._query_first_by_field(self.users_collection, "email", email_norm)
-        if not doc:
-            return None
+        for collection_name in self._user_collections():
+            doc = self._query_first_by_field(collection_name, "email", email_norm)
+            if not doc:
+                continue
 
-        user = doc.to_dict() or {}
-        stored_hash = user.get("password_hash") or ""
-        stored_plain = user.get("password") or ""
-        valid = False
+            user = doc.to_dict() or {}
+            stored_hash = user.get("password_hash") or ""
+            stored_plain = user.get("password") or ""
+            valid = self._check_password_compat(stored_hash, password)
+            if not valid and stored_plain:
+                valid = stored_plain == password
+            if not valid:
+                continue
 
-        if stored_hash:
-            try:
-                valid = check_password_hash(stored_hash, password)
-            except Exception:
-                valid = False
-        elif stored_plain:
-            valid = stored_plain == password
-
-        if not valid:
-            return None
-
-        return {
-            "user_id": user.get("user_id") or doc.id,
-            "email": user.get("email") or email_norm,
-            "name": user.get("name") or "",
-            "role": user.get("role") or "viewer",
-            "client_id": user.get("client_id"),
-        }
+            return {
+                "user_id": user.get("user_id") or doc.id,
+                "email": user.get("email") or email_norm,
+                "name": user.get("name") or "",
+                "role": user.get("role") or "viewer",
+                "client_id": user.get("client_id"),
+            }
+        return None
 
     def reset_user_password(self, user_id: str, new_password: str) -> bool:
         try:
