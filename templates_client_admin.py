@@ -258,11 +258,11 @@ def get_client_portal_html(client, dashboards):
 
                 <div class="mini-grid">
                     <div class="mini-metric">
-                        <span class="metric-label">Investimento</span>
+                        <span class="metric-label">Budget Utilizado</span>
                         <span class="metric-value js-investment">{escape(_fmt_currency(investment))}</span>
                     </div>
                     <div class="mini-metric">
-                        <span class="metric-label">Imp. Contratadas</span>
+                        <span class="metric-label">Quantidade</span>
                         <span class="metric-value js-impressions">{escape(_fmt_int(impressions))}</span>
                     </div>
                     <div class="mini-metric">
@@ -405,9 +405,10 @@ def get_client_portal_html(client, dashboards):
                 const payload = await res.json();
                 if (!payload.success || !payload.data) return;
                 const contract = payload.data.contract || {{}};
+                const summary = payload.data.summary || {{}};
 
-                const investment = pickFirst(contract, ['investment', 'investimento', 'budget', 'total_budget']);
-                const impressions = pickFirst(contract, ['contracted_impressions', 'impressions_contracted', 'impressions']);
+                const investment = pickFirst(summary, ['total_investment', 'total_spend']) ?? pickFirst(contract, ['investment', 'investimento', 'budget', 'total_budget']);
+                const impressions = pickFirst(summary, ['total_impressions', 'impressions']) ?? pickFirst(contract, ['contracted_impressions', 'impressions_contracted', 'impressions']);
                 const kpiTarget = pickFirst(contract, ['kpi_target', 'contracted_kpi', 'cpm_contracted', 'cpv_contracted', 'cpe_contracted', 'cpd_contracted']);
                 const startDate = pickFirst(contract, ['start_date', 'data_inicio', 'period_start']);
                 const endDate = pickFirst(contract, ['end_date', 'data_fim', 'period_end']);
