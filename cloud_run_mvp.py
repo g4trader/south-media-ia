@@ -2447,7 +2447,8 @@ def generate_dynamic_dashboard_html(campaign, data):
         
         html_content = html_content.replace('{{API_ENDPOINT}}', api_endpoint)
         
-        return with_superadmin_sidebar(html_content, active_menu="dashboards")
+        # Dashboards devem abrir limpos, sem shell/sidebar administrativa.
+        return html_content
         
     except Exception as e:
         logger.error(f"❌ Erro ao gerar HTML dinâmico: {e}")
@@ -3112,7 +3113,7 @@ def dashboards_list():
                     {link_section}
                 </div>
                 <div class="dashboard-actions">
-                    <a href="/api/dashboard/{campaign_key}" class="btn-primary">
+                    <a href="/api/dashboard/{campaign_key}" class="btn-primary" target="_blank" rel="noopener noreferrer">
                         Ver Dashboard
                     </a>
                     <a href="#" class="btn-secondary" onclick="copyToClipboard('/api/dashboard/{campaign_key}')">

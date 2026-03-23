@@ -282,7 +282,7 @@ def get_client_portal_html(client, dashboards):
                 </div>
 
                 <div class="actions">
-                    <a href="/api/dashboard/{ckey_safe}" class="btn-primary">Abrir Dashboard</a>
+                    <a href="/api/dashboard/{ckey_safe}" class="btn-primary" target="_blank" rel="noopener noreferrer">Abrir Dashboard</a>
                     <a href="/api/{ckey_safe}/data" class="btn-secondary">Ver dados API</a>
                 </div>
             </article>
