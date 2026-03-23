@@ -22,6 +22,7 @@ COPY config.py .
 COPY gunicorn.conf.py .
 COPY date_normalizer.py .
 COPY bigquery_firestore_manager.py .
+COPY templates_client_admin.py .
 # Credenciais agora são baixadas do Google Cloud Storage
 COPY static/ ./static/
 
