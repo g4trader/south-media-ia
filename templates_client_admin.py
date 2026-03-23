@@ -227,6 +227,12 @@ def get_client_portal_html(client, dashboards):
             or d.get("budget")
             or d.get("total_budget")
         )
+        budget_used = (
+            d.get("budget_used")
+            or d.get("used_budget")
+            or d.get("total_spend")
+            or d.get("spend")
+        )
         impressions = (
             d.get("contracted_impressions")
             or d.get("impressions_contracted")
@@ -258,8 +264,12 @@ def get_client_portal_html(client, dashboards):
 
                 <div class="mini-grid">
                     <div class="mini-metric">
+                        <span class="metric-label">Budget Contratado</span>
+                        <span class="metric-value js-budget-contracted">{escape(_fmt_currency(investment))}</span>
+                    </div>
+                    <div class="mini-metric">
                         <span class="metric-label">Budget Utilizado</span>
-                        <span class="metric-value js-investment">{escape(_fmt_currency(investment))}</span>
+                        <span class="metric-value js-budget-used">{escape(_fmt_currency(budget_used))}</span>
                     </div>
                     <div class="mini-metric">
                         <span class="metric-label">Quantidade</span>
@@ -407,18 +417,21 @@ def get_client_portal_html(client, dashboards):
                 const contract = payload.data.contract || {{}};
                 const summary = payload.data.summary || {{}};
 
-                const investment = pickFirst(summary, ['total_investment', 'total_spend']) ?? pickFirst(contract, ['investment', 'investimento', 'budget', 'total_budget']);
+                const budgetContracted = pickFirst(contract, ['investment', 'investimento', 'budget', 'total_budget']);
+                const budgetUsed = pickFirst(summary, ['total_spend', 'spent']) ?? pickFirst(contract, ['budget_used', 'used_budget', 'spend']);
                 const impressions = pickFirst(summary, ['total_impressions', 'impressions']) ?? pickFirst(contract, ['contracted_impressions', 'impressions_contracted', 'impressions']);
                 const kpiTarget = pickFirst(contract, ['kpi_target', 'contracted_kpi', 'cpm_contracted', 'cpv_contracted', 'cpe_contracted', 'cpd_contracted']);
                 const startDate = pickFirst(contract, ['start_date', 'data_inicio', 'period_start']);
                 const endDate = pickFirst(contract, ['end_date', 'data_fim', 'period_end']);
 
-                const elInvestment = card.querySelector('.js-investment');
+                const elBudgetContracted = card.querySelector('.js-budget-contracted');
+                const elBudgetUsed = card.querySelector('.js-budget-used');
                 const elImpressions = card.querySelector('.js-impressions');
                 const elKpi = card.querySelector('.js-kpi-target');
                 const elPeriod = card.querySelector('.js-period');
 
-                if (elInvestment && investment !== null) elInvestment.textContent = fmtCurrency(investment);
+                if (elBudgetContracted && budgetContracted !== null) elBudgetContracted.textContent = fmtCurrency(budgetContracted);
+                if (elBudgetUsed && budgetUsed !== null) elBudgetUsed.textContent = fmtCurrency(budgetUsed);
                 if (elImpressions && impressions !== null) elImpressions.textContent = fmtInt(impressions);
                 if (elKpi && kpiTarget !== null) elKpi.textContent = String(kpiTarget);
                 if (elPeriod && (startDate || endDate)) elPeriod.textContent = `${{fmtDate(startDate)}} - ${{fmtDate(endDate)}}`;

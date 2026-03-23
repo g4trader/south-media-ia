@@ -1775,6 +1775,34 @@ def get_dashboard_html(campaign_key):
             if linked_client_id and linked_client_id != user_client_id:
                 return "<h1>Acesso negado</h1>", 403
 
+        def _load_published_dashboard_fallback() -> Optional[str]:
+            """Try loading previously published dashboard HTML from local static or GCS."""
+            dashboard_filename = f"dash_{campaign_key}.html"
+            local_path = os.path.join("static", dashboard_filename)
+
+            try:
+                if os.path.exists(local_path):
+                    with open(local_path, "r", encoding="utf-8") as f:
+                        logger.info(f"✅ Dashboard fallback local carregado: {local_path}")
+                        return f.read()
+            except Exception as local_err:
+                logger.warning(f"⚠️ Falha ao ler fallback local ({local_path}): {local_err}")
+
+            try:
+                from google.cloud import storage
+                client_storage = storage.Client()
+                bucket = client_storage.bucket('south-media-ia-database-452311')
+                gcs_path = f"dashboards/{dashboard_filename}"
+                blob = bucket.blob(gcs_path)
+                if blob.exists():
+                    html_content = blob.download_as_text()
+                    logger.info(f"✅ Dashboard fallback carregado do GCS: {gcs_path}")
+                    return html_content
+            except Exception as gcs_err:
+                logger.warning(f"⚠️ Falha ao carregar fallback do GCS para {campaign_key}: {gcs_err}")
+
+            return None
+
         # Obter dados da campanha do Firestore primeiro
         campaign = None
         if bq_fs_manager:
@@ -1880,9 +1908,16 @@ def get_dashboard_html(campaign_key):
         )
         
         extractor = RealGoogleSheetsExtractor(config)
-        data = extractor.extract_data()
-        
+        data = None
+        try:
+            data = extractor.extract_data()
+        except Exception as extraction_err:
+            logger.warning(f"⚠️ Erro na extração em tempo real para {campaign_key}: {extraction_err}")
+
         if not data:
+            fallback_html = _load_published_dashboard_fallback()
+            if fallback_html:
+                return fallback_html, 200, {'Content-Type': 'text/html; charset=utf-8'}
             return f"<html><body><h1>Falha ao extrair dados da planilha para '{campaign_key}'</h1></body></html>", 500
         
         # Garantir que o KPI da campanha sobrescreva o do contrato
