@@ -7,10 +7,13 @@ Implementação para substituir SQLite + GCS
 import os
 import json
 import logging
+import re
+import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from google.cloud import bigquery
 from google.cloud import firestore
+from werkzeug.security import check_password_hash, generate_password_hash
 
 logger = logging.getLogger(__name__)
 
@@ -31,16 +34,22 @@ class BigQueryFirestoreManager:
                 self.dataset_id = 'south_media_dashboards_staging'
                 self.campaigns_collection = 'campaigns_staging'
                 self.dashboards_collection = 'dashboards_staging'
+                self.clients_collection = 'clients_staging'
+                self.users_collection = 'users_staging'
                 logger.info("🧪 Usando ambiente STAGING")
             elif self.environment == 'hml':
                 self.dataset_id = 'south_media_dashboards_hml'
                 self.campaigns_collection = 'campaigns_hml'
                 self.dashboards_collection = 'dashboards_hml'
+                self.clients_collection = 'clients_hml'
+                self.users_collection = 'users_hml'
                 logger.info("🔬 Usando ambiente HOMOLOGAÇÃO (HML)")
             else:
                 self.dataset_id = 'south_media_dashboards'
                 self.campaigns_collection = 'campaigns'
                 self.dashboards_collection = 'dashboards'
+                self.clients_collection = 'clients'
+                self.users_collection = 'users'
                 logger.info("🚀 Usando ambiente PRODUCTION")
             
             # Tabelas (iguais para ambos ambientes)
@@ -337,6 +346,274 @@ class BigQueryFirestoreManager:
                 "firestore_available": False,
                 "error": str(e),
             }
+
+    # ======================
+    # Multi-tenant auth/client helpers
+    # ======================
+    def _slugify(self, value: str) -> str:
+        raw = (value or "").strip().lower()
+        raw = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+        return raw or f"client-{uuid.uuid4().hex[:8]}"
+
+    def _normalize_email(self, email: str) -> str:
+        return (email or "").strip().lower()
+
+    def _query_first_by_field(self, collection_name: str, field_name: str, value: str):
+        query = self.fs_client.collection(collection_name).where(field_name, "==", value).limit(1)
+        docs = list(query.stream())
+        return docs[0] if docs else None
+
+    def ensure_superadmin_user(self, email: str, password: str, name: str = "Super Admin") -> str:
+        email_norm = self._normalize_email(email)
+        existing = self._query_first_by_field(self.users_collection, "email", email_norm)
+        now = datetime.now()
+        password_hash = generate_password_hash(password)
+
+        if existing:
+            user_id = existing.id
+            self.fs_client.collection(self.users_collection).document(user_id).set({
+                "email": email_norm,
+                "name": name or "Super Admin",
+                "role": "super_admin",
+                "password_hash": password_hash,
+                "updated_at": now,
+            }, merge=True)
+            return user_id
+
+        user_id = f"user_{uuid.uuid4().hex[:16]}"
+        self.fs_client.collection(self.users_collection).document(user_id).set({
+            "user_id": user_id,
+            "email": email_norm,
+            "name": name or "Super Admin",
+            "role": "super_admin",
+            "client_id": None,
+            "password_hash": password_hash,
+            "created_at": now,
+            "updated_at": now,
+        })
+        return user_id
+
+    def verify_user_credentials(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+        email_norm = self._normalize_email(email)
+        doc = self._query_first_by_field(self.users_collection, "email", email_norm)
+        if not doc:
+            return None
+
+        user = doc.to_dict() or {}
+        stored_hash = user.get("password_hash") or ""
+        stored_plain = user.get("password") or ""
+        valid = False
+
+        if stored_hash:
+            try:
+                valid = check_password_hash(stored_hash, password)
+            except Exception:
+                valid = False
+        elif stored_plain:
+            valid = stored_plain == password
+
+        if not valid:
+            return None
+
+        return {
+            "user_id": user.get("user_id") or doc.id,
+            "email": user.get("email") or email_norm,
+            "name": user.get("name") or "",
+            "role": user.get("role") or "viewer",
+            "client_id": user.get("client_id"),
+        }
+
+    def reset_user_password(self, user_id: str, new_password: str) -> bool:
+        try:
+            self.fs_client.collection(self.users_collection).document(user_id).set({
+                "password_hash": generate_password_hash(new_password),
+                "updated_at": datetime.now(),
+            }, merge=True)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao resetar senha ({user_id}): {e}")
+            return False
+
+    def update_user_role(self, user_id: str, role: str) -> bool:
+        try:
+            self.fs_client.collection(self.users_collection).document(user_id).set({
+                "role": role,
+                "updated_at": datetime.now(),
+            }, merge=True)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar role ({user_id}): {e}")
+            return False
+
+    def list_all_users(self) -> List[Dict[str, Any]]:
+        users = []
+        try:
+            docs = self.fs_client.collection(self.users_collection).stream()
+            for doc in docs:
+                u = doc.to_dict() or {}
+                users.append({
+                    "user_id": u.get("user_id") or doc.id,
+                    "email": u.get("email") or "",
+                    "name": u.get("name") or "",
+                    "role": u.get("role") or "viewer",
+                    "client_id": u.get("client_id"),
+                })
+            users.sort(key=lambda x: (x.get("email") or ""))
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar usuários: {e}")
+        return users
+
+    def create_client(self, name: str, slug: Optional[str] = None) -> str:
+        client_id = self._slugify(slug or name)
+        now = datetime.now()
+        doc_ref = self.fs_client.collection(self.clients_collection).document(client_id)
+        if doc_ref.get().exists:
+            client_id = f"{client_id}-{uuid.uuid4().hex[:6]}"
+            doc_ref = self.fs_client.collection(self.clients_collection).document(client_id)
+        doc_ref.set({
+            "client_id": client_id,
+            "name": (name or "").strip(),
+            "slug": client_id,
+            "created_at": now,
+            "updated_at": now,
+        })
+        return client_id
+
+    def list_clients(self) -> List[Dict[str, Any]]:
+        clients = []
+        try:
+            docs = self.fs_client.collection(self.clients_collection).stream()
+            for doc in docs:
+                c = doc.to_dict() or {}
+                clients.append({
+                    "client_id": c.get("client_id") or doc.id,
+                    "name": c.get("name") or c.get("client_id") or doc.id,
+                    "slug": c.get("slug") or c.get("client_id") or doc.id,
+                })
+            clients.sort(key=lambda x: (x.get("name") or "").lower())
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar clientes: {e}")
+        return clients
+
+    def get_client(self, client_id: str) -> Optional[Dict[str, Any]]:
+        doc = self.fs_client.collection(self.clients_collection).document(client_id).get()
+        if not doc.exists:
+            return None
+        c = doc.to_dict() or {}
+        return {
+            "client_id": c.get("client_id") or doc.id,
+            "name": c.get("name") or c.get("client_id") or doc.id,
+            "slug": c.get("slug") or c.get("client_id") or doc.id,
+        }
+
+    def update_client(self, client_id: str, name: Optional[str] = None, slug: Optional[str] = None) -> bool:
+        try:
+            payload = {"updated_at": datetime.now()}
+            if name is not None:
+                payload["name"] = name
+            if slug is not None:
+                payload["slug"] = self._slugify(slug)
+            self.fs_client.collection(self.clients_collection).document(client_id).set(payload, merge=True)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar cliente ({client_id}): {e}")
+            return False
+
+    def delete_client(self, client_id: str) -> bool:
+        try:
+            self.fs_client.collection(self.clients_collection).document(client_id).delete()
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao excluir cliente ({client_id}): {e}")
+            return False
+
+    def list_client_users(self, client_id: str) -> List[Dict[str, Any]]:
+        users = []
+        try:
+            docs = self.fs_client.collection(self.users_collection).where("client_id", "==", client_id).stream()
+            for doc in docs:
+                u = doc.to_dict() or {}
+                users.append({
+                    "user_id": u.get("user_id") or doc.id,
+                    "email": u.get("email") or "",
+                    "name": u.get("name") or "",
+                    "role": u.get("role") or "viewer",
+                    "client_id": u.get("client_id"),
+                })
+            users.sort(key=lambda x: (x.get("email") or ""))
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar usuários do cliente ({client_id}): {e}")
+        return users
+
+    def add_client_user(self, client_id: str, email: str, name: str = "", role: str = "viewer", password: str = "") -> str:
+        email_norm = self._normalize_email(email)
+        existing = self._query_first_by_field(self.users_collection, "email", email_norm)
+        now = datetime.now()
+        user_id = existing.id if existing else f"user_{uuid.uuid4().hex[:16]}"
+        payload = {
+            "user_id": user_id,
+            "email": email_norm,
+            "name": (name or "").strip(),
+            "role": role or "viewer",
+            "client_id": client_id,
+            "updated_at": now,
+        }
+        if password:
+            payload["password_hash"] = generate_password_hash(password)
+        if not existing:
+            payload["created_at"] = now
+        self.fs_client.collection(self.users_collection).document(user_id).set(payload, merge=True)
+        return user_id
+
+    def remove_client_user(self, user_id: str) -> bool:
+        try:
+            self.fs_client.collection(self.users_collection).document(user_id).delete()
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao remover usuário ({user_id}): {e}")
+            return False
+
+    def set_dashboard_client(self, campaign_key: str, client_id: str) -> bool:
+        try:
+            now = datetime.now()
+            self.fs_client.collection(self.dashboards_collection).document(campaign_key).set({
+                "client_id": client_id,
+                "updated_at": now,
+            }, merge=True)
+            self.fs_client.collection(self.campaigns_collection).document(campaign_key).set({
+                "client_id": client_id,
+                "updated_at": now,
+            }, merge=True)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao vincular dashboard ({campaign_key}) ao cliente ({client_id}): {e}")
+            return False
+
+    def get_dashboards_by_client(self, client_id: str) -> List[Dict[str, Any]]:
+        dashboards = []
+        try:
+            docs = self.fs_client.collection(self.dashboards_collection).where("client_id", "==", client_id).stream()
+            for doc in docs:
+                d = doc.to_dict() or {}
+                dashboards.append({
+                    "campaign_key": d.get("campaign_key") or doc.id,
+                    "dashboard_name": d.get("dashboard_name") or d.get("campaign_name") or doc.id,
+                    "campaign_name": d.get("campaign_name") or d.get("dashboard_name"),
+                    "channel": d.get("channel"),
+                    "kpi": d.get("kpi"),
+                    "client_id": d.get("client_id"),
+                    "created_at": d.get("created_at"),
+                    "updated_at": d.get("updated_at"),
+                    "start_date": d.get("start_date"),
+                    "end_date": d.get("end_date"),
+                    "investment": d.get("investment"),
+                    "impressions": d.get("impressions"),
+                    "kpi_target": d.get("kpi_target"),
+                })
+            dashboards.sort(key=lambda x: (x.get("dashboard_name") or "").lower())
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar dashboards do cliente ({client_id}): {e}")
+        return dashboards
 
 if __name__ == "__main__":
     # Teste básico
