@@ -13,7 +13,7 @@ import tempfile
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from functools import wraps
-from flask import Flask, request, jsonify, send_from_directory, render_template_string, session, redirect
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, session, redirect, make_response
 from flask_cors import CORS
 import pandas as pd
 
@@ -2249,8 +2249,14 @@ def client_dashboards(client_id):
         dashboards = []
     page_html = _render_client_portal(client, dashboards)
     if is_super_admin():
-        return with_superadmin_sidebar(page_html, active_menu="dashboards")
-    return page_html
+        page_html = with_superadmin_sidebar(page_html, active_menu="dashboards")
+
+    # Avoid stale cached HTML/JS in the client mini-dashboard portal.
+    response = make_response(page_html)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 @app.route('/me/dashboards')
