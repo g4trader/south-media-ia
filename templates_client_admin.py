@@ -247,7 +247,7 @@ def get_client_portal_html(client, dashboards):
 
         cards.append(
             f"""
-            <article class="mini-card">
+            <article class="mini-card" data-campaign-key="{escape(ckey)}">
                 <div class="mini-top">
                     <div>
                         <h3 class="card-title">{escape(cname)}</h3>
@@ -259,19 +259,19 @@ def get_client_portal_html(client, dashboards):
                 <div class="mini-grid">
                     <div class="mini-metric">
                         <span class="metric-label">Investimento</span>
-                        <span class="metric-value">{escape(_fmt_currency(investment))}</span>
+                        <span class="metric-value js-investment">{escape(_fmt_currency(investment))}</span>
                     </div>
                     <div class="mini-metric">
                         <span class="metric-label">Imp. Contratadas</span>
-                        <span class="metric-value">{escape(_fmt_int(impressions))}</span>
+                        <span class="metric-value js-impressions">{escape(_fmt_int(impressions))}</span>
                     </div>
                     <div class="mini-metric">
                         <span class="metric-label">Meta KPI</span>
-                        <span class="metric-value">{escape(str(kpi_target) if kpi_target not in (None, "") else "--")}</span>
+                        <span class="metric-value js-kpi-target">{escape(str(kpi_target) if kpi_target not in (None, "") else "--")}</span>
                     </div>
                     <div class="mini-metric">
                         <span class="metric-label">Período</span>
-                        <span class="metric-value">{escape(period_text)}</span>
+                        <span class="metric-value js-period">{escape(period_text)}</span>
                     </div>
                 </div>
 
@@ -370,6 +370,68 @@ def get_client_portal_html(client, dashboards):
             {cards_html}
         </div>
     </div>
+    <script>
+        function fmtCurrency(v) {{
+            const n = Number(v);
+            if (!Number.isFinite(n)) return "--";
+            return new Intl.NumberFormat('pt-BR', {{ style: 'currency', currency: 'BRL' }}).format(n);
+        }}
+        function fmtInt(v) {{
+            const n = Number(v);
+            if (!Number.isFinite(n)) return "--";
+            return new Intl.NumberFormat('pt-BR', {{ maximumFractionDigits: 0 }}).format(Math.round(n));
+        }}
+        function fmtDate(v) {{
+            if (!v) return "--";
+            const d = new Date(v);
+            if (!Number.isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+            const raw = String(v).trim();
+            return raw || "--";
+        }}
+        function pickFirst(obj, keys) {{
+            for (const k of keys) {{
+                if (!obj) break;
+                const val = obj[k];
+                if (val !== undefined && val !== null && String(val).trim() !== "") return val;
+            }}
+            return null;
+        }}
+        async function hydrateMiniCard(card) {{
+            const campaignKey = card.dataset.campaignKey;
+            if (!campaignKey) return;
+            try {{
+                const res = await fetch(`/api/${{encodeURIComponent(campaignKey)}}/data`);
+                if (!res.ok) return;
+                const payload = await res.json();
+                if (!payload.success || !payload.data) return;
+                const contract = payload.data.contract || {{}};
+
+                const investment = pickFirst(contract, ['investment', 'investimento', 'budget', 'total_budget']);
+                const impressions = pickFirst(contract, ['contracted_impressions', 'impressions_contracted', 'impressions']);
+                const kpiTarget = pickFirst(contract, ['kpi_target', 'contracted_kpi', 'cpm_contracted', 'cpv_contracted', 'cpe_contracted', 'cpd_contracted']);
+                const startDate = pickFirst(contract, ['start_date', 'data_inicio', 'period_start']);
+                const endDate = pickFirst(contract, ['end_date', 'data_fim', 'period_end']);
+
+                const elInvestment = card.querySelector('.js-investment');
+                const elImpressions = card.querySelector('.js-impressions');
+                const elKpi = card.querySelector('.js-kpi-target');
+                const elPeriod = card.querySelector('.js-period');
+
+                if (elInvestment && investment !== null) elInvestment.textContent = fmtCurrency(investment);
+                if (elImpressions && impressions !== null) elImpressions.textContent = fmtInt(impressions);
+                if (elKpi && kpiTarget !== null) elKpi.textContent = String(kpiTarget);
+                if (elPeriod && (startDate || endDate)) elPeriod.textContent = `${{fmtDate(startDate)}} - ${{fmtDate(endDate)}}`;
+            }} catch (err) {{
+                // Ignore card-level errors to avoid breaking the whole client portal.
+            }}
+        }}
+        (async function hydrateMiniCards() {{
+            const cards = Array.from(document.querySelectorAll('.mini-card[data-campaign-key]'));
+            for (const card of cards) {{
+                await hydrateMiniCard(card);
+            }}
+        }})();
+    </script>
 </body>
 </html>
 """
