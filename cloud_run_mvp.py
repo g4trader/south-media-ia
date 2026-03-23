@@ -2275,7 +2275,7 @@ def admin_panel():
     if not cards_html:
         cards_html = '<div class="empty">Nenhum cliente cadastrado ainda.</div>'
 
-    return render_template_string("""
+    page_html = render_template_string("""
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2284,17 +2284,7 @@ def admin_panel():
   <title>Painel Superadmin</title>
   <style>
     *{box-sizing:border-box}
-    :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke:rgba(139,92,246,.28)}
-    body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%);color:#fff}
-    .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-    .sidebar{background:linear-gradient(180deg,#0c1323 0%,#111827 100%);border-right:1px solid rgba(148,163,184,.25);padding:22px 18px;position:sticky;top:0;height:100vh}
-    .brand{font-weight:800;font-size:1.05rem;letter-spacing:.2px;margin-bottom:20px;color:#e5e7eb}
-    .menu{display:flex;flex-direction:column;gap:8px}
-    .menu a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#f8fafc;text-decoration:none;background:transparent;border:1px solid transparent;transition:all .18s ease}
-    .menu a:hover{border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);color:#f97316}
-    .menu a.active{color:#f97316;border-color:rgba(249,115,22,.55);background:rgba(249,115,22,.10);box-shadow:inset 0 0 0 1px rgba(249,115,22,.08)}
-    .menu .nav-icon{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
-    .content{padding:24px}
+    .container{max-width:1100px;margin:0 auto}
     .header h1{margin:0 0 6px 0}
     .header p{margin:0;color:#9CA3AF}
     .stats{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap}
@@ -2305,29 +2295,11 @@ def admin_panel():
     .client-name{font-weight:700;font-size:1rem}
     .client-id{color:#9CA3AF;font-size:.85rem;margin-top:4px}
     .client-count{margin-top:10px;color:#c4b5fd;font-weight:600}
-    .empty{color:var(--muted);background:rgba(0,0,0,.20);border:1px dashed rgba(148,163,184,.35);border-radius:10px;padding:18px}
-    @media (max-width: 900px){
-      .layout{grid-template-columns:1fr}
-      .sidebar{height:auto;position:relative}
-    }
+    .empty{color:#9CA3AF;background:rgba(0,0,0,.20);border:1px dashed rgba(148,163,184,.35);border-radius:10px;padding:18px}
   </style>
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="brand">South Media IA - Superadmin</div>
-      <nav class="menu">
-        <a class="active" href="/panel"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg> Painel</a>
-        <a href="/dashboards-list"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg> Dashboards</a>
-        <a href="/dash-generator-pro"><svg class="nav-icon" viewBox="0 0 24 24"><path d="m13 3-7 10h5l-1 8 8-12h-5l1-6z"></path></svg> Gerador</a>
-        <a href="/dash-generator-pro-multicanal"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="12" cy="18" r="2"></circle><path d="M8 7.5 10.7 15M16 7.5 13.3 15M8 6h8"></path></svg> Gerador Multicanal</a>
-        <a href="/admin/clients"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg> Clientes</a>
-        <a href="/admin/users"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg> Usuários</a>
-        <a href="/me/dashboards"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"></path></svg> Meus Dashboards</a>
-        <a href="/logout"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg> Sair</a>
-      </nav>
-    </aside>
-    <main class="content">
+  <div class="container">
       <div class="header">
         <h1>Visão Geral de Clientes</h1>
         <p>Clique em um cliente para abrir a listagem de dashboards vinculados.</p>
@@ -2337,11 +2309,11 @@ def admin_panel():
         <div class="stat"><strong>{{ total_dashboards }}</strong><br>Dashboards vinculados</div>
       </div>
       <section class="cards">{{ cards_html|safe }}</section>
-    </main>
   </div>
 </body>
 </html>
     """, clients_count=len(clients), total_dashboards=total_linked_dashboards, cards_html=cards_html)
+    return with_superadmin_sidebar(page_html, active_menu="panel")
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):

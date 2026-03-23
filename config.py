@@ -35,7 +35,9 @@ class EnvironmentConfig:
         
         if self.environment == 'production':
             return {
-                'api_endpoint': 'https://gen-dashboard-ia-6f3ckz7c7q-uc.a.run.app',
+                # In production, default to same-origin requests to preserve authenticated session cookies.
+                # Can be overridden via API_ENDPOINT when needed.
+                'api_endpoint': os.environ.get('API_ENDPOINT', ''),
                 'git_manager_url': None,  # Desativado para evitar instabilidade
                 'debug': False,
                 'port': int(os.environ.get('PORT', 8080))
@@ -50,7 +52,8 @@ class EnvironmentConfig:
     
     def get_api_endpoint(self) -> str:
         """Obter endpoint da API baseado no ambiente"""
-        return self.config['api_endpoint']
+        endpoint = self.config['api_endpoint'] or ''
+        return endpoint.rstrip('/')
     
     def get_git_manager_url(self) -> str:
         """Obter URL do Git Manager baseado no ambiente"""
