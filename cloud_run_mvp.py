@@ -12,7 +12,8 @@ import sqlite3
 import tempfile
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
-from flask import Flask, request, jsonify, send_from_directory, render_template_string
+from functools import wraps
+from flask import Flask, request, jsonify, send_from_directory, render_template_string, session, redirect
 from flask_cors import CORS
 import pandas as pd
 
@@ -28,8 +29,16 @@ from real_google_sheets_extractor import RealGoogleSheetsExtractor
 from google_sheets_service import GoogleSheetsService
 from config import get_api_endpoint, get_git_manager_url, is_production, is_development, get_port, is_debug
 from bigquery_firestore_manager import BigQueryFirestoreManager
+try:
+    from templates_client_admin import get_admin_clients_html, get_client_portal_html
+except ImportError:
+    get_admin_clients_html = get_client_portal_html = None
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "south-media-dev-secret-change-in-production")
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = True if is_production() else False
 @app.route('/favicon.ico')
 def favicon():
     try:
@@ -49,6 +58,187 @@ try:
 except Exception as e:
     logger.warning(f"⚠️ BigQuery + Firestore não disponível: {e}")
     bq_fs_manager = None
+
+if bq_fs_manager:
+    try:
+        # Provisionar superadmins iniciais (idempotente)
+        bq_fs_manager.ensure_superadmin_user(
+            email="g4trader.news@gmail.com",
+            password="south#media@26",
+            name="Super Admin"
+        )
+        bq_fs_manager.ensure_superadmin_user(
+            email="operacional@southmedia.com.br",
+            password="south#media@26",
+            name="Super Admin Operacional"
+        )
+        logger.info("✅ Superadmins iniciais garantidos")
+    except Exception as e:
+        logger.warning(f"⚠️ Não foi possível provisionar superadmins iniciais: {e}")
+
+
+def get_current_session_user() -> Optional[Dict[str, Any]]:
+    """Retornar dados do usuário autenticado da sessão."""
+    if not session.get("user_id"):
+        return None
+    return {
+        "user_id": session.get("user_id"),
+        "email": session.get("email"),
+        "role": session.get("role"),
+        "client_id": session.get("client_id"),
+    }
+
+
+def is_super_admin() -> bool:
+    user = get_current_session_user()
+    return bool(user and user.get("role") == "super_admin")
+
+
+def login_required_api(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not get_current_session_user():
+            return jsonify({"success": False, "message": "Não autenticado"}), 401
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def superadmin_required_api(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not get_current_session_user():
+            return jsonify({"success": False, "message": "Não autenticado"}), 401
+        if not is_super_admin():
+            return jsonify({"success": False, "message": "Acesso negado"}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def login_required_page(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not get_current_session_user():
+            return redirect("/login?redirect=" + request.path)
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def superadmin_required_page(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not get_current_session_user():
+            return redirect("/login?redirect=" + request.path)
+        if not is_super_admin():
+            return "<h1>Acesso negado</h1>", 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+def with_superadmin_sidebar(page_html: str, active_menu: str = "") -> str:
+    """Inject persistent superadmin sidebar into full HTML pages."""
+    if not page_html or "<html" not in page_html or "<body" not in page_html:
+        return page_html
+
+    nav_items = [
+        ("panel", "/panel", '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>', "Painel"),
+        ("dashboards", "/dashboards-list", '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg>', "Dashboards"),
+        ("generator", "/dash-generator-pro", '<svg class="nav-icon" viewBox="0 0 24 24"><path d="m13 3-7 10h5l-1 8 8-12h-5l1-6z"></path></svg>', "Gerador"),
+        ("multichannel", "/dash-generator-pro-multicanal", '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="12" cy="18" r="2"></circle><path d="M8 7.5 10.7 15M16 7.5 13.3 15M8 6h8"></path></svg>', "Gerador Multicanal"),
+        ("clients", "/admin/clients", '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg>', "Clientes"),
+        ("users", "/admin/users", '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>', "Usuários"),
+        ("me", "/me/dashboards", '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"></path></svg>', "Meus Dashboards"),
+        ("logout", "/logout", '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>', "Sair"),
+    ]
+    nav_links = []
+    for key, href, icon, label in nav_items:
+        class_attr = ' class="active"' if key == active_menu else ""
+        nav_links.append(f'<a{class_attr} href="{href}">{icon} {label}</a>')
+    nav_html = "".join(nav_links)
+
+    style_block = """
+<style id="superadmin-shell-style">
+  :root{
+    --bg:#0F1023;
+    --bg2:#16213E;
+    --panel:#1A1A2E;
+    --muted:#9CA3AF;
+    --stroke:rgba(139,92,246,.28);
+    --grad:linear-gradient(135deg,#8B5CF6,#EC4899);
+    --orange:#f97316;
+  }
+  body{
+    margin:0!important;
+    padding:0!important;
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif!important;
+    color:#fff!important;
+    background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)!important;
+    min-height:100vh;
+  }
+  .sa-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+  .sa-sidebar{background:linear-gradient(180deg,#0c1323 0%,#111827 100%);border-right:1px solid rgba(148,163,184,.25);padding:22px 18px;position:sticky;top:0;height:100vh;z-index:20}
+  .sa-brand{font-weight:800;font-size:1.05rem;letter-spacing:.2px;margin-bottom:20px;color:#e5e7eb}
+  .sa-menu{display:flex;flex-direction:column;gap:8px}
+  .sa-menu a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#f8fafc;text-decoration:none;background:transparent;border:1px solid transparent;transition:all .18s ease}
+  .sa-menu a:hover{border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);color:var(--orange)}
+  .sa-menu a.active{color:var(--orange);border-color:rgba(249,115,22,.55);background:rgba(249,115,22,.10);box-shadow:inset 0 0 0 1px rgba(249,115,22,.08)}
+  .sa-menu .nav-icon{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .sa-content{padding:24px}
+
+  /* unify page visuals to multicanal style */
+  .sa-content .container{
+    max-width:1100px;
+    margin:0 auto;
+    background:rgba(26,26,46,.8);
+    border:1px solid var(--stroke);
+    border-radius:14px;
+    padding:2rem;
+    backdrop-filter:blur(8px);
+    box-shadow:0 20px 40px rgba(0,0,0,.3);
+  }
+  .sa-content .card,.sa-content .stat-card,.sa-content .filters,.sa-content .dashboard-card{
+    background:rgba(0,0,0,.20)!important;
+    border:1px solid rgba(148,163,184,.14)!important;
+    border-radius:12px!important;
+    backdrop-filter:blur(8px);
+  }
+  .sa-content h1{color:#8B5CF6!important}
+  .sa-content .subtitle,.sa-content .sub,.sa-content p{color:var(--muted)}
+  .sa-content input,.sa-content select,.sa-content button{
+    border:1px solid rgba(148,163,184,.2)!important;
+    border-radius:8px!important;
+    background:rgba(255,255,255,.04)!important;
+    color:#fff!important;
+  }
+  .sa-content button,.sa-content .btn-primary{
+    background:var(--grad)!important;
+    border:none!important;
+    color:#fff!important;
+  }
+  .sa-content .view-dashboards-btn,.sa-content .admin-links a,.sa-content .back-link,.sa-content .nav-link{
+    color:#8B5CF6!important;
+  }
+  .sa-content .view-dashboards-btn:hover,.sa-content .admin-links a:hover,.sa-content .back-link:hover,.sa-content .nav-link:hover{
+    color:var(--orange)!important;
+  }
+  @media (max-width:900px){
+    .sa-shell{grid-template-columns:1fr}
+    .sa-sidebar{position:relative;height:auto}
+    .sa-content{padding:14px}
+    .sa-content .container{padding:1rem}
+  }
+</style>
+"""
+    shell_start = f'<div class="sa-shell"><aside class="sa-sidebar"><div class="sa-brand">South Media IA - Superadmin</div><nav class="sa-menu">{nav_html}</nav></aside><main class="sa-content">'
+    shell_end = "</main></div>"
+
+    html = page_html
+    if "</head>" in html and "superadmin-shell-style" not in html:
+        html = html.replace("</head>", style_block + "</head>", 1)
+    if "<body>" in html:
+        html = html.replace("<body>", "<body>" + shell_start, 1)
+    if "</body>" in html:
+        html = html.replace("</body>", shell_end + "</body>", 1)
+    return html
 
 class CampaignConfig:
     """Configuração de uma campanha"""
@@ -779,10 +969,222 @@ def test_extractor():
             "traceback": traceback.format_exc()
         }), 500
 
+@app.route('/login', methods=['GET'])
+def login_page():
+    """Página de login server-side."""
+    redirect_to = request.args.get("redirect", "")
+    return render_template_string("""
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - South Media IA</title>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
+    .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:24px;min-width:320px}
+    input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#fff}
+    button{background:#7c3aed;border:none;font-weight:600;cursor:pointer}
+    .msg{margin-top:12px;color:#fca5a5}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Entrar</h2>
+    <label>E-mail</label>
+    <input id="email" type="email" autocomplete="username" />
+    <label>Senha</label>
+    <input id="password" type="password" autocomplete="current-password" />
+    <button id="btnLogin">Entrar</button>
+    <div id="msg" class="msg"></div>
+  </div>
+  <script>
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const msg = document.getElementById('msg');
+      msg.textContent = '';
+      const r = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ email, password })
+      });
+      const j = await r.json();
+      if (!j.success) {
+        msg.textContent = j.message || 'Falha no login';
+        return;
+      }
+      const redirectTo = {{ redirect_to|tojson }};
+      const fallback = (j.user && j.user.role === 'super_admin')
+        ? '/panel'
+        : '/me/dashboards';
+      window.location.href = redirectTo || fallback;
+    });
+  </script>
+</body>
+</html>
+    """, redirect_to=redirect_to)
+
+
+@app.route('/logout', methods=['GET'])
+def logout_page():
+    session.clear()
+    return redirect("/login")
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def api_auth_login():
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Auth indisponível"}), 503
+    try:
+        data = request.get_json() or {}
+        email = (data.get("email") or "").strip().lower()
+        password = data.get("password") or ""
+        if not email or not password:
+            return jsonify({"success": False, "message": "E-mail e senha são obrigatórios"}), 400
+
+        user = bq_fs_manager.verify_user_credentials(email=email, password=password)
+        if not user:
+            return jsonify({"success": False, "message": "Credenciais inválidas"}), 401
+
+        session.clear()
+        session["user_id"] = user.get("user_id")
+        session["email"] = user.get("email")
+        session["role"] = user.get("role", "viewer")
+        session["client_id"] = user.get("client_id")
+
+        return jsonify({
+            "success": True,
+            "user": {
+                "user_id": user.get("user_id"),
+                "email": user.get("email"),
+                "name": user.get("name", ""),
+                "role": user.get("role", "viewer"),
+                "client_id": user.get("client_id"),
+            }
+        })
+    except Exception as e:
+        logger.error(f"❌ Erro no login: {e}")
+        return jsonify({"success": False, "message": "Erro interno no login"}), 500
+
+
+@app.route('/api/auth/logout', methods=['POST'])
+def api_auth_logout():
+    session.clear()
+    return jsonify({"success": True})
+
+
+@app.route('/api/auth/me', methods=['GET'])
+def api_auth_me():
+    user = get_current_session_user()
+    if not user:
+        return jsonify({"success": False, "message": "Não autenticado"}), 401
+    return jsonify({"success": True, "user": user})
+
+
+@app.route('/api/auth/change-password', methods=['POST'])
+@login_required_api
+def api_auth_change_password():
+    """Trocar senha do usuário logado."""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Auth indisponível"}), 503
+    try:
+        data = request.get_json() or {}
+        current_password = data.get("current_password") or ""
+        new_password = data.get("new_password") or ""
+        if not current_password or not new_password:
+            return jsonify({"success": False, "message": "Senha atual e nova senha são obrigatórias"}), 400
+        if len(new_password) < 8:
+            return jsonify({"success": False, "message": "Nova senha deve ter pelo menos 8 caracteres"}), 400
+
+        me = get_current_session_user()
+        user = bq_fs_manager.verify_user_credentials(email=me.get("email"), password=current_password)
+        if not user:
+            return jsonify({"success": False, "message": "Senha atual inválida"}), 401
+
+        ok = bq_fs_manager.reset_user_password(user_id=me.get("user_id"), new_password=new_password)
+        if not ok:
+            return jsonify({"success": False, "message": "Falha ao atualizar senha"}), 500
+        return jsonify({"success": True})
+    except Exception as e:
+        logger.error(f"❌ Erro ao trocar senha: {e}")
+        return jsonify({"success": False, "message": "Erro interno"}), 500
+
+
+@app.route('/api/admin/users', methods=['GET'])
+@superadmin_required_api
+def api_admin_list_users():
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    users = bq_fs_manager.list_all_users()
+    sanitized = []
+    for u in users:
+        sanitized.append({
+            "user_id": u.get("user_id"),
+            "email": u.get("email"),
+            "name": u.get("name"),
+            "role": u.get("role", "viewer"),
+            "client_id": u.get("client_id"),
+            "status": u.get("status", "active"),
+            "last_login": u.get("last_login"),
+        })
+    return jsonify({"success": True, "users": sanitized})
+
+
+@app.route('/api/admin/users/<user_id>/password', methods=['PUT'])
+@superadmin_required_api
+def api_admin_reset_user_password(user_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    data = request.get_json() or {}
+    new_password = data.get("new_password") or ""
+    if len(new_password) < 8:
+        return jsonify({"success": False, "message": "Senha deve ter pelo menos 8 caracteres"}), 400
+    ok = bq_fs_manager.reset_user_password(user_id=user_id, new_password=new_password)
+    if not ok:
+        return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
+    return jsonify({"success": True})
+
+
+@app.route('/api/admin/users/<user_id>/role', methods=['PUT'])
+@superadmin_required_api
+def api_admin_update_user_role(user_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    data = request.get_json() or {}
+    role = (data.get("role") or "").strip()
+    allowed_roles = {"super_admin", "admin", "manager", "viewer"}
+    if role not in allowed_roles:
+        return jsonify({"success": False, "message": "Role inválida"}), 400
+    ok = bq_fs_manager.update_user_role(user_id=user_id, role=role)
+    if not ok:
+        return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
+    return jsonify({"success": True})
+
+
 @app.route('/dash-generator-pro', methods=['GET'])
+@superadmin_required_page
 def dash_generator_pro():
     """Interface de teste do gerador"""
-    return render_template_string('''
+    from html import escape as html_escape
+
+    clients_for_select = []
+    if bq_fs_manager:
+        try:
+            clients_for_select = bq_fs_manager.list_clients() or []
+        except Exception as e:
+            logger.warning(f"⚠️ Erro ao carregar clientes para o gerador: {e}")
+
+    client_options_html = ''.join(
+        '<option value="{client_id}" data-client-name="{client_name}">{client_name} ({client_id})</option>'.format(
+            client_id=html_escape(str(c.get("client_id") or "")),
+            client_name=html_escape(str(c.get("name") or c.get("client_id") or "")),
+        )
+        for c in clients_for_select
+        if c.get("client_id")
+    )
+
+    page_html = render_template_string(''' 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1018,14 +1420,32 @@ def dash_generator_pro():
             <div class="logo">SM</div>
             <h1>Gerador de Dashboards</h1>
             <p class="subtitle">Sistema Profissional de Geração de Dashboards</p>
-            <div class="persistence-badge">🎯 Persistência Definitiva - BigQuery + Firestore</div>
-            <a href="/dashboards-list" class="view-dashboards-btn">📊 Ver Todos os Dashboards</a>
+            <div class="persistence-badge">Persistência Definitiva - BigQuery + Firestore</div>
+            <a href="/dashboards-list" class="view-dashboards-btn" style="display:inline-flex;align-items:center;gap:8px">
+                <svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg>
+                Ver Todos os Dashboards
+            </a>
+            <div style="margin-top:10px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+                <a href="/admin/clients" class="view-dashboards-btn" style="margin:0;display:inline-flex;align-items:center;gap:8px"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg>Clientes</a>
+                <a href="/admin/users" class="view-dashboards-btn" style="margin:0;display:inline-flex;align-items:center;gap:8px"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Usuários</a>
+                <a href="/logout" class="view-dashboards-btn" style="margin:0;display:inline-flex;align-items:center;gap:8px"><svg style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>Sair</a>
+            </div>
         </div>
         
         <form id="generatorForm">
         <div class="form-group">
-            <label for="clientName">Cliente:</label>
+            <label for="clientName">Cliente (nome para geração):</label>
             <input type="text" id="clientName" name="client" required>
+            <small>Se selecionar um cliente existente abaixo, este campo será preenchido automaticamente.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="clientId">Vincular ao Cliente (opcional):</label>
+            <select id="clientId" name="client_id">
+                <option value="">Sem vínculo (vincule depois)</option>
+                {{client_options_html|safe}}
+            </select>
+            <small>O vínculo será gravado no momento da criação do dashboard.</small>
         </div>
         
         <div class="form-group">
@@ -1090,7 +1510,7 @@ def dash_generator_pro():
             <small>Marque esta opção se a campanha CPM utiliza métricas de quartis de vídeo/escuta</small>
         </div>
         
-        <button type="submit" id="generateButton">🚀 Gerar Dashboard</button>
+        <button type="submit" id="generateButton">Gerar Dashboard</button>
         </form>
         
         <div id="result"></div>
@@ -1132,6 +1552,22 @@ def dash_generator_pro():
                 sheetIdField.style.color = '#666';
             }
         });
+
+        // Auto-preencher "client" quando usuário selecionar um client_id existente
+        const clientIdSelect = document.getElementById('clientId');
+        const clientNameInput = document.getElementById('clientName');
+        if (clientIdSelect && clientNameInput) {
+            clientIdSelect.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                const clientName = opt ? opt.dataset.clientName : '';
+                if (clientName) clientNameInput.value = clientName;
+            });
+
+            // Se o usuário editar manualmente o nome, removemos o vínculo
+            clientNameInput.addEventListener('input', function() {
+                if (clientIdSelect.value) clientIdSelect.value = '';
+            });
+        }
         
         // Mostrar/ocultar opção de quartis quando KPI for CPM
         document.getElementById('kpi').addEventListener('change', function() {
@@ -1204,9 +1640,11 @@ def dash_generator_pro():
     </script>
 </body>
 </html>
-    ''')
+    ''', client_options_html=client_options_html)
+    return with_superadmin_sidebar(page_html, active_menu="generator")
 
 @app.route('/api/generate-dashboard', methods=['POST'])
+@superadmin_required_api
 def generate_dashboard_endpoint():
     """Gerar dashboard via API"""
     try:
@@ -1221,6 +1659,9 @@ def generate_dashboard_endpoint():
                 return jsonify({"success": False, "message": f"Campo obrigatório: {field}"}), 400
         
         client = data['client']
+        client_id = data.get('client_id')
+        if isinstance(client_id, str) and client_id.strip() == '':
+            client_id = None
         campaign_name = data['campaign_name']
         sheet_id = data['sheet_id']
         channel = data.get('channel', 'Video Programática')
@@ -1264,6 +1705,9 @@ def generate_dashboard_endpoint():
                     channel=channel,
                     kpi=kpi
                 )
+                # Se um client_id foi informado, persistir o vínculo do dashboard com o cliente
+                if client_id:
+                    bq_fs_manager.set_dashboard_client(campaign_key, client_id=client_id)
                 logger.info(f"✅ Dashboard {dashboard_id} salvo no BigQuery + Firestore")
             except Exception as e:
                 logger.warning(f"⚠️ Erro ao salvar dashboard no BigQuery/Firestore: {e}")
@@ -1282,9 +1726,22 @@ def generate_dashboard_endpoint():
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
 @app.route('/api/dashboard/<campaign_key>', methods=['GET'])
+@login_required_page
 def get_dashboard_html(campaign_key):
     """Obter dashboard HTML dinâmico (réplica da produção)"""
     try:
+        user = get_current_session_user()
+        if not user:
+            return redirect("/login?redirect=/api/dashboard/" + campaign_key)
+
+        # Controle de acesso por client_id (superadmin vê tudo)
+        if not is_super_admin() and bq_fs_manager:
+            linked_dashboard = bq_fs_manager.get_dashboard(campaign_key)
+            linked_client_id = (linked_dashboard or {}).get("client_id")
+            user_client_id = user.get("client_id")
+            if linked_client_id and linked_client_id != user_client_id:
+                return "<h1>Acesso negado</h1>", 403
+
         # Obter dados da campanha do Firestore primeiro
         campaign = None
         if bq_fs_manager:
@@ -1319,6 +1776,12 @@ def get_dashboard_html(campaign_key):
         
         if not campaign:
             return f"<html><body><h1>Campanha '{campaign_key}' não encontrada</h1></body></html>", 404
+        
+        # Normalizar campanha (Firestore pode não ter campaign_key no body; doc.id = campaign_key)
+        campaign['campaign_key'] = campaign.get('campaign_key') or campaign_key
+        campaign.setdefault('client', '')
+        campaign.setdefault('campaign_name', '')
+        campaign.setdefault('sheet_id', '')
         
         # Garantir que use_quartiles existe e é int (default 0 se não existir)
         if 'use_quartiles' not in campaign:
@@ -1407,9 +1870,22 @@ def get_dashboard_html(campaign_key):
         return f"<html><body><h1>Erro ao carregar dashboard</h1><p>{str(e)}</p></body></html>", 500
 
 @app.route('/api/<campaign_key>/data', methods=['GET'])
+@login_required_api
 def get_campaign_data(campaign_key):
     """Obter dados de uma campanha específica"""
     try:
+        user = get_current_session_user()
+        if not user:
+            return jsonify({"success": False, "message": "Não autenticado"}), 401
+
+        # Controle de acesso por client_id (superadmin vê tudo)
+        if not is_super_admin() and bq_fs_manager:
+            linked_dashboard = bq_fs_manager.get_dashboard(campaign_key)
+            linked_client_id = (linked_dashboard or {}).get("client_id")
+            user_client_id = user.get("client_id")
+            if linked_client_id and linked_client_id != user_client_id:
+                return jsonify({"success": False, "message": "Acesso negado"}), 403
+
         # Buscar campanha do Firestore
         campaign = None
         if bq_fs_manager:
@@ -1449,6 +1925,7 @@ def get_campaign_data(campaign_key):
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
 @app.route('/api/campaigns', methods=['GET'])
+@superadmin_required_api
 def list_campaigns():
     """Listar todas as campanhas"""
     try:
@@ -1457,6 +1934,414 @@ def list_campaigns():
     except Exception as e:
         logger.error(f"❌ Erro ao listar campanhas: {e}")
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
+
+# --- API Clientes e vínculo de dashboards ---
+@app.route('/api/clients', methods=['GET'])
+@superadmin_required_api
+def api_list_clients():
+    """Listar todos os clientes"""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        clients = bq_fs_manager.list_clients()
+        return jsonify({"success": True, "clients": clients})
+    except Exception as e:
+        logger.error(f"❌ Erro ao listar clientes: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients', methods=['POST'])
+@superadmin_required_api
+def api_create_client():
+    """Criar cliente. Body: { name, slug? }"""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        data = request.get_json() or {}
+        name = data.get('name') or (request.form.get('name') if request.form else None)
+        if not name:
+            return jsonify({"success": False, "message": "Campo 'name' obrigatório"}), 400
+        slug = data.get('slug') or request.form.get('slug')
+        client_id = bq_fs_manager.create_client(name=name.strip(), slug=slug.strip() if slug else None)
+        if not client_id:
+            return jsonify({"success": False, "message": "Falha ao criar cliente"}), 500
+        return jsonify({"success": True, "client_id": client_id, "client": bq_fs_manager.get_client(client_id)})
+    except Exception as e:
+        logger.error(f"❌ Erro ao criar cliente: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>', methods=['GET'])
+@superadmin_required_api
+def api_get_client(client_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        client = bq_fs_manager.get_client(client_id)
+        if not client:
+            return jsonify({"success": False, "message": "Cliente não encontrado"}), 404
+        return jsonify({"success": True, "client": client})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>', methods=['PUT'])
+@superadmin_required_api
+def api_update_client(client_id):
+    """Atualizar cliente. Body: { name?, slug? }"""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        data = request.get_json() or {}
+        name = data.get('name')
+        slug = data.get('slug')
+        ok = bq_fs_manager.update_client(client_id, name=name, slug=slug)
+        if not ok:
+            return jsonify({"success": False, "message": "Cliente não encontrado"}), 404
+        return jsonify({"success": True, "client": bq_fs_manager.get_client(client_id)})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>', methods=['DELETE'])
+@superadmin_required_api
+def api_delete_client(client_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        ok = bq_fs_manager.delete_client(client_id)
+        if not ok:
+            return jsonify({"success": False, "message": "Cliente não encontrado"}), 404
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>/users', methods=['GET'])
+@superadmin_required_api
+def api_list_client_users(client_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        users = bq_fs_manager.list_client_users(client_id)
+        return jsonify({"success": True, "users": users})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>/users', methods=['POST'])
+@superadmin_required_api
+def api_add_client_user(client_id):
+    """Body: { email, name?, role? }"""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        data = request.get_json() or {}
+        email = (data.get('email') or request.form.get('email') or '').strip()
+        if not email:
+            return jsonify({"success": False, "message": "Campo 'email' obrigatório"}), 400
+        name = data.get('name') or request.form.get('name')
+        role = data.get('role') or request.form.get('role') or 'viewer'
+        password = data.get('password') or request.form.get('password')
+        user_id = bq_fs_manager.add_client_user(client_id, email=email, name=name, role=role, password=password)
+        if not user_id:
+            return jsonify({"success": False, "message": "Falha ao adicionar usuário"}), 500
+        return jsonify({"success": True, "user_id": user_id})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>/users/<user_id>', methods=['DELETE'])
+@superadmin_required_api
+def api_remove_client_user(client_id, user_id):
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        ok = bq_fs_manager.remove_client_user(user_id)
+        if not ok:
+            return jsonify({"success": False, "message": "Usuário não encontrado"}), 404
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/clients/<client_id>/dashboards', methods=['GET'])
+@login_required_api
+def api_list_client_dashboards(client_id):
+    user = get_current_session_user()
+    if not user:
+        return jsonify({"success": False, "message": "Não autenticado"}), 401
+    if not is_super_admin() and user.get("client_id") != client_id:
+        return jsonify({"success": False, "message": "Acesso negado"}), 403
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        dashboards = bq_fs_manager.get_dashboards_by_client(client_id)
+        return jsonify({"success": True, "dashboards": dashboards})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route('/api/dashboards/<campaign_key>/client', methods=['PUT'])
+@superadmin_required_api
+def api_link_dashboard_client(campaign_key):
+    """Vincular ou desvincular dashboard ao cliente. Body: { client_id } (null para remover)"""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        data = request.get_json() or {}
+        client_id = data.get('client_id')
+        if client_id is not None and client_id == '':
+            client_id = None
+        ok = bq_fs_manager.set_dashboard_client(campaign_key, client_id=client_id)
+        if not ok:
+            return jsonify({"success": False, "message": "Dashboard não encontrado"}), 404
+        return jsonify({"success": True, "campaign_key": campaign_key, "client_id": client_id})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+def _render_admin_clients():
+    if get_admin_clients_html:
+        return get_admin_clients_html()
+    return "<h1>Templates não disponíveis</h1>"
+
+def _render_client_portal(client, dashboards):
+    if get_client_portal_html:
+        return get_client_portal_html(client, dashboards)
+    return "<h1>Templates não disponíveis</h1>"
+
+@app.route('/admin/clients')
+@superadmin_required_page
+def admin_clients():
+    """Página de gerenciamento de clientes e usuários"""
+    if not bq_fs_manager:
+        return "<h1>Firestore não disponível</h1>", 503
+    return with_superadmin_sidebar(_render_admin_clients(), active_menu="clients")
+
+
+@app.route('/admin/users')
+@superadmin_required_page
+def admin_users():
+    """Página de gerenciamento global de usuários."""
+    page_html = render_template_string("""
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administração de Usuários</title>
+  <style>
+    body{font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;padding:24px}
+    .container{max-width:1100px;margin:0 auto}
+    a{color:#8B5CF6;text-decoration:none}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:16px;margin-top:16px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.2);font-size:.9rem}
+    input,select,button{padding:8px;border-radius:8px;border:1px solid rgba(148,163,184,.3);background:rgba(255,255,255,.1);color:#fff}
+    button{cursor:pointer;background:rgba(139,92,246,.4);border-color:#8B5CF6}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/dashboards-list">← Voltar</a>
+    <h1 style="display:flex;align-items:center;gap:10px"><svg style="width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Administração de Usuários</h1>
+    <p style="color:#9CA3AF">Gerencie roles e reset de senha de todos os usuários.</p>
+    <div class="card">
+      <table id="usersTable">
+        <thead><tr><th>E-mail</th><th>Nome</th><th>Role</th><th>Cliente</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const api = (path, opts={}) => fetch(path, {headers:{'Content-Type':'application/json'}, ...opts}).then(r=>r.json());
+    function esc(v){ const d=document.createElement('div'); d.textContent=v||''; return d.innerHTML; }
+    async function loadUsers(){
+      const r = await api('/api/admin/users');
+      const tb = document.querySelector('#usersTable tbody');
+      if(!r.success){ tb.innerHTML = '<tr><td colspan="5">Erro ao carregar usuários</td></tr>'; return; }
+      tb.innerHTML = r.users.map(u => `
+        <tr>
+          <td>${esc(u.email)}</td>
+          <td>${esc(u.name||'')}</td>
+          <td>
+            <select data-role-user="${u.user_id}">
+              ${['viewer','manager','admin','super_admin'].map(role => `<option value="${role}" ${u.role===role?'selected':''}>${role}</option>`).join('')}
+            </select>
+          </td>
+          <td>${esc(u.client_id||'-')}</td>
+          <td>
+            <button data-save-role="${u.user_id}">Salvar role</button>
+            <button data-reset-pass="${u.user_id}">Resetar senha</button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('[data-save-role]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const userId = btn.dataset.saveRole;
+          const role = document.querySelector(`[data-role-user="${userId}"]`).value;
+          const j = await api('/api/admin/users/'+userId+'/role',{method:'PUT',body:JSON.stringify({role})});
+          alert(j.success ? 'Role atualizada' : (j.message || 'Erro'));
+        };
+      });
+
+      document.querySelectorAll('[data-reset-pass]').forEach(btn=>{
+        btn.onclick = async ()=>{
+          const userId = btn.dataset.resetPass;
+          const newPassword = prompt('Nova senha (mínimo 8 caracteres):');
+          if(!newPassword) return;
+          const j = await api('/api/admin/users/'+userId+'/password',{method:'PUT',body:JSON.stringify({new_password:newPassword})});
+          alert(j.success ? 'Senha resetada' : (j.message || 'Erro'));
+        };
+      });
+    }
+    loadUsers();
+  </script>
+</body>
+</html>
+    """)
+    return with_superadmin_sidebar(page_html, active_menu="users")
+
+@app.route('/client/<client_id>/dashboards')
+@login_required_page
+def client_dashboards(client_id):
+    """Painel do cliente: listagem de dashboards vinculados a este cliente"""
+    user = get_current_session_user()
+    if not user:
+        return redirect("/login?redirect=/client/" + client_id + "/dashboards")
+    if not is_super_admin() and user.get("client_id") != client_id:
+        return "<h1>Acesso negado</h1>", 403
+    if not bq_fs_manager:
+        return "<h1>Firestore não disponível</h1>", 503
+    try:
+        client = bq_fs_manager.get_client(client_id)
+        if not client:
+            return "<h1>Cliente não encontrado</h1>", 404
+        dashboards = bq_fs_manager.get_dashboards_by_client(client_id)
+    except Exception as e:
+        logger.error(f"Erro ao listar dashboards do cliente: {e}")
+        client = {}
+        dashboards = []
+    page_html = _render_client_portal(client, dashboards)
+    if is_super_admin():
+        return with_superadmin_sidebar(page_html, active_menu="dashboards")
+    return page_html
+
+
+@app.route('/me/dashboards')
+@login_required_page
+def my_dashboards():
+    """Atalho para o painel de dashboards do usuário logado."""
+    user = get_current_session_user()
+    if not user:
+        return redirect("/login?redirect=/me/dashboards")
+
+    if is_super_admin():
+        return redirect("/panel")
+
+    client_id = user.get("client_id")
+    if not client_id:
+        return "<h1>Usuário sem empresa vinculada</h1><p>Solicite ao superadmin a vinculação do seu usuário a um cliente.</p>", 403
+
+    return redirect(f"/client/{client_id}/dashboards")
+
+
+@app.route('/panel')
+@superadmin_required_page
+def admin_panel():
+    """Painel principal do superusuário com menu lateral e cards de clientes."""
+    clients = []
+    dashboards_by_client = {}
+    total_linked_dashboards = 0
+
+    if bq_fs_manager:
+        try:
+            clients = bq_fs_manager.list_clients() or []
+            for client in clients:
+                client_id = client.get("client_id")
+                if not client_id:
+                    continue
+                linked = bq_fs_manager.get_dashboards_by_client(client_id) or []
+                dashboards_by_client[client_id] = len(linked)
+                total_linked_dashboards += len(linked)
+        except Exception as e:
+            logger.error(f"❌ Erro ao montar painel admin: {e}")
+
+    cards_html = ""
+    for client in clients:
+        client_id = client.get("client_id", "")
+        client_name = client.get("name") or client_id
+        count = dashboards_by_client.get(client_id, 0)
+        cards_html += f"""
+        <a class="client-card" href="/client/{client_id}/dashboards">
+            <div class="client-name">{client_name}</div>
+            <div class="client-id">{client_id}</div>
+            <div class="client-count">{count} dashboard(s)</div>
+        </a>
+        """
+
+    if not cards_html:
+        cards_html = '<div class="empty">Nenhum cliente cadastrado ainda.</div>'
+
+    return render_template_string("""
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Superadmin</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke:rgba(139,92,246,.28)}
+    body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%);color:#fff}
+    .layout{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg,#0c1323 0%,#111827 100%);border-right:1px solid rgba(148,163,184,.25);padding:22px 18px;position:sticky;top:0;height:100vh}
+    .brand{font-weight:800;font-size:1.05rem;letter-spacing:.2px;margin-bottom:20px;color:#e5e7eb}
+    .menu{display:flex;flex-direction:column;gap:8px}
+    .menu a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#f8fafc;text-decoration:none;background:transparent;border:1px solid transparent;transition:all .18s ease}
+    .menu a:hover{border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);color:#f97316}
+    .menu a.active{color:#f97316;border-color:rgba(249,115,22,.55);background:rgba(249,115,22,.10);box-shadow:inset 0 0 0 1px rgba(249,115,22,.08)}
+    .menu .nav-icon{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+    .content{padding:24px}
+    .header h1{margin:0 0 6px 0}
+    .header p{margin:0;color:#9CA3AF}
+    .stats{margin-top:16px;display:flex;gap:12px;flex-wrap:wrap}
+    .stat{background:rgba(0,0,0,.20);border:1px solid rgba(148,163,184,.14);border-radius:12px;padding:12px 14px}
+    .cards{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+    .client-card{display:block;text-decoration:none;color:#fff;background:rgba(0,0,0,.20);border:1px solid rgba(148,163,184,.14);border-radius:12px;padding:16px;transition:.2s}
+    .client-card:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.6)}
+    .client-name{font-weight:700;font-size:1rem}
+    .client-id{color:#9CA3AF;font-size:.85rem;margin-top:4px}
+    .client-count{margin-top:10px;color:#c4b5fd;font-weight:600}
+    .empty{color:var(--muted);background:rgba(0,0,0,.20);border:1px dashed rgba(148,163,184,.35);border-radius:10px;padding:18px}
+    @media (max-width: 900px){
+      .layout{grid-template-columns:1fr}
+      .sidebar{height:auto;position:relative}
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">South Media IA - Superadmin</div>
+      <nav class="menu">
+        <a class="active" href="/panel"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg> Painel</a>
+        <a href="/dashboards-list"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg> Dashboards</a>
+        <a href="/dash-generator-pro"><svg class="nav-icon" viewBox="0 0 24 24"><path d="m13 3-7 10h5l-1 8 8-12h-5l1-6z"></path></svg> Gerador</a>
+        <a href="/dash-generator-pro-multicanal"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2"></circle><circle cx="18" cy="6" r="2"></circle><circle cx="12" cy="18" r="2"></circle><path d="M8 7.5 10.7 15M16 7.5 13.3 15M8 6h8"></path></svg> Gerador Multicanal</a>
+        <a href="/admin/clients"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg> Clientes</a>
+        <a href="/admin/users"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg> Usuários</a>
+        <a href="/me/dashboards"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"></path></svg> Meus Dashboards</a>
+        <a href="/logout"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg> Sair</a>
+      </nav>
+    </aside>
+    <main class="content">
+      <div class="header">
+        <h1>Visão Geral de Clientes</h1>
+        <p>Clique em um cliente para abrir a listagem de dashboards vinculados.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>{{ clients_count }}</strong><br>Clientes</div>
+        <div class="stat"><strong>{{ total_dashboards }}</strong><br>Dashboards vinculados</div>
+      </div>
+      <section class="cards">{{ cards_html|safe }}</section>
+    </main>
+  </div>
+</body>
+</html>
+    """, clients_count=len(clients), total_dashboards=total_linked_dashboards, cards_html=cards_html)
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
@@ -1537,10 +2422,10 @@ def generate_dynamic_dashboard_html(campaign, data):
         with open(template_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
-        # Substituir variáveis dinâmicas
-        campaign_key = campaign['campaign_key']
-        client = campaign['client']
-        campaign_name = campaign['campaign_name']
+        # Substituir variáveis dinâmicas (usar .get para evitar KeyError com dados do Firestore)
+        campaign_key = campaign.get('campaign_key', '')
+        client = campaign.get('client', '')
+        campaign_name = campaign.get('campaign_name', '')
         
         # Substituir no HTML usando os placeholders corretos do template
         html_content = html_content.replace('{{CLIENT_NAME}}', client)
@@ -1557,7 +2442,7 @@ def generate_dynamic_dashboard_html(campaign, data):
         
         html_content = html_content.replace('{{API_ENDPOINT}}', api_endpoint)
         
-        return html_content
+        return with_superadmin_sidebar(html_content, active_menu="dashboards")
         
     except Exception as e:
         logger.error(f"❌ Erro ao gerar HTML dinâmico: {e}")
@@ -1580,6 +2465,7 @@ if __name__ == '__main__':
         app.run(host='0.0.0.0', port=PORT, debug=DEBUG)
 
 @app.route('/api/cleanup-orphans', methods=['POST'])
+@superadmin_required_api
 def cleanup_orphans():
     """Limpar dados órfãos - SOLUÇÃO DEFINITIVA"""
     try:
@@ -1656,6 +2542,7 @@ def cleanup_orphans():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/dashboards-list')
+@superadmin_required_page
 def dashboards_list():
     """Página de listagem de dashboards"""
     try:
@@ -1683,7 +2570,8 @@ def dashboards_list():
                             'campaign_name': data.get('campaign_name', 'N/A'),
                             'channel': data.get('channel', 'N/A'),
                             'kpi': data.get('kpi', 'N/A'),
-                            'created_at': data.get('created_at', 'N/A')
+                            'created_at': data.get('created_at', 'N/A'),
+                            'client_id': data.get('client_id')  # vínculo com cliente (painel por cliente)
                         })
                     except Exception as doc_error:
                         logger.warning(f"Erro ao processar documento {doc.id}: {doc_error}")
@@ -1708,12 +2596,21 @@ def dashboards_list():
                         'campaign_name': data.get('campaign_name', 'N/A'),
                         'channel': data.get('channel', 'N/A'),
                         'kpi': data.get('kpi', 'N/A'),
-                        'created_at': data.get('created_at', 'N/A')
+                        'created_at': data.get('created_at', 'N/A'),
+                        'client_id': data.get('client_id')
                     })
             except Exception as e:
                 logger.error(f"Erro ao buscar dashboards do Firestore (fallback): {e}")
                 import traceback
                 logger.error(traceback.format_exc())
+        
+        # Buscar clientes para o seletor de vínculo
+        clients_for_link = []
+        if bq_fs_manager:
+            try:
+                clients_for_link = bq_fs_manager.list_clients()
+            except Exception:
+                pass
         
         # Gerar HTML da página
         html_content = f"""
@@ -1758,6 +2655,23 @@ def dashboards_list():
         }}
         
         .back-link:hover {{
+            color: #EC4899;
+        }}
+        
+        .admin-links {{
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }}
+        
+        .admin-links a {{
+            color: #8B5CF6;
+            text-decoration: none;
+            font-weight: 500;
+        }}
+        
+        .admin-links a:hover {{
             color: #EC4899;
         }}
         
@@ -1871,6 +2785,42 @@ def dashboards_list():
             transform: translateY(-2px);
             border-color: rgba(139, 92, 246, 0.5);
             box-shadow: 0 10px 25px rgba(139, 92, 246, 0.1);
+        }}
+        
+        .client-select, .btn-link, .btn-unlink {{
+            margin-right: 8px;
+            margin-bottom: 6px;
+        }}
+        .client-select {{
+            max-width: 180px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(148,163,184,.3);
+            border-radius: 6px;
+            padding: 6px 8px;
+            color: #fff;
+            font-size: 0.85rem;
+        }}
+        .btn-link, .btn-unlink {{
+            background: rgba(139,92,246,0.3);
+            border: 1px solid rgba(139,92,246,0.6);
+            color: #C4B5FD;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }}
+        .btn-unlink {{
+            background: rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.5);
+            color: #FCA5A5;
+        }}
+        .btn-link:hover, .btn-unlink:hover {{
+            opacity: 0.9;
+        }}
+        .client-link-info {{
+            color: #9CA3AF;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
         }}
         
         .dashboard-header {{
@@ -2014,7 +2964,13 @@ def dashboards_list():
     <div class="container">
         <div class="header">
             <a href="/" class="back-link">← Voltar ao Gerador</a>
-            <h1>📊 Dashboards Gerados</h1>
+            <div class="admin-links">
+                <a href="/admin/clients" style="display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg>Gerenciar clientes e usuários</a>
+                <a href="/admin/users" style="display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Administrar usuários</a>
+                <a href="/me/dashboards" style="display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg>Meus dashboards</a>
+                <a href="/logout" style="display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>Sair</a>
+            </div>
+            <h1>Dashboards Gerados</h1>
             <p class="subtitle">Gerencie e acesse todos os dashboards criados</p>
         </div>
         
@@ -2093,6 +3049,8 @@ def dashboards_list():
             kpi = dashboard.get('kpi', 'N/A') or 'N/A'
             created_at = dashboard.get('created_at', 'N/A')
             campaign_key = dashboard.get('campaign_key', '') or ''
+            linked_client_id = dashboard.get('client_id') or ''
+            linked_client_name = next((c.get('name') or c.get('client_id') for c in clients_for_link if (c.get('client_id') or c.get('slug')) == linked_client_id), linked_client_id) if linked_client_id else ''
             
             # Garantir que os valores são strings antes de usar .lower()
             client_str = str(client) if client else 'N/A'
@@ -2117,8 +3075,15 @@ def dashboards_list():
             # Criar string de busca segura
             search_text = f"{client_str.lower()} {campaign_name_str.lower()} {channel_str.lower()}"
             
+            # Seletor de clientes para vínculo (opções HTML)
+            client_options = ''.join(f'<option value="{c.get("client_id") or c.get("slug")}">{c.get("name") or c.get("client_id")}</option>' for c in clients_for_link)
+            link_section = ''
+            if linked_client_id:
+                link_section = f'<div class="client-link-info">Vinculado a: <strong>{linked_client_name or linked_client_id}</strong></div><button type="button" class="btn-unlink" data-campaign-key="{campaign_key}">Remover vínculo</button>'
+            else:
+                link_section = f'<select class="client-select" data-campaign-key="{campaign_key}"><option value="">Vincular ao cliente...</option>{client_options}</select><button type="button" class="btn-link" data-campaign-key="{campaign_key}">Vincular</button>'
             html_content += f"""
-            <div class="dashboard-card" data-client="{client_str}" data-channel="{channel_str}" data-kpi="{kpi_str}" data-search="{search_text}">
+            <div class="dashboard-card" data-client="{client_str}" data-channel="{channel_str}" data-kpi="{kpi_str}" data-search="{search_text}" data-client-id="{linked_client_id}">
                 <div class="dashboard-header">
                     <div class="client-name">{client_str}</div>
                     <div class="channel-tag">{channel_str.upper()}</div>
@@ -2138,9 +3103,12 @@ def dashboards_list():
                         <div class="meta-value">{formatted_date}</div>
                     </div>
                 </div>
+                <div class="dashboard-client-link" style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(148,163,184,.2);">
+                    {link_section}
+                </div>
                 <div class="dashboard-actions">
                     <a href="/api/dashboard/{campaign_key}" class="btn-primary">
-                        📊 Ver Dashboard
+                        Ver Dashboard
                     </a>
                     <a href="#" class="btn-secondary" onclick="copyToClipboard('/api/dashboard/{campaign_key}')">
                         📋 Copiar URL
@@ -2201,6 +3169,47 @@ def dashboards_list():
             }
         }
         
+        // Vincular dashboard ao cliente
+        async function linkDashboard(campaignKey, clientId) {
+            try {
+                const r = await fetch('/api/dashboards/' + campaignKey + '/client', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId })
+                });
+                const j = await r.json();
+                if (j.success) location.reload();
+                else alert(j.message || 'Erro ao vincular');
+            } catch (e) { alert('Erro: ' + e.message); }
+        }
+        async function unlinkDashboard(campaignKey) {
+            try {
+                const r = await fetch('/api/dashboards/' + campaignKey + '/client', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: null })
+                });
+                const j = await r.json();
+                if (j.success) location.reload();
+                else alert(j.message || 'Erro ao remover vínculo');
+            } catch (e) { alert('Erro: ' + e.message); }
+        }
+        document.querySelectorAll('.btn-link').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const key = this.dataset.campaignKey;
+                const sel = this.closest('.dashboard-client-link').querySelector('.client-select');
+                const clientId = sel && sel.value ? sel.value : null;
+                if (!clientId) { alert('Selecione um cliente'); return; }
+                linkDashboard(key, clientId);
+            });
+        });
+        document.querySelectorAll('.btn-unlink').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!confirm('Remover vínculo deste dashboard com o cliente?')) return;
+                unlinkDashboard(this.dataset.campaignKey);
+            });
+        });
+        
         // Adicionar event listeners
         document.getElementById('clientFilter').addEventListener('change', filterDashboards);
         document.getElementById('channelFilter').addEventListener('change', filterDashboards);
@@ -2211,16 +3220,17 @@ def dashboards_list():
 </html>
         """
         
-        return html_content
+        return with_superadmin_sidebar(html_content, active_menu="dashboards")
         
     except Exception as e:
         logger.error(f"❌ Erro ao carregar listagem de dashboards: {e}")
         return f"<h1>Erro ao carregar dashboards</h1><p>Erro: {str(e)}</p>", 500
 
 @app.route('/dash-generator-pro-multicanal', methods=['GET'])
+@superadmin_required_page
 def dash_generator_pro_multicanal():
     """Interface do gerador multicanal - permite múltiplos canais com planilhas distintas"""
-    return render_template_string(r'''
+    page_html = render_template_string(r'''
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2484,7 +3494,13 @@ def dash_generator_pro_multicanal():
             <div class="logo">SM</div>
             <h1>Gerador de Dashboards Multicanal</h1>
             <p class="subtitle">Configure múltiplos canais, cada um com sua própria planilha</p>
-            <div class="multichannel-badge">🔗 Múltiplos Canais - Planilhas Independentes</div>
+            <div class="multichannel-badge">Múltiplos Canais - Planilhas Independentes</div>
+            <div style="margin-top:10px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap">
+                <a href="/dashboards-list" style="color:#8B5CF6;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg>Dashboards</a>
+                <a href="/admin/clients" style="color:#8B5CF6;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"></circle><path d="M3.5 19a5.5 5.5 0 0 1 11 0"></path><circle cx="17.5" cy="9" r="2.5"></circle><path d="M16 14.8a4.5 4.5 0 0 1 4.5 4.2"></path></svg>Clientes</a>
+                <a href="/admin/users" style="color:#8B5CF6;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Usuários</a>
+                <a href="/logout" style="color:#8B5CF6;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>Sair</a>
+            </div>
         </div>
         
         <form id="generatorForm">
@@ -2504,7 +3520,7 @@ def dash_generator_pro_multicanal():
                 <div class="add-channel-btn" onclick="addChannel()">+ Adicionar Canal</div>
             </div>
             
-            <button type="submit" id="generateButton">🚀 Gerar Dashboard Multicanal</button>
+            <button type="submit" id="generateButton">Gerar Dashboard Multicanal</button>
         </form>
         
         <div id="result"></div>
@@ -2707,8 +3723,10 @@ def dash_generator_pro_multicanal():
 </body>
 </html>
     ''')
+    return with_superadmin_sidebar(page_html, active_menu="multichannel")
 
 @app.route('/api/generate-dashboard-multicanal', methods=['POST'])
+@superadmin_required_api
 def generate_dashboard_multicanal():
     """Gerar dashboard multicanal com múltiplos canais e planilhas distintas"""
     try:
