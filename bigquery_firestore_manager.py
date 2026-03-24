@@ -950,6 +950,12 @@ class BigQueryFirestoreManager:
                     "start_date": d.get("start_date"),
                     "end_date": d.get("end_date"),
                     "investment": d.get("investment"),
+                    # Budget utilizado (mini-dashboards do portal) — pode vir do Firestore ou ser preenchido na API
+                    "budget_used": d.get("budget_used")
+                        or d.get("total_spend")
+                        or d.get("used_budget")
+                        or d.get("Budget Utilizado (R$)"),
+                    "total_spend": d.get("total_spend") or d.get("budget_used"),
                     "impressions": d.get("impressions"),
                     "kpi_target": d.get("kpi_target"),
                 })

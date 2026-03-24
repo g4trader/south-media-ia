@@ -10,8 +10,10 @@ import logging
 import json
 import sqlite3
 import tempfile
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory, render_template_string, session, redirect, make_response
 from flask_cors import CORS
@@ -2125,6 +2127,92 @@ def api_remove_client_user(client_id, user_id):
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+# Cache curto para não repetir extração da planilha ao abrir /client/.../dashboards várias vezes seguidas
+_PORTAL_SHEET_METRICS_CACHE: Dict[str, tuple] = {}
+_PORTAL_SHEET_CACHE_TTL_SEC = 300
+
+
+def _extract_portal_metrics_for_campaign(campaign_key: str) -> Optional[Dict[str, Any]]:
+    """Lê investimento e gasto (budget utilizado) da mesma fonte do dashboard (planilha)."""
+    if not campaign_key or not bq_fs_manager:
+        return None
+    now = time.time()
+    cached = _PORTAL_SHEET_METRICS_CACHE.get(campaign_key)
+    if cached and (now - cached[0]) < _PORTAL_SHEET_CACHE_TTL_SEC:
+        return cached[1]
+
+    try:
+        doc = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(campaign_key).get()
+        if not doc.exists:
+            return None
+        campaign = doc.to_dict() or {}
+        sheet_id = (campaign.get("sheet_id") or "").strip()
+        if not sheet_id:
+            return None
+
+        config = CampaignConfig(
+            campaign_key=campaign_key,
+            client=campaign.get("client") or "",
+            campaign_name=campaign.get("campaign_name") or "",
+            sheet_id=sheet_id,
+            channel=campaign.get("channel"),
+            kpi=campaign.get("kpi"),
+        )
+        extractor = RealGoogleSheetsExtractor(config)
+        data = extractor.extract_data()
+        if not data:
+            return None
+        summary = data.get("campaign_summary") or {}
+        contract = data.get("contract") or {}
+        spend = summary.get("total_spend")
+        inv = contract.get("investment")
+        payload = {
+            "total_spend": spend,
+            "investment": inv,
+        }
+        _PORTAL_SHEET_METRICS_CACHE[campaign_key] = (now, payload)
+        return payload
+    except Exception as e:
+        logger.warning(f"⚠️ Métricas do portal (planilha) para {campaign_key}: {e}")
+        return None
+
+
+def enrich_client_portal_dashboards_from_sheets(dashboards: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Preenche budget_used / total_spend (e investment se faltar) a partir da planilha."""
+    if not dashboards:
+        return dashboards
+    keys = [d.get("campaign_key") for d in dashboards if d.get("campaign_key")]
+    if not keys:
+        return dashboards
+
+    metrics_by_key: Dict[str, Dict[str, Any]] = {}
+    max_workers = min(3, max(1, len(keys)))
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        future_map = {pool.submit(_extract_portal_metrics_for_campaign, k): k for k in keys}
+        for fut in as_completed(future_map):
+            ck = future_map[fut]
+            try:
+                m = fut.result()
+                if m:
+                    metrics_by_key[ck] = m
+            except Exception as e:
+                logger.warning(f"⚠️ Enriquecimento portal {ck}: {e}")
+
+    for d in dashboards:
+        ck = d.get("campaign_key")
+        m = metrics_by_key.get(ck)
+        if not m:
+            continue
+        ts = m.get("total_spend")
+        if ts is not None:
+            d["budget_used"] = ts
+            d["total_spend"] = ts
+        inv = m.get("investment")
+        if inv is not None and (d.get("investment") in (None, "", 0, "0")):
+            d["investment"] = inv
+    return dashboards
+
+
 @app.route('/api/clients/<client_id>/dashboards', methods=['GET'])
 @login_required_api
 def api_list_client_dashboards(client_id):
@@ -2137,6 +2225,7 @@ def api_list_client_dashboards(client_id):
         return jsonify({"success": False, "message": "Firestore não disponível"}), 503
     try:
         dashboards = bq_fs_manager.get_dashboards_by_client(client_id)
+        dashboards = enrich_client_portal_dashboards_from_sheets(dashboards)
         return jsonify({"success": True, "dashboards": dashboards})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -2278,6 +2367,7 @@ def client_dashboards(client_id):
         if not client:
             return "<h1>Cliente não encontrado</h1>", 404
         dashboards = bq_fs_manager.get_dashboards_by_client(client_id)
+        dashboards = enrich_client_portal_dashboards_from_sheets(dashboards)
     except Exception as e:
         logger.error(f"Erro ao listar dashboards do cliente: {e}")
         client = {}
