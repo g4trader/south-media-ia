@@ -143,7 +143,7 @@ class BigQueryFirestoreManager:
             logger.info(f"✅ Tabela {table_ref} criada")
     
     def save_campaign(self, campaign_key: str, client: str, campaign_name: str, 
-                     sheet_id: str, channel: str = None, kpi: str = None) -> bool:
+                     sheet_id: str, channel: str = None, kpi: str = None, use_footfall: bool = False) -> bool:
         """Salvar campanha no BigQuery e Firestore"""
         try:
             now = datetime.now()
@@ -175,6 +175,7 @@ class BigQueryFirestoreManager:
                 "sheet_id": sheet_id,
                 "channel": channel,
                 "kpi": kpi,
+                "use_footfall": bool(use_footfall),
                 "created_at": now,
                 "updated_at": now,
             })

@@ -500,7 +500,7 @@ class CloudRunDatabaseManager:
         
         return status
 
-    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None, use_quartiles: bool = False) -> bool:
+    def save_campaign(self, campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: Optional[str] = None, kpi: Optional[str] = None, use_quartiles: bool = False, use_footfall: bool = False) -> bool:
         """Salvar ou atualizar uma campanha no banco de dados"""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -518,11 +518,17 @@ class CloudRunDatabaseManager:
             except:
                 pass  # Coluna já existe
             
+            # Adicionar coluna use_footfall se não existir
+            try:
+                cursor.execute('ALTER TABLE campaigns ADD COLUMN use_footfall INTEGER DEFAULT 0')
+            except:
+                pass  # Coluna já existe
+            
             cursor.execute('''
                 INSERT OR REPLACE INTO campaigns 
-                (campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            ''', (campaign_key, client, campaign_name, sheet_id, channel, kpi, 1 if use_quartiles else 0))
+                (campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, use_footfall, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ''', (campaign_key, client, campaign_name, sheet_id, channel, kpi, 1 if use_quartiles else 0, 1 if use_footfall else 0))
             
             conn.commit()
             conn.close()
@@ -548,7 +554,7 @@ class CloudRunDatabaseManager:
             cursor = conn.cursor()
             
             cursor.execute('''
-                SELECT campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, created_at, updated_at
+                SELECT campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, use_footfall, created_at, updated_at
                 FROM campaigns WHERE campaign_key = ?
             ''', (campaign_key,))
             
@@ -569,10 +575,12 @@ class CloudRunDatabaseManager:
                 # use_quartiles está na posição 6 se existir, senão default 0
                 if len(result) > 6:
                     campaign_dict['use_quartiles'] = result[6]
-                    campaign_dict['created_at'] = result[7] if len(result) > 7 else None
-                    campaign_dict['updated_at'] = result[8] if len(result) > 8 else None
+                    campaign_dict['use_footfall'] = result[7] if len(result) > 7 else 0
+                    campaign_dict['created_at'] = result[8] if len(result) > 8 else None
+                    campaign_dict['updated_at'] = result[9] if len(result) > 9 else None
                 else:
                     campaign_dict['use_quartiles'] = 0
+                    campaign_dict['use_footfall'] = 0
                     campaign_dict['created_at'] = result[6] if len(result) > 6 else None
                     campaign_dict['updated_at'] = result[7] if len(result) > 7 else None
                 
@@ -705,14 +713,17 @@ def generate_campaign_key(client: str, campaign_name: str) -> str:
     
     return f"{client_clean}_{campaign_clean}"
 
-def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática", kpi: str = "CPV", use_quartiles: bool = False) -> Dict[str, Any]:
+def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet_id: str, channel: str = "Video Programática", kpi: str = "CPV", use_quartiles: bool = False, use_footfall: bool = False) -> Dict[str, Any]:
     """Gerar dashboard a partir do template"""
     try:
         # Determinar template baseado no KPI
         template_path = 'static/dash_generic_template.html'
         
-        # Selecionar template baseado no KPI
-        if kpi.upper() == 'CPM':
+        # Selecionar template baseado no KPI / flags especiais
+        if use_footfall:
+            template_path = 'static/dash_footfall_template.html'
+            logger.info(f"🎯 Usando template FOOTFALL para: {campaign_name}")
+        elif kpi.upper() == 'CPM':
             if use_quartiles:
                 template_path = 'static/dash_cpm_with_quartiles_template.html'
                 logger.info(f"🎯 Usando template CPM com quartis para: {campaign_name} (KPI: {kpi})")
@@ -1568,6 +1579,14 @@ def dash_generator_pro():
             </label>
             <small>Marque esta opção se a campanha CPM utiliza métricas de quartis de vídeo/escuta</small>
         </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="useFootfall" name="use_footfall" value="1">
+                Gerar com template Footfall
+            </label>
+            <small>Use esta opção para campanhas Drive-to-Store/Footfall.</small>
+        </div>
         
         <button type="submit" id="generateButton">Gerar Dashboard</button>
         </form>
@@ -1655,6 +1674,7 @@ def dash_generator_pro():
                 
                 // Adicionar flag de quartis se checkbox estiver marcado
                 data.use_quartiles = document.getElementById('useQuartiles').checked ? '1' : '0';
+                data.use_footfall = document.getElementById('useFootfall').checked ? '1' : '0';
                 
                 const response = await fetch('/api/generate-dashboard', {
                     method: 'POST',
@@ -1726,24 +1746,25 @@ def generate_dashboard_endpoint():
         channel = data.get('channel', 'Video Programática')
         kpi = data.get('kpi', 'CPV')
         use_quartiles = data.get('use_quartiles', '0') == '1' or data.get('use_quartiles', False) == True
+        use_footfall = data.get('use_footfall', '0') == '1' or data.get('use_footfall', False) == True
         
         # Gerar campaign_key automaticamente
         campaign_key = generate_campaign_key(client, campaign_name)
         
         # Salvar campanha no banco (SQLite + GCS)
-        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles):
+        if not db_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, use_footfall):
             return jsonify({"success": False, "message": "Erro ao salvar configuração da campanha"}), 500
         
         # Salvar também no BigQuery + Firestore se disponível
         if bq_fs_manager:
             try:
-                bq_fs_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi)
+                bq_fs_manager.save_campaign(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_footfall=use_footfall)
                 logger.info(f"✅ Campanha {campaign_key} salva no BigQuery + Firestore")
             except Exception as e:
                 logger.warning(f"⚠️ Erro ao salvar no BigQuery/Firestore: {e}")
         
         # Gerar dashboard
-        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles)
+        result = generate_dashboard(campaign_key, client, campaign_name, sheet_id, channel, kpi, use_quartiles, use_footfall)
         
         if not result['success']:
             return jsonify({"success": False, "message": f"Erro ao gerar dashboard: {result['error']}"}), 500
@@ -1836,8 +1857,8 @@ def get_dashboard_html(campaign_key):
             if doc.exists:
                 campaign = doc.to_dict()
         
-        # Se não encontrou no Firestore ou não tem use_quartiles, buscar do SQLite local
-        if not campaign or 'use_quartiles' not in campaign:
+        # Se não encontrou no Firestore ou faltam flags, buscar do SQLite local
+        if not campaign or 'use_quartiles' not in campaign or 'use_footfall' not in campaign:
             logger.info(f"🔄 Buscando campanha {campaign_key} no SQLite local...")
             campaign_local = db_manager.get_campaign(campaign_key)
             if campaign_local:
@@ -1849,6 +1870,10 @@ def get_dashboard_html(campaign_key):
                     if isinstance(use_quartiles_sqlite, str):
                         use_quartiles_sqlite = 1 if use_quartiles_sqlite == '1' or use_quartiles_sqlite == 1 else 0
                     campaign['use_quartiles'] = int(use_quartiles_sqlite)
+                    use_footfall_sqlite = campaign_local.get('use_footfall', 0)
+                    if isinstance(use_footfall_sqlite, str):
+                        use_footfall_sqlite = 1 if use_footfall_sqlite == '1' or use_footfall_sqlite.lower() == 'true' else 0
+                    campaign['use_footfall'] = int(use_footfall_sqlite)
                     logger.info(f"✅ use_quartiles obtido do SQLite: {campaign['use_quartiles']} (tipo: {type(campaign['use_quartiles'])})")
                 else:
                     campaign = campaign_local
@@ -1859,6 +1884,11 @@ def get_dashboard_html(campaign_key):
                             campaign['use_quartiles'] = 1 if use_quartiles_val == '1' or use_quartiles_val == 1 else 0
                         else:
                             campaign['use_quartiles'] = int(use_quartiles_val)
+                    use_footfall_val = campaign.get('use_footfall', 0)
+                    if isinstance(use_footfall_val, str):
+                        campaign['use_footfall'] = 1 if use_footfall_val == '1' or use_footfall_val.lower() == 'true' else 0
+                    else:
+                        campaign['use_footfall'] = int(use_footfall_val)
                     logger.info(f"✅ Campanha encontrada no SQLite local, use_quartiles: {campaign.get('use_quartiles', 0)}")
         
         if not campaign:
@@ -2549,7 +2579,7 @@ def serve_static(filename):
 def generate_dynamic_dashboard_html(campaign, data):
     """Gerar HTML dinâmico do dashboard (réplica da produção)"""
     try:
-        # Selecionar template baseado no KPI da campanha e use_quartiles
+        # Selecionar template baseado no KPI da campanha e flags
         kpi = campaign.get('kpi', 'CPV')
         # Converter use_quartiles para boolean de forma robusta
         use_quartiles_val = campaign.get('use_quartiles', 0)
@@ -2557,10 +2587,18 @@ def generate_dynamic_dashboard_html(campaign, data):
             use_quartiles = use_quartiles_val == '1' or use_quartiles_val == 1
         else:
             use_quartiles = int(use_quartiles_val) == 1 or use_quartiles_val == True
+        use_footfall_val = campaign.get('use_footfall', 0)
+        if isinstance(use_footfall_val, str):
+            use_footfall = use_footfall_val == '1' or use_footfall_val.lower() == 'true'
+        else:
+            use_footfall = int(use_footfall_val) == 1 or use_footfall_val is True
         
-        logger.info(f"🔍 DEBUG generate_dynamic_dashboard_html: KPI={kpi}, use_quartiles={use_quartiles} (valor original: {use_quartiles_val}, tipo: {type(use_quartiles_val)})")
+        logger.info(f"🔍 DEBUG generate_dynamic_dashboard_html: KPI={kpi}, use_quartiles={use_quartiles}, use_footfall={use_footfall}")
         
-        if kpi.upper() == 'CPM':
+        if use_footfall:
+            template_path = os.path.join('static', 'dash_footfall_template.html')
+            logger.info(f"🎯 Usando template FOOTFALL para dashboard dinâmico: {campaign['campaign_name']}")
+        elif kpi.upper() == 'CPM':
             if use_quartiles:
                 template_path = os.path.join('static', 'dash_cpm_with_quartiles_template.html')
                 logger.info(f"🎯 Usando template CPM com quartis para dashboard dinâmico: {campaign['campaign_name']}")
