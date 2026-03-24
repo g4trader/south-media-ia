@@ -37,12 +37,6 @@ def get_admin_clients_html():
 </head>
 <body>
     <div class="container">
-        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
-            <a href="/dashboards-list" class="nav-link"><svg viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"></path></svg>Voltar à listagem de dashboards</a>
-            <a href="/admin/users" class="nav-link"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Administrar usuários</a>
-            <a href="/me/dashboards" class="nav-link"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"></rect><rect x="13" y="3" width="8" height="5" rx="1.5"></rect><rect x="13" y="10" width="8" height="11" rx="1.5"></rect><rect x="3" y="13" width="8" height="8" rx="1.5"></rect></svg>Meus dashboards</a>
-            <a href="/logout" class="nav-link"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>Sair</a>
-        </div>
         <h1>Gerenciar clientes e usuários</h1>
         <p class="sub">Crie clientes e associe usuários para que cada cliente acesse apenas seus dashboards.</p>
         

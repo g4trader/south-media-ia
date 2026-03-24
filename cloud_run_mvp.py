@@ -11,6 +11,7 @@ import json
 import sqlite3
 import tempfile
 import time
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
@@ -47,6 +48,14 @@ def favicon():
         return send_from_directory(os.getcwd(), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
     except Exception:
         return '', 204
+
+@app.route('/assets/<path:filename>')
+def assets_files(filename):
+    try:
+        return send_from_directory(os.path.join(os.getcwd(), 'assets'), filename)
+    except Exception:
+        return '', 404
+
 CORS(app)
 
 # Configuração do ambiente
@@ -86,6 +95,7 @@ def get_current_session_user() -> Optional[Dict[str, Any]]:
     return {
         "user_id": session.get("user_id"),
         "email": session.get("email"),
+        "name": session.get("name"),
         "role": session.get("role"),
         "client_id": session.get("client_id"),
     }
@@ -171,6 +181,8 @@ def with_superadmin_sidebar(page_html: str, active_menu: str = "") -> str:
     """Inject persistent superadmin sidebar into full HTML pages."""
     if not page_html or "<html" not in page_html or "<body" not in page_html:
         return page_html
+    user = get_current_session_user() or {}
+    user_label = user.get("name") or user.get("email") or "Usuário"
 
     nav_items = [
         ("panel", "/panel", '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>', "Painel"),
@@ -208,13 +220,17 @@ def with_superadmin_sidebar(page_html: str, active_menu: str = "") -> str:
     min-height:100vh;
   }
   .sa-shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-  .sa-sidebar{background:linear-gradient(180deg,#0c1323 0%,#111827 100%);border-right:1px solid rgba(148,163,184,.25);padding:22px 18px;position:sticky;top:0;height:100vh;z-index:20}
-  .sa-brand{font-weight:800;font-size:1.05rem;letter-spacing:.2px;margin-bottom:20px;color:#e5e7eb}
+  .sa-sidebar{background:linear-gradient(180deg,#0c1323 0%,#111827 100%);border-right:1px solid rgba(148,163,184,.25);padding:22px 18px;position:sticky;top:0;height:100vh;z-index:20;display:flex;flex-direction:column}
+  .sa-brand{margin-bottom:20px;display:flex;justify-content:center}
+  .sa-logo{width:100%;max-width:180px;height:auto;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(0,0,0,.35))}
   .sa-menu{display:flex;flex-direction:column;gap:8px}
   .sa-menu a{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:10px;color:#f8fafc;text-decoration:none;background:transparent;border:1px solid transparent;transition:all .18s ease}
   .sa-menu a:hover{border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);color:var(--orange)}
   .sa-menu a.active{color:var(--orange);border-color:rgba(249,115,22,.55);background:rgba(249,115,22,.10);box-shadow:inset 0 0 0 1px rgba(249,115,22,.08)}
   .sa-menu .nav-icon{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .sa-footer{margin-top:auto;padding-top:14px;border-top:1px solid rgba(148,163,184,.22);color:#cbd5e1;display:flex;align-items:center;gap:9px;font-size:.9rem}
+  .sa-footer-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .sa-footer-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .sa-content{padding:24px}
 
   /* unify page visuals to multicanal style */
@@ -261,10 +277,15 @@ def with_superadmin_sidebar(page_html: str, active_menu: str = "") -> str:
   }
 </style>
 """
-    shell_start = f'<div class="sa-shell"><aside class="sa-sidebar"><div class="sa-brand">South Media IA - Superadmin</div><nav class="sa-menu">{nav_html}</nav></aside><main class="sa-content">'
+    shell_start = f'<div class="sa-shell"><aside class="sa-sidebar"><div class="sa-brand"><img src="/assets/logo_southmedia.png" alt="South Media" class="sa-logo"></div><nav class="sa-menu">{nav_html}</nav><div class="sa-footer"><svg class="sa-footer-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg><span class="sa-footer-name">{user_label}</span></div></aside><main class="sa-content">'
     shell_end = "</main></div>"
 
     html = page_html
+    # Remove menus internos duplicados; navegação fica exclusivamente na sidebar.
+    html = re.sub(r'<div class="admin-links">.*?</div>', '', html, flags=re.DOTALL)
+    html = re.sub(r'<a[^>]*class="[^"]*back-link[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL)
+    html = re.sub(r'<a[^>]*class="[^"]*view-dashboards-btn[^"]*"[^>]*>.*?</a>', '', html, flags=re.DOTALL)
+    html = re.sub(r'<div[^>]*style="[^"]*margin-top:10px[^"]*flex-wrap:wrap[^"]*"[^>]*>.*?</div>', '', html, flags=re.DOTALL)
     if "</head>" in html and "superadmin-shell-style" not in html:
         html = html.replace("</head>", style_block + "</head>", 1)
     if "<body>" in html:
@@ -1014,8 +1035,11 @@ def login_page():
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - South Media IA</title>
   <style>
-    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}
-    .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:24px;min-width:320px}
+    body{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+    .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:24px;min-width:320px;max-width:360px;width:100%}
+    .logo-wrap{display:flex;justify-content:center;margin-bottom:14px}
+    .logo{width:100%;max-width:180px;height:auto;object-fit:contain}
+    h2{text-align:center;margin:0 0 10px}
     input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#fff}
     button{background:#7c3aed;border:none;font-weight:600;cursor:pointer}
     .msg{margin-top:12px;color:#fca5a5}
@@ -1023,6 +1047,7 @@ def login_page():
 </head>
 <body>
   <div class="card">
+    <div class="logo-wrap"><img src="/assets/logo_southmedia.png" alt="South Media" class="logo"></div>
     <h2>Entrar</h2>
     <label>E-mail</label>
     <input id="email" type="email" autocomplete="username" />
@@ -1085,6 +1110,7 @@ def api_auth_login():
         session.clear()
         session["user_id"] = user.get("user_id")
         session["email"] = user.get("email")
+        session["name"] = user.get("name", "")
         session["role"] = user.get("role", "viewer")
         session["client_id"] = user.get("client_id")
 
@@ -2291,7 +2317,6 @@ def admin_users():
 </head>
 <body>
   <div class="container">
-    <a href="/dashboards-list">← Voltar</a>
     <h1 style="display:flex;align-items:center;gap:10px"><svg style="width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>Administração de Usuários</h1>
     <p style="color:#9CA3AF">Gerencie roles e reset de senha de todos os usuários.</p>
     <div class="card">
