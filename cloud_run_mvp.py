@@ -1039,7 +1039,6 @@ def login_page():
     .card{background:#111827;border:1px solid #334155;border-radius:12px;padding:24px;min-width:320px;max-width:360px;width:100%}
     .logo-wrap{display:flex;justify-content:center;margin-bottom:14px}
     .logo{width:100%;max-width:180px;height:auto;object-fit:contain}
-    h2{text-align:center;margin:0 0 10px}
     input,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#fff}
     button{background:#7c3aed;border:none;font-weight:600;cursor:pointer}
     .msg{margin-top:12px;color:#fca5a5}
@@ -1048,7 +1047,6 @@ def login_page():
 <body>
   <div class="card">
     <div class="logo-wrap"><img src="/assets/logo_southmedia.png" alt="" class="logo" onerror="this.style.display='none'" /></div>
-    <h2>Entrar</h2>
     <label>E-mail</label>
     <input id="email" type="email" autocomplete="username" />
     <label>Senha</label>
