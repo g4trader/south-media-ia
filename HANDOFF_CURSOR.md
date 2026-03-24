@@ -45,6 +45,14 @@ Padronizar o sistema com painel superadmin consistente, sidebar persistente e vi
    - `/admin/clients`
 4. Verificar que a sidebar não desaparece e o estilo visual permanece consistente.
 
+## Segurança (credenciais)
+- `credentials.json` e `credentials_old.json` estão no `.gitignore`; use `credentials.example.json` como modelo.
+- Chaves que já foram commitadas no histórico do Git devem ser **revogadas/rotacionadas** no GCP (IAM → chaves da service account).
+
+## Scripts de manutenção (footfall / planilhas)
+- `update_santander_mar2026_footfall.py`, `update_carnaportal_*.py` — atualizam HTMLs estáticos a partir de Sheets.
+- `verify_sheet_data.py`, `fetch_report_via_api.py`, `diagnose_vc_column.py`, `read_sheet_public.py` — diagnóstico de planilhas.
+
 ## Próximos passos sugeridos
 - Refinar responsividade (mobile/tablet) para menu e grids.
 - Ajustar estado ativo contextual em `/client/<client_id>/dashboards` (ex.: destacar "Clientes").

@@ -83,6 +83,11 @@ python3 check_all_environments.py
 pip install -r requirements.txt
 ```
 
+### Credenciais Google (local)
+1. Copie `credentials.example.json` para `credentials.json`.
+2. Cole o JSON da **service account** (GCP → IAM → Contas de serviço → Chaves).
+3. `credentials.json` **não é versionado** (`.gitignore`).
+
 ### Ferramentas Necessárias
 - Python 3.11+
 - gcloud CLI

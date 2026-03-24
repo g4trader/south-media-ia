@@ -1,0 +1,2624 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portal Auto Shopping — CarnaPortal (Footfall Display)</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ==== (COMENTADO - PER ainda não definido)
+// (function(){
+  // Separate channels
+//   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
+//   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+//   try {
+//     const ctx = document.getElementById('insVideoEff');
+//     if (ctx) {
+//       const data = {
+        // labels: video.map(r=>r["Canal"]),
+//         datasets: [{
+//           label: 'Canais de Vídeo',
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+//           pointRadius: 6
+//         }]
+//       };
+//       new Chart(ctx, {
+//         type: 'scatter',
+//         data,
+//         options: {
+//           plugins:{legend:{display:false}},
+//           scales:{
+//             x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+//             y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+//           }
+//         }
+//       });
+//     }
+//   } catch(e){}
+
+
+  // Pacing: Utilizado vs Contratado
+//   try {
+//     const ctx = document.getElementById('insPacing');
+//     if (ctx) {
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       new Chart(ctx, {
+//         type: 'bar',
+//         data: {
+//           labels: ['Pacing'],
+//           datasets: [
+//             { label: 'Contratado', data: [contratado] },
+//             { label: 'Utilizado', data: [utilizado] }
+//           ]
+//         },
+//         options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+//       });
+//     }
+//   } catch(e){}
+
+  // Insights text
+//   try {
+//     const list = document.getElementById('insightsList');
+//     if (list) {
+      // Best CPV among video
+//       const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+//       const bestCPV = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["CPV (R$)"]||Infinity);
+//         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+//       const bestVTR = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["VTR (100%)"]||0);
+//         return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+
+
+      // Pacing
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       const pacing = contratado>0 ? (utilizado/contratado) : 0;
+
+//       const items = [];
+//       if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
+//       if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
+//       items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
+
+//       if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
+//       list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+//     }
+//   } catch(e){}
+// })();
+
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // CTR diário (display)
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx) {
+      const dailyDisplay = DAILY.filter(r => (r.channel||'').toLowerCase()==='footfall display');
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const dates = Object.keys(grouped).sort((a,b)=>{
+        const pa = a.split('/').reverse().join('-');
+        const pb = b.split('/').reverse().join('-');
+        return pa < pb ? -1 : pa > pb ? 1 : 0;
+      });
+      const ctrValues = dates.map(d=>{
+        const g = grouped[d];
+        return g.impressions>0 ? (g.clicks/g.impressions)*100 : 0;
+      });
+      const maxCtr = ctrValues.length ? Math.max(...ctrValues, 1) : 1;
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: dates, datasets: [
+          { label:'CTR (%)', data: ctrValues, borderColor:'#ff6b35', backgroundColor:'rgba(255,107,53,0.2)', tension:0.3, fill:false }
+        ]},
+        options: {
+          plugins:{legend:{position:'bottom'}},
+          scales:{
+            y:{title:{display:true,text:'CTR (%)'}, suggestedMax: maxCtr},
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      // Pacing e performance display
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+      const totalImp = Number(CONS["Impressões"]||0);
+      const totalClicks = Number(CONS["Cliques"]||0);
+      const ctrTotal = totalImp>0 ? (totalClicks/totalImp)*100 : 0;
+      const metaImp = 150000;
+      const entregaPct = metaImp>0 ? (totalImp/metaImp)*100 : 0;
+
+      // Melhor CTR por dia
+      const dailyDisplay = DAILY.filter(r => (r.channel||'').toLowerCase()==='footfall display');
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const bestCtr = Object.entries(grouped).reduce((acc,[date,val])=>{
+        const ctr = val.impressions>0 ? (val.clicks/val.impressions)*100 : 0;
+        return ctr > (acc.ctr||-1) ? {date, ctr} : acc;
+      }, {});
+
+      const items = [];
+      items.push(`⏱️ Pacing orçamentário: <b>${(pacing*100).toFixed(1)}%</b> do budget utilizado.`);
+      items.push(`📈 Entrega de impressões: <b>${fmtInt(totalImp)}</b> (${entregaPct.toFixed(1)}% de 150.000 contratadas).`);
+      items.push(`🎯 CTR médio: <b>${ctrTotal.toFixed(2)}%</b>.`);
+      if (bestCtr.date) items.push(`⭐ Melhor CTR diário: <b>${bestCtr.ctr.toFixed(2)}%</b> em ${bestCtr.date}.`);
+
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+
+</script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes heatmap-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        
+        .marker-cluster {
+            background-color: rgba(255, 107, 53, 0.8);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .marker-cluster-small {
+            width: 40px;
+            height: 40px;
+            line-height: 36px;
+            font-size: 14px;
+        }
+        
+        .marker-cluster-medium {
+            width: 50px;
+            height: 50px;
+            line-height: 46px;
+            font-size: 16px;
+        }
+        
+        .marker-cluster-large {
+            width: 60px;
+            height: 60px;
+            line-height: 56px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">South Media</div>
+        <div class="muted">Portal Auto Shopping — CarnaPortal (Footfall Display)</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Campanha: CarnaPortal</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+    <div class="tab" data-tab="footfall">👣 Footfall</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo por Canal</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th id="th-cpm" style="display:none;">CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Selecione o canal:</div>
+        <select id="channelSelect" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff"></select>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — <span id="channelNameSpan">—</span></h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Impressões</th><th>Cliques</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="footfallExtras" class="hidden">
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:10px">Formatos usados no Footfall Display</h3>
+        <ul style="columns:2; gap:24px; margin-left:18px">
+          <li>360x300 (A)</li><li>300x250 (A)</li><li>300x50 (A)</li><li>320x480 (A)</li><li>336x336 (A)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ctvPublishers" class="hidden">
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:10px">Publishers utilizados (CTV)</h3>
+        <ul style="columns:2; gap:24px; margin-left:18px">
+          <li>Pluto TV - Watch Free Movies, Shows & Live TV - FireTv (B00KDSGIPK)</li>
+          <li>Plex: Stream Movies & TV - Android Tv</li>
+          <li>Pluto TV Television Gratis Channels | Roku Channel Store | Roku - Roku</li>
+          <li>Pluto TV - LG Tv</li>
+          <li>LG Channels - LG Tv (474310)</li>
+          <li>Live TV - Android Tv</li>
+          <li>RecordPlus - Android Tv</li>
+          <li>Rainbow Dash - FireTv (B079X4ZZ4T)</li>
+          <li>Samsung TV - Android TV</li>
+          <li>Xiaomi TV+: Watch Live TV - Android Tv</li>
+          <li>TCL CHANNEL - Android Tv</li>
+          <li>Plex Free Movies and TV</li>
+          <li>MovieArk: Stream Movies & Live - Android Tv</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:8px">Pacing da Campanha</h3>
+      <div class="muted" style="margin-bottom:8px">Orçamento Utilizado vs Contratado (quanto já foi gasto).</div>
+      <canvas id="insPacing"></canvas>
+    </div>
+
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul id="insightsList" style="margin-left:18px;line-height:1.75"></ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>Footfall Display:</strong> Priorizar formatos com CTR mais alto (300x250 e 336x336).</li>
+        <li><strong>Footfall Display:</strong> Garantir entrega mínima diária para manter pacing de impressões.</li>
+        <li><strong>Footfall Display:</strong> Revisar publishers com CTR baixo e realocar para inventário mais responsivo.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+
+    <div id="tab-planning" class="hidden">
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="margin-bottom:10px">Planejamento da Campanha</h3>
+    <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+      Cliente: Portal Auto Shopping · Campanha: CarnaPortal · Canal: Drive to store · Criativos: Banners
+    </p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+    <div class="card">
+      <h3 style="margin-bottom:10px">Cronograma & Investimento</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Período: <span id="plan-periodo"></span></li>
+        <li>Budget Total: R$ <span id="plan-budget-total"></span></li>
+        <li>Budget Utilizado: R$ <span id="plan-budget-used"></span></li>
+        <li>Pacing: <span id="plan-pacing"></span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:10px">Métricas Contratadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Meta Impressões: <span id="plan-imp-meta"></span></li>
+        <li>Imp Entregues: <span id="plan-imp-entregues"></span></li>
+        <li>Pacing Imp: <span id="plan-imp-pacing"></span></li>
+        <li>CPM Contratado: R$ <span id="plan-cpm"></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+    <div class="card" style="grid-column: span 1;">
+      <h3 style="margin-bottom:10px">Publishers</h3>
+      <div style="overflow:auto">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left; color:rgba(255,255,255,0.7);">
+              <th style="padding:8px 6px;">Nome</th>
+              <th style="padding:8px 6px;">App/URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px 6px;">drivetostore</td>
+              <td style="padding:8px 6px;">drivetostore.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: span 1;">
+      <h3 style="margin-bottom:10px">Praças</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">
+        Campanha entregue nas cidades e estados selecionados na campanha.
+      </p>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;">
+    <div class="card">
+      <h3 style="margin-bottom:10px">Segmentações</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">n/a</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Tipo de criativo</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">Banners</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Canal</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">Drive to store</p>
+    </div>
+  </div>
+</div>
+<!-- FOOTFALL -->
+  <div id="tab-footfall" class="hidden">
+    <!-- Hero Section -->
+    <section class="hero" style="text-align: center; margin-bottom: 2rem; padding: 2rem 0;">
+      <span style="color: #ff6b35; text-transform: uppercase; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: block;">Portal Auto Shopping · CarnaPortal</span>
+      <h1 style="font-size: 2.5rem; font-weight: bold; color: #ffffff; margin-bottom: 1rem; letter-spacing: 1px;">ANÁLISE DE FOOTFALL - DISPLAY</h1>
+      <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Monitoramento diário do tráfego gerado pelo canal Footfall Display durante a campanha de janeiro 2026</p>
+    </section>
+
+    <!-- Metrics -->
+    <section class="metrics-grid" id="footfall-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+      <div class="loading" style="display: flex; justify-content: center; align-items: center; height: 200px; flex-direction: column; gap: 1rem;">
+        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #ff6b35; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p>Carregando dados...</p>
+      </div>
+    </section>
+
+    <!-- Content Grid -->
+    <section class="content-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem;">
+      <!-- Map -->
+      <div class="card">
+        <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+          <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Distribuição Geográfica</h3>
+          <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Mapa interativo com localização das lojas e intensidade de footfall</p>
+        </div>
+        <div class="card-content" style="padding: 1.5rem;">
+          <div id="footfall-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2);"></div>
+          <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.8rem;">
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #ff6b35;"></div>
+              <span>Alta (≥10%)</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #8b5cf6;"></div>
+              <span>Média (5-10%)</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #00ff88;"></div>
+              <span>Baixa (&lt;5%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+          <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Performance por Loja</h3>
+          <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Distribuição de usuários footfall por taxa de conversão</p>
+        </div>
+        <div class="card-content" style="padding: 1.5rem;">
+          <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="footfall-performanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Stores -->
+    <section class="card top-stores">
+      <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+        <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Top 5 Lojas por Footfall</h3>
+        <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Ranking das lojas com maior número de usuários detectados</p>
+      </div>
+      <div id="footfall-topStores">
+        <div class="loading" style="display: flex; justify-content: center; align-items: center; height: 200px; flex-direction: column; gap: 1rem;">
+          <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #ff6b35; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <p>Carregando ranking...</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// Dados serão extraídos da planilha: https://docs.google.com/spreadsheets/d/1tLz31iH7xVJgIvdGbMlfs8kf0mdeWhZuG8D8x1n3fDY/edit?gid=304137877#gid=304137877
+const CONS = {
+  "Budget Contratado (R$)": 3750.0,
+  "Budget Utilizado (R$)": 4524.99,
+  "Impressões": 180989,
+  "Cliques": 1286,
+  "CTR (%)": 0.007105404195835105,
+  "VC (100%)": 0,
+  "VTR (100%)": 0,
+  "CPV (R$)": 0,
+  "CPM (R$)": 25.0,
+  "Pacing (%)": 1.206664
+};
+
+
+
+
+
+
+
+
+
+
+
+
+// Dados serão extraídos da planilha: https://docs.google.com/spreadsheets/d/1tLz31iH7xVJgIvdGbMlfs8kf0mdeWhZuG8D8x1n3fDY/edit?gid=304137877#gid=304137877
+const PER = [
+  {
+    "Canal": "Footfall Display",
+    "Budget Contratado (R$)": 3750.0,
+    "Budget Utilizado (R$)": 4524.99,
+    "Impressões": 180989,
+    "Cliques": 1286,
+    "CTR (%)": 0.007105404195835105,
+    "VC (100%)": 0,
+    "VTR (100%)": 0,
+    "CPV (R$)": 0,
+    "CPM (R$)": 25.0,
+    "Pacing (%)": 1.206664,
+    "Criativos Únicos": 5
+  }
+];
+
+
+
+
+
+
+
+
+
+
+
+
+// Dados diários serão extraídos da planilha: https://docs.google.com/spreadsheets/d/1tLz31iH7xVJgIvdGbMlfs8kf0mdeWhZuG8D8x1n3fDY/edit?gid=304137877#gid=304137877
+const DAILY = [
+  {
+    "date": "07/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 44.53,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1781,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 79.08,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3163,
+    "clicks": 10,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 33.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1326,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 26.35,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1054,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 46.95,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1878,
+    "clicks": 10,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 43.45,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1738,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.13,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 46.23,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1849,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 28.43,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1137,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 54.48,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2179,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 68.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2722,
+    "clicks": 10,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 98.83,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3953,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 44.48,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1779,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 54.3,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2172,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 51.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2046,
+    "clicks": 9,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 58.3,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2332,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 218.55,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 8742,
+    "clicks": 17,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 76.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3051,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 74.68,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2987,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 111.3,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4452,
+    "clicks": 10,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 0.13,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 37.33,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1493,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.33,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 13,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 8.53,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 341,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 81.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3241,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 18.73,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 749,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 7.08,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 283,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 0.38,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 15,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 0.83,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 33,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 78.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3122,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 31.68,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1267,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 8.65,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 346,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 7.23,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 289,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 16.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 651,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 35.88,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1435,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 9.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 371,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 12.3,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 492,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 21.9,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 876,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 8.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 331,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 22.43,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 897,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 15.78,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 631,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 12.3,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 492,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 20.58,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 823,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 12.78,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 511,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 19.4,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 776,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_336x336px",
+    "spend": 5.78,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 231,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 13.18,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 527,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 15.45,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 618,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 15.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 606,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 35.8,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1432,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 44.2,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1768,
+    "clicks": 8,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 33.73,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1349,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 46.38,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1855,
+    "clicks": 8,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 44.98,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1799,
+    "clicks": 24,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 42.13,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1685,
+    "clicks": 28,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 43.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1721,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 41.38,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1655,
+    "clicks": 90,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 45.98,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1839,
+    "clicks": 25,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 42.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1691,
+    "clicks": 32,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 30.83,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1233,
+    "clicks": 77,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 30.98,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1239,
+    "clicks": 18,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 44.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1766,
+    "clicks": 36,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 25.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1001,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 41.85,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1674,
+    "clicks": 74,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 31.1,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1244,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 35.58,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1423,
+    "clicks": 33,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 2.95,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 118,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 44.95,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1798,
+    "clicks": 106,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 52.9,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2116,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 52.48,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2099,
+    "clicks": 51,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 50.6,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2024,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 99.95,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3998,
+    "clicks": 92,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 79.68,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3187,
+    "clicks": 27,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 113.23,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4529,
+    "clicks": 41,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 72.35,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2894,
+    "clicks": 19,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 99.2,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3968,
+    "clicks": 31,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 86.95,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3478,
+    "clicks": 36,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 105.4,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4216,
+    "clicks": 44,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 72.33,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2893,
+    "clicks": 25,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 88.18,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3527,
+    "clicks": 36,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 143.45,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5738,
+    "clicks": 19,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 160.38,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 6415,
+    "clicks": 27,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 120.65,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4826,
+    "clicks": 14,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 136.45,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5458,
+    "clicks": 20,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x50px",
+    "spend": 124.55,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4982,
+    "clicks": 29,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_300x250px",
+    "spend": 143.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5726,
+    "clicks": 37,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_360x300px",
+    "spend": 105.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4211,
+    "clicks": 22,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Footfall Display",
+    "creative": "Midia-Programatica_320x480px",
+    "spend": 114.93,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4597,
+    "clicks": 35,
+    "visits": 0
+  }
+];
+// Dados de footfall (aba Footfall da planilha)
+// Fonte: aba Footfall da planilha Portal Auto Shopping — Drive to store
+// https://docs.google.com/spreadsheets/d/1tLz31iH7xVJgIvdGbMlfs8kf0mdeWhZuG8D8x1n3fDY/edit?gid=304137877#gid=304137877
+// Dados de footfall serão extraídos da planilha: https://docs.google.com/spreadsheets/d/1tLz31iH7xVJgIvdGbMlfs8kf0mdeWhZuG8D8x1n3fDY/edit?gid=304137877#gid=304137877
+const FOOTFALL_POINTS = [
+  {
+    "lat": -19.9077882899644,
+    "lon": -43.9592569000019,
+    "name": "Av. Dom Pedro II, 1900 - Carlos Prates, Belo Horizonte - MG, 30710-010",
+    "users": 32,
+    "rate": 5.89
+  }
+];
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning','footfall'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+  
+  // Inicializar Footfall quando a aba for clicada
+  if (id === 'footfall') {
+    initializeFootfallContent();
+  }
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🖨️ Impressões", fmtInt(CONS["Impressões"])],
+  ["📈 CTR", pct(CONS["CTR (%)"])],
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Detectar KPI do dashboard (baseado no título ou contexto)
+// Este dashboard é Footfall Display, então não é CPM
+const dashboardKpi = 'DISPLAY'; // Pode ser 'CPM', 'CPV', 'CPE', 'CPD', 'DISPLAY', etc.
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+const thCpm = document.getElementById('th-cpm');
+if (thCpm) {
+  thCpm.style.display = dashboardKpi === 'CPM' ? '' : 'none';
+}
+
+PER.forEach(r=>{
+  const cpmCell = dashboardKpi === 'CPM' ? `<td>R$ ${fmtBR(r["CPM (R$)"])}</td>` : '';
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Impressões"])}</td>
+      <td>${fmtInt(r["Cliques"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
+      <td>${fmtInt(r["VC (100%)"])}</td>
+      <td>${pct(r["VTR (100%)"])}</td>
+      <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
+      ${cpmCell}
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{labels, datasets:[{data:spendData}]},
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+const impressions = PER.map(r=>Number(r["Impressões"]||0));
+const ctr = PER.map(r=>(Number(r["CTR (%)"]||0))*100);
+new Chart(ctx2, {
+  type:'bar',
+  data:{labels, datasets:[
+    {label:'Impressões', data:impressions, yAxisID:'y'},
+    {label:'CTR (%)', data:ctr, yAxisID:'y1'}
+  ]},
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{title:{display:true,text:'Impressões'}, ticks:{callback:v=>fmtInt(v)}},
+      y1:{position:'right', title:{display:true,text:'CTR (%)'}, grid:{drawOnChartArea:false}}
+    }
+  }
+});
+
+// CHANNELS — selector
+const sel = document.getElementById('channelSelect');
+PER.forEach(r=>{ const opt=document.createElement('option'); opt.value=r["Canal"]; opt.textContent=r["Canal"]; sel.appendChild(opt); });
+const metricsChannel = document.getElementById('metrics-channel');
+const channelNameSpan = document.getElementById('channelNameSpan');
+
+// Verificar se os elementos existem
+if (!metricsChannel) {
+  console.error('Elemento metrics-channel não encontrado');
+}
+if (!channelNameSpan) {
+  console.error('Elemento channelNameSpan não encontrado');
+}
+
+function renderChannelDailyTable(name){
+  const tbody = document.getElementById('channelDailyBody');
+  if (!tbody) {
+    console.error('channelDailyBody não encontrado');
+    return;
+  }
+  tbody.innerHTML = "";
+  
+  if (!DAILY || DAILY.length === 0) {
+    console.warn('Array DAILY está vazio ou não definido');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;">Nenhum dado disponível</td></tr>';
+    return;
+  }
+  
+  const channelName = (name||'').toLowerCase().trim();
+  const rows = DAILY.filter(r=> {
+    const rChannel = (r.channel||'').toLowerCase().trim();
+    return rChannel === channelName;
+  }).sort((a,b)=>{ // date desc
+    const pa = a.date.split('/').reverse().join('-');
+    const pb = b.date.split('/').reverse().join('-');
+    return pa<pb ? 1 : pa>pb ? -1 : 0;
+  });
+  
+  console.log(`Renderizando ${rows.length} registros para canal "${name}"`);
+  
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;">Nenhum dado disponível para este canal</td></tr>';
+    return;
+  }
+  
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+      </tr>`);
+  });
+}
+
+
+function renderChannel(name){
+  console.log('renderChannel chamado com:', name);
+  console.log('PER disponível:', PER);
+  console.log('DAILY disponível:', DAILY ? `${DAILY.length} registros` : 'não definido');
+  
+  const r = PER.find(x=> (x["Canal"]||'').toLowerCase()=== (name||'').toLowerCase()) || PER[0];
+  const nm = r ? r['Canal'] : name;
+  console.log('Canal encontrado:', nm);
+  
+  if (channelNameSpan) {
+    channelNameSpan.textContent = nm || '—';
+  }
+  
+  // Definir métricas baseadas no tipo de canal
+  const isVideoChannel = ['CTV', 'Disney', 'Netflix', 'YouTube'].includes(nm);
+  const isDisplayChannel = nm === 'Footfall Display';
+  const isMixedChannel = nm === 'TikTok';
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+  ];
+  
+  // Adicionar métricas específicas por tipo de canal
+  if (isVideoChannel) {
+    // Canais de vídeo: VTR e CPV
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])]
+    );
+  } else if (isDisplayChannel) {
+    // Canal de display: CPM apenas se KPI for CPM
+    items.push(
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])]
+    );
+    if (dashboardKpi === 'CPM') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
+  } else if (isMixedChannel) {
+    // Canal misto (TikTok): VTR, CPV e CPM (apenas se KPI for CPM)
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])]
+    );
+    if (dashboardKpi === 'CPM') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
+  }
+  
+  // Calcular CPM médio a partir dos dados diários apenas se o KPI for CPM
+  if (dashboardKpi === 'CPM' && DAILY && DAILY.length > 0) {
+    const channelDaily = DAILY.filter(d => {
+      const dChannel = (d.channel||'').toLowerCase().trim();
+      return dChannel === (nm||'').toLowerCase().trim();
+    });
+    
+    if (channelDaily.length > 0) {
+      const cpmValues = channelDaily
+        .filter(d => d.impressions > 0 && d.spend > 0)
+        .map(d => (d.spend / d.impressions) * 1000);
+      
+      if (cpmValues.length > 0) {
+        const cpmMedio = cpmValues.reduce((sum, val) => sum + val, 0) / cpmValues.length;
+        items.push(['📊 CPM MÉDIO', `R$ ${fmtBR(cpmMedio)}`]);
+      }
+    }
+  }
+  
+  if (metricsChannel) {
+    metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  } else {
+    console.error('metricsChannel não encontrado, não é possível renderizar métricas');
+  }
+  
+  renderChannelDailyTable(nm);
+  
+  // Mostrar seções específicas por canal
+  const showFF = (nm||'').toLowerCase()==='footfall display';
+  const showCTV = (nm||'').toLowerCase()==='ctv';
+  
+  const footfallWrap = document.getElementById('footfallExtras');
+  const ctvWrap = document.getElementById('ctvPublishers');
+  
+  if(footfallWrap) footfallWrap.classList.toggle('hidden', !showFF);
+  if(ctvWrap) ctvWrap.classList.toggle('hidden', !showCTV);
+}
+
+sel.addEventListener('change', e=>renderChannel(e.target.value));
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (PER && PER.length > 0 && PER[0]['Canal']) {
+      renderChannel(PER[0]['Canal']);
+    }
+  });
+} else {
+  // DOM já está pronto
+  if (PER && PER.length > 0 && PER[0]['Canal']) {
+    renderChannel(PER[0]['Canal']);
+  }
+}
+
+// ====== PLANNING POPULATION ======
+(function(){
+  const period = '07/02/2026 a 28/02/2026';
+  const metaImp = 150000;
+  const cpmContratado = 25.0;
+  const budgetTotal = Number(CONS["Budget Contratado (R$)"]||0);
+  const budgetUsed = Number(CONS["Budget Utilizado (R$)"]||0);
+  const pacingBudget = budgetTotal>0 ? budgetUsed/budgetTotal : 0;
+  const impEnt = Number(CONS["Impressões"]||0);
+  const pacingImp = metaImp>0 ? impEnt/metaImp : 0;
+
+  const setTxt = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent = txt; };
+  setTxt('plan-periodo', period);
+  setTxt('plan-budget-total', fmtBR(budgetTotal));
+  setTxt('plan-budget-used', fmtBR(budgetUsed));
+  setTxt('plan-pacing', `${(pacingBudget*100).toFixed(2)}%`);
+  setTxt('plan-imp-meta', fmtInt(metaImp));
+  setTxt('plan-imp-entregues', fmtInt(impEnt));
+  setTxt('plan-imp-pacing', `${(pacingImp*100).toFixed(2)}%`);
+  setTxt('plan-cpm', fmtBR(cpmContratado));
+})();
+
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+      const totalImp = Number(CONS["Impressões"]||0);
+      const totalClicks = Number(CONS["Cliques"]||0);
+      const ctrTotal = totalImp>0 ? (totalClicks/totalImp)*100 : 0;
+      const metaImp = 150000;
+      const entregaPct = metaImp>0 ? (totalImp/metaImp)*100 : 0;
+
+      const dailyDisplay = DAILY.filter(r => (r.channel||'').toLowerCase()==='footfall display');
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const bestCtr = Object.entries(grouped).reduce((acc,[date,val])=>{
+        const ctr = val.impressions>0 ? (val.clicks/val.impressions)*100 : 0;
+        return ctr > (acc.ctr||-1) ? {date, ctr} : acc;
+      }, {});
+
+      const items = [];
+      items.push(`⏱️ Pacing orçamentário: <b>${(pacing*100).toFixed(1)}%</b> do budget utilizado.`);
+      items.push(`📈 Entrega de impressões: <b>${fmtInt(totalImp)}</b> (${entregaPct.toFixed(1)}% de 150.000 contratadas).`);
+      items.push(`🎯 CTR médio: <b>${ctrTotal.toFixed(2)}%</b>.`);
+      if (bestCtr.date) items.push(`⭐ Melhor CTR diário: <b>${bestCtr.ctr.toFixed(2)}%</b> em ${bestCtr.date}.`);
+
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+
+// FOOTFALL FUNCTIONS
+let footfallInitialized = false;
+
+function initializeFootfall() {
+  if (footfallInitialized) return;
+  setTimeout(() => {
+    updateFootfallMetrics();
+    initializeFootfallMap();
+    initializeFootfallChart();
+    updateFootfallTopStores();
+    footfallInitialized = true;
+  }, 100);
+}
+
+
+
+function updateFootfallTopStores() {
+  const topStoresContainer = document.getElementById('footfall-topStores');
+  if (!topStoresContainer) {
+    console.error('Elemento footfall-topStores não encontrado');
+    return;
+  }
+  
+  // Limpar conteúdo existente
+  topStoresContainer.innerHTML = '';
+  
+  if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+    // Ordenar por usuários (descendente) e pegar top 5
+    const sortedPoints = FOOTFALL_POINTS
+      .filter(point => point.users > 0)
+      .sort((a, b) => b.users - a.users)
+      .slice(0, 5);
+    
+    sortedPoints.forEach((point, index) => {
+      const storeItem = document.createElement('div');
+      storeItem.className = 'store-item';
+      storeItem.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid #ff6b35;
+      `;
+      
+      storeItem.innerHTML = `
+        <div>
+          <div style="font-weight: 600; color: white; font-size: 0.9rem;">
+            ${index + 1}. ${point.name.length > 30 ? point.name.substring(0, 30) + '...' : point.name}
+          </div>
+          <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">
+            Taxa: ${point.rate}%
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 600; color: #ff6b35; font-size: 1.1rem;">
+            ${point.users.toLocaleString('pt-BR')}
+          </div>
+          <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">
+            usuários
+          </div>
+        </div>
+      `;
+      
+      topStoresContainer.appendChild(storeItem);
+    });
+    
+    console.log('Top Stores footfall atualizado com', sortedPoints.length, 'lojas');
+  } else {
+    topStoresContainer.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Nenhum dado disponível</div>';
+  }
+}
+
+
+
+function initializeFootfallContent() {
+    console.log('Inicializando conteúdo footfall...');
+    
+    // Aguardar um pouco para garantir que os elementos estejam prontos
+    setTimeout(() => {
+        updateFootfallMetrics();
+        initializeFootfallMap();
+        initializeFootfallChart();
+        updateFootfallTopStores();
+    }, 500);
+}
+
+
+function updateFootfallMetrics() {
+    const metricsContainer = document.getElementById('footfall-metrics');
+    if (!metricsContainer || typeof FOOTFALL_POINTS === 'undefined') {
+        return;
+    }
+    
+    const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
+    
+    if (footfallData.length === 0) {
+        metricsContainer.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Carregando métricas...</div>';
+        return;
+    }
+    
+    // Calcular métricas
+    const totalLojas = footfallData.length;
+    const totalUsuarios = footfallData.reduce((sum, item) => sum + item.users, 0);
+    const taxaMedia = footfallData.reduce((sum, item) => sum + item.rate, 0) / totalLojas;
+    const melhorLoja = footfallData.reduce((max, item) => item.rate > max.rate ? item : max);
+    
+    const metricsHTML = `
+        <div class="metric-card" style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #ff6b35;">🏪 Total de Lojas</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${totalLojas}</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Região metropolitana</div>
+        </div>
+        <div class="metric-card" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #8b5cf6;">👥 Total de Usuários</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${totalUsuarios.toLocaleString('pt-BR')}</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Footfall detectado</div>
+        </div>
+        <div class="metric-card" style="background: rgba(236, 72, 153, 0.1); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #ec4899;">📈 Taxa Média</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${taxaMedia.toFixed(1)}%</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Conversão média</div>
+        </div>
+        <div class="metric-card" style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #06b6d4;">🏆 Melhor Performance</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${melhorLoja.rate}%</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">${melhorLoja.name.split(' - ')[1] || melhorLoja.name.split(' ')[1] || 'Melhor loja'}</div>
+        </div>
+    `;
+    
+    metricsContainer.innerHTML = metricsHTML;
+    console.log('Métricas footfall atualizadas:', { totalLojas, totalUsuarios, taxaMedia: taxaMedia.toFixed(1) + '%', melhorLoja: melhorLoja.name });
+}
+
+
+function initializeFootfallMap() {
+    const mapElement = document.getElementById('footfall-map');
+    if (!mapElement) {
+        console.error('Elemento footfall-map não encontrado');
+        return;
+    }
+    
+    // Destruir mapa existente se houver
+    if (window.footfallMap) {
+        window.footfallMap.remove();
+    }
+    
+    const map = L.map('footfall-map').setView([-19.9078, -43.9593], 13);
+    window.footfallMap = map;
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    if (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length > 0) {
+        const footfallData = FOOTFALL_POINTS.filter(point => point.users > 0);
+        
+        // Criar cluster de markers
+        const markers = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            iconCreateFunction: function(cluster) {
+                const childCount = cluster.getChildCount();
+                let c = ' marker-cluster-';
+                if (childCount < 10) {
+                    c += 'small';
+                } else if (childCount < 100) {
+                    c += 'medium';
+                } else {
+                    c += 'large';
+                }
+                return new L.DivIcon({
+                    html: '<div><span>' + childCount + '</span></div>',
+                    className: 'marker-cluster' + c,
+                    iconSize: new L.Point(40, 40)
+                });
+            }
+        });
+        
+        // Adicionar markers
+        footfallData.forEach(point => {
+            const marker = L.marker([point.lat, point.lon]);
+            marker.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
+                </div>
+            `);
+            markers.addLayer(marker);
+        });
+        
+        // Dados para heatmap
+        const heatmapData = [];
+        footfallData.forEach(store => {
+            // Intensidade baseada na taxa de conversão
+            const baseIntensity = Math.max(0.1, store.rate / 20); // Normalizar para 0-1
+            
+            // Adicionar pontos espalhados para simular densidade
+            const spreadRadius = 0.005; // Raio de espalhamento
+            const numPoints = Math.max(3, Math.floor(store.users / 1000)); // Mais pontos para mais usuários
+            
+            for (let i = 0; i < numPoints; i++) {
+                const offsetLat = (Math.random() - 0.5) * spreadRadius;
+                const offsetLng = (Math.random() - 0.5) * spreadRadius;
+                const pointIntensity = baseIntensity * (0.7 + Math.random() * 0.6);
+                
+                heatmapData.push([
+                    store.lat + offsetLat, 
+                    store.lon + offsetLng, 
+                    pointIntensity
+                ]);
+            }
+            
+            // Ponto central com intensidade máxima
+            heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
+        });
+        
+        // Adicionar layers ao mapa
+        map.addLayer(markers);
+        
+        // Heatmap layer
+        const heatmapLayer = L.heatLayer(heatmapData, {
+            radius: 50,
+            blur: 20,
+            maxZoom: 18,
+            minOpacity: 0.3,
+            gradient: {
+                0.0: 'rgba(0, 255, 136, 0.1)',
+                0.2: 'rgba(6, 182, 212, 0.4)',
+                0.4: 'rgba(139, 92, 246, 0.6)',
+                0.6: 'rgba(236, 72, 153, 0.8)',
+                0.8: 'rgba(255, 107, 53, 0.9)',
+                1.0: 'rgba(255, 107, 53, 1.0)'
+            }
+        }).addTo(map);
+        
+        // Controle de layers
+        const overlayMaps = {
+            "🔥 Mapa de Calor": heatmapLayer,
+            "📍 Marcadores": markers
+        };
+        
+        L.control.layers(null, overlayMaps, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+        
+        console.log(`Mapa footfall inicializado: ${footfallData.length} lojas, ${heatmapData.length} pontos de calor`);
+    }
+    
+    // Invalidar tamanho do mapa
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+    
+    return map;
+}
+
+function initializeFootfallChart() {
+  const ctxEl = document.getElementById('footfall-performanceChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
+  const source = (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length) ? FOOTFALL_POINTS : [];
+  const chartData = source
+    .filter(store => store.users > 0)
+    .sort((a, b) => b.users - a.users)
+    .slice(0, 8);
+
+  if (chartData.length === 0) {
+    ctxEl.parentElement.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.7);padding:2rem;">Nenhum dado de footfall disponível.</p>';
+    return;
+  }
+
+  new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Lojas',
+        data: chartData.map(store => ({
+          x: store.users,
+          y: store.rate,
+          label: store.name.split(' - ')[1] || store.name
+        })),
+        backgroundColor: 'rgba(255, 107, 53, 0.6)',
+        borderColor: '#ff6b35',
+        pointRadius: function(context) {
+          return Math.max(5, Math.min(15, context.parsed.x / 500));
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ff6b35',
+          bodyColor: '#ffffff',
+          callbacks: {
+            label: function(context) {
+              return `${context.raw.label}: ${context.parsed.x.toLocaleString()} usuários, ${context.parsed.y}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Usuários Footfall',
+            color: '#ffffff'
+          },
+          ticks: {
+            color: '#ffffff'
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Taxa de Conversão (%)',
+            color: '#ffffff'
+          },
+          ticks: {
+            color: '#ffffff'
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function initializeFootfallTopStores() {
+  const source = (typeof FOOTFALL_POINTS !== 'undefined' && FOOTFALL_POINTS.length) ? FOOTFALL_POINTS : [];
+  const topStores = source
+    .filter(store => store.users > 0)
+    .sort((a, b) => b.users - a.users)
+    .slice(0, 5);
+
+  const topStoresHTML = topStores.map(store => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s;">
+      <div style="font-weight: 500; flex: 1; color: #ffffff;">${store.name.split(' - ')[1] || store.name}</div>
+      <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+        <div style="color: #06b6d4; font-weight: 500;">${store.users.toLocaleString()} usuários</div>
+        <div style="color: #ff6b35; font-weight: 500;">${store.rate}%</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
+}
+
+</script>
+</body>
+</html>

@@ -4,6 +4,10 @@ venv/
 __pycache__/
 *.pyc
 
+# Credenciais locais (nunca commitar JSON real da service account)
+credentials.json
+credentials_old.json
+
 # Environment files
 .env
 .env.local
