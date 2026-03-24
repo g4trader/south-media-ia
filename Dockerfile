@@ -25,6 +25,7 @@ COPY bigquery_firestore_manager.py .
 COPY templates_client_admin.py .
 # Credenciais agora são baixadas do Google Cloud Storage
 COPY static/ ./static/
+COPY assets/ ./assets/
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app \

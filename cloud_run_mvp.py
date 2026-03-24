@@ -277,7 +277,7 @@ def with_superadmin_sidebar(page_html: str, active_menu: str = "") -> str:
   }
 </style>
 """
-    shell_start = f'<div class="sa-shell"><aside class="sa-sidebar"><div class="sa-brand"><img src="/assets/logo_southmedia.png" alt="South Media" class="sa-logo"></div><nav class="sa-menu">{nav_html}</nav><div class="sa-footer"><svg class="sa-footer-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M4 20a8 8 0 0 1 16 0"></path></svg><span class="sa-footer-name">{user_label}</span></div></aside><main class="sa-content">'
+    shell_start = f"<div class=\"sa-shell\"><aside class=\"sa-sidebar\"><div class=\"sa-brand\"><img src=\"/assets/logo_southmedia.png\" alt=\"\" class=\"sa-logo\" onerror=\"this.style.display='none'\" /></div><nav class=\"sa-menu\">{nav_html}</nav><div class=\"sa-footer\"><svg class=\"sa-footer-icon\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"8\" r=\"3.5\"></circle><path d=\"M4 20a8 8 0 0 1 16 0\"></path></svg><span class=\"sa-footer-name\">{user_label}</span></div></aside><main class=\"sa-content\">"
     shell_end = "</main></div>"
 
     html = page_html
@@ -1047,7 +1047,7 @@ def login_page():
 </head>
 <body>
   <div class="card">
-    <div class="logo-wrap"><img src="/assets/logo_southmedia.png" alt="South Media" class="logo"></div>
+    <div class="logo-wrap"><img src="/assets/logo_southmedia.png" alt="" class="logo" onerror="this.style.display='none'" /></div>
     <h2>Entrar</h2>
     <label>E-mail</label>
     <input id="email" type="email" autocomplete="username" />
