@@ -110,24 +110,34 @@ class RealGoogleSheetsExtractor:
             spreadsheet_info = self.service.spreadsheets().get(spreadsheetId=self.config.sheet_id).execute()
             sheets = spreadsheet_info.get('sheets', [])
             
-            # Procurar por abas que contenham dados diários (mais flexível)
             report_sheet = None
-            possible_names = ['report', 'dados', 'daily', 'diário', 'performance', 'delivery']
-            
-            for sheet in sheets:
-                sheet_name = sheet['properties']['title']
-                clean_name = sheet_name.strip().lower()
-                
-                # Verificar se o nome da aba contém alguma das palavras-chave
-                for possible_name in possible_names:
-                    if possible_name in clean_name:
-                        report_sheet = sheet_name
-                        logger.info(f"📊 Encontrada aba de dados: '{sheet_name}' (contém: '{possible_name}')")
+            # Se tiver report_sheet_gid (ex.: 364193781), usar essa aba para bater com a planilha
+            report_gid = getattr(self.config, 'report_sheet_gid', None)
+            if report_gid is not None:
+                try:
+                    gid_int = int(report_gid)
+                    for sheet in sheets:
+                        if sheet.get('properties', {}).get('sheetId') == gid_int:
+                            report_sheet = sheet['properties']['title']
+                            logger.info(f"📊 Usando aba Report por GID {gid_int}: '{report_sheet}'")
+                            break
+                except (TypeError, ValueError):
+                    pass
+            if not report_sheet:
+                possible_names = [
+                    'report', 'dados', 'daily', 'diário', 'diario', 'performance', 'delivery',
+                    'relatório', 'relatorio', 'fps', 'youtube', 'data', 'views', 'complete'
+                ]
+                for sheet in sheets:
+                    sheet_name = sheet['properties']['title']
+                    clean_name = sheet_name.strip().lower()
+                    for possible_name in possible_names:
+                        if possible_name in clean_name:
+                            report_sheet = sheet_name
+                            logger.info(f"📊 Encontrada aba de dados: '{sheet_name}' (contém: '{possible_name}')")
+                            break
+                    if report_sheet:
                         break
-                
-                if report_sheet:
-                    break
-            
             # Se não encontrou, usar a primeira aba que não seja de configuração
             if not report_sheet:
                 config_sheets = ['informações', 'contrato', 'publishers', 'estratégias', 'config']
@@ -147,7 +157,8 @@ class RealGoogleSheetsExtractor:
                 available_sheets = [sheet['properties']['title'] for sheet in sheets]
                 raise Exception(f"Nenhuma aba de dados encontrada. Abas disponíveis: {available_sheets}")
             
-            range_name = f"{report_sheet}!A:Z"
+            # Nome da aba com aspas se tiver espaço (ex.: 'Dados Diários'!A:Z)
+            range_name = f"'{report_sheet}'!A:Z" if ' ' in report_sheet else f"{report_sheet}!A:Z"
             
             # Ler os dados da aba encontrada
             result = self.service.spreadsheets().values().get(
@@ -164,39 +175,88 @@ class RealGoogleSheetsExtractor:
             # Converter para DataFrame
             df = pd.DataFrame(values[1:], columns=values[0])  # Primeira linha como header
             
-            # Mapear colunas para nomes padronizados
+            # Mapear colunas para nomes padronizados (inglês + português / variações)
             column_mapping = {
                 'Day': 'date',
+                'Data': 'date',
+                'Date': 'date',
+                'Dia': 'date',
                 'Line Item': 'line_item',
                 'Creative': 'creative',
-                'Valor investido': 'spend',  # Corrigido: minúscula
+                'Valor investido': 'spend',
+                'Spend': 'spend',
                 'Imps': 'impressions',
+                'Impressões': 'impressions',
                 'Disparos': 'disparos',
                 'Clicks': 'clicks',
+                'Cliques': 'clicks',
                 'CPV': 'cpv',
                 'CPC': 'cpc',
-                'CTR %': 'ctr',  # Corrigido: com %
+                'CTR %': 'ctr',
+                'CTR': 'ctr',
                 '25% Video Complete': 'video_25',
                 '50% Video Complete': 'video_50',
                 '75% Video Complete': 'video_75',
-                '100% Complete': 'video_completions',  # Corrigido: 100% Complete
-                'Video Starts': 'video_starts'
+                '100% Complete': 'video_completions',
+                'Video Starts': 'video_starts',
+                'Visualizações completas': 'video_completions',
             }
+            # Aplicar mapeamento (case-insensitive: planilha pode ter "Day" ou "day" ou "DAY")
+            rename_map = {}
+            col_lower = {str(c).strip().lower(): str(c).strip() for c in df.columns}
+            for k, v in column_mapping.items():
+                k_lower = k.lower()
+                if k_lower in col_lower:
+                    rename_map[col_lower[k_lower]] = v
+            df = df.rename(columns=rename_map)
             
-            # Renomear colunas
-            df = df.rename(columns=column_mapping)
+            # Excluir linhas sem data (totais/resumos) para não inflar soma de VCs/impr
+            if 'date' in df.columns:
+                before = len(df)
+                df['date'] = df['date'].astype(str).str.strip()
+                df = df[df['date'].notna() & (df['date'] != '') & (df['date'].str.lower() != 'nan')]
+                if len(df) < before:
+                    logger.info(f"📋 Removidas {before - len(df)} linhas sem data (totais/resumo)")
             
-            # Converter tipos de dados
-            for col in ['spend', 'impressions', 'disparos', 'clicks', 'cpv', 'cpc', 'ctr', 
+            # Converter tipos de dados: API pode retornar número (301166.0) ou string com milhar (ex.: "301.166")
+            def _parse_num_br(ser):
+                def _one(val):
+                    if pd.isna(val):
+                        return float('nan')
+                    s = str(val).strip().replace('R$', '').replace(' ', '')
+                    if not s or s.lower() == 'nan':
+                        return float('nan')
+                    # Se tem vírgula, é decimal BR: 1.234,56 -> remover ponto, trocar vírgula
+                    if ',' in s:
+                        s = s.replace('.', '').replace(',', '.')
+                        try:
+                            return float(s)
+                        except ValueError:
+                            return float('nan')
+                    # Se termina com .0 ou .00 (número da API), usar float direto
+                    if s.endswith('.0') or ('.' in s and s.split('.')[-1].replace('0', '') == ''):
+                        try:
+                            return float(s)
+                        except ValueError:
+                            pass
+                    # Ponto como milhar (ex.: 1.234 ou 301.166) vs decimal (1.5)
+                    if '.' in s:
+                        parts = s.split('.')
+                        if len(parts) == 2 and len(parts[1]) == 3 and parts[1].isdigit():
+                            return float(s.replace('.', ''))  # milhar
+                        try:
+                            return float(s)
+                        except ValueError:
+                            return float('nan')
+                    try:
+                        return float(s)
+                    except ValueError:
+                        return float('nan')
+                return ser.map(_one)
+            for col in ['spend', 'impressions', 'disparos', 'clicks', 'cpv', 'cpc', 'ctr',
                        'video_25', 'video_50', 'video_75', 'video_completions', 'video_starts']:
                 if col in df.columns:
-                    if col == 'spend':  # Tratamento especial para valores monetários brasileiros
-                        # Formato brasileiro: R$ 2.575,54 -> 2575.54
-                        df[col] = df[col].astype(str).str.replace('R$', '').str.replace(' ', '').str.strip()
-                        # Remover pontos de milhares e substituir vírgula por ponto decimal
-                        df[col] = df[col].str.replace('.', '', regex=False)  # Remove pontos de milhares
-                        df[col] = df[col].str.replace(',', '.', regex=False)  # Vírgula vira ponto decimal
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df[col] = _parse_num_br(df[col])
             
             # Converter data com correção de formato
             if 'date' in df.columns:
@@ -230,6 +290,9 @@ class RealGoogleSheetsExtractor:
                 impressions = int(raw_imps) if pd.notna(raw_imps) else 0
                 clicks = int(row.get('clicks', 0)) if pd.notna(row.get('clicks')) else 0
                 video_completions = int(row.get('video_completions', 0)) if pd.notna(row.get('video_completions')) else 0
+                video_75 = int(row.get('video_75', 0)) if pd.notna(row.get('video_75')) else 0
+                # Não zerar video_completions quando 100% > 75%: a planilha pode reportar assim (definições diferentes).
+                # Total VC Entregue deve bater com a soma da coluna 100% Complete na planilha.
                 disparos = int(row.get('disparos', video_completions)) if pd.notna(row.get('disparos', video_completions)) else 0
                 
                 # Calcular métricas dinamicamente
@@ -257,11 +320,12 @@ class RealGoogleSheetsExtractor:
                     "video_starts": int(row.get('video_starts', 0)) if pd.notna(row.get('video_starts')) else 0
                 })
             
-            logger.info(f"✅ Dados diários extraídos: {len(daily_data)} registros")
+            total_vc = sum(d.get('video_completions', 0) for d in daily_data)
+            logger.info(f"✅ Dados diários extraídos: {len(daily_data)} registros | Soma VC (100% Complete): {total_vc}")
             return daily_data
             
         except Exception as e:
-            logger.error(f"❌ Erro ao extrair dados diários: {e}")
+            logger.error(f"❌ Erro ao extrair dados diários: {e}", exc_info=True)
             return None
     
     def _extract_contract_data(self) -> Optional[Dict[str, Any]]:
@@ -293,7 +357,8 @@ class RealGoogleSheetsExtractor:
                 # Para campanhas CPE/CPD sem aba de contrato, usar dados padrão baseados nos dados da planilha
                 return self._generate_default_contract_data()
             
-            range_name = f"{contract_sheet}!A:C"
+            # Nome da aba com aspas se tiver espaço (ex.: 'Informações de contrato'!A:D)
+            range_name = f"'{contract_sheet}'!A:D" if ' ' in contract_sheet else f"{contract_sheet}!A:D"
             result = self.service.spreadsheets().values().get(
                 spreadsheetId=self.config.sheet_id,
                 range=range_name
@@ -304,20 +369,36 @@ class RealGoogleSheetsExtractor:
                 logger.error(f"❌ Aba '{contract_sheet}' está vazia")
                 return None
             
-            # Converter para dicionário
+            # Converter para dicionário (chave exata + chave sem dois-pontos final para flexibilidade)
+            # Valor pode estar em B ou, se B vazio, em C. Também aceitar linha com A vazio, B=label, C=valor.
+            def _cell(row, i):
+                if len(row) <= i:
+                    return ""
+                return str(row[i]).strip() if row[i] is not None else ""
+            
             contract_dict = {}
             for row in values:
-                if len(row) >= 2:
-                    key = str(row[0]).strip()
-                    value = str(row[1]).strip()
-                    if key and value and value.lower() != 'nan':
-                        contract_dict[key] = value
-                        
-                        # Se for "Periodo de veiculação" e houver valor na coluna C, adicionar como _fim
-                        if key == "Periodo de veiculação" and len(row) >= 3:
-                            periodo_fim = str(row[2]).strip()
-                            if periodo_fim and periodo_fim.lower() != 'nan':
-                                contract_dict[f"{key}_fim"] = periodo_fim
+                if len(row) < 1:
+                    continue
+                key = _cell(row, 0)
+                val_b = _cell(row, 1)
+                val_c = _cell(row, 2) if len(row) >= 3 else ""
+                value = val_b or val_c
+                # Estrutura alternativa: A vazio, B = label, C = valor (ex.: VC Contratadas)
+                if not key and len(row) >= 3 and val_b and val_c:
+                    key, value = val_b, val_c
+                if key and value and value.lower() != 'nan':
+                    contract_dict[key] = value
+                    if key.endswith(':'):
+                        contract_dict[key.rstrip(':')] = value
+                    # Normalizar chave sem ":" para busca posterior
+                    key_plain = key.rstrip(':')
+                    if key_plain and key_plain not in contract_dict:
+                        contract_dict[key_plain] = value
+                    
+                    if key == "Periodo de veiculação" or key_plain == "Periodo de veiculação":
+                        if len(row) >= 3 and val_c:
+                            contract_dict["Periodo de veiculação_fim"] = val_c
             
             logger.info(f"📋 Dados de contrato encontrados: {list(contract_dict.keys())}")
             
@@ -335,29 +416,47 @@ class RealGoogleSheetsExtractor:
                 # Também mapear para complete_views_contracted para compatibilidade
                 complete_views_contracted = impressions_contracted
             else:
-                # Para CPV/CPE/CPD, priorizar "Complete Views Contrado", "Escutas Contrado" ou "Disparos Contratado(s)"
-                # Observação: algumas planilhas usam o typo "Disparos Contrado".
-                complete_views_contracted = int(
-                    contract_dict.get(
-                        "Complete Views Contrado",
-                        contract_dict.get(
-                            "Escutas Contrado",
-                            contract_dict.get(
-                                "Disparos Contratados",
-                                contract_dict.get(
-                                    "Disparos Contrado",
-                                    contract_dict.get("Downloads Contratados", "0")
-                                )
-                            )
-                        )
-                    ).replace('.', '').replace(',', '')
-                ) if (
+                # Para CPV/CPE/CPD: VC Contratadas, Complete Views Contratado(s), Escutas, Disparos, etc.
+                # Incluir com e sem dois-pontos (planilha pode ter "VC Contratadas:" ou "VC Contratadas").
+                # Planilha FPS usa exatamente "Complete Views Contrado" (A7) e valor em B7 (ex.: 205318)
+                raw_vc = (
                     contract_dict.get("Complete Views Contrado")
+                    or contract_dict.get("Complete Views Contrado:")
+                    or contract_dict.get("VC Contratadas")
+                    or contract_dict.get("VC Contratadas:")
+                    or contract_dict.get("Complete Views Contratadas")
+                    or contract_dict.get("Complete Views Contratadas:")
+                    or contract_dict.get("Visualizações Completas Contratadas")
+                    or contract_dict.get("Views Contratadas")
                     or contract_dict.get("Escutas Contrado")
                     or contract_dict.get("Disparos Contratados")
                     or contract_dict.get("Disparos Contrado")
                     or contract_dict.get("Downloads Contratados")
-                ) else 0
+                )
+                # Fallback: procurar qualquer chave que contenha VC/Complete View/Visualização e Contratad (case-insensitive)
+                if not raw_vc:
+                    for k, v in contract_dict.items():
+                        k_lower = k.lower()
+                        v_str = str(v).strip() if v is not None else ""
+                        if not v_str or v_str.lower() == 'nan':
+                            continue
+                        if ('vc' in k_lower or 'complete view' in k_lower or 'visualização' in k_lower or 'visualizacoes' in k_lower) and ('contratad' in k_lower or 'contrado' in k_lower):
+                            raw_vc = v
+                            logger.info(f"📋 VC Contratadas encontrado na chave: {k!r} = {v}")
+                            break
+                        if 'view' in k_lower and 'contract' in k_lower:
+                            raw_vc = v
+                            logger.info(f"📋 VC Contratadas encontrado na chave: {k!r} = {v}")
+                            break
+                # Aceitar valor como número (API) ou string (ex.: "205318" ou "205.318")
+                raw_vc_str = str(raw_vc).strip() if raw_vc is not None else ""
+                if raw_vc_str and raw_vc_str.lower() != 'nan':
+                    raw_vc_clean = raw_vc_str.replace('.', '').replace(',', '').replace(' ', '')
+                    complete_views_contracted = int(raw_vc_clean) if raw_vc_clean.isdigit() else 0
+                else:
+                    complete_views_contracted = 0
+                if complete_views_contracted == 0 and not is_cpm:
+                    logger.warning(f"⚠️ VC Contratadas zerado. Chaves do contrato: {list(contract_dict.keys())}")
                 impressions_contracted = 0
             
             # Mapear para estrutura padrão (usando as chaves reais da planilha)
@@ -670,11 +769,19 @@ class RealGoogleSheetsExtractor:
         # Não gerar insight de "KPI atual vs contratado" para:
         # - CPM: fixo, não faz sentido comparar
         # - CPD: user pediu para remover essa análise no quadro de Insights Principais
+        # Só mostrar "acima"/"abaixo" quando houver diferença relevante (evitar "acima" com valores iguais ex.: R$ 0,03 vs R$ 0,03)
         if kpi_upper not in ('CPM', 'CPD'):
-            if metrics['cpv'] > metrics['cpv_contracted']:
-                insights.append(f"📊 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está acima do contratado (R$ {metrics['cpv_contracted']:.2f})")
-            else:
-                insights.append(f"💰 {kpi_type} atual (R$ {metrics['cpv']:.2f}) está abaixo do contratado (R$ {metrics['cpv_contracted']:.2f})")
+            cpv_atual = float(metrics.get('cpv', 0) or 0)
+            cpv_contr = float(metrics.get('cpv_contracted', 0) or 0)
+            tol_abs = 0.005  # R$ 0,005 de tolerância
+            tol_rel = 0.01   # 1% de tolerância
+            diff_ok = cpv_contr > 0 and (abs(cpv_atual - cpv_contr) > max(tol_abs, cpv_contr * tol_rel))
+            if diff_ok and cpv_atual > cpv_contr:
+                insights.append(f"📊 {kpi_type} atual (R$ {cpv_atual:.2f}) está acima do contratado (R$ {cpv_contr:.2f})")
+            elif diff_ok and cpv_atual < cpv_contr:
+                insights.append(f"💰 {kpi_type} atual (R$ {cpv_atual:.2f}) está abaixo do contratado (R$ {cpv_contr:.2f})")
+            elif cpv_contr > 0:
+                insights.append(f"✅ {kpi_type} atual (R$ {cpv_atual:.2f}) está em linha com o contratado (R$ {cpv_contr:.2f})")
         
         # Insights de VTR só fazem sentido para campanhas com vídeo (CPV/CPE)
         if kpi_upper in ('CPV', 'CPE'):
@@ -689,7 +796,7 @@ class RealGoogleSheetsExtractor:
 
 # Classe de configuração
 class CampaignConfig:
-    def __init__(self, client, campaign, campaign_key, sheet_id, tabs=None):
+    def __init__(self, client, campaign, campaign_key, sheet_id, tabs=None, report_sheet_gid=None):
         self.client = client
         self.campaign = campaign
         self.campaign_key = campaign_key
@@ -700,6 +807,8 @@ class CampaignConfig:
             "publishers": "Publishers",
             "strategies": "Segmentações"
         }
+        # GID da aba Report (ex.: 364193781) para forçar essa aba quando conhecido
+        self.report_sheet_gid = report_sheet_gid
 
 if __name__ == "__main__":
     # Teste local

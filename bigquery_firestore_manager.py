@@ -53,6 +53,10 @@ class BigQueryFirestoreManager:
                 self.users_collection = 'users'
                 logger.info("🚀 Usando ambiente PRODUCTION")
             
+            # Coleções de clientes e usuários (compartilhadas por ambiente)
+            self.clients_collection = 'clients'
+            self.client_users_collection = 'client_users'
+            
             # Tabelas (iguais para ambos ambientes)
             self.campaigns_table = 'campaigns'
             self.dashboards_table = 'dashboards'
@@ -311,6 +315,313 @@ class BigQueryFirestoreManager:
             
         except Exception as e:
             logger.error(f"❌ Erro ao obter dashboards: {e}")
+            return []
+    
+    # --- Clientes e vínculo de dashboards ---
+    def create_client(self, name: str, slug: str = None) -> Optional[str]:
+        """Criar cliente. Retorna client_id."""
+        try:
+            import uuid
+            client_id = slug or str(uuid.uuid4())[:8]
+            client_id = "".join(c for c in client_id if c.isalnum() or c in "-_").lower() or str(uuid.uuid4())[:8]
+            doc_ref = self.fs_client.collection(self.clients_collection).document(client_id)
+            if doc_ref.get().exists:
+                client_id = f"{client_id}_{str(uuid.uuid4())[:4]}"
+                doc_ref = self.fs_client.collection(self.clients_collection).document(client_id)
+            now = datetime.now()
+            doc_ref.set({
+                "client_id": client_id,
+                "name": name,
+                "slug": client_id,
+                "created_at": now,
+                "updated_at": now,
+            })
+            logger.info(f"✅ Cliente criado: {client_id}")
+            return client_id
+        except Exception as e:
+            logger.error(f"❌ Erro ao criar cliente: {e}")
+            return None
+    
+    def list_clients(self) -> List[Dict[str, Any]]:
+        """Listar todos os clientes."""
+        try:
+            out = []
+            for doc in self.fs_client.collection(self.clients_collection).stream():
+                d = doc.to_dict()
+                d["client_id"] = doc.id
+                out.append(d)
+            return out
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar clientes: {e}")
+            return []
+    
+    def get_client(self, client_id: str) -> Optional[Dict[str, Any]]:
+        """Obter um cliente por ID."""
+        try:
+            doc = self.fs_client.collection(self.clients_collection).document(client_id).get()
+            if not doc.exists:
+                return None
+            d = doc.to_dict()
+            d["client_id"] = doc.id
+            return d
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter cliente: {e}")
+            return None
+    
+    def update_client(self, client_id: str, name: str = None, slug: str = None) -> bool:
+        """Atualizar cliente."""
+        try:
+            ref = self.fs_client.collection(self.clients_collection).document(client_id)
+            if not ref.get().exists:
+                return False
+            data = {"updated_at": datetime.now()}
+            if name is not None:
+                data["name"] = name
+            if slug is not None:
+                data["slug"] = slug
+            ref.update(data)
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar cliente: {e}")
+            return False
+    
+    def delete_client(self, client_id: str) -> bool:
+        """Remover cliente (não remove vínculos de dashboard; opcionalmente desvincula)."""
+        try:
+            self.fs_client.collection(self.clients_collection).document(client_id).delete()
+            logger.info(f"✅ Cliente removido: {client_id}")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao remover cliente: {e}")
+            return False
+    
+    def add_client_user(self, client_id: str, email: str, name: str = None, role: str = "viewer", password: str = None) -> Optional[str]:
+        """Adicionar usuário ao cliente. Retorna user_id."""
+        try:
+            import uuid
+            user_id = str(uuid.uuid4())[:12]
+            ref = self.fs_client.collection(self.client_users_collection).document(user_id)
+            now = datetime.now()
+            payload = {
+                "client_id": client_id,
+                "email": email.strip().lower(),
+                "name": name or "",
+                "role": role,
+                "status": "active",
+                "created_at": now,
+                "updated_at": now,
+            }
+            if password:
+                payload["password_hash"] = generate_password_hash(password)
+            ref.set(payload)
+            return user_id
+        except Exception as e:
+            logger.error(f"❌ Erro ao adicionar usuário: {e}")
+            return None
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        """Buscar usuário (client_users) por e-mail."""
+        try:
+            email_norm = (email or "").strip().lower()
+            if not email_norm:
+                return None
+
+            query = (
+                self.fs_client
+                .collection(self.client_users_collection)
+                .where("email", "==", email_norm)
+                .limit(1)
+                .stream()
+            )
+            for doc in query:
+                data = doc.to_dict() or {}
+                data["user_id"] = doc.id
+                return data
+            return None
+        except Exception as e:
+            logger.error(f"❌ Erro ao buscar usuário por e-mail: {e}")
+            return None
+
+    def verify_user_credentials(self, email: str, password: str) -> Optional[Dict[str, Any]]:
+        """Validar credenciais de usuário (hash + fallback legado em texto plano)."""
+        try:
+            user = self.get_user_by_email(email)
+            if not user:
+                return None
+
+            if user.get("status", "active") != "active":
+                return None
+
+            password_hash = user.get("password_hash")
+            password_plain = user.get("password")
+            is_valid = False
+
+            if password_hash:
+                is_valid = check_password_hash(password_hash, password or "")
+            elif password_plain is not None:
+                # Compatibilidade com usuários antigos em texto plano
+                is_valid = str(password_plain) == str(password or "")
+                if is_valid:
+                    # Migrar automaticamente para hash
+                    self.fs_client.collection(self.client_users_collection).document(user["user_id"]).update({
+                        "password_hash": generate_password_hash(password or ""),
+                        "updated_at": datetime.now(),
+                    })
+
+            if not is_valid:
+                return None
+
+            # Atualizar último login
+            self.fs_client.collection(self.client_users_collection).document(user["user_id"]).update({
+                "last_login": datetime.now(),
+                "updated_at": datetime.now(),
+            })
+            return user
+        except Exception as e:
+            logger.error(f"❌ Erro ao verificar credenciais: {e}")
+            return None
+
+    def ensure_superadmin_user(self, email: str, password: str, name: str = None) -> Optional[str]:
+        """Criar/atualizar usuário superadmin."""
+        try:
+            import uuid
+            email_norm = (email or "").strip().lower()
+            if not email_norm or not password:
+                return None
+
+            existing = self.get_user_by_email(email_norm)
+            now = datetime.now()
+            payload = {
+                "email": email_norm,
+                "name": name or email_norm,
+                "role": "super_admin",
+                "status": "active",
+                "password_hash": generate_password_hash(password),
+                "updated_at": now,
+            }
+
+            if existing:
+                # Superadmin não deve ficar preso a client_id
+                payload["client_id"] = None
+                self.fs_client.collection(self.client_users_collection).document(existing["user_id"]).set(payload, merge=True)
+                return existing["user_id"]
+
+            user_id = str(uuid.uuid4())[:12]
+            payload.update({
+                "client_id": None,
+                "created_at": now,
+            })
+            self.fs_client.collection(self.client_users_collection).document(user_id).set(payload)
+            return user_id
+        except Exception as e:
+            logger.error(f"❌ Erro ao garantir superadmin {email}: {e}")
+            return None
+
+    def get_dashboard(self, campaign_key: str) -> Optional[Dict[str, Any]]:
+        """Buscar dashboard por campaign_key (id do documento)."""
+        try:
+            doc = self.fs_client.collection(self.dashboards_collection).document(campaign_key).get()
+            if not doc.exists:
+                return None
+            data = doc.to_dict() or {}
+            data["campaign_key"] = doc.id
+            return data
+        except Exception as e:
+            logger.error(f"❌ Erro ao buscar dashboard {campaign_key}: {e}")
+            return None
+    
+    def list_client_users(self, client_id: str) -> List[Dict[str, Any]]:
+        """Listar usuários do cliente."""
+        try:
+            out = []
+            for doc in self.fs_client.collection(self.client_users_collection).where("client_id", "==", client_id).stream():
+                d = doc.to_dict()
+                d["user_id"] = doc.id
+                out.append(d)
+            return out
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar usuários do cliente: {e}")
+            return []
+    
+    def remove_client_user(self, user_id: str) -> bool:
+        """Remover usuário do cliente."""
+        try:
+            self.fs_client.collection(self.client_users_collection).document(user_id).delete()
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao remover usuário: {e}")
+            return False
+
+    def list_all_users(self) -> List[Dict[str, Any]]:
+        """Listar todos os usuários (superadmin + clientes)."""
+        try:
+            out = []
+            for doc in self.fs_client.collection(self.client_users_collection).stream():
+                d = doc.to_dict() or {}
+                d["user_id"] = doc.id
+                out.append(d)
+            return out
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar usuários: {e}")
+            return []
+
+    def update_user_role(self, user_id: str, role: str) -> bool:
+        """Atualizar role de um usuário."""
+        try:
+            ref = self.fs_client.collection(self.client_users_collection).document(user_id)
+            if not ref.get().exists:
+                return False
+            ref.update({
+                "role": role,
+                "updated_at": datetime.now(),
+            })
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao atualizar role do usuário: {e}")
+            return False
+
+    def reset_user_password(self, user_id: str, new_password: str) -> bool:
+        """Resetar senha de usuário."""
+        try:
+            ref = self.fs_client.collection(self.client_users_collection).document(user_id)
+            if not ref.get().exists:
+                return False
+            ref.update({
+                "password_hash": generate_password_hash(new_password),
+                "updated_at": datetime.now(),
+            })
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao resetar senha do usuário: {e}")
+            return False
+    
+    def set_dashboard_client(self, campaign_key: str, client_id: Optional[str]) -> bool:
+        """Vincular ou desvincular dashboard ao cliente. client_id=None para remover vínculo."""
+        try:
+            ref = self.fs_client.collection(self.dashboards_collection).document(campaign_key)
+            if not ref.get().exists:
+                return False
+            if client_id is None:
+                ref.update({u"client_id": firestore.DELETE_FIELD})
+            else:
+                ref.update({"client_id": client_id, "updated_at": datetime.now()})
+            logger.info(f"✅ Dashboard {campaign_key} vinculado ao cliente: {client_id}")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Erro ao vincular dashboard: {e}")
+            return False
+    
+    def get_dashboards_by_client(self, client_id: str) -> List[Dict[str, Any]]:
+        """Listar dashboards vinculados ao cliente."""
+        try:
+            out = []
+            for doc in self.fs_client.collection(self.dashboards_collection).where("client_id", "==", client_id).stream():
+                data = doc.to_dict()
+                data["campaign_key"] = doc.id
+                out.append(data)
+            return out
+        except Exception as e:
+            logger.error(f"❌ Erro ao listar dashboards do cliente: {e}")
             return []
     
     def get_persistence_status(self) -> Dict[str, Any]:

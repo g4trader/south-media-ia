@@ -516,6 +516,11 @@ class DashboardLoader {
             this.originalData = JSON.parse(JSON.stringify(data));
             this.filteredData = JSON.parse(JSON.stringify(data));
             
+            // Unificar período: usar datas do contrato no seletor e no display
+            if (window.filterBar && data.contract && data.contract.period_start && data.contract.period_end) {
+                window.filterBar.setPeriodFromContract(data.contract.period_start, data.contract.period_end);
+            }
+            
             // 3. Dados recebidos
             this.updateProgress(50, "Dados recebidos com sucesso!");
             
@@ -2392,6 +2397,35 @@ class FilterBar {
     
     if (startDateInput) startDateInput.value = this.startDate;
     if (endDateInput) endDateInput.value = this.endDate;
+  }
+
+  /** Define período a partir do contrato (dd/mm/yyyy) para unificar exibição em todo o dashboard */
+  setPeriodFromContract(periodStart, periodEnd) {
+    if (!periodStart || !periodEnd || typeof periodStart !== 'string' || typeof periodEnd !== 'string') return;
+    const parsed = (br) => {
+      const s = (br || '').trim();
+      if (!s) return null;
+      const parts = s.split(/[/-]/);
+      if (parts.length !== 3) return null;
+      const d = parts[0].padStart(2, '0');
+      const m = parts[1].padStart(2, '0');
+      const y = parts[2];
+      return `${y}-${m}-${d}`;
+    };
+    const start = parsed(periodStart);
+    const end = parsed(periodEnd);
+    if (!start || !end) return;
+    this.startDate = start;
+    this.endDate = end;
+    const startDateInput = document.getElementById('filter-start-date');
+    const endDateInput = document.getElementById('filter-end-date');
+    if (startDateInput) startDateInput.value = this.startDate;
+    if (endDateInput) endDateInput.value = this.endDate;
+    this.updatePeriodDisplay();
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => btn.classList.remove('active'));
+    const todosBtn = document.querySelector('[data-filter="todos"]');
+    if (todosBtn) todosBtn.classList.add('active');
+    this.activeFilter = 'todos';
   }
 
   handleQuickFilter(filterType) {

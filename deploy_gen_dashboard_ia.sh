@@ -29,6 +29,7 @@ echo "🔍 Verificando arquivos necessários..."
 REQUIRED_FILES=(
     "cloud_run_mvp.py"
     "bigquery_firestore_manager.py"
+    "templates_client_admin.py"
     "real_google_sheets_extractor.py"
     "google_sheets_service.py"
     "config.py"
@@ -130,6 +131,15 @@ if [[ $HEALTH_RESPONSE == *"healthy"* ]]; then
 else
     echo "⚠️  Health check falhou. Verifique os logs:"
     echo "   gcloud run services logs read ${SERVICE_NAME} --limit=50"
+fi
+
+# Teste Selenium: validar dashboard operacional (ex.: FPS YouTube)
+echo ""
+echo "🧪 Teste Selenium - dashboard operacional..."
+if BASE_URL="${SERVICE_URL}" python3 selenium_test_dashboard.py 2>/dev/null; then
+    echo "✅ Teste Selenium passou!"
+else
+    echo "⚠️  Teste Selenium falhou. Execute manualmente: BASE_URL=${SERVICE_URL} python3 selenium_test_dashboard.py"
 fi
 
 echo ""
