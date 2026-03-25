@@ -3714,11 +3714,30 @@ def dash_generator_pro_multicanal():
                 <label for="campaignName">Nome da Campanha:</label>
                 <input type="text" id="campaignName" name="campaign_name" required autocomplete="off" data-lpignore="true">
             </div>
+
+            <div class="card" style="margin: 18px 0; padding: 16px;">
+                <label style="margin-bottom: 10px; display:block;">Modo de Criação:</label>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" id="modeManual" class="tab active" style="flex:1;">Planilhas por Canal (manual)</button>
+                    <button type="button" id="modeFromExisting" class="tab" style="flex:1;">Baseado em Dashboards Existentes</button>
+                </div>
+                <p class="muted" style="margin-top:10px;">No modo “existentes”, você seleciona campanhas já criadas e o sistema consolida tudo em um multicanal.</p>
+            </div>
             
-            <div class="channels-container">
+            <div class="channels-container" id="manualMode">
                 <label style="margin-bottom: 1rem;">Canais:</label>
                 <div id="channelsList"></div>
                 <div class="add-channel-btn" onclick="addChannel()">+ Adicionar Canal</div>
+            </div>
+
+            <div class="channels-container hidden" id="existingMode" style="margin-top: 10px;">
+                <label style="margin-bottom: .75rem;">Selecione os dashboards existentes:</label>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 10px;">
+                    <input type="text" id="existingSearch" placeholder="Buscar por cliente/campanha/canal/KPI..." style="flex: 1; min-width: 240px;">
+                    <button type="button" id="btnLoadExisting" style="width:auto; padding:.7rem 1rem;">Carregar</button>
+                    <span class="muted" id="existingCount" style="font-size:.9rem;"></span>
+                </div>
+                <div id="existingList" style="display:grid; gap:10px;"></div>
             </div>
             
             <button type="submit" id="generateButton">Gerar Dashboard Multicanal</button>
@@ -3841,6 +3860,79 @@ def dash_generator_pro_multicanal():
             addChannel();
         }
         
+        let generatorMode = 'manual'; // 'manual' | 'existing'
+        let existingItems = [];
+
+        function setMode(mode) {
+            generatorMode = mode;
+            const manual = document.getElementById('manualMode');
+            const existing = document.getElementById('existingMode');
+            const btnManual = document.getElementById('modeManual');
+            const btnExisting = document.getElementById('modeFromExisting');
+            if (mode === 'existing') {
+                manual.classList.add('hidden');
+                existing.classList.remove('hidden');
+                btnManual.classList.remove('active');
+                btnExisting.classList.add('active');
+            } else {
+                existing.classList.add('hidden');
+                manual.classList.remove('hidden');
+                btnExisting.classList.remove('active');
+                btnManual.classList.add('active');
+            }
+        }
+
+        document.getElementById('modeManual').addEventListener('click', () => setMode('manual'));
+        document.getElementById('modeFromExisting').addEventListener('click', () => setMode('existing'));
+
+        function esc(s){ const d=document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+        function renderExistingList(filterText='') {
+            const q = (filterText || '').trim().toLowerCase();
+            const list = document.getElementById('existingList');
+            const items = !q ? existingItems : existingItems.filter(it => (it.search||'').includes(q));
+            document.getElementById('existingCount').textContent = existingItems.length ? `${items.length}/${existingItems.length} exibidos` : '';
+            list.innerHTML = items.map(it => `
+                <label class="card" style="padding:12px; margin:0; display:flex; gap:12px; align-items:flex-start; cursor:pointer;">
+                    <input type="checkbox" class="js-existing-item" value="${esc(it.campaign_key)}" style="margin-top:4px;">
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <div style="font-weight:800;">${esc(it.client || 'N/A')} — ${esc(it.campaign_name || it.campaign_key)}</div>
+                            <div class="muted" style="font-size:.85rem;">${esc(it.channel || '')} ${it.kpi ? '• ' + esc(it.kpi) : ''}</div>
+                        </div>
+                        <div class="muted" style="margin-top:6px; font-size:.85rem;">
+                            <span>ID: ${esc(it.campaign_key)}</span>
+                            ${it.updated_at ? ` • <span>Atualizado: ${esc(it.updated_at)}</span>` : ''}
+                        </div>
+                    </div>
+                </label>
+            `).join('') || `<div class="muted">Nenhum item encontrado.</div>`;
+        }
+
+        async function loadExisting() {
+            const btn = document.getElementById('btnLoadExisting');
+            btn.disabled = true;
+            btn.textContent = 'Carregando...';
+            try {
+                const r = await fetch('/api/admin/campaigns-picker');
+                const j = await r.json();
+                if (!j.success) throw new Error(j.message || 'Falha ao carregar');
+                existingItems = (j.items || []).map(it => ({
+                    ...it,
+                    search: `${it.client||''} ${it.campaign_name||''} ${it.channel||''} ${it.kpi||''} ${it.campaign_key||''}`.toLowerCase()
+                }));
+                renderExistingList(document.getElementById('existingSearch').value);
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Carregar';
+            }
+        }
+
+        document.getElementById('btnLoadExisting').addEventListener('click', loadExisting);
+        document.getElementById('existingSearch').addEventListener('input', (e)=> renderExistingList(e.target.value));
+
         document.getElementById('generatorForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -3858,30 +3950,36 @@ def dash_generator_pro_multicanal():
                     campaign_name: formData.get('campaign_name'),
                     channels: []
                 };
-                
-                // Coletar dados dos canais
-                const channelInputs = document.querySelectorAll('.channel-card');
-                channelInputs.forEach(card => {
-                    const channelName = card.querySelector('select[name*="[channel_name]"]').value;
-                    const actionDescription = card.querySelector('input[name*="[action_description]"]').value || '';
-                    const kpi = card.querySelector('select[name*="[kpi]"]').value;
-                    const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
-                    
-                    if (channelName && sheetId) {
-                        data.channels.push({
-                            channel_name: channelName,
-                            action_description: actionDescription,
-                            kpi: kpi,
-                            sheet_id: sheetId
-                        });
-                    }
-                });
-                
-                if (data.channels.length === 0) {
-                    throw new Error('Adicione pelo menos um canal');
+
+                let endpoint = '/api/generate-dashboard-multicanal';
+
+                if (generatorMode === 'existing') {
+                    endpoint = '/api/generate-dashboard-multicanal-from-existing';
+                    const selected = Array.from(document.querySelectorAll('.js-existing-item:checked')).map(i => i.value);
+                    if (!selected.length) throw new Error('Selecione pelo menos um dashboard existente');
+                    data.source_campaign_keys = selected;
+                    delete data.channels;
+                } else {
+                    // Coletar dados dos canais (manual)
+                    const channelInputs = document.querySelectorAll('.channel-card');
+                    channelInputs.forEach(card => {
+                        const channelName = card.querySelector('select[name*="[channel_name]"]').value;
+                        const actionDescription = card.querySelector('input[name*="[action_description]"]').value || '';
+                        const kpi = card.querySelector('select[name*="[kpi]"]').value;
+                        const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
+                        if (channelName && sheetId) {
+                            data.channels.push({
+                                channel_name: channelName,
+                                action_description: actionDescription,
+                                kpi: kpi,
+                                sheet_id: sheetId
+                            });
+                        }
+                    });
+                    if (data.channels.length === 0) throw new Error('Adicione pelo menos um canal');
                 }
-                
-                const response = await fetch('/api/generate-dashboard-multicanal', {
+
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -4166,6 +4264,234 @@ def generate_dashboard_multicanal():
         import traceback
         logger.error(traceback.format_exc())
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
+
+
+@app.route('/api/admin/campaigns-picker', methods=['GET'])
+@superadmin_required_api
+def api_admin_campaigns_picker():
+    """Lista campanhas do Firestore para seleção no multicanal (requer sheet_id)."""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        items = []
+        docs = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).limit(500).stream()
+        for doc in docs:
+            d = doc.to_dict() or {}
+            sheet_id = (d.get("sheet_id") or "").strip()
+            if not sheet_id:
+                continue
+            items.append({
+                "campaign_key": d.get("campaign_key") or doc.id,
+                "client": d.get("client"),
+                "campaign_name": d.get("campaign_name"),
+                "channel": d.get("channel"),
+                "kpi": d.get("kpi"),
+                "sheet_id": sheet_id,
+                "updated_at": (d.get("updated_at").isoformat() if hasattr(d.get("updated_at"), "isoformat") else (d.get("updated_at") or "")),
+            })
+        items.sort(key=lambda x: (str(x.get("client") or ""), str(x.get("campaign_name") or "")))
+        return jsonify({"success": True, "items": items})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/generate-dashboard-multicanal-from-existing', methods=['POST'])
+@superadmin_required_api
+def generate_dashboard_multicanal_from_existing():
+    """Gerar multicanal consolidando campanhas já existentes (por campaign_key)."""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        data = request.get_json() or {}
+        client = data.get("client")
+        campaign_name = data.get("campaign_name")
+        source_keys = data.get("source_campaign_keys") or []
+        if not client or not campaign_name:
+            return jsonify({"success": False, "message": "Cliente e nome da campanha são obrigatórios"}), 400
+        if not isinstance(source_keys, list) or not source_keys:
+            return jsonify({"success": False, "message": "Selecione ao menos um dashboard existente"}), 400
+
+        campaign_key = generate_campaign_key(client, campaign_name)
+        logger.info(f"🔄 Gerando multicanal (existentes): {client} - {campaign_name} ({len(source_keys)} fontes)")
+
+        # Consolidadores (mesma lógica do multicanal atual)
+        all_daily_data = []
+        all_channels_data = []
+        all_publishers = []
+        all_strategies = []
+        all_insights = []
+        total_investment = 0.0
+        total_spend = 0.0
+        total_impressions = 0
+        total_clicks = 0
+        total_video_completions = 0
+        total_video_starts = 0
+        total_complete_views_contracted = 0
+        total_q25 = 0
+        total_q50 = 0
+        total_q75 = 0
+
+        # Carregar campanhas fonte do Firestore (sheet_id, channel, kpi)
+        sources = []
+        for sk in source_keys:
+            sk_norm = (sk or "").strip()
+            if not sk_norm:
+                continue
+            doc = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(sk_norm).get()
+            if not doc.exists:
+                continue
+            c = doc.to_dict() or {}
+            sheet_id = (c.get("sheet_id") or "").strip()
+            if not sheet_id:
+                continue
+            sources.append({
+                "campaign_key": sk_norm,
+                "client": c.get("client"),
+                "campaign_name": c.get("campaign_name"),
+                "channel": c.get("channel") or "Canal",
+                "kpi": c.get("kpi") or "CPV",
+                "sheet_id": sheet_id,
+            })
+
+        if not sources:
+            return jsonify({"success": False, "message": "Nenhuma fonte válida (com sheet_id) encontrada"}), 400
+
+        for src in sources:
+            channel_name = src["channel"]
+            channel_display_name = f"{channel_name} — {src.get('campaign_name') or src['campaign_key']}"
+            kpi = src["kpi"]
+            sheet_id = src["sheet_id"]
+            try:
+                config = CampaignConfig(
+                    campaign_key=f"{campaign_key}_{src['campaign_key']}",
+                    client=client,
+                    campaign_name=campaign_name,
+                    sheet_id=sheet_id,
+                    channel=channel_name,
+                    kpi=kpi,
+                )
+                extractor = RealGoogleSheetsExtractor(config)
+                channel_data = extractor.extract_data()
+                if not channel_data:
+                    continue
+
+                daily_data = channel_data.get("daily_data", []) or []
+                for record in daily_data:
+                    record["channel"] = channel_display_name
+                    all_daily_data.append(record)
+
+                summary = channel_data.get("campaign_summary", {}) or {}
+                contract = channel_data.get("contract", {}) or {}
+                total_investment += contract.get("investment", 0) or 0
+                total_spend += summary.get("total_spend", 0) or 0
+                total_impressions += summary.get("total_impressions", 0) or 0
+                total_clicks += summary.get("total_clicks", 0) or 0
+                total_video_completions += summary.get("total_video_completions", 0) or 0
+                total_video_starts += summary.get("total_video_starts", 0) or 0
+                total_complete_views_contracted += contract.get("complete_views_contracted", 0) or 0
+
+                for record in daily_data:
+                    total_q25 += record.get("video_25", 0) or 0
+                    total_q50 += record.get("video_50", 0) or 0
+                    total_q75 += record.get("video_75", 0) or 0
+
+                pubs = channel_data.get("publishers", []) or []
+                if pubs:
+                    all_publishers.extend(pubs)
+                strats = channel_data.get("strategies", []) or []
+                if strats:
+                    all_strategies.extend(strats)
+                ins = channel_data.get("insights", []) or []
+                if ins:
+                    all_insights.extend(ins)
+
+                all_channels_data.append({
+                    "channel_name": channel_name,
+                    "channel_display_name": channel_display_name,
+                    "action_description": src.get("campaign_name") or "",
+                    "kpi": kpi,
+                    "sheet_id": sheet_id,
+                    "source_campaign_key": src["campaign_key"],
+                    "data": channel_data,
+                })
+            except Exception as ex:
+                logger.warning(f"⚠️ Fonte {src['campaign_key']} falhou: {ex}")
+                continue
+
+        if not all_channels_data:
+            return jsonify({"success": False, "message": "Nenhuma fonte foi processada com sucesso"}), 500
+
+        total_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0.0
+        total_vtr = (total_video_completions / total_video_starts * 100) if total_video_starts > 0 else 0.0
+        total_cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0.0
+        pacing = (total_spend / total_investment * 100) if total_investment > 0 else 0.0
+        primary_kpi = all_channels_data[0].get("kpi") or "CPV"
+
+        consolidated_data = {
+            "campaign_summary": {
+                "client": client,
+                "campaign": campaign_name,
+                "status": "Ativa",
+                "total_spend": total_spend,
+                "total_impressions": total_impressions,
+                "total_clicks": total_clicks,
+                "total_video_completions": total_video_completions,
+                "total_video_starts": total_video_starts,
+                "ctr": total_ctr,
+                "vtr": total_vtr,
+                "cpm": total_cpm,
+                "pacing": pacing,
+                "q25": total_q25,
+                "q50": total_q50,
+                "q75": total_q75,
+            },
+            "contract": {
+                "client": client,
+                "campaign": campaign_name,
+                "investment": total_investment,
+                "complete_views_contracted": total_complete_views_contracted,
+                "canal": "Multicanal",
+                "kpi": primary_kpi,
+            },
+            "daily_data": all_daily_data,
+            "channels": all_channels_data,
+            "publishers": all_publishers,
+            "strategies": all_strategies,
+            "insights": all_insights,
+            "last_updated": datetime.now().isoformat(),
+            "data_source": "multicanal_from_existing",
+            "sources": [s["campaign_key"] for s in sources],
+        }
+
+        result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
+        if not result.get("success"):
+            return jsonify({"success": False, "message": result.get("error") or "Falha ao gerar HTML"}), 500
+
+        # Persistir campanha multicanal (sem sheet_id, como o padrão atual)
+        try:
+            bq_fs_manager.save_campaign(campaign_key, client, campaign_name, "", "Multicanal", primary_kpi)
+            # Guardar fontes para auditoria
+            bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(campaign_key).set({
+                "channel": "Multicanal",
+                "sheet_id": "",
+                "multicanal_sources": [s["campaign_key"] for s in sources],
+                "updated_at": datetime.now(),
+            }, merge=True)
+        except Exception as e:
+            logger.warning(f"⚠️ Falha ao persistir campanha multicanal: {e}")
+
+        return jsonify({
+            "success": True,
+            "message": "Dashboard multicanal (existentes) gerado com sucesso",
+            "campaign_key": campaign_key,
+            "dashboard_name": f"{client} - {campaign_name}",
+            "dashboard_url": result["dashboard_url"],
+            "dashboard_url_full": result["dashboard_url_full"],
+            "sources_count": len(sources),
+        })
+    except Exception as e:
+        logger.error(f"❌ Erro no endpoint /api/generate-dashboard-multicanal-from-existing: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
 
 def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
     """Gerar HTML do dashboard multicanal"""
