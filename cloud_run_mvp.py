@@ -759,6 +759,7 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
                 channel=channel,
                 kpi=kpi
             )
+            config.use_footfall = bool(use_footfall)
             extractor = RealGoogleSheetsExtractor(config)
             extracted_data = extractor.extract_data()
             
@@ -1962,6 +1963,7 @@ def get_dashboard_html(campaign_key):
             channel=campaign.get('channel'),
             kpi=campaign.get('kpi')
         )
+        config.use_footfall = bool(campaign.get("use_footfall"))
         
         extractor = RealGoogleSheetsExtractor(config)
         data = None
@@ -2030,6 +2032,7 @@ def get_campaign_data(campaign_key):
             channel=campaign.get('channel'),
             kpi=campaign.get('kpi')
         )
+        config.use_footfall = bool(campaign.get("use_footfall"))
         
         extractor = RealGoogleSheetsExtractor(config)
         extracted_data = extractor.extract_data()

@@ -10,6 +10,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import logging
+import re
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -92,6 +93,10 @@ class RealGoogleSheetsExtractor:
                 "last_updated": datetime.now().isoformat(),
                 "data_source": "google_sheets_real"
             }
+
+            use_footfall = bool(getattr(self.config, "use_footfall", False))
+            if use_footfall:
+                result["footfall_points"] = self._extract_footfall_points()
             
             logger.info(f"✅ Extração REAL concluída para {self.config.client}")
             logger.info(f"📊 Dados extraídos: {len(daily_data)} dias")
@@ -649,6 +654,96 @@ class RealGoogleSheetsExtractor:
         except Exception as e:
             logger.warning(f"⚠️ Erro ao extrair estratégias: {e}")
             return []
+
+    def _extract_footfall_points(self) -> list:
+        """Extrai pontos de footfall da aba 'Footfall' da planilha.
+
+        Espera colunas (case-insensitive):
+        - lat
+        - long
+        - name
+        - Footfall Users
+        - Footfall Rate %
+        """
+        try:
+            logger.info("🗺️ Extraindo pontos de Footfall (aba 'Footfall')")
+            result = self.service.spreadsheets().values().get(
+                spreadsheetId=self.config.sheet_id,
+                range="Footfall!A1:Z1000"
+            ).execute()
+            values = result.get("values", [])
+            if not values:
+                return []
+
+            header = [str(c).strip().lower() for c in values[0]]
+
+            def idx(col_name: str) -> int:
+                col_name = col_name.strip().lower()
+                return header.index(col_name) if col_name in header else -1
+
+            lat_i = idx("lat")
+            lon_i = idx("long")
+            name_i = idx("name")
+            users_i = idx("footfall users")
+            rate_i = idx("footfall rate %")
+
+            def safe_get(row, i: int) -> str:
+                return str(row[i]).strip() if i >= 0 and i < len(row) and row[i] is not None else ""
+
+            def parse_coord(val: str):
+                try:
+                    return float(str(val).replace(" ", ""))
+                except Exception:
+                    return None
+
+            points = []
+            for row in values[1:]:
+                if not any(row):
+                    continue
+                name = safe_get(row, name_i)
+                if not name:
+                    continue
+
+                users_raw = safe_get(row, users_i)
+                rate_raw = safe_get(row, rate_i)
+                lat_raw = safe_get(row, lat_i)
+                lon_raw = safe_get(row, lon_i)
+
+                try:
+                    users = int(re.sub(r"[.,\\s]", "", users_raw) or "0")
+                except Exception:
+                    users = 0
+
+                try:
+                    rate = float(
+                        str(rate_raw)
+                        .replace("%", "")
+                        .replace(" ", "")
+                        .replace(".", "")
+                        .replace(",", ".")
+                        or "0"
+                    )
+                except Exception:
+                    rate = 0.0
+
+                lat = parse_coord(lat_raw)
+                lon = parse_coord(lon_raw)
+                if lat is None or lon is None:
+                    continue
+
+                points.append({
+                    "lat": lat,
+                    "lon": lon,
+                    "name": name,
+                    "users": users,
+                    "rate": rate,
+                })
+
+            logger.info(f"✅ Footfall: {len(points)} pontos")
+            return points
+        except Exception as e:
+            logger.warning(f"⚠️ Falha ao extrair Footfall: {e}")
+            return []
     
     def _calculate_metrics(self, daily_data: list, contract_data: Dict) -> Dict[str, Any]:
         """Calcular métricas totais"""
@@ -809,6 +904,7 @@ class CampaignConfig:
         }
         # GID da aba Report (ex.: 364193781) para forçar essa aba quando conhecido
         self.report_sheet_gid = report_sheet_gid
+        self.use_footfall = False
 
 if __name__ == "__main__":
     # Teste local
