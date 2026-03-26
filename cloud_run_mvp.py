@@ -1549,7 +1549,7 @@ def dash_generator_pro():
                 <option value="Netflix">Netflix</option>
                 <option value="Disney">Disney</option>
                 <option value="HBO">HBO</option>
-                <option value="HHS">HHS (Impressões/CPM)</option>
+                <option value="HHS">HHS</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="Pinterest">Pinterest</option>
                 <option value="Spotify">Spotify</option>
@@ -1558,7 +1558,7 @@ def dash_generator_pro():
                 <option value="CTV">CTV</option>
                 <option value="Push">Push</option>
                 <option value="Richmedia">Richmedia</option>
-                <option value="OHS">OHS (Impressões/CPM)</option>
+                <option value="OHS">OHS</option>
             </select>
         </div>
         
@@ -3828,7 +3828,7 @@ def dash_generator_pro_multicanal():
                             <option value="Netflix">Netflix</option>
                             <option value="Disney">Disney</option>
                             <option value="HBO">HBO</option>
-                            <option value="HHS">HHS (Impressões/CPM)</option>
+                            <option value="HHS">HHS</option>
                             <option value="LinkedIn">LinkedIn</option>
                             <option value="Pinterest">Pinterest</option>
                             <option value="Spotify">Spotify</option>
@@ -3838,7 +3838,7 @@ def dash_generator_pro_multicanal():
                             <option value="Footfall Display">Footfall Display</option>
                             <option value="Push">Push</option>
                             <option value="Richmedia">Richmedia</option>
-                            <option value="OHS">OHS (Impressões/CPM)</option>
+                            <option value="OHS">OHS</option>
                         </select>
                     </div>
                     <div class="form-group">
