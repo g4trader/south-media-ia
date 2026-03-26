@@ -2225,6 +2225,191 @@ def get_campaign_data(campaign_key):
         
         if not campaign:
             return jsonify({"success": False, "message": f"Campanha '{campaign_key}' não encontrada"}), 404
+
+        # Multicanal: não existe sheet_id único. Precisamos consolidar a partir da configuração persistida.
+        is_multicanal = (
+            (campaign.get("channel") == "Multicanal") or
+            (not (campaign.get("sheet_id") or "").strip())
+        )
+        if is_multicanal:
+            multicanal_channels = campaign.get("multicanal_channels")
+            multicanal_sources = campaign.get("multicanal_sources")
+
+            if not isinstance(multicanal_channels, list) and not isinstance(multicanal_sources, list):
+                return jsonify({
+                    "success": False,
+                    "message": "Campanha multicanal sem configuração (multicanal_channels/multicanal_sources). Gere novamente no gerador.",
+                }), 400
+
+            # Consolidação (modo manual via multicanal_channels)
+            if isinstance(multicanal_channels, list) and multicanal_channels:
+                all_daily_data = []
+                all_channels_data = []
+                all_publishers = []
+                all_strategies = []
+                all_insights = []
+                total_investment = 0.0
+                total_spend = 0.0
+                total_impressions = 0
+                total_clicks = 0
+                total_video_completions = 0
+                total_video_starts = 0
+                total_complete_views_contracted = 0
+                total_q25 = 0
+                total_q50 = 0
+                total_q75 = 0
+                all_footfall_points = []
+                footfall_sources = []
+
+                for channel_config in multicanal_channels:
+                    channel_name = channel_config.get("channel_name", "Canal")
+                    action_description = (channel_config.get("action_description") or "").strip()
+                    sheet_id = (channel_config.get("sheet_id") or "").strip()
+                    kpi = (channel_config.get("kpi") or "CPV").strip()
+                    if str(channel_name).strip().upper() in ("HHS", "OHS"):
+                        channel_name = str(channel_name).strip().upper()
+                        kpi = "CPM"
+                    use_footfall = bool(channel_config.get("use_footfall", False)) or ("footfall" in (str(channel_name).lower()))
+
+                    if not sheet_id:
+                        continue
+
+                    channel_display_name = f"{channel_name} - {action_description}" if action_description else str(channel_name)
+                    try:
+                        config = CampaignConfig(
+                            campaign_key=f"{campaign_key}_{str(channel_name).lower().replace(' ', '_')}",
+                            client=campaign.get("client") or "",
+                            campaign_name=campaign.get("campaign_name") or "",
+                            sheet_id=sheet_id,
+                            channel=channel_name,
+                            kpi=kpi,
+                        )
+                        config.use_footfall = bool(use_footfall)
+                        extractor = RealGoogleSheetsExtractor(config)
+                        channel_data = extractor.extract_data()
+                        if not channel_data:
+                            continue
+
+                        daily_data = channel_data.get("daily_data", []) or []
+                        for record in daily_data:
+                            record["channel"] = channel_display_name
+                            all_daily_data.append(record)
+
+                        summary = channel_data.get("campaign_summary", {}) or {}
+                        contract = channel_data.get("contract", {}) or {}
+                        total_investment += contract.get("investment", 0) or 0
+                        total_spend += summary.get("total_spend", 0) or 0
+                        total_impressions += summary.get("total_impressions", 0) or 0
+                        total_clicks += summary.get("total_clicks", 0) or 0
+                        total_video_completions += summary.get("total_video_completions", 0) or 0
+                        total_video_starts += summary.get("total_video_starts", 0) or 0
+                        total_complete_views_contracted += contract.get("complete_views_contracted", 0) or 0
+
+                        for record in daily_data:
+                            total_q25 += record.get("video_25", 0) or 0
+                            total_q50 += record.get("video_50", 0) or 0
+                            total_q75 += record.get("video_75", 0) or 0
+
+                        pubs = channel_data.get("publishers", []) or []
+                        if pubs:
+                            all_publishers.extend(pubs)
+                        strats = channel_data.get("strategies", []) or []
+                        if strats:
+                            all_strategies.extend(strats)
+                        ins = channel_data.get("insights", []) or []
+                        if ins:
+                            all_insights.extend(ins)
+
+                        all_channels_data.append({
+                            "channel_name": channel_name,
+                            "channel_display_name": channel_display_name,
+                            "action_description": action_description,
+                            "kpi": kpi,
+                            "sheet_id": sheet_id,
+                            "data": channel_data,
+                        })
+
+                        fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
+                        if isinstance(fpts, list) and fpts:
+                            all_footfall_points.extend(fpts)
+                            footfall_sources.append({
+                                "key": channel_display_name,
+                                "label": channel_display_name,
+                                "channel": channel_name,
+                                "points": fpts,
+                            })
+                    except Exception as ex:
+                        logger.warning(f"⚠️ Multicanal /data: canal {channel_name} falhou: {ex}")
+                        continue
+
+                if not all_channels_data:
+                    return jsonify({"success": False, "message": "Nenhum canal multicanal pôde ser processado"}), 500
+
+                total_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0.0
+                total_vtr = (total_video_completions / total_video_starts * 100) if total_video_starts > 0 else 0.0
+                total_cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0.0
+                pacing = (total_spend / total_investment * 100) if total_investment > 0 else 0.0
+                primary_kpi = all_channels_data[0].get("kpi") or "CPV"
+
+                consolidated_data = {
+                    "campaign_summary": {
+                        "client": campaign.get("client"),
+                        "campaign": campaign.get("campaign_name"),
+                        "status": "Ativa",
+                        "total_spend": total_spend,
+                        "total_impressions": total_impressions,
+                        "total_clicks": total_clicks,
+                        "total_video_completions": total_video_completions,
+                        "total_video_starts": total_video_starts,
+                        "ctr": total_ctr,
+                        "vtr": total_vtr,
+                        "cpm": total_cpm,
+                        "pacing": pacing,
+                        "q25": total_q25,
+                        "q50": total_q50,
+                        "q75": total_q75,
+                    },
+                    "contract": {
+                        "client": campaign.get("client"),
+                        "campaign": campaign.get("campaign_name"),
+                        "investment": total_investment,
+                        "complete_views_contracted": total_complete_views_contracted,
+                        "canal": "Multicanal",
+                        "kpi": primary_kpi,
+                    },
+                    "daily_data": all_daily_data,
+                    "channels": all_channels_data,
+                    "publishers": all_publishers,
+                    "strategies": all_strategies,
+                    "insights": all_insights,
+                    "footfall_points": [],
+                    "footfall_sources": footfall_sources,
+                    "last_updated": datetime.now().isoformat(),
+                    "data_source": "multicanal_data_endpoint",
+                }
+
+                if all_footfall_points:
+                    seen = set()
+                    dedup = []
+                    for p in all_footfall_points:
+                        try:
+                            key = (str(p.get("name") or ""), float(p.get("lat")), float(p.get("lon")))
+                        except Exception:
+                            continue
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        dedup.append(p)
+                    consolidated_data["footfall_points"] = dedup
+
+                return jsonify({"success": True, "data": consolidated_data})
+
+            # Se for multicanal_sources, por enquanto exigir regeneração pelo gerador (evita duplicação pesada aqui)
+            if isinstance(multicanal_sources, list) and multicanal_sources:
+                return jsonify({
+                    "success": False,
+                    "message": "Este multicanal foi criado a partir de existentes. Gere novamente para consolidar (/data) ou abra o HTML (que já embute os dados).",
+                }), 400
         
         # Sempre extrair dados frescos da planilha
         logger.info(f"🔄 Extraindo dados frescos da planilha para: {campaign_key}")
