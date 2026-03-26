@@ -4130,6 +4130,7 @@ def generate_dashboard_multicanal():
         total_q75 = 0
         
         all_footfall_points = []
+        footfall_sources = []
 
         for channel_config in channels_config:
             channel_name = channel_config.get('channel_name', 'Canal')
@@ -4217,6 +4218,13 @@ def generate_dashboard_multicanal():
                     fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
                     if isinstance(fpts, list) and fpts:
                         all_footfall_points.extend(fpts)
+                        # Uma aba Footfall por planilha/canal marcado
+                        footfall_sources.append({
+                            "key": channel_display_name,
+                            "label": channel_display_name,
+                            "channel": channel_name,
+                            "points": fpts,
+                        })
                     
                     logger.info(f"✅ Canal {channel_name} processado: {len(daily_data)} registros")
                 else:
@@ -4305,6 +4313,7 @@ def generate_dashboard_multicanal():
             "strategies": unique_strategies if unique_strategies else [],
             "insights": all_insights if all_insights else [],
             "footfall_points": [],
+            "footfall_sources": [],
             "last_updated": datetime.now().isoformat(),
             "data_source": "google_sheets_multicanal"
         }
@@ -4323,6 +4332,10 @@ def generate_dashboard_multicanal():
                 seen.add(key)
                 dedup.append(p)
             consolidated_data["footfall_points"] = dedup
+
+        # Footfall por canal/planilha (abas dinâmicas no template)
+        if footfall_sources:
+            consolidated_data["footfall_sources"] = footfall_sources
         
         # Gerar dashboard
         result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
@@ -4411,6 +4424,7 @@ def generate_dashboard_multicanal_from_existing():
         all_strategies = []
         all_insights = []
         all_footfall_points = []
+        footfall_sources = []
         total_investment = 0.0
         total_spend = 0.0
         total_impressions = 0
@@ -4515,6 +4529,12 @@ def generate_dashboard_multicanal_from_existing():
                 fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
                 if isinstance(fpts, list) and fpts:
                     all_footfall_points.extend(fpts)
+                    footfall_sources.append({
+                        "key": channel_display_name,
+                        "label": channel_display_name,
+                        "channel": channel_name,
+                        "points": fpts,
+                    })
             except Exception as ex:
                 logger.warning(f"⚠️ Fonte {src['campaign_key']} falhou: {ex}")
                 continue
@@ -4560,6 +4580,7 @@ def generate_dashboard_multicanal_from_existing():
             "strategies": all_strategies,
             "insights": all_insights,
             "footfall_points": [],
+            "footfall_sources": [],
             "last_updated": datetime.now().isoformat(),
             "data_source": "multicanal_from_existing",
             "sources": [s["campaign_key"] for s in sources],
@@ -4578,6 +4599,9 @@ def generate_dashboard_multicanal_from_existing():
                 seen.add(key)
                 dedup.append(p)
             consolidated_data["footfall_points"] = dedup
+
+        if footfall_sources:
+            consolidated_data["footfall_sources"] = footfall_sources
 
         result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
         if not result.get("success"):
@@ -4612,14 +4636,14 @@ def generate_dashboard_multicanal_from_existing():
 def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
     """Gerar HTML do dashboard multicanal"""
     try:
-        # Determinar template: Footfall (heatmap) tem prioridade quando existir `footfall_points`.
-        footfall_points = consolidated_data.get("footfall_points") if isinstance(consolidated_data, dict) else None
-        has_footfall = isinstance(footfall_points, list) and len(footfall_points) > 0
+        # Template multicanal com abas de Footfall por planilha/canal (data-driven).
+        footfall_sources = consolidated_data.get("footfall_sources") if isinstance(consolidated_data, dict) else None
+        has_footfall_sources = isinstance(footfall_sources, list) and len(footfall_sources) > 0
 
-        if has_footfall:
-            template_path = 'static/dash_footfall_template.html'
+        if has_footfall_sources:
+            template_path = 'static/dash_multicanal_footfall_tabs_template.html'
         else:
-            # Determinar template baseado no KPI principal
+            # Sem Footfall: manter template atual por KPI
             template_path = 'static/dash_generic_template.html'
             if kpi.upper() == 'CPM':
                 template_path = 'static/dash_remarketing_cpm_template.html'
