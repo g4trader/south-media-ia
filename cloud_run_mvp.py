@@ -1958,7 +1958,7 @@ def get_dashboard_html(campaign_key):
         )
         
         if is_multicanal:
-            # Para dashboards multicanal, tentar carregar do GCS
+            # Para dashboards multicanal, carregar do GCS (e regenerar se detectar HTML antigo)
             try:
                 from google.cloud import storage
                 client_storage = storage.Client()
@@ -1970,6 +1970,176 @@ def get_dashboard_html(campaign_key):
                 
                 if blob.exists():
                     html_content = blob.download_as_text()
+
+                    # Se o HTML parece ser o modelo genérico antigo, e temos config persistida,
+                    # regenerar usando o template multicanal novo (baseado no sonho_v3).
+                    try:
+                        multicanal_channels = campaign.get("multicanal_channels") if isinstance(campaign, dict) else None
+                        looks_legacy = ("Extraindo dados atualizados" in html_content) or ("Carregando Dashboard" in html_content) or ("Período:" in html_content)
+                        if looks_legacy and isinstance(multicanal_channels, list) and multicanal_channels:
+                            logger.info(f"🔄 Detectado HTML legado para {campaign_key}. Regenerando multicanal via multicanal_channels...")
+
+                            # Re-extrair e consolidar (mesma lógica do endpoint manual, versão tolerante a falhas)
+                            all_daily_data = []
+                            all_channels_data = []
+                            all_publishers = []
+                            all_strategies = []
+                            all_insights = []
+                            total_investment = 0.0
+                            total_spend = 0.0
+                            total_impressions = 0
+                            total_clicks = 0
+                            total_video_completions = 0
+                            total_video_starts = 0
+                            total_complete_views_contracted = 0
+                            total_q25 = 0
+                            total_q50 = 0
+                            total_q75 = 0
+                            all_footfall_points = []
+                            footfall_sources = []
+
+                            for channel_config in multicanal_channels:
+                                channel_name = channel_config.get('channel_name', 'Canal')
+                                action_description = (channel_config.get('action_description') or '').strip()
+                                sheet_id = (channel_config.get('sheet_id') or '').strip()
+                                kpi = (channel_config.get('kpi') or 'CPV').strip()
+                                if str(channel_name).strip().upper() in ('HHS', 'OHS'):
+                                    channel_name = str(channel_name).strip().upper()
+                                    kpi = 'CPM'
+                                use_footfall = bool(channel_config.get('use_footfall', False)) or ('footfall' in (str(channel_name).lower()))
+                                if not sheet_id:
+                                    continue
+
+                                channel_display_name = f"{channel_name} - {action_description}" if action_description else channel_name
+                                try:
+                                    config = CampaignConfig(
+                                        campaign_key=f"{campaign_key}_{str(channel_name).lower().replace(' ', '_')}",
+                                        client=campaign.get('client') or '',
+                                        campaign_name=campaign.get('campaign_name') or '',
+                                        sheet_id=sheet_id,
+                                        channel=channel_name,
+                                        kpi=kpi,
+                                    )
+                                    config.use_footfall = bool(use_footfall)
+                                    extractor = RealGoogleSheetsExtractor(config)
+                                    channel_data = extractor.extract_data()
+                                    if not channel_data:
+                                        continue
+
+                                    daily_data = channel_data.get('daily_data', []) or []
+                                    for record in daily_data:
+                                        record['channel'] = channel_display_name
+                                        all_daily_data.append(record)
+
+                                    summary = channel_data.get('campaign_summary', {}) or {}
+                                    contract = channel_data.get('contract', {}) or {}
+                                    total_investment += contract.get('investment', 0) or 0
+                                    total_spend += summary.get('total_spend', 0) or 0
+                                    total_impressions += summary.get('total_impressions', 0) or 0
+                                    total_clicks += summary.get('total_clicks', 0) or 0
+                                    total_video_completions += summary.get('total_video_completions', 0) or 0
+                                    total_video_starts += summary.get('total_video_starts', 0) or 0
+                                    total_complete_views_contracted += contract.get('complete_views_contracted', 0) or 0
+
+                                    for record in daily_data:
+                                        total_q25 += record.get('video_25', 0) or 0
+                                        total_q50 += record.get('video_50', 0) or 0
+                                        total_q75 += record.get('video_75', 0) or 0
+
+                                    pubs = channel_data.get('publishers', []) or []
+                                    if pubs:
+                                        all_publishers.extend(pubs)
+                                    strats = channel_data.get('strategies', []) or []
+                                    if strats:
+                                        all_strategies.extend(strats)
+                                    ins = channel_data.get('insights', []) or []
+                                    if ins:
+                                        all_insights.extend(ins)
+
+                                    all_channels_data.append({
+                                        'channel_name': channel_name,
+                                        'channel_display_name': channel_display_name,
+                                        'action_description': action_description,
+                                        'kpi': kpi,
+                                        'sheet_id': sheet_id,
+                                        'data': channel_data,
+                                    })
+
+                                    fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
+                                    if isinstance(fpts, list) and fpts:
+                                        all_footfall_points.extend(fpts)
+                                        footfall_sources.append({
+                                            "key": channel_display_name,
+                                            "label": channel_display_name,
+                                            "channel": channel_name,
+                                            "points": fpts,
+                                        })
+                                except Exception as ex:
+                                    logger.warning(f"⚠️ Regeneração: canal {channel_name} falhou: {ex}")
+                                    continue
+
+                            if all_channels_data:
+                                total_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0.0
+                                total_vtr = (total_video_completions / total_video_starts * 100) if total_video_starts > 0 else 0.0
+                                total_cpm = (total_spend / total_impressions * 1000) if total_impressions > 0 else 0.0
+                                pacing = (total_spend / total_investment * 100) if total_investment > 0 else 0.0
+                                primary_kpi = all_channels_data[0].get('kpi') or 'CPV'
+
+                                consolidated_data = {
+                                    "campaign_summary": {
+                                        "client": campaign.get("client"),
+                                        "campaign": campaign.get("campaign_name"),
+                                        "status": "Ativa",
+                                        "total_spend": total_spend,
+                                        "total_impressions": total_impressions,
+                                        "total_clicks": total_clicks,
+                                        "total_video_completions": total_video_completions,
+                                        "total_video_starts": total_video_starts,
+                                        "ctr": total_ctr,
+                                        "vtr": total_vtr,
+                                        "cpm": total_cpm,
+                                        "pacing": pacing,
+                                    },
+                                    "contract": {
+                                        "client": campaign.get("client"),
+                                        "campaign": campaign.get("campaign_name"),
+                                        "investment": total_investment,
+                                        "complete_views_contracted": total_complete_views_contracted,
+                                        "canal": "Multicanal",
+                                        "kpi": primary_kpi,
+                                    },
+                                    "daily_data": all_daily_data,
+                                    "channels": all_channels_data,
+                                    "publishers": all_publishers,
+                                    "strategies": all_strategies,
+                                    "insights": all_insights,
+                                    "footfall_points": [],
+                                    "footfall_sources": footfall_sources,
+                                    "last_updated": datetime.now().isoformat(),
+                                    "data_source": "multicanal_regenerated_on_view",
+                                }
+
+                                if all_footfall_points:
+                                    seen = set()
+                                    dedup = []
+                                    for p in all_footfall_points:
+                                        try:
+                                            key = (str(p.get("name") or ""), float(p.get("lat")), float(p.get("lon")))
+                                        except Exception:
+                                            continue
+                                        if key in seen:
+                                            continue
+                                        seen.add(key)
+                                        dedup.append(p)
+                                    consolidated_data["footfall_points"] = dedup
+
+                                generate_dashboard_multicanal_html(campaign_key, campaign.get("client") or "", campaign.get("campaign_name") or "", consolidated_data, primary_kpi)
+                                # Recarregar do GCS após regenerar
+                                if blob.exists():
+                                    html_content = blob.download_as_text()
+                    except Exception as regen_err:
+                        logger.warning(f"⚠️ Falha ao validar/regenerar HTML multicanal {campaign_key}: {regen_err}")
+
                     logger.info(f"✅ Dashboard multicanal carregado do GCS: {gcs_path}")
                     return html_content, 200, {'Content-Type': 'text/html; charset=utf-8'}
                 else:
@@ -4343,6 +4513,25 @@ def generate_dashboard_multicanal():
         if bq_fs_manager:
             try:
                 bq_fs_manager.save_campaign(campaign_key, client, campaign_name, "", "Multicanal", primary_kpi)
+                # Persistir configuração (modo manual) para permitir regeneração posterior do HTML
+                try:
+                    safe_channels = []
+                    for ch in (channels_config or []):
+                        safe_channels.append({
+                            "channel_name": (ch.get("channel_name") or "").strip(),
+                            "action_description": (ch.get("action_description") or "").strip(),
+                            "kpi": (ch.get("kpi") or "").strip(),
+                            "sheet_id": (ch.get("sheet_id") or "").strip(),
+                            "use_footfall": bool(ch.get("use_footfall", False)),
+                        })
+                    bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(campaign_key).set({
+                        "channel": "Multicanal",
+                        "sheet_id": "",
+                        "multicanal_channels": safe_channels,
+                        "updated_at": datetime.now(),
+                    }, merge=True)
+                except Exception as persist_err:
+                    logger.warning(f"⚠️ Falha ao persistir multicanal_channels: {persist_err}")
                 logger.info(f"✅ Campanha multicanal {campaign_key} salva no BigQuery + Firestore")
             except Exception as e:
                 logger.warning(f"⚠️ Erro ao salvar no BigQuery/Firestore: {e}")
