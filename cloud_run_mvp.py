@@ -4821,19 +4821,9 @@ def generate_dashboard_multicanal_from_existing():
 def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
     """Gerar HTML do dashboard multicanal"""
     try:
-        # Template multicanal com abas de Footfall por planilha/canal (data-driven).
-        footfall_sources = consolidated_data.get("footfall_sources") if isinstance(consolidated_data, dict) else None
-        has_footfall_sources = isinstance(footfall_sources, list) and len(footfall_sources) > 0
-
-        if has_footfall_sources:
-            template_path = 'static/dash_multicanal_footfall_tabs_template.html'
-        else:
-            # Sem Footfall: manter template atual por KPI
-            template_path = 'static/dash_generic_template.html'
-            if kpi.upper() == 'CPM':
-                template_path = 'static/dash_remarketing_cpm_template.html'
-            elif kpi.upper() == 'CPE':
-                template_path = 'static/dash_generic_cpe_template.html'
+        # Multicanal deve SEMPRE usar o template multicanal (aba "Por Canal" e estrutura de tabs).
+        # As abas de Footfall são adicionadas dinamicamente somente quando existir `footfall_sources`.
+        template_path = 'static/dash_multicanal_footfall_tabs_template.html'
         
         if not os.path.exists(template_path):
             raise Exception(f"Template não encontrado: {template_path}")
