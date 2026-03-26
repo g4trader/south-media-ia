@@ -747,68 +747,6 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         
         with open(template_path, 'r', encoding='utf-8') as f:
             dashboard_content = f.read()
-
-        # Footfall (multicanal): se existir footfall_points no consolidado, injetar mapa/heatmap no HTML gerado.
-        footfall_points = consolidated_data.get("footfall_points") if isinstance(consolidated_data, dict) else None
-        has_footfall = isinstance(footfall_points, list) and len(footfall_points) > 0
-        if has_footfall:
-            try:
-                footfall_json = json.dumps(footfall_points, ensure_ascii=False, default=str)
-                leaflet_includes = """
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-"""
-                if "</head>" in dashboard_content and "leaflet@1.9.4" not in dashboard_content:
-                    dashboard_content = dashboard_content.replace("</head>", leaflet_includes + "\n</head>", 1)
-
-                footfall_block = f"""
-<!-- FOOTFALL (multicanal) -->
-<div class="card" id="footfall-card" style="margin-top:24px;">
-  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
-    <h3 style="margin:0;">Footfall</h3>
-    <span class="badge" style="border:1px solid rgba(249,115,22,.55);color:#f97316;background:transparent;">FOOTFALL</span>
-  </div>
-  <p style="margin-top:8px;color:var(--muted);">Mapa de calor consolidado (aba Footfall das planilhas).</p>
-  <div id="footfall-map" style="height:420px;width:100%;border-radius:12px;border:1px solid rgba(148,163,184,.18);margin-top:12px;"></div>
-</div>
-<script>
-window.FOOTFALL_POINTS = {footfall_json};
-(function(){{
-  function asNum(v){{ try {{ const n = Number(String(v).replace(/[^0-9.-]/g,'')); return Number.isFinite(n)?n:0; }} catch(e){{ return 0; }} }}
-  const points = (window.FOOTFALL_POINTS||[]).filter(p=>p && isFinite(p.lat) && isFinite(p.lon));
-  const el = document.getElementById('footfall-map');
-  if(!el || typeof L === 'undefined') return;
-  const center = points.length ? [points[0].lat, points[0].lon] : [-19.9078, -43.9593];
-  const map = L.map('footfall-map').setView(center, 12);
-  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{ maxZoom: 18 }}).addTo(map);
-  if(!points.length) return;
-  const markers = L.markerClusterGroup();
-  const heat = [];
-  for (const p of points) {{
-    const users = asNum(p.users);
-    const rate = asNum(p.rate);
-    markers.addLayer(L.marker([p.lat, p.lon]).bindPopup(`<b>${{p.name||'-'}}</b><br/>Usuários: ${{users}}<br/>Taxa: ${{rate.toFixed(2)}}%`));
-    const intensity = Math.max(0.2, Math.min(1.0, users > 0 ? users / 500 : 0.2));
-    heat.push([p.lat, p.lon, intensity]);
-  }}
-  map.addLayer(markers);
-  L.heatLayer(heat, {{ radius: 26, blur: 18, maxZoom: 14 }}).addTo(map);
-  try {{
-    const bounds = L.latLngBounds(points.map(p=>[p.lat,p.lon]));
-    map.fitBounds(bounds, {{ padding: [24,24] }});
-  }} catch(e) {{}}
-  setTimeout(()=>map.invalidateSize(), 50);
-}})();
-</script>
-"""
-                if "</body>" in dashboard_content and "FOOTFALL (multicanal)" not in dashboard_content:
-                    dashboard_content = dashboard_content.replace("</body>", footfall_block + "\n</body>", 1)
-            except Exception as e:
-                logger.warning(f"⚠️ Falha ao injetar Footfall no multicanal: {e}")
         
         # Extrair dados da planilha e popular no dashboard
         logger.info(f"📊 Extraindo dados da planilha para popular o dashboard...")
@@ -4614,12 +4552,19 @@ def generate_dashboard_multicanal_from_existing():
 def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
     """Gerar HTML do dashboard multicanal"""
     try:
-        # Determinar template baseado no KPI principal
-        template_path = 'static/dash_generic_template.html'
-        if kpi.upper() == 'CPM':
-            template_path = 'static/dash_remarketing_cpm_template.html'
-        elif kpi.upper() == 'CPE':
-            template_path = 'static/dash_generic_cpe_template.html'
+        # Determinar template: Footfall (heatmap) tem prioridade quando existir `footfall_points`.
+        footfall_points = consolidated_data.get("footfall_points") if isinstance(consolidated_data, dict) else None
+        has_footfall = isinstance(footfall_points, list) and len(footfall_points) > 0
+
+        if has_footfall:
+            template_path = 'static/dash_footfall_template.html'
+        else:
+            # Determinar template baseado no KPI principal
+            template_path = 'static/dash_generic_template.html'
+            if kpi.upper() == 'CPM':
+                template_path = 'static/dash_remarketing_cpm_template.html'
+            elif kpi.upper() == 'CPE':
+                template_path = 'static/dash_generic_cpe_template.html'
         
         if not os.path.exists(template_path):
             raise Exception(f"Template não encontrado: {template_path}")
