@@ -744,7 +744,7 @@ class RealGoogleSheetsExtractor:
             def safe_get(row, i: int) -> str:
                 return str(row[i]).strip() if i >= 0 and i < len(row) and row[i] is not None else ""
 
-            def parse_coord(val: str):
+            def parse_coord(val: str, max_abs: float):
                 try:
                     s = str(val).strip()
                     if not s or s.lower() == "nan":
@@ -773,7 +773,7 @@ class RealGoogleSheetsExtractor:
 
                     # Se veio em escala (micro/nano graus), reduzir até caber no range de graus
                     # (lat ~ [-90,90], lon ~ [-180,180])
-                    while abs(num) > 180:
+                    while abs(num) > max_abs:
                         num /= 10.0
                         # Evitar loop infinito caso algo esteja muito fora
                         if abs(num) < 1e-12:
@@ -812,8 +812,8 @@ class RealGoogleSheetsExtractor:
                 except Exception:
                     rate = 0.0
 
-                lat = parse_coord(lat_raw)
-                lon = parse_coord(lon_raw)
+                lat = parse_coord(lat_raw, 90.0)
+                lon = parse_coord(lon_raw, 180.0)
                 if lat is None or lon is None:
                     continue
 
