@@ -4776,6 +4776,56 @@ def api_admin_campaigns_picker():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route('/api/admin/campaign/<campaign_key>', methods=['GET'])
+@superadmin_required_api
+def api_admin_get_campaign(campaign_key):
+    """Retorna documento completo da campanha no Firestore (debug/admin)."""
+    if not bq_fs_manager:
+        return jsonify({"success": False, "message": "Firestore não disponível"}), 503
+    try:
+        ck = (campaign_key or "").strip()
+        if not ck:
+            return jsonify({"success": False, "message": "campaign_key obrigatório"}), 400
+        doc = bq_fs_manager.fs_client.collection(bq_fs_manager.campaigns_collection).document(ck).get()
+        if not doc.exists:
+            return jsonify({"success": False, "message": "Campanha não encontrada"}), 404
+        d = doc.to_dict() or {}
+        d["campaign_key"] = d.get("campaign_key") or doc.id
+        # Normalizar timestamps para string (evita erro de JSON)
+        for k in ("created_at", "updated_at"):
+            if hasattr(d.get(k), "isoformat"):
+                d[k] = d[k].isoformat()
+        return jsonify({"success": True, "campaign": d})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route('/api/admin/sheet-tabs/<sheet_id>', methods=['GET'])
+@superadmin_required_api
+def api_admin_sheet_tabs(sheet_id):
+    """Lista abas de um Google Sheet (debug/admin)."""
+    try:
+        sid = (sheet_id or "").strip()
+        if not sid:
+            return jsonify({"success": False, "message": "sheet_id obrigatório"}), 400
+        from google_sheets_service import GoogleSheetsService
+        svc = GoogleSheetsService()
+        if not svc.is_configured():
+            return jsonify({"success": False, "message": "GoogleSheetsService não configurado"}), 503
+        info = svc._service.spreadsheets().get(spreadsheetId=sid).execute()
+        sheets = info.get("sheets", []) or []
+        titles = []
+        for s in sheets:
+            p = s.get("properties", {}) or {}
+            titles.append({
+                "title": p.get("title"),
+                "sheetId": p.get("sheetId"),
+            })
+        return jsonify({"success": True, "sheet_id": sid, "tabs": titles})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/generate-dashboard-multicanal-from-existing', methods=['POST'])
 @superadmin_required_api
 def generate_dashboard_multicanal_from_existing():
