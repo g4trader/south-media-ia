@@ -752,6 +752,8 @@ class RealGoogleSheetsExtractor:
                     # Normalizar: aceitar números com separadores de milhar (ex.: -8.031.797.632.094.190)
                     # e também formatos usuais com ponto decimal (ex.: -8.0317).
                     s = s.replace(" ", "")
+                    # Alguns Sheets podem usar sinal de menos Unicode (U+2212) etc.
+                    s = s.replace("−", "-").replace("–", "-").replace("—", "-")
                     if "," in s and "." not in s:
                         # Decimal com vírgula
                         s = s.replace(",", ".")
