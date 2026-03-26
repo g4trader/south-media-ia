@@ -4826,6 +4826,25 @@ def api_admin_sheet_tabs(sheet_id):
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route('/api/admin/sheet-preview/<sheet_id>', methods=['GET'])
+@superadmin_required_api
+def api_admin_sheet_preview(sheet_id):
+    """Preview de um range do Google Sheets (debug/admin). Query: range=... (default Footfall!A1:Z10)."""
+    try:
+        sid = (sheet_id or "").strip()
+        if not sid:
+            return jsonify({"success": False, "message": "sheet_id obrigatório"}), 400
+        range_name = (request.args.get("range") or "Footfall!A1:Z10").strip()
+        from google_sheets_service import GoogleSheetsService
+        svc = GoogleSheetsService()
+        if not svc.is_configured():
+            return jsonify({"success": False, "message": "GoogleSheetsService não configurado"}), 503
+        res = svc._service.spreadsheets().values().get(spreadsheetId=sid, range=range_name).execute()
+        return jsonify({"success": True, "sheet_id": sid, "range": range_name, "values": res.get("values", [])})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route('/api/generate-dashboard-multicanal-from-existing', methods=['POST'])
 @superadmin_required_api
 def generate_dashboard_multicanal_from_existing():
