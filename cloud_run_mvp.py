@@ -1549,6 +1549,7 @@ def dash_generator_pro():
                 <option value="Netflix">Netflix</option>
                 <option value="Disney">Disney</option>
                 <option value="HBO">HBO</option>
+                <option value="HHS">HHS (Impressões/CPM)</option>
                 <option value="LinkedIn">LinkedIn</option>
                 <option value="Pinterest">Pinterest</option>
                 <option value="Spotify">Spotify</option>
@@ -1557,6 +1558,7 @@ def dash_generator_pro():
                 <option value="CTV">CTV</option>
                 <option value="Push">Push</option>
                 <option value="Richmedia">Richmedia</option>
+                <option value="OHS">OHS (Impressões/CPM)</option>
             </select>
         </div>
         
@@ -1648,14 +1650,43 @@ def dash_generator_pro():
             });
         }
         
-        // Mostrar/ocultar opção de quartis quando KPI for CPM
+        function isImpressionCpmChannel(channelValue) {
+            const v = (channelValue || '').trim().toUpperCase();
+            return v === 'HHS' || v === 'OHS';
+        }
+
+        // Mostrar/ocultar opção de quartis
+        // - Apenas quando KPI for CPM E a campanha for de vídeo/escuta (HHS/OHS são impressões -> não usa quartis)
         document.getElementById('kpi').addEventListener('change', function() {
             const quartilesGroup = document.getElementById('quartilesGroup');
-            if (this.value === 'CPM') {
+            const channelValue = document.getElementById('channel').value;
+            if (this.value === 'CPM' && !isImpressionCpmChannel(channelValue)) {
                 quartilesGroup.style.display = 'block';
             } else {
                 quartilesGroup.style.display = 'none';
                 document.getElementById('useQuartiles').checked = false;
+            }
+        });
+
+        // Forçar KPI=CPM para HHS/OHS (Impressões/CPM)
+        document.getElementById('channel').addEventListener('change', function() {
+            const isImprCpm = isImpressionCpmChannel(this.value);
+            const kpiSelect = document.getElementById('kpi');
+            const quartilesGroup = document.getElementById('quartilesGroup');
+
+            if (isImprCpm) {
+                kpiSelect.value = 'CPM';
+                quartilesGroup.style.display = 'none';
+                document.getElementById('useQuartiles').checked = false;
+            } else {
+                // Reaplicar regra de exibição do quartis conforme KPI atual
+                const kpiVal = kpiSelect.value;
+                if (kpiVal === 'CPM') {
+                    quartilesGroup.style.display = 'block';
+                } else {
+                    quartilesGroup.style.display = 'none';
+                    document.getElementById('useQuartiles').checked = false;
+                }
             }
         });
 
@@ -1744,10 +1775,17 @@ def generate_dashboard_endpoint():
             client_id = None
         campaign_name = data['campaign_name']
         sheet_id = data['sheet_id']
-        channel = data.get('channel', 'Video Programática')
+        channel = (data.get('channel', 'Video Programática') or '').strip()
         kpi = data.get('kpi', 'CPV')
+
+        # HHS/OHS são por Impressões e devem usar KPI=CPM
+        if str(channel).strip().upper() in ('HHS', 'OHS'):
+            channel = str(channel).strip().upper()
+            kpi = 'CPM'
         use_quartiles = data.get('use_quartiles', '0') == '1' or data.get('use_quartiles', False) == True
         use_footfall = data.get('use_footfall', '0') == '1' or data.get('use_footfall', False) == True
+        if str(channel).strip().upper() in ('HHS', 'OHS'):
+            use_quartiles = False
         
         # Gerar campaign_key automaticamente
         campaign_key = generate_campaign_key(client, campaign_name)
@@ -3778,7 +3816,7 @@ def dash_generator_pro_multicanal():
                 <div class="channel-grid">
                     <div class="form-group">
                         <label>Nome do Canal:</label>
-                        <select name="channels[${channelCount}][channel_name]" required>
+                        <select name="channels[${channelCount}][channel_name]" required onchange="syncKpiForChannel(${channelCount}, this.value)">
                             <option value="">Selecione um canal</option>
                             <option value="Video Programática">Video Programática</option>
                             <option value="Display Programática">Display Programática</option>
@@ -3790,6 +3828,7 @@ def dash_generator_pro_multicanal():
                             <option value="Netflix">Netflix</option>
                             <option value="Disney">Disney</option>
                             <option value="HBO">HBO</option>
+                            <option value="HHS">HHS (Impressões/CPM)</option>
                             <option value="LinkedIn">LinkedIn</option>
                             <option value="Pinterest">Pinterest</option>
                             <option value="Spotify">Spotify</option>
@@ -3799,6 +3838,7 @@ def dash_generator_pro_multicanal():
                             <option value="Footfall Display">Footfall Display</option>
                             <option value="Push">Push</option>
                             <option value="Richmedia">Richmedia</option>
+                            <option value="OHS">OHS (Impressões/CPM)</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -3851,12 +3891,25 @@ def dash_generator_pro_multicanal():
                 sheetIdInput.style.color = sheetId ? '#10B981' : '#666';
             }
         }
+
+        // HHS/OHS: Impressões/CPM (forçar KPI=CPM quando selecionado)
+        function syncKpiForChannel(channelId, channelValue) {
+            const v = (channelValue || '').trim().toUpperCase();
+            const card = document.getElementById(`channel-${channelId}`);
+            if (!card) return;
+            const kpiSelect = card.querySelector('select[name*="[kpi]"]');
+            if (!kpiSelect) return;
+            if (v === 'HHS' || v === 'OHS') {
+                kpiSelect.value = 'CPM';
+            }
+        }
         
         // Garantir que as funções estejam no escopo global
         window.addChannel = addChannel;
         window.removeChannel = removeChannel;
         window.updateSheetId = updateSheetId;
         window.extractSheetId = extractSheetId;
+        window.syncKpiForChannel = syncKpiForChannel;
         
         // Adicionar primeiro canal por padrão quando o DOM estiver pronto
         if (document.readyState === 'loading') {
@@ -4083,6 +4136,9 @@ def generate_dashboard_multicanal():
             action_description = channel_config.get('action_description', '').strip()
             sheet_id = channel_config.get('sheet_id')
             kpi = channel_config.get('kpi', 'CPV')
+            if str(channel_name).strip().upper() in ('HHS', 'OHS'):
+                channel_name = str(channel_name).strip().upper()
+                kpi = 'CPM'  # HHS/OHS: Impressões/CPM
             use_footfall = channel_config.get('use_footfall', 0) in (1, True, '1', 'true', 'True') or ('footfall' in (channel_name or '').lower())
             
             if not sheet_id:
@@ -4396,6 +4452,10 @@ def generate_dashboard_multicanal_from_existing():
             channel_name = src["channel"]
             channel_display_name = f"{channel_name} — {src.get('campaign_name') or src['campaign_key']}"
             kpi = src["kpi"]
+            if str(channel_name).strip().upper() in ('HHS', 'OHS'):
+                channel_name = str(channel_name).strip().upper()
+                channel_display_name = f"{channel_name} — {src.get('campaign_name') or src['campaign_key']}"
+                kpi = 'CPM'  # HHS/OHS: Impressões/CPM
             sheet_id = src["sheet_id"]
             try:
                 config = CampaignConfig(
