@@ -1845,16 +1845,14 @@ def generate_dashboard_endpoint():
         return jsonify({"success": False, "message": f"Erro interno: {str(e)}"}), 500
 
 @app.route('/api/dashboard/<campaign_key>', methods=['GET'])
-@login_required_page
 def get_dashboard_html(campaign_key):
     """Obter dashboard HTML dinâmico (réplica da produção)"""
     try:
         user = get_current_session_user()
-        if not user:
-            return redirect("/login?redirect=/api/dashboard/" + campaign_key)
 
-        # Controle de acesso por client_id (superadmin vê tudo)
-        if not is_super_admin() and bq_fs_manager:
+        # Controle de acesso por client_id apenas quando houver sessão (superadmin vê tudo).
+        # Dashboards devem ser acessíveis por link direto (sem login) para compartilhamento.
+        if user and (not is_super_admin()) and bq_fs_manager:
             linked_dashboard = bq_fs_manager.get_dashboard(campaign_key)
             linked_client_id = (linked_dashboard or {}).get("client_id")
             user_client_id = user.get("client_id")
@@ -2034,16 +2032,14 @@ def get_dashboard_html(campaign_key):
         return f"<html><body><h1>Erro ao carregar dashboard</h1><p>{str(e)}</p></body></html>", 500
 
 @app.route('/api/<campaign_key>/data', methods=['GET'])
-@login_required_api
 def get_campaign_data(campaign_key):
     """Obter dados de uma campanha específica"""
     try:
         user = get_current_session_user()
-        if not user:
-            return jsonify({"success": False, "message": "Não autenticado"}), 401
 
-        # Controle de acesso por client_id (superadmin vê tudo)
-        if not is_super_admin() and bq_fs_manager:
+        # Controle de acesso por client_id apenas quando houver sessão.
+        # Permitimos acesso público para dashboards compartilháveis.
+        if user and (not is_super_admin()) and bq_fs_manager:
             linked_dashboard = bq_fs_manager.get_dashboard(campaign_key)
             linked_client_id = (linked_dashboard or {}).get("client_id")
             user_client_id = user.get("client_id")
