@@ -747,6 +747,68 @@ def generate_dashboard(campaign_key: str, client: str, campaign_name: str, sheet
         
         with open(template_path, 'r', encoding='utf-8') as f:
             dashboard_content = f.read()
+
+        # Footfall (multicanal): se existir footfall_points no consolidado, injetar mapa/heatmap no HTML gerado.
+        footfall_points = consolidated_data.get("footfall_points") if isinstance(consolidated_data, dict) else None
+        has_footfall = isinstance(footfall_points, list) and len(footfall_points) > 0
+        if has_footfall:
+            try:
+                footfall_json = json.dumps(footfall_points, ensure_ascii=False, default=str)
+                leaflet_includes = """
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+"""
+                if "</head>" in dashboard_content and "leaflet@1.9.4" not in dashboard_content:
+                    dashboard_content = dashboard_content.replace("</head>", leaflet_includes + "\n</head>", 1)
+
+                footfall_block = f"""
+<!-- FOOTFALL (multicanal) -->
+<div class="card" id="footfall-card" style="margin-top:24px;">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;">
+    <h3 style="margin:0;">Footfall</h3>
+    <span class="badge" style="border:1px solid rgba(249,115,22,.55);color:#f97316;background:transparent;">FOOTFALL</span>
+  </div>
+  <p style="margin-top:8px;color:var(--muted);">Mapa de calor consolidado (aba Footfall das planilhas).</p>
+  <div id="footfall-map" style="height:420px;width:100%;border-radius:12px;border:1px solid rgba(148,163,184,.18);margin-top:12px;"></div>
+</div>
+<script>
+window.FOOTFALL_POINTS = {footfall_json};
+(function(){{
+  function asNum(v){{ try {{ const n = Number(String(v).replace(/[^0-9.-]/g,'')); return Number.isFinite(n)?n:0; }} catch(e){{ return 0; }} }}
+  const points = (window.FOOTFALL_POINTS||[]).filter(p=>p && isFinite(p.lat) && isFinite(p.lon));
+  const el = document.getElementById('footfall-map');
+  if(!el || typeof L === 'undefined') return;
+  const center = points.length ? [points[0].lat, points[0].lon] : [-19.9078, -43.9593];
+  const map = L.map('footfall-map').setView(center, 12);
+  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{ maxZoom: 18 }}).addTo(map);
+  if(!points.length) return;
+  const markers = L.markerClusterGroup();
+  const heat = [];
+  for (const p of points) {{
+    const users = asNum(p.users);
+    const rate = asNum(p.rate);
+    markers.addLayer(L.marker([p.lat, p.lon]).bindPopup(`<b>${{p.name||'-'}}</b><br/>Usuários: ${{users}}<br/>Taxa: ${{rate.toFixed(2)}}%`));
+    const intensity = Math.max(0.2, Math.min(1.0, users > 0 ? users / 500 : 0.2));
+    heat.push([p.lat, p.lon, intensity]);
+  }}
+  map.addLayer(markers);
+  L.heatLayer(heat, {{ radius: 26, blur: 18, maxZoom: 14 }}).addTo(map);
+  try {{
+    const bounds = L.latLngBounds(points.map(p=>[p.lat,p.lon]));
+    map.fitBounds(bounds, {{ padding: [24,24] }});
+  }} catch(e) {{}}
+  setTimeout(()=>map.invalidateSize(), 50);
+}})();
+</script>
+"""
+                if "</body>" in dashboard_content and "FOOTFALL (multicanal)" not in dashboard_content:
+                    dashboard_content = dashboard_content.replace("</body>", footfall_block + "\n</body>", 1)
+            except Exception as e:
+                logger.warning(f"⚠️ Falha ao injetar Footfall no multicanal: {e}")
         
         # Extrair dados da planilha e popular no dashboard
         logger.info(f"📊 Extraindo dados da planilha para popular o dashboard...")
@@ -3817,6 +3879,13 @@ def dash_generator_pro_multicanal():
                         </select>
                     </div>
                     <div class="form-group">
+                        <label style="display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox" name="channels[${channelCount}][use_footfall]" value="1">
+                            Incluir Footfall (aba + mapa)
+                        </label>
+                        <small>Marque se esta planilha possui a aba <b>Footfall</b> com lat/long.</small>
+                    </div>
+                    <div class="form-group">
                         <label>URL da Planilha:</label>
                         <input type="url" name="channels[${channelCount}][sheet_url]" placeholder="https://docs.google.com/spreadsheets/d/..." required oninput="updateSheetId(${channelCount}, this.value)" autocomplete="off" data-lpignore="true" data-form-type="other">
                     </div>
@@ -3966,13 +4035,15 @@ def dash_generator_pro_multicanal():
                         const channelName = card.querySelector('select[name*="[channel_name]"]').value;
                         const actionDescription = card.querySelector('input[name*="[action_description]"]').value || '';
                         const kpi = card.querySelector('select[name*="[kpi]"]').value;
+                        const useFootfall = !!(card.querySelector('input[name*="[use_footfall]"]') && card.querySelector('input[name*="[use_footfall]"]').checked);
                         const sheetId = card.querySelector('input[name*="[sheet_id]"]').value;
                         if (channelName && sheetId) {
                             data.channels.push({
                                 channel_name: channelName,
                                 action_description: actionDescription,
                                 kpi: kpi,
-                                sheet_id: sheetId
+                                sheet_id: sheetId,
+                                use_footfall: useFootfall ? 1 : 0
                             });
                         }
                     });
@@ -4067,11 +4138,14 @@ def generate_dashboard_multicanal():
         total_q50 = 0
         total_q75 = 0
         
+        all_footfall_points = []
+
         for channel_config in channels_config:
             channel_name = channel_config.get('channel_name', 'Canal')
             action_description = channel_config.get('action_description', '').strip()
             sheet_id = channel_config.get('sheet_id')
             kpi = channel_config.get('kpi', 'CPV')
+            use_footfall = channel_config.get('use_footfall', 0) in (1, True, '1', 'true', 'True') or ('footfall' in (channel_name or '').lower())
             
             if not sheet_id:
                 logger.warning(f"⚠️ Canal {channel_name} sem sheet_id, pulando...")
@@ -4091,6 +4165,7 @@ def generate_dashboard_multicanal():
                     channel=channel_name,
                     kpi=kpi
                 )
+                config.use_footfall = bool(use_footfall)
                 
                 # Extrair dados
                 extractor = RealGoogleSheetsExtractor(config)
@@ -4143,6 +4218,11 @@ def generate_dashboard_multicanal():
                         'sheet_id': sheet_id,
                         'data': channel_data
                     })
+
+                    # Footfall points (se existirem)
+                    fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
+                    if isinstance(fpts, list) and fpts:
+                        all_footfall_points.extend(fpts)
                     
                     logger.info(f"✅ Canal {channel_name} processado: {len(daily_data)} registros")
                 else:
@@ -4230,9 +4310,25 @@ def generate_dashboard_multicanal():
             "publishers": unique_publishers if unique_publishers else [],
             "strategies": unique_strategies if unique_strategies else [],
             "insights": all_insights if all_insights else [],
+            "footfall_points": [],
             "last_updated": datetime.now().isoformat(),
             "data_source": "google_sheets_multicanal"
         }
+
+        # Deduplicar footfall_points por (name,lat,lon)
+        if all_footfall_points:
+            seen = set()
+            dedup = []
+            for p in all_footfall_points:
+                try:
+                    key = (str(p.get("name") or ""), float(p.get("lat")), float(p.get("lon")))
+                except Exception:
+                    continue
+                if key in seen:
+                    continue
+                seen.add(key)
+                dedup.append(p)
+            consolidated_data["footfall_points"] = dedup
         
         # Gerar dashboard
         result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
@@ -4320,6 +4416,7 @@ def generate_dashboard_multicanal_from_existing():
         all_publishers = []
         all_strategies = []
         all_insights = []
+        all_footfall_points = []
         total_investment = 0.0
         total_spend = 0.0
         total_impressions = 0
@@ -4351,6 +4448,7 @@ def generate_dashboard_multicanal_from_existing():
                 "channel": c.get("channel") or "Canal",
                 "kpi": c.get("kpi") or "CPV",
                 "sheet_id": sheet_id,
+                "use_footfall": bool(c.get("use_footfall")),
             })
 
         if not sources:
@@ -4370,6 +4468,7 @@ def generate_dashboard_multicanal_from_existing():
                     channel=channel_name,
                     kpi=kpi,
                 )
+                config.use_footfall = bool(src.get("use_footfall")) or ("footfall" in (channel_name or "").lower())
                 extractor = RealGoogleSheetsExtractor(config)
                 channel_data = extractor.extract_data()
                 if not channel_data:
@@ -4414,6 +4513,10 @@ def generate_dashboard_multicanal_from_existing():
                     "source_campaign_key": src["campaign_key"],
                     "data": channel_data,
                 })
+
+                fpts = channel_data.get("footfall_points") if isinstance(channel_data, dict) else None
+                if isinstance(fpts, list) and fpts:
+                    all_footfall_points.extend(fpts)
             except Exception as ex:
                 logger.warning(f"⚠️ Fonte {src['campaign_key']} falhou: {ex}")
                 continue
@@ -4458,10 +4561,25 @@ def generate_dashboard_multicanal_from_existing():
             "publishers": all_publishers,
             "strategies": all_strategies,
             "insights": all_insights,
+            "footfall_points": [],
             "last_updated": datetime.now().isoformat(),
             "data_source": "multicanal_from_existing",
             "sources": [s["campaign_key"] for s in sources],
         }
+
+        if all_footfall_points:
+            seen = set()
+            dedup = []
+            for p in all_footfall_points:
+                try:
+                    key = (str(p.get("name") or ""), float(p.get("lat")), float(p.get("lon")))
+                except Exception:
+                    continue
+                if key in seen:
+                    continue
+                seen.add(key)
+                dedup.append(p)
+            consolidated_data["footfall_points"] = dedup
 
         result = generate_dashboard_multicanal_html(campaign_key, client, campaign_name, consolidated_data, primary_kpi)
         if not result.get("success"):
