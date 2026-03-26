@@ -746,7 +746,39 @@ class RealGoogleSheetsExtractor:
 
             def parse_coord(val: str):
                 try:
-                    return float(str(val).replace(" ", ""))
+                    s = str(val).strip()
+                    if not s or s.lower() == "nan":
+                        return None
+                    # Normalizar: aceitar números com separadores de milhar (ex.: -8.031.797.632.094.190)
+                    # e também formatos usuais com ponto decimal (ex.: -8.0317).
+                    s = s.replace(" ", "")
+                    if "," in s and "." not in s:
+                        # Decimal com vírgula
+                        s = s.replace(",", ".")
+
+                    # Se parece um inteiro gigantesco com separadores, remover tudo exceto dígitos, sinal e ponto
+                    cleaned = re.sub(r"[^0-9\\-\\.]", "", s)
+                    if not cleaned or cleaned in ("-", "."):
+                        return None
+
+                    # Tentar float direto primeiro
+                    try:
+                        num = float(cleaned)
+                    except Exception:
+                        # Se ainda falhar (ex.: múltiplos pontos), remover pontos e tratar como inteiro
+                        digits = re.sub(r"[^0-9\\-]", "", cleaned)
+                        if digits in ("", "-"):
+                            return None
+                        num = float(int(digits))
+
+                    # Se veio em escala (micro/nano graus), reduzir até caber no range de graus
+                    # (lat ~ [-90,90], lon ~ [-180,180])
+                    while abs(num) > 180:
+                        num /= 10.0
+                        # Evitar loop infinito caso algo esteja muito fora
+                        if abs(num) < 1e-12:
+                            return None
+                    return num
                 except Exception:
                     return None
 
