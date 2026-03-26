@@ -1861,7 +1861,7 @@ def generate_dashboard_endpoint():
             "campaign_key": campaign_key,
             "dashboard_name": f"{client} - {campaign_name}",
             "dashboard_url": result['dashboard_url'],
-            "dashboard_url_full": result['dashboard_url_full']
+            "dashboard_url_full": f"{request.host_url.rstrip('/')}{result['dashboard_url']}"
         })
         
     except Exception as e:
@@ -4350,7 +4350,7 @@ def generate_dashboard_multicanal():
             "campaign_key": campaign_key,
             "dashboard_name": f"{client} - {campaign_name}",
             "dashboard_url": result['dashboard_url'],
-            "dashboard_url_full": result['dashboard_url_full'],
+            "dashboard_url_full": f"{request.host_url.rstrip('/')}{result['dashboard_url']}",
             "channels_count": len(all_channels_data),
             "channels": [ch['channel_name'] for ch in all_channels_data]
         })
@@ -4604,7 +4604,7 @@ def generate_dashboard_multicanal_from_existing():
             "campaign_key": campaign_key,
             "dashboard_name": f"{client} - {campaign_name}",
             "dashboard_url": result["dashboard_url"],
-            "dashboard_url_full": result["dashboard_url_full"],
+            "dashboard_url_full": f"{request.host_url.rstrip('/')}{result['dashboard_url']}",
             "sources_count": len(sources),
         })
     except Exception as e:
