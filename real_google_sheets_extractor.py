@@ -656,20 +656,45 @@ class RealGoogleSheetsExtractor:
             return []
 
     def _extract_footfall_points(self) -> list:
-        """Extrai pontos de footfall da aba 'Footfall' da planilha.
+        """Extrai pontos de footfall de uma aba de Footfall da planilha.
 
         Espera colunas (case-insensitive):
-        - lat
-        - long
-        - name
-        - Footfall Users
-        - Footfall Rate %
+        - lat / latitude
+        - long / lon / lng / longitude
+        - name / store / location
+        - Footfall Users / users / visitantes
+        - Footfall Rate % / rate / taxa
         """
         try:
-            logger.info("🗺️ Extraindo pontos de Footfall (aba 'Footfall')")
+            logger.info("🗺️ Extraindo pontos de Footfall")
+
+            # Descobrir a aba correta (nem sempre se chama exatamente 'Footfall')
+            spreadsheet_info = self.service.spreadsheets().get(spreadsheetId=self.config.sheet_id).execute()
+            sheets = spreadsheet_info.get('sheets', []) or []
+            sheet_titles = [s.get('properties', {}).get('title') for s in sheets if s.get('properties', {}).get('title')]
+
+            footfall_sheet = None
+            # Preferir nomes que contenham "footfall"
+            for title in sheet_titles:
+                if "footfall" in str(title).strip().lower():
+                    footfall_sheet = title
+                    break
+            # Fallback: alguns modelos usam "Mapa" / "Heatmap" / "Fluxo"
+            if not footfall_sheet:
+                for title in sheet_titles:
+                    t = str(title).strip().lower()
+                    if any(k in t for k in ["heat", "mapa", "map", "fluxo", "foot fall"]):
+                        footfall_sheet = title
+                        break
+
+            if not footfall_sheet:
+                logger.warning(f"⚠️ Nenhuma aba de Footfall encontrada. Abas disponíveis: {sheet_titles}")
+                return []
+
+            range_name = f"'{footfall_sheet}'!A1:Z2000" if ' ' in footfall_sheet else f"{footfall_sheet}!A1:Z2000"
             result = self.service.spreadsheets().values().get(
                 spreadsheetId=self.config.sheet_id,
-                range="Footfall!A1:Z1000"
+                range=range_name
             ).execute()
             values = result.get("values", [])
             if not values:
@@ -681,11 +706,40 @@ class RealGoogleSheetsExtractor:
                 col_name = col_name.strip().lower()
                 return header.index(col_name) if col_name in header else -1
 
+            # Coordenadas
             lat_i = idx("lat")
+            if lat_i < 0:
+                lat_i = idx("latitude")
+
             lon_i = idx("long")
+            if lon_i < 0:
+                for alt in ("lon", "lng", "longitude"):
+                    lon_i = idx(alt)
+                    if lon_i >= 0:
+                        break
+
+            # Nome/label
             name_i = idx("name")
+            if name_i < 0:
+                for alt in ("store", "loja", "location", "local", "ponto", "pdv"):
+                    name_i = idx(alt)
+                    if name_i >= 0:
+                        break
+
+            # Métricas
             users_i = idx("footfall users")
+            if users_i < 0:
+                for alt in ("users", "usuários", "usuarios", "visitantes", "footfall"):
+                    users_i = idx(alt)
+                    if users_i >= 0:
+                        break
+
             rate_i = idx("footfall rate %")
+            if rate_i < 0:
+                for alt in ("rate", "taxa", "footfall rate", "rate %", "taxa %"):
+                    rate_i = idx(alt)
+                    if rate_i >= 0:
+                        break
 
             def safe_get(row, i: int) -> str:
                 return str(row[i]).strip() if i >= 0 and i < len(row) and row[i] is not None else ""
@@ -739,10 +793,11 @@ class RealGoogleSheetsExtractor:
                     "rate": rate,
                 })
 
-            logger.info(f"✅ Footfall: {len(points)} pontos")
+            logger.info(f"✅ Footfall ({footfall_sheet}): {len(points)} pontos")
             return points
         except Exception as e:
-            logger.warning(f"⚠️ Falha ao extrair Footfall: {e}")
+            # Não quebrar o dashboard quando a aba não existir / não tiver permissão
+            logger.warning(f"⚠️ Falha ao extrair Footfall: {e}", exc_info=True)
             return []
     
     def _calculate_metrics(self, daily_data: list, contract_data: Dict) -> Dict[str, Any]:
