@@ -781,6 +781,9 @@ class RealGoogleSheetsExtractor:
                         # Evitar loop infinito caso algo esteja muito fora
                         if abs(num) < 1e-12:
                             return None
+                    # Heurística adicional para latitudes: alguns exports vêm "1 casa a mais" (ex.: -80.317... deveria ser -8.031...).
+                    if max_abs == 90.0 and abs(num) > 60:
+                        num /= 10.0
                     # Blindagem: se a string original tinha sinal negativo, preservar o sinal
                     if negative_hint and num > 0:
                         num = -num
