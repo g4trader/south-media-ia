@@ -749,6 +749,7 @@ class RealGoogleSheetsExtractor:
                     s = str(val).strip()
                     if not s or s.lower() == "nan":
                         return None
+                    negative_hint = s[:1] in ("-", "−", "–", "—")
                     # Normalizar: aceitar números com separadores de milhar (ex.: -8.031.797.632.094.190)
                     # e também formatos usuais com ponto decimal (ex.: -8.0317).
                     s = s.replace(" ", "")
@@ -780,6 +781,9 @@ class RealGoogleSheetsExtractor:
                         # Evitar loop infinito caso algo esteja muito fora
                         if abs(num) < 1e-12:
                             return None
+                    # Blindagem: se a string original tinha sinal negativo, preservar o sinal
+                    if negative_hint and num > 0:
+                        num = -num
                     return num
                 except Exception:
                     return None
