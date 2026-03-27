@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <tr>
               <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
               <th>Impressões</th><th>Cliques</th>
-              <th>Starts</th><th>25%</th><th>50%</th><th>75%</th><th>100%</th>
+              <th class="qcol">Starts</th><th class="qcol">25%</th><th class="qcol">50%</th><th class="qcol">75%</th><th class="qcol">100%</th>
             </tr>
           </thead>
           <tbody id="channelDailyBody"></tbody>
@@ -565,6 +565,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py (planilhas reais Sonho multicanal) ---
+// --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
@@ -7449,9 +7450,13 @@ function renderChannelDailyTable(name){
     return;
   }
   tbody.innerHTML = "";
+
+  const isDisplay = ['hhs','ohs'].includes((name||'').toLowerCase().trim());
+  const qcolCount = 5;
+  const totalCols = isDisplay ? (12 - qcolCount) : 12;
   
   if (!DAILY || DAILY.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--muted);">Aguardando dados da planilha (entrega diária).</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;padding:2rem;color:var(--muted);">Aguardando dados da planilha (entrega diária).</td></tr>`;
     return;
   }
   
@@ -7466,7 +7471,7 @@ function renderChannelDailyTable(name){
   });
   
   if (rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;">Nenhum dado disponível para este canal</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${totalCols}" style="text-align:center;padding:2rem;">Nenhum dado disponível para este canal</td></tr>`;
     return;
   }
   
@@ -7478,12 +7483,18 @@ function renderChannelDailyTable(name){
         <td>R$ ${fmtBR(r.spend)}</td>
         <td>${fmtInt(r.impressions)}</td>
         <td>${fmtInt(r.clicks)}</td>
-        <td>${fmtInt(r.starts)}</td>
-        <td>${fmtInt(r.q25)}</td>
-        <td>${fmtInt(r.q50)}</td>
-        <td>${fmtInt(r.q75)}</td>
-        <td>${fmtInt(r.q100)}</td>
+        <td class="qcol">${fmtInt(r.starts)}</td>
+        <td class="qcol">${fmtInt(r.q25)}</td>
+        <td class="qcol">${fmtInt(r.q50)}</td>
+        <td class="qcol">${fmtInt(r.q75)}</td>
+        <td class="qcol">${fmtInt(r.q100)}</td>
       </tr>`);
+  });
+}
+
+function setQuartileColumnsVisible(show){
+  document.querySelectorAll('#channelDailyTable .qcol').forEach(el=>{
+    el.style.display = show ? '' : 'none';
   });
 }
 
@@ -7501,6 +7512,9 @@ function renderChannel(name){
   const isDisplayChannel = ['HHS', 'OHS'].includes(nm);
   const isSpotifyChannel = nm === 'Spotify';
   const isMixedChannel = false;
+
+  // Quartis só para CPV/CPE (não para HHS/OHS)
+  setQuartileColumnsVisible(!isDisplayChannel);
   
   const items = [
     ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
