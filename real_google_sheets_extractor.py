@@ -208,6 +208,20 @@ class RealGoogleSheetsExtractor:
                 '100% Complete': 'video_completions',
                 'Video Starts': 'video_starts',
                 'Visualizações completas': 'video_completions',
+                # Variações comuns em templates/exportações
+                'Starts': 'video_starts',
+                'Start': 'video_starts',
+                'Inícios': 'video_starts',
+                'Inicios': 'video_starts',
+                '25%': 'video_25',
+                '50%': 'video_50',
+                '75%': 'video_75',
+                '100%': 'video_completions',
+                '100% Video Complete': 'video_completions',
+                'Quartil 25%': 'video_25',
+                'Quartil 50%': 'video_50',
+                'Quartil 75%': 'video_75',
+                'Quartil 100%': 'video_completions',
             }
             # Aplicar mapeamento (case-insensitive: planilha pode ter "Day" ou "day" ou "DAY")
             rename_map = {}
