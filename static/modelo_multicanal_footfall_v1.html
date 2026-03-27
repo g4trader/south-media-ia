@@ -1,0 +1,8070 @@
+<!--
+  Protótipo multicanal Footfall v1 (base: dash_portal_auto_shopping_mar2026_santander_footfall.html)
+  Cliente: Sonho · Campanha: Sonho Sabão em pó
+  Planilhas: HHS, OHS, CTV, Disney, Netflix, Spotify, Youtube (ver build_modelo_multicanal_footfall_v1.py)
+  Atualizar dados embutidos:
+    python3 build_modelo_multicanal_footfall_v1.py
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sonho — Sonho Sabão em pó — Multicanal (Footfall v1)</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ==== INSIGHTS LOGIC ==== (COMENTADO - PER ainda não definido)
+// (function(){
+  // Separate channels
+//   const videoNames = ["YouTube","TikTok","Netflix","Disney","CTV"];
+//   const isVideo = (r)=> videoNames.includes((r["Canal"]||"").trim());
+  // const video = PER.filter(isVideo);
+  // const display = PER.filter(r => (r["Canal"]||"").toLowerCase().includes("footfall"));
+
+  // Video Efficiency: scatter VTR(%) vs CPV (R$) — invert x-axis meaning: lower CPV is better
+//   try {
+//     const ctx = document.getElementById('insVideoEff');
+//     if (ctx) {
+//       const data = {
+        // labels: video.map(r=>r["Canal"]),
+//         datasets: [{
+//           label: 'Canais de Vídeo',
+          // data: video.map(r=>({x: Number(r["CPV (R$)"]||0), y: Number(r["VTR (100%)"]||0)*100})),
+//           pointRadius: 6
+//         }]
+//       };
+//       new Chart(ctx, {
+//         type: 'scatter',
+//         data,
+//         options: {
+//           plugins:{legend:{display:false}},
+//           scales:{
+//             x:{title:{display:true,text:'CPV (R$) — menor é melhor'}},
+//             y:{title:{display:true,text:'VTR100 (%) — maior é melhor'}, suggestedMax: 100}
+//           }
+//         }
+//       });
+//     }
+//   } catch(e){}
+
+
+  // Pacing: Utilizado vs Contratado
+//   try {
+//     const ctx = document.getElementById('insPacing');
+//     if (ctx) {
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       new Chart(ctx, {
+//         type: 'bar',
+//         data: {
+//           labels: ['Pacing'],
+//           datasets: [
+//             { label: 'Contratado', data: [contratado] },
+//             { label: 'Utilizado', data: [utilizado] }
+//           ]
+//         },
+//         options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+//       });
+//     }
+//   } catch(e){}
+
+  // Insights text
+//   try {
+//     const list = document.getElementById('insightsList');
+//     if (list) {
+      // Best CPV among video
+//       const videoValid = video.filter(r => r["CPV (R$)"]!=="" && r["VTR (100%)"]!=="");
+//       const bestCPV = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["CPV (R$)"]||Infinity);
+//         return (v < (acc.val||Infinity)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+//       const bestVTR = videoValid.reduce((acc,cur)=>{
+//         const v = Number(cur["VTR (100%)"]||0);
+//         return (v > (acc.val||-1)) ? {name:cur["Canal"], val:v} : acc;
+//       }, {});
+
+
+      // Pacing
+//       const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+//       const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+//       const pacing = contratado>0 ? (utilizado/contratado) : 0;
+
+//       const items = [];
+//       if (bestCPV.name) items.push(`🎥 Melhor CPV em vídeo: <b>${bestCPV.name}</b> (R$ ${bestCPV.val.toFixed(2)}).`);
+//       if (bestVTR.name) items.push(`✅ Maior VTR100: <b>${bestVTR.name}</b> (${(bestVTR.val*100).toFixed(1)}%).`);
+//       items.push(`⏱️ Pacing da campanha: <b>${(pacing*100).toFixed(1)}%</b> do contratado já foi utilizado.`);
+
+//       if (!items.length) items.push("Sem insights suficientes — verifique se os dados de PER/CONS estão preenchidos.");
+//       list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+//     }
+//   } catch(e){}
+// })();
+
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+// ==== INSIGHTS LOGIC (após DAILY existir no body) ====
+document.addEventListener('DOMContentLoaded', function(){
+(function(){
+  // CTR diário (display)
+  try {
+    const ctx = document.getElementById('insVideoEff');
+    if (ctx && typeof DAILY !== 'undefined') {
+      const dailyDisplay = DAILY.filter(r => ['hhs','ohs'].includes((r.channel||'').toLowerCase()));
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const dates = Object.keys(grouped).sort((a,b)=>{
+        const pa = a.split('/').reverse().join('-');
+        const pb = b.split('/').reverse().join('-');
+        return pa < pb ? -1 : pa > pb ? 1 : 0;
+      });
+      const ctrValues = dates.map(d=>{
+        const g = grouped[d];
+        return g.impressions>0 ? (g.clicks/g.impressions)*100 : 0;
+      });
+      const maxCtr = ctrValues.length ? Math.max(...ctrValues, 1) : 1;
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: dates, datasets: [
+          { label:'CTR (%)', data: ctrValues, borderColor:'#ff6b35', backgroundColor:'rgba(255,107,53,0.2)', tension:0.3, fill:false }
+        ]},
+        options: {
+          plugins:{legend:{position:'bottom'}},
+          scales:{
+            y:{title:{display:true,text:'CTR (%)'}, suggestedMax: maxCtr},
+          }
+        }
+      });
+    }
+  } catch(e){}
+
+
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      // Pacing e performance display
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+      const totalImp = Number(CONS["Impressões"]||0);
+      const totalClicks = Number(CONS["Cliques"]||0);
+      const ctrTotal = totalImp>0 ? (totalClicks/totalImp)*100 : 0;
+      const metaImp = 150000;
+      const entregaPct = metaImp>0 ? (totalImp/metaImp)*100 : 0;
+
+      // Melhor CTR por dia
+      const dailyDisplay = DAILY.filter(r => ['hhs','ohs'].includes((r.channel||'').toLowerCase()));
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const bestCtr = Object.entries(grouped).reduce((acc,[date,val])=>{
+        const ctr = val.impressions>0 ? (val.clicks/val.impressions)*100 : 0;
+        return ctr > (acc.ctr||-1) ? {date, ctr} : acc;
+      }, {});
+
+      const items = [];
+      items.push(`⏱️ Pacing orçamentário: <b>${(pacing*100).toFixed(1)}%</b> do budget utilizado.`);
+      items.push(`📈 Entrega de impressões: <b>${fmtInt(totalImp)}</b> (${entregaPct.toFixed(1)}% de 150.000 contratadas).`);
+      items.push(`🎯 CTR médio: <b>${ctrTotal.toFixed(2)}%</b>.`);
+      if (bestCtr.date) items.push(`⭐ Melhor CTR diário: <b>${bestCtr.ctr.toFixed(2)}%</b> em ${bestCtr.date}.`);
+
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+});
+
+</script>
+<style>
+  :root{--bg:#0F1023;--bg2:#16213E;--panel:#1A1A2E;--muted:#9CA3AF;--stroke: rgba(139,92,246,.28);
+         --grad: linear-gradient(135deg,#8B5CF6,#EC4899);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#fff;
+       background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 50%,var(--panel) 100%)}
+  .container{max-width:1320px;margin:0 auto;padding:32px 32px 40px}
+  .card{background:rgba(26,26,46,.8);border:1px solid var(--stroke);border-radius:14px;padding:20px;margin-bottom:24px;backdrop-filter:blur(8px)}
+  .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:40px;height:40px;border-radius:10px;background:var(--grad);display:grid;place-items:center;font-weight:700}
+  .muted{color:var(--muted)}
+  .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:20px 0}
+  .tab{border:1px solid rgba(148,163,184,.2);background:rgba(255,255,255,.04);padding:10px;border-radius:10px;text-align:center;cursor:pointer;color:var(--muted);font-weight:600}
+  .tab.active{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+  .hidden{display:none}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)} .tabs{grid-template-columns:repeat(2,1fr)} }
+  .metric{border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px}
+  .metric .label{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-size:.82rem}
+  .metric .value{font-size:1.7rem;font-weight:800;line-height:1.15}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:900px){.kpis{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse}
+  thead th{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.8rem;text-align:left;border-bottom:1px solid rgba(148,163,184,.22);padding:1rem}
+  tbody td{padding:1rem;border-bottom:1px solid rgba(148,163,184,.14)}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(0,255,136,.2);border:1px solid rgba(0,255,136,.4);font-weight:600;color:#00ff88}
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes heatmap-pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        
+        .marker-cluster {
+            background-color: rgba(255, 107, 53, 0.8);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .marker-cluster-small {
+            width: 40px;
+            height: 40px;
+            line-height: 36px;
+            font-size: 14px;
+        }
+        
+        .marker-cluster-medium {
+            width: 50px;
+            height: 50px;
+            line-height: 46px;
+            font-size: 16px;
+        }
+        
+        .marker-cluster-large {
+            width: 60px;
+            height: 60px;
+            line-height: 56px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="card header">
+    <div class="logo">
+      <div class="logo-icon">SM</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">Sonho</div>
+        <div class="muted">Multicanal — Sonho Sabão em pó (protótipo layout v1)</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Campanha: Sonho Sabão em pó</div>
+      <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="overview">🎬 Visão Geral</div>
+    <div class="tab" data-tab="channels">🧭 Por Canal</div>
+    <div class="tab" data-tab="insights">📊 Análise & Insights</div>
+    <div class="tab" data-tab="planning">📋 Planejamento</div>
+    <div class="tab" data-tab="footfall">👣 Footfall (HHS / OHS)</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div class="metrics" id="metrics-overview-top"></div>
+    <div class="kpis">
+      <div class="card"><canvas id="chartSpendShare"></canvas></div>
+      <div class="card"><canvas id="chartResults"></canvas></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Resumo por Canal</h3>
+      <div class="muted" style="margin-bottom:10px">Valores contratados vs. realizados.</div>
+      <div style="overflow:auto">
+        <table id="tableChannels">
+          <thead>
+            <tr>
+              <th>Canal</th><th>Budget Contratado (R$)</th><th>Budget Utilizado (R$)</th><th>Pacing (%)</th>
+              <th>Impressões</th><th>Cliques</th><th>CTR</th><th>VC (100%)</th><th>VTR (100%)</th>
+              <th>CPV (R$)</th><th id="th-cpm" style="display:none;">CPM (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyChannels"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div id="tab-channels" class="hidden">
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="font-weight:800">Selecione o canal:</div>
+        <select id="channelSelect" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff"></select>
+      </div>
+    </div>
+    <div class="metrics" id="metrics-channel"></div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Entrega diária — <span id="channelNameSpan">—</span></h3>
+      <div style="overflow:auto">
+        <table id="channelDailyTable">
+          <thead>
+            <tr>
+              <th>Data</th><th>Criativo</th><th>Investimento (R$)</th>
+              <th>Impressões</th><th>Cliques</th>
+            </tr>
+          </thead>
+          <tbody id="channelDailyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="footfallExtras" class="hidden">
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:10px">Formatos usados no Footfall Display</h3>
+        <ul style="columns:2; gap:24px; margin-left:18px">
+          <li>360x300 (A)</li><li>300x250 (A)</li><li>300x50 (A)</li><li>320x480 (A)</li><li>336x336 (A)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="ctvPublishers" class="hidden">
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:10px">Publishers utilizados (CTV)</h3>
+        <ul style="columns:2; gap:24px; margin-left:18px">
+          <li>Pluto TV - Watch Free Movies, Shows & Live TV - FireTv (B00KDSGIPK)</li>
+          <li>Plex: Stream Movies & TV - Android Tv</li>
+          <li>Pluto TV Television Gratis Channels | Roku Channel Store | Roku - Roku</li>
+          <li>Pluto TV - LG Tv</li>
+          <li>LG Channels - LG Tv (474310)</li>
+          <li>Live TV - Android Tv</li>
+          <li>RecordPlus - Android Tv</li>
+          <li>Rainbow Dash - FireTv (B079X4ZZ4T)</li>
+          <li>Samsung TV - Android TV</li>
+          <li>Xiaomi TV+: Watch Live TV - Android Tv</li>
+          <li>TCL CHANNEL - Android Tv</li>
+          <li>Plex Free Movies and TV</li>
+          <li>MovieArk: Stream Movies & Live - Android Tv</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- INSIGHTS -->
+  <div id="tab-insights" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <h3 style="margin-bottom:8px">Pacing da Campanha</h3>
+      <div class="muted" style="margin-bottom:8px">Orçamento Utilizado vs Contratado (quanto já foi gasto).</div>
+      <canvas id="insPacing"></canvas>
+    </div>
+
+    <div class="card" id="insightsCards">
+      <h3 style="margin-bottom:8px">Resumo de Insights</h3>
+      <ul id="insightsList" style="margin-left:18px;line-height:1.75"></ul>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <h3 style="margin-bottom:10px">Otimizações Recomendadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li><strong>Footfall Display:</strong> Priorizar formatos com CTR mais alto (300x250 e 336x336).</li>
+        <li><strong>Footfall Display:</strong> Garantir entrega mínima diária para manter pacing de impressões.</li>
+        <li><strong>Footfall Display:</strong> Revisar publishers com CTR baixo e realocar para inventário mais responsivo.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PLANEJAMENTO -->
+
+    <div id="tab-planning" class="hidden">
+  <div class="card" style="margin-bottom:16px">
+    <h3 style="margin-bottom:10px">Planejamento da Campanha</h3>
+    <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
+      Cliente: Sonho · Campanha: Sonho Sabão em pó · Multicanal (HHS, OHS, CTV, Disney, Netflix, Spotify, Youtube)
+    </p>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+    <div class="card">
+      <h3 style="margin-bottom:10px">Cronograma & Investimento</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Período: <span id="plan-periodo"></span></li>
+        <li>Budget Total: R$ <span id="plan-budget-total"></span></li>
+        <li>Budget Utilizado: R$ <span id="plan-budget-used"></span></li>
+        <li>Pacing: <span id="plan-pacing"></span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:10px">Métricas Contratadas</h3>
+      <ul style="margin:0; padding-left:18px; line-height:1.6; color:rgba(148,163,184,0.9)">
+        <li>Meta Impressões: <span id="plan-imp-meta"></span></li>
+        <li>Imp Entregues: <span id="plan-imp-entregues"></span></li>
+        <li>Pacing Imp: <span id="plan-imp-pacing"></span></li>
+        <li>CPM Contratado: R$ <span id="plan-cpm"></span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-bottom:16px">
+    <div class="card" style="grid-column: span 1;">
+      <h3 style="margin-bottom:10px">Publishers</h3>
+      <div style="overflow:auto">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left; color:rgba(255,255,255,0.7);">
+              <th style="padding:8px 6px;">Nome</th>
+              <th style="padding:8px 6px;">App/URL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px 6px;">drivetostore</td>
+              <td style="padding:8px 6px;">drivetostore.com</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: span 1;">
+      <h3 style="margin-bottom:10px">Praças</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">
+        Campanha entregue nas cidades e estados selecionados na campanha.
+      </p>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px;">
+    <div class="card">
+      <h3 style="margin-bottom:10px">Segmentações</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">n/a</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Tipo de criativo</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">Banners</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Canal</h3>
+      <p style="margin:0; line-height:1.6; color:rgba(148,163,184,0.9)">Drive to store</p>
+    </div>
+  </div>
+</div>
+<!-- FOOTFALL -->
+  <div id="tab-footfall" class="hidden">
+    <!-- Hero Section -->
+    <section class="hero" style="text-align: center; margin-bottom: 2rem; padding: 2rem 0;">
+      <span style="color: #ff6b35; text-transform: uppercase; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: block;">Sonho · Sonho Sabão em pó</span>
+      <h1 style="font-size: 2.5rem; font-weight: bold; color: #ffffff; margin-bottom: 1rem; letter-spacing: 1px;">ANÁLISE DE FOOTFALL (HHS / OHS)</h1>
+      <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Pontos carregados das abas Footfall das planilhas HHS e OHS. Use os botões abaixo para alternar a fonte.</p>
+    </section>
+
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <button type="button" id="footfall-source-hhs" style="cursor:pointer;padding:10px 16px;border-radius:10px;border:1px solid #ff6b35;background:rgba(255,107,53,.25);color:#fff;font-weight:700;">Fonte: HHS</button>
+      <button type="button" id="footfall-source-ohs" style="cursor:pointer;padding:10px 16px;border-radius:10px;border:1px solid rgba(148,163,184,.25);background:rgba(255,255,255,.06);color:#fff;font-weight:700;">Fonte: OHS</button>
+    </div>
+
+    <!-- Metrics -->
+    <section class="metrics-grid" id="footfall-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+      <div class="loading" style="display: flex; justify-content: center; align-items: center; height: 200px; flex-direction: column; gap: 1rem;">
+        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #ff6b35; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+        <p>Carregando dados...</p>
+      </div>
+    </section>
+
+    <!-- Content Grid -->
+    <section class="content-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem;">
+      <!-- Map -->
+      <div class="card">
+        <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+          <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Distribuição Geográfica</h3>
+          <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Mapa interativo com localização das lojas e intensidade de footfall</p>
+        </div>
+        <div class="card-content" style="padding: 1.5rem;">
+          <div id="footfall-map" style="height: 400px; width: 100%; border-radius: 8px; filter: hue-rotate(15deg) saturate(1.2);"></div>
+          <div class="legend" style="display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; font-size: 0.8rem;">
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #ff6b35;"></div>
+              <span>Alta (≥10%)</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #8b5cf6;"></div>
+              <span>Média (5-10%)</span>
+            </div>
+            <div class="legend-item" style="display: flex; align-items: center; gap: 0.5rem;">
+              <div class="legend-color" style="width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px rgba(255, 107, 53, 0.3); background: #00ff88;"></div>
+              <span>Baixa (&lt;5%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card">
+        <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+          <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Performance por Loja</h3>
+          <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Distribuição de usuários footfall por taxa de conversão</p>
+        </div>
+        <div class="card-content" style="padding: 1.5rem;">
+          <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="footfall-performanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Stores -->
+    <section class="card top-stores">
+      <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(139, 92, 246, 0.1));">
+        <h3 class="card-title" style="font-size: 1.25rem; font-weight: bold; color: #ffffff; margin-bottom: 0.5rem;">Top 5 Lojas por Footfall</h3>
+        <p class="card-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Ranking das lojas com maior número de usuários detectados</p>
+      </div>
+      <div id="footfall-topStores">
+        <div class="loading" style="display: flex; justify-content: center; align-items: center; height: 200px; flex-direction: column; gap: 1rem;">
+          <div class="spinner" style="width: 40px; height: 40px; border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #ff6b35; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <p>Carregando ranking...</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// --- Dados gerados por build_modelo_multicanal_footfall_v1.py (planilhas reais Sonho multicanal) ---
+const CONS = {
+  "Budget Contratado (R$)": 17199.989999999998,
+  "Budget Utilizado (R$)": 8213.72,
+  "Impressões": 204702,
+  "Cliques": 682,
+  "CTR (%)": 0.003331672382292308,
+  "CPM (R$)": 0.0,
+  "Pacing (%)": 0.47754213810589424,
+  "VC (100%)": 116153,
+  "VTR (100%)": 0.0,
+  "CPV (R$)": 0.0
+};
+
+const PER = [
+  {
+    "Canal": "HHS",
+    "Budget Contratado (R$)": 0.0,
+    "Budget Utilizado (R$)": 18.180000000000003,
+    "Impressões": 1486,
+    "Cliques": 32,
+    "CTR (%)": 0.021534320323014805,
+    "VC (100%)": 0,
+    "VTR (100%)": 0.0,
+    "CPV (R$)": 0.0,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.0,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "OHS",
+    "Budget Contratado (R$)": 0.0,
+    "Budget Utilizado (R$)": 0.0,
+    "Impressões": 0,
+    "Cliques": 257,
+    "CTR (%)": 0.0,
+    "VC (100%)": 0,
+    "VTR (100%)": 0.0,
+    "CPV (R$)": 0.0,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.0,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "CTV",
+    "Budget Contratado (R$)": 1813.33,
+    "Budget Utilizado (R$)": 970.56,
+    "Impressões": 10785,
+    "Cliques": 0,
+    "CTR (%)": 0.0,
+    "VC (100%)": 8088,
+    "VTR (100%)": 0.7591514923972217,
+    "CPV (R$)": 0.12,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.535236278007864,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "Disney",
+    "Budget Contratado (R$)": 1813.33,
+    "Budget Utilizado (R$)": 863.72,
+    "Impressões": 4431,
+    "Cliques": 0,
+    "CTR (%)": 0.0,
+    "VC (100%)": 3322,
+    "VTR (100%)": 0.7584474885844749,
+    "CPV (R$)": 0.26,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.4763170520534045,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "Netflix",
+    "Budget Contratado (R$)": 1813.33,
+    "Budget Utilizado (R$)": 844.1700000000001,
+    "Impressões": 6897,
+    "Cliques": 0,
+    "CTR (%)": 0.0,
+    "VC (100%)": 4443,
+    "VTR (100%)": 0.884883489344752,
+    "CPV (R$)": 0.19000000000000003,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.4655357822348939,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "Spotify",
+    "Budget Contratado (R$)": 7000.0,
+    "Budget Utilizado (R$)": 3086.88,
+    "Impressões": 20936,
+    "Cliques": 23,
+    "CTR (%)": 0.0010985861673672144,
+    "VC (100%)": 19293,
+    "VTR (100%)": 0.0,
+    "CPV (R$)": 0.16,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.4409828571428572,
+    "Criativos Únicos": 0
+  },
+  {
+    "Canal": "Youtube",
+    "Budget Contratado (R$)": 4760.0,
+    "Budget Utilizado (R$)": 2430.21,
+    "Impressões": 160167,
+    "Cliques": 370,
+    "CTR (%)": 0.002310088844768273,
+    "VC (100%)": 81007,
+    "VTR (100%)": 0.0,
+    "CPV (R$)": 0.03,
+    "CPM (R$)": 0.0,
+    "Pacing (%)": 0.5105483193277311,
+    "Criativos Únicos": 0
+  }
+];
+
+const DAILY = [
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.04,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.07,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 6,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.13,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 11,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.27,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 22,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.1,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 8,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.11,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 9,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.16,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 13,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.27,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 22,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 1.03,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 84,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 1.08,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 88,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 1.48,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 121,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.04,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.05,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 4,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.09,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 7,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.12,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 10,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.4,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 33,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.56,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 46,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.11,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 9,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.15,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 12,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.28,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 23,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 1.09,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 89,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 1.79,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 146,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.02,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 2,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.27,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 22,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.33,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 27,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.04,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.11,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 9,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.18,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 15,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 1.2,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 98,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 4.36,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 356,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.01,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 1,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.18,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 15,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.29,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 24,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.04,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.04,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 3,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.06,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 5,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.27,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 22,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "HHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 1.26,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 103,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 9,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 17,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x100.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-180x150.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 11,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 9,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 33,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-336x280.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-250x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-320x480.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-468x60.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "OHS",
+    "creative": "RS125DC2-programatica-300x250.jpg",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "OHS",
+    "creative": "1901-09-09 00:00:00",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "OHS",
+    "creative": "1901-12-11 00:00:00",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "OHS",
+    "creative": "1902-01-13 00:00:00",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "OHS",
+    "creative": "1950-09-30 00:00:00",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "OHS",
+    "creative": "1965-10-16 00:00:00",
+    "spend": 0.0,
+    "starts": 0,
+    "q25": 0,
+    "q50": 0,
+    "q75": 0,
+    "q100": 0,
+    "impressions": 0,
+    "clicks": 13,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 17.04,
+    "starts": 238,
+    "q25": 203,
+    "q50": 184,
+    "q75": 169,
+    "q100": 142,
+    "impressions": 239,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 13.2,
+    "starts": 285,
+    "q25": 163,
+    "q50": 147,
+    "q75": 128,
+    "q100": 110,
+    "impressions": 287,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 14.52,
+    "starts": 206,
+    "q25": 181,
+    "q50": 166,
+    "q75": 144,
+    "q100": 121,
+    "impressions": 208,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 13.08,
+    "starts": 180,
+    "q25": 161,
+    "q50": 143,
+    "q75": 124,
+    "q100": 109,
+    "impressions": 183,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 12.48,
+    "starts": 176,
+    "q25": 159,
+    "q50": 134,
+    "q75": 119,
+    "q100": 104,
+    "impressions": 178,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 13.56,
+    "starts": 170,
+    "q25": 159,
+    "q50": 133,
+    "q75": 128,
+    "q100": 113,
+    "impressions": 171,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 14.88,
+    "starts": 211,
+    "q25": 187,
+    "q50": 162,
+    "q75": 149,
+    "q100": 124,
+    "impressions": 213,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 18.84,
+    "starts": 212,
+    "q25": 201,
+    "q50": 193,
+    "q75": 173,
+    "q100": 157,
+    "impressions": 213,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 14.88,
+    "starts": 222,
+    "q25": 211,
+    "q50": 188,
+    "q75": 162,
+    "q100": 124,
+    "impressions": 227,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 14.4,
+    "starts": 187,
+    "q25": 175,
+    "q50": 168,
+    "q75": 145,
+    "q100": 120,
+    "impressions": 189,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 13.92,
+    "starts": 186,
+    "q25": 149,
+    "q50": 135,
+    "q75": 123,
+    "q100": 116,
+    "impressions": 194,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.72,
+    "starts": 166,
+    "q25": 132,
+    "q50": 120,
+    "q75": 117,
+    "q100": 106,
+    "impressions": 176,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 14.16,
+    "starts": 188,
+    "q25": 151,
+    "q50": 136,
+    "q75": 124,
+    "q100": 118,
+    "impressions": 197,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 16.08,
+    "starts": 187,
+    "q25": 179,
+    "q50": 167,
+    "q75": 141,
+    "q100": 134,
+    "impressions": 189,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 19.68,
+    "starts": 215,
+    "q25": 201,
+    "q50": 192,
+    "q75": 180,
+    "q100": 164,
+    "impressions": 217,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 15.0,
+    "starts": 190,
+    "q25": 171,
+    "q50": 157,
+    "q75": 139,
+    "q100": 125,
+    "impressions": 198,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 20.04,
+    "starts": 253,
+    "q25": 231,
+    "q50": 208,
+    "q75": 197,
+    "q100": 167,
+    "impressions": 256,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.12,
+    "starts": 170,
+    "q25": 158,
+    "q50": 134,
+    "q75": 119,
+    "q100": 101,
+    "impressions": 174,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 16.92,
+    "starts": 229,
+    "q25": 199,
+    "q50": 181,
+    "q75": 164,
+    "q100": 141,
+    "impressions": 231,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 13.68,
+    "starts": 186,
+    "q25": 168,
+    "q50": 151,
+    "q75": 132,
+    "q100": 114,
+    "impressions": 187,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 15.96,
+    "starts": 213,
+    "q25": 192,
+    "q50": 174,
+    "q75": 156,
+    "q100": 133,
+    "impressions": 214,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.96,
+    "starts": 175,
+    "q25": 159,
+    "q50": 143,
+    "q75": 124,
+    "q100": 108,
+    "impressions": 176,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 26.28,
+    "starts": 237,
+    "q25": 234,
+    "q50": 228,
+    "q75": 223,
+    "q100": 219,
+    "impressions": 238,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 22.44,
+    "starts": 203,
+    "q25": 197,
+    "q50": 194,
+    "q75": 193,
+    "q100": 187,
+    "impressions": 206,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 23.52,
+    "starts": 265,
+    "q25": 239,
+    "q50": 218,
+    "q75": 201,
+    "q100": 196,
+    "impressions": 266,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.24,
+    "starts": 178,
+    "q25": 155,
+    "q50": 129,
+    "q75": 115,
+    "q100": 102,
+    "impressions": 179,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 24.36,
+    "starts": 281,
+    "q25": 264,
+    "q50": 247,
+    "q75": 218,
+    "q100": 203,
+    "impressions": 285,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 30.6,
+    "starts": 312,
+    "q25": 300,
+    "q50": 288,
+    "q75": 274,
+    "q100": 255,
+    "impressions": 316,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 23.64,
+    "starts": 270,
+    "q25": 258,
+    "q50": 236,
+    "q75": 209,
+    "q100": 197,
+    "impressions": 271,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 17.4,
+    "starts": 200,
+    "q25": 198,
+    "q50": 184,
+    "q75": 165,
+    "q100": 145,
+    "impressions": 203,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 11.16,
+    "starts": 100,
+    "q25": 99,
+    "q50": 96,
+    "q75": 95,
+    "q100": 93,
+    "impressions": 101,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 11.88,
+    "starts": 106,
+    "q25": 105,
+    "q50": 103,
+    "q75": 101,
+    "q100": 99,
+    "impressions": 107,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 13.32,
+    "starts": 118,
+    "q25": 117,
+    "q50": 115,
+    "q75": 114,
+    "q100": 111,
+    "impressions": 119,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.36,
+    "starts": 113,
+    "q25": 111,
+    "q50": 107,
+    "q75": 106,
+    "q100": 103,
+    "impressions": 114,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 21.0,
+    "starts": 187,
+    "q25": 180,
+    "q50": 178,
+    "q75": 176,
+    "q100": 175,
+    "impressions": 188,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 10.2,
+    "starts": 96,
+    "q25": 92,
+    "q50": 90,
+    "q75": 88,
+    "q100": 85,
+    "impressions": 97,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 12.72,
+    "starts": 121,
+    "q25": 117,
+    "q50": 111,
+    "q75": 108,
+    "q100": 106,
+    "impressions": 122,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 9.96,
+    "starts": 90,
+    "q25": 88,
+    "q50": 87,
+    "q75": 85,
+    "q100": 83,
+    "impressions": 91,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 15.12,
+    "starts": 140,
+    "q25": 138,
+    "q50": 135,
+    "q75": 131,
+    "q100": 126,
+    "impressions": 141,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 6.6,
+    "starts": 67,
+    "q25": 65,
+    "q50": 63,
+    "q75": 60,
+    "q100": 55,
+    "impressions": 68,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 14.28,
+    "starts": 135,
+    "q25": 131,
+    "q50": 128,
+    "q75": 124,
+    "q100": 119,
+    "impressions": 137,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 10.56,
+    "starts": 103,
+    "q25": 97,
+    "q50": 95,
+    "q75": 92,
+    "q100": 88,
+    "impressions": 104,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 15.36,
+    "starts": 143,
+    "q25": 139,
+    "q50": 136,
+    "q75": 132,
+    "q100": 128,
+    "impressions": 145,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 9.36,
+    "starts": 90,
+    "q25": 86,
+    "q50": 84,
+    "q75": 81,
+    "q100": 78,
+    "impressions": 92,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 12.12,
+    "starts": 117,
+    "q25": 112,
+    "q50": 108,
+    "q75": 105,
+    "q100": 101,
+    "impressions": 118,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 12.84,
+    "starts": 124,
+    "q25": 119,
+    "q50": 116,
+    "q75": 112,
+    "q100": 107,
+    "impressions": 126,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 11.04,
+    "starts": 107,
+    "q25": 102,
+    "q50": 99,
+    "q75": 95,
+    "q100": 92,
+    "impressions": 109,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 8.28,
+    "starts": 82,
+    "q25": 78,
+    "q50": 75,
+    "q75": 73,
+    "q100": 69,
+    "impressions": 83,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 24.96,
+    "starts": 232,
+    "q25": 227,
+    "q50": 221,
+    "q75": 213,
+    "q100": 208,
+    "impressions": 233,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 21.72,
+    "starts": 200,
+    "q25": 194,
+    "q50": 187,
+    "q75": 185,
+    "q100": 181,
+    "impressions": 201,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 46.56,
+    "starts": 420,
+    "q25": 418,
+    "q50": 403,
+    "q75": 394,
+    "q100": 388,
+    "impressions": 422,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 25.8,
+    "starts": 233,
+    "q25": 230,
+    "q50": 221,
+    "q75": 217,
+    "q100": 215,
+    "impressions": 234,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 44.52,
+    "starts": 409,
+    "q25": 397,
+    "q50": 392,
+    "q75": 387,
+    "q100": 371,
+    "impressions": 412,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 39.36,
+    "starts": 363,
+    "q25": 352,
+    "q50": 347,
+    "q75": 342,
+    "q100": 328,
+    "impressions": 365,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 8.88,
+    "starts": 81,
+    "q25": 80,
+    "q50": 78,
+    "q75": 76,
+    "q100": 74,
+    "impressions": 82,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 6.96,
+    "starts": 66,
+    "q25": 65,
+    "q50": 63,
+    "q75": 61,
+    "q100": 58,
+    "impressions": 67,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 6.0,
+    "starts": 57,
+    "q25": 56,
+    "q50": 54,
+    "q75": 52,
+    "q100": 50,
+    "impressions": 59,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 7.56,
+    "starts": 71,
+    "q25": 70,
+    "q50": 68,
+    "q75": 66,
+    "q100": 63,
+    "impressions": 73,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "CTV",
+    "creative": "Sonhos 30s",
+    "spend": 5.52,
+    "starts": 53,
+    "q25": 52,
+    "q50": 50,
+    "q75": 48,
+    "q100": 46,
+    "impressions": 54,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "CTV",
+    "creative": "Sonho 15s",
+    "spend": 3.96,
+    "starts": 39,
+    "q25": 38,
+    "q50": 36,
+    "q75": 34,
+    "q100": 33,
+    "impressions": 40,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 24.44,
+    "starts": 150,
+    "q25": 123,
+    "q50": 111,
+    "q75": 104,
+    "q100": 94,
+    "impressions": 153,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 25.74,
+    "starts": 171,
+    "q25": 144,
+    "q50": 127,
+    "q75": 108,
+    "q100": 99,
+    "impressions": 173,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 26.26,
+    "starts": 203,
+    "q25": 171,
+    "q50": 127,
+    "q75": 115,
+    "q100": 101,
+    "impressions": 205,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 34.32,
+    "starts": 205,
+    "q25": 193,
+    "q50": 178,
+    "q75": 157,
+    "q100": 132,
+    "impressions": 206,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 27.56,
+    "starts": 169,
+    "q25": 138,
+    "q50": 125,
+    "q75": 113,
+    "q100": 106,
+    "impressions": 171,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 28.08,
+    "starts": 164,
+    "q25": 143,
+    "q50": 131,
+    "q75": 118,
+    "q100": 108,
+    "impressions": 166,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 25.22,
+    "starts": 172,
+    "q25": 151,
+    "q50": 129,
+    "q75": 107,
+    "q100": 97,
+    "impressions": 174,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 26.0,
+    "starts": 173,
+    "q25": 132,
+    "q50": 124,
+    "q75": 118,
+    "q100": 100,
+    "impressions": 175,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 31.2,
+    "starts": 182,
+    "q25": 163,
+    "q50": 152,
+    "q75": 137,
+    "q100": 120,
+    "impressions": 184,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 28.08,
+    "starts": 177,
+    "q25": 152,
+    "q50": 137,
+    "q75": 122,
+    "q100": 108,
+    "impressions": 179,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 26.26,
+    "starts": 163,
+    "q25": 141,
+    "q50": 126,
+    "q75": 113,
+    "q100": 101,
+    "impressions": 164,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 43.16,
+    "starts": 187,
+    "q25": 182,
+    "q50": 177,
+    "q75": 173,
+    "q100": 166,
+    "impressions": 188,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 25.22,
+    "starts": 104,
+    "q25": 103,
+    "q50": 100,
+    "q75": 99,
+    "q100": 97,
+    "impressions": 109,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 23.66,
+    "starts": 113,
+    "q25": 110,
+    "q50": 105,
+    "q75": 101,
+    "q100": 91,
+    "impressions": 114,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 23.4,
+    "starts": 108,
+    "q25": 107,
+    "q50": 102,
+    "q75": 98,
+    "q100": 90,
+    "impressions": 110,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 22.88,
+    "starts": 96,
+    "q25": 94,
+    "q50": 93,
+    "q75": 91,
+    "q100": 88,
+    "impressions": 97,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 26.26,
+    "starts": 107,
+    "q25": 106,
+    "q50": 105,
+    "q75": 103,
+    "q100": 101,
+    "impressions": 108,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 20.02,
+    "starts": 95,
+    "q25": 93,
+    "q50": 85,
+    "q75": 82,
+    "q100": 77,
+    "impressions": 96,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 23.14,
+    "starts": 100,
+    "q25": 97,
+    "q50": 92,
+    "q75": 91,
+    "q100": 89,
+    "impressions": 101,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 26.52,
+    "starts": 121,
+    "q25": 119,
+    "q50": 114,
+    "q75": 109,
+    "q100": 102,
+    "impressions": 122,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 29.9,
+    "starts": 127,
+    "q25": 124,
+    "q50": 121,
+    "q75": 118,
+    "q100": 115,
+    "impressions": 129,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 21.84,
+    "starts": 96,
+    "q25": 92,
+    "q50": 90,
+    "q75": 87,
+    "q100": 84,
+    "impressions": 97,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 32.24,
+    "starts": 137,
+    "q25": 133,
+    "q50": 130,
+    "q75": 127,
+    "q100": 124,
+    "impressions": 139,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 25.48,
+    "starts": 110,
+    "q25": 107,
+    "q50": 104,
+    "q75": 101,
+    "q100": 98,
+    "impressions": 112,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 22.62,
+    "starts": 103,
+    "q25": 101,
+    "q50": 99,
+    "q75": 93,
+    "q100": 87,
+    "impressions": 104,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 18.72,
+    "starts": 98,
+    "q25": 94,
+    "q50": 84,
+    "q75": 79,
+    "q100": 72,
+    "impressions": 99,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 102.7,
+    "starts": 435,
+    "q25": 421,
+    "q50": 416,
+    "q75": 410,
+    "q100": 395,
+    "impressions": 438,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 23.92,
+    "starts": 102,
+    "q25": 101,
+    "q50": 99,
+    "q75": 96,
+    "q100": 92,
+    "impressions": 104,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 21.58,
+    "starts": 95,
+    "q25": 93,
+    "q50": 90,
+    "q75": 88,
+    "q100": 83,
+    "impressions": 96,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "Disney",
+    "creative": "Sonho 15s",
+    "spend": 27.3,
+    "starts": 117,
+    "q25": 114,
+    "q50": 111,
+    "q75": 108,
+    "q100": 105,
+    "impressions": 118,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 32.87,
+    "starts": 193,
+    "q25": 187,
+    "q50": 183,
+    "q75": 177,
+    "q100": 173,
+    "impressions": 385,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 38.0,
+    "starts": 222,
+    "q25": 216,
+    "q50": 211,
+    "q75": 205,
+    "q100": 200,
+    "impressions": 445,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 25.27,
+    "starts": 148,
+    "q25": 144,
+    "q50": 141,
+    "q75": 136,
+    "q100": 133,
+    "impressions": 296,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 35.53,
+    "starts": 208,
+    "q25": 201,
+    "q50": 197,
+    "q75": 191,
+    "q100": 187,
+    "impressions": 415,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 20.33,
+    "starts": 119,
+    "q25": 115,
+    "q50": 113,
+    "q75": 109,
+    "q100": 107,
+    "impressions": 237,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 30.4,
+    "starts": 178,
+    "q25": 173,
+    "q50": 169,
+    "q75": 164,
+    "q100": 160,
+    "impressions": 356,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 20.33,
+    "starts": 118,
+    "q25": 115,
+    "q50": 112,
+    "q75": 109,
+    "q100": 107,
+    "impressions": 237,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 27.93,
+    "starts": 163,
+    "q25": 158,
+    "q50": 155,
+    "q75": 150,
+    "q100": 147,
+    "impressions": 326,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 22.8,
+    "starts": 133,
+    "q25": 129,
+    "q50": 127,
+    "q75": 123,
+    "q100": 120,
+    "impressions": 267,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 29.45,
+    "starts": 176,
+    "q25": 169,
+    "q50": 165,
+    "q75": 159,
+    "q100": 155,
+    "impressions": 348,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 33.63,
+    "starts": 198,
+    "q25": 191,
+    "q50": 187,
+    "q75": 181,
+    "q100": 177,
+    "impressions": 392,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 44.84,
+    "starts": 253,
+    "q25": 245,
+    "q50": 241,
+    "q75": 238,
+    "q100": 236,
+    "impressions": 254,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 23.37,
+    "starts": 175,
+    "q25": 151,
+    "q50": 144,
+    "q75": 132,
+    "q100": 123,
+    "impressions": 176,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 20.52,
+    "starts": 120,
+    "q25": 119,
+    "q50": 116,
+    "q75": 110,
+    "q100": 108,
+    "impressions": 123,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 19.76,
+    "starts": 138,
+    "q25": 123,
+    "q50": 117,
+    "q75": 115,
+    "q100": 104,
+    "impressions": 139,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 25.65,
+    "starts": 140,
+    "q25": 139,
+    "q50": 138,
+    "q75": 136,
+    "q100": 135,
+    "impressions": 141,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 23.56,
+    "starts": 131,
+    "q25": 130,
+    "q50": 127,
+    "q75": 125,
+    "q100": 124,
+    "impressions": 133,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 21.85,
+    "starts": 126,
+    "q25": 125,
+    "q50": 121,
+    "q75": 119,
+    "q100": 115,
+    "impressions": 127,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 19.19,
+    "starts": 112,
+    "q25": 110,
+    "q50": 107,
+    "q75": 104,
+    "q100": 101,
+    "impressions": 113,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 15.58,
+    "starts": 101,
+    "q25": 95,
+    "q50": 89,
+    "q75": 87,
+    "q100": 82,
+    "impressions": 102,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 22.61,
+    "starts": 132,
+    "q25": 129,
+    "q50": 126,
+    "q75": 123,
+    "q100": 119,
+    "impressions": 134,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 16.72,
+    "starts": 99,
+    "q25": 96,
+    "q50": 94,
+    "q75": 91,
+    "q100": 88,
+    "impressions": 101,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 23.56,
+    "starts": 137,
+    "q25": 133,
+    "q50": 130,
+    "q75": 127,
+    "q100": 124,
+    "impressions": 139,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 19.19,
+    "starts": 115,
+    "q25": 112,
+    "q50": 109,
+    "q75": 105,
+    "q100": 101,
+    "impressions": 117,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 21.28,
+    "starts": 132,
+    "q25": 130,
+    "q50": 122,
+    "q75": 119,
+    "q100": 112,
+    "impressions": 133,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 45.6,
+    "starts": 266,
+    "q25": 252,
+    "q50": 250,
+    "q75": 247,
+    "q100": 240,
+    "impressions": 267,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 52.25,
+    "starts": 354,
+    "q25": 313,
+    "q50": 289,
+    "q75": 283,
+    "q100": 275,
+    "impressions": 355,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 37.62,
+    "starts": 212,
+    "q25": 210,
+    "q50": 207,
+    "q75": 203,
+    "q100": 198,
+    "impressions": 214,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 32.49,
+    "starts": 186,
+    "q25": 183,
+    "q50": 180,
+    "q75": 176,
+    "q100": 171,
+    "impressions": 187,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "Netflix",
+    "creative": "Sonho 30s",
+    "spend": 41.99,
+    "starts": 236,
+    "q25": 233,
+    "q50": 229,
+    "q75": 224,
+    "q100": 221,
+    "impressions": 238,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 146.24,
+    "starts": 0,
+    "q25": 918,
+    "q50": 917,
+    "q75": 916,
+    "q100": 914,
+    "impressions": 926,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 158.4,
+    "starts": 0,
+    "q25": 997,
+    "q50": 995,
+    "q75": 992,
+    "q100": 990,
+    "impressions": 1007,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 144.64,
+    "starts": 0,
+    "q25": 914,
+    "q50": 910,
+    "q75": 908,
+    "q100": 904,
+    "impressions": 944,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 146.24,
+    "starts": 0,
+    "q25": 928,
+    "q50": 924,
+    "q75": 919,
+    "q100": 914,
+    "impressions": 956,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 155.68,
+    "starts": 0,
+    "q25": 984,
+    "q50": 980,
+    "q75": 976,
+    "q100": 973,
+    "impressions": 991,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 152.16,
+    "starts": 0,
+    "q25": 962,
+    "q50": 956,
+    "q75": 954,
+    "q100": 951,
+    "impressions": 977,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 145.92,
+    "starts": 0,
+    "q25": 926,
+    "q50": 916,
+    "q75": 915,
+    "q100": 912,
+    "impressions": 933,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 173.12,
+    "starts": 0,
+    "q25": 1095,
+    "q50": 1085,
+    "q75": 1084,
+    "q100": 1082,
+    "impressions": 1097,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 180.8,
+    "starts": 0,
+    "q25": 1138,
+    "q50": 1132,
+    "q75": 1131,
+    "q100": 1130,
+    "impressions": 1176,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 144.64,
+    "starts": 0,
+    "q25": 964,
+    "q50": 948,
+    "q75": 931,
+    "q100": 904,
+    "impressions": 1008,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 159.68,
+    "starts": 0,
+    "q25": 1073,
+    "q50": 1051,
+    "q75": 1029,
+    "q100": 998,
+    "impressions": 1124,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 62.72,
+    "starts": 0,
+    "q25": 412,
+    "q50": 406,
+    "q75": 399,
+    "q100": 392,
+    "impressions": 428,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 347.52,
+    "starts": 0,
+    "q25": 2189,
+    "q50": 2185,
+    "q75": 2181,
+    "q100": 2172,
+    "impressions": 2315,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 89.92,
+    "starts": 0,
+    "q25": 567,
+    "q50": 566,
+    "q75": 563,
+    "q100": 562,
+    "impressions": 1159,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 117.44,
+    "starts": 0,
+    "q25": 753,
+    "q50": 748,
+    "q75": 741,
+    "q100": 734,
+    "impressions": 760,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 97.76,
+    "starts": 0,
+    "q25": 627,
+    "q50": 622,
+    "q75": 617,
+    "q100": 611,
+    "impressions": 644,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 101.76,
+    "starts": 0,
+    "q25": 649,
+    "q50": 646,
+    "q75": 642,
+    "q100": 636,
+    "impressions": 654,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 87.68,
+    "starts": 0,
+    "q25": 574,
+    "q50": 569,
+    "q75": 560,
+    "q100": 548,
+    "impressions": 589,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 55.2,
+    "starts": 0,
+    "q25": 359,
+    "q50": 352,
+    "q75": 351,
+    "q100": 345,
+    "impressions": 446,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 68.8,
+    "starts": 0,
+    "q25": 447,
+    "q50": 434,
+    "q75": 433,
+    "q100": 430,
+    "impressions": 550,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 87.68,
+    "starts": 0,
+    "q25": 561,
+    "q50": 556,
+    "q75": 552,
+    "q100": 548,
+    "impressions": 572,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 72.8,
+    "starts": 0,
+    "q25": 466,
+    "q50": 461,
+    "q75": 457,
+    "q100": 455,
+    "impressions": 471,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 80.32,
+    "starts": 0,
+    "q25": 508,
+    "q50": 506,
+    "q75": 503,
+    "q100": 502,
+    "impressions": 512,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "Spotify",
+    "creative": "Sonho lançado",
+    "spend": 109.76,
+    "starts": 0,
+    "q25": 693,
+    "q50": 689,
+    "q75": 688,
+    "q100": 686,
+    "impressions": 697,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.34,
+    "starts": 0,
+    "q25": 1456,
+    "q50": 986,
+    "q75": 612,
+    "q100": 278,
+    "impressions": 1924,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.86,
+    "starts": 0,
+    "q25": 1341,
+    "q50": 913,
+    "q75": 584,
+    "q100": 262,
+    "impressions": 1783,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.82,
+    "starts": 0,
+    "q25": 1512,
+    "q50": 1034,
+    "q75": 681,
+    "q100": 294,
+    "impressions": 2016,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "01/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.28,
+    "starts": 0,
+    "q25": 1397,
+    "q50": 952,
+    "q75": 634,
+    "q100": 276,
+    "impressions": 1857,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.67,
+    "starts": 0,
+    "q25": 1479,
+    "q50": 1006,
+    "q75": 658,
+    "q100": 289,
+    "impressions": 1963,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.13,
+    "starts": 0,
+    "q25": 1378,
+    "q50": 938,
+    "q75": 601,
+    "q100": 271,
+    "impressions": 1824,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 9.03,
+    "starts": 0,
+    "q25": 1572,
+    "q50": 1078,
+    "q75": 719,
+    "q100": 301,
+    "impressions": 2094,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "02/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.52,
+    "starts": 0,
+    "q25": 1436,
+    "q50": 981,
+    "q75": 639,
+    "q100": 284,
+    "impressions": 1911,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.25,
+    "starts": 0,
+    "q25": 1411,
+    "q50": 958,
+    "q75": 623,
+    "q100": 275,
+    "impressions": 1876,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.59,
+    "starts": 0,
+    "q25": 1306,
+    "q50": 889,
+    "q75": 567,
+    "q100": 253,
+    "impressions": 1734,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.91,
+    "starts": 0,
+    "q25": 1531,
+    "q50": 1049,
+    "q75": 698,
+    "q100": 297,
+    "impressions": 2037,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "03/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.46,
+    "starts": 0,
+    "q25": 1421,
+    "q50": 971,
+    "q75": 631,
+    "q100": 282,
+    "impressions": 1892,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.73,
+    "starts": 0,
+    "q25": 1465,
+    "q50": 1001,
+    "q75": 655,
+    "q100": 291,
+    "impressions": 1947,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.04,
+    "starts": 0,
+    "q25": 1357,
+    "q50": 924,
+    "q75": 593,
+    "q100": 268,
+    "impressions": 1803,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 9.12,
+    "starts": 0,
+    "q25": 1553,
+    "q50": 1067,
+    "q75": 712,
+    "q100": 304,
+    "impressions": 2068,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "04/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.64,
+    "starts": 0,
+    "q25": 1448,
+    "q50": 990,
+    "q75": 648,
+    "q100": 288,
+    "impressions": 1926,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.22,
+    "starts": 0,
+    "q25": 1407,
+    "q50": 957,
+    "q75": 621,
+    "q100": 274,
+    "impressions": 1869,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.74,
+    "starts": 0,
+    "q25": 1323,
+    "q50": 902,
+    "q75": 576,
+    "q100": 258,
+    "impressions": 1756,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.88,
+    "starts": 0,
+    "q25": 1526,
+    "q50": 1045,
+    "q75": 694,
+    "q100": 296,
+    "impressions": 2029,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "05/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.43,
+    "starts": 0,
+    "q25": 1431,
+    "q50": 976,
+    "q75": 636,
+    "q100": 281,
+    "impressions": 1904,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.61,
+    "starts": 0,
+    "q25": 1461,
+    "q50": 998,
+    "q75": 651,
+    "q100": 287,
+    "impressions": 1938,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.13,
+    "starts": 0,
+    "q25": 1369,
+    "q50": 934,
+    "q75": 602,
+    "q100": 271,
+    "impressions": 1817,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 9.06,
+    "starts": 0,
+    "q25": 1565,
+    "q50": 1073,
+    "q75": 715,
+    "q100": 302,
+    "impressions": 2084,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "06/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.43,
+    "starts": 0,
+    "q25": 1427,
+    "q50": 974,
+    "q75": 638,
+    "q100": 281,
+    "impressions": 1896,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.73,
+    "starts": 0,
+    "q25": 1474,
+    "q50": 1007,
+    "q75": 659,
+    "q100": 291,
+    "impressions": 1954,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.19,
+    "starts": 0,
+    "q25": 1379,
+    "q50": 941,
+    "q75": 606,
+    "q100": 273,
+    "impressions": 1831,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 9.18,
+    "starts": 0,
+    "q25": 1581,
+    "q50": 1084,
+    "q75": 723,
+    "q100": 306,
+    "impressions": 2106,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "07/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.58,
+    "starts": 0,
+    "q25": 1442,
+    "q50": 984,
+    "q75": 644,
+    "q100": 286,
+    "impressions": 1919,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 8.22,
+    "starts": 0,
+    "q25": 1409,
+    "q50": 956,
+    "q75": 620,
+    "q100": 274,
+    "impressions": 1873,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.77,
+    "starts": 0,
+    "q25": 1326,
+    "q50": 905,
+    "q75": 579,
+    "q100": 259,
+    "impressions": 1759,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.91,
+    "starts": 0,
+    "q25": 1529,
+    "q50": 1046,
+    "q75": 696,
+    "q100": 297,
+    "impressions": 2035,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "08/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.46,
+    "starts": 0,
+    "q25": 1434,
+    "q50": 978,
+    "q75": 637,
+    "q100": 282,
+    "impressions": 1908,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 7.86,
+    "starts": 0,
+    "q25": 1342,
+    "q50": 911,
+    "q75": 594,
+    "q100": 262,
+    "impressions": 1769,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 9.42,
+    "starts": 0,
+    "q25": 1621,
+    "q50": 1101,
+    "q75": 742,
+    "q100": 314,
+    "impressions": 2106,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.76,
+    "starts": 0,
+    "q25": 1483,
+    "q50": 1009,
+    "q75": 670,
+    "q100": 292,
+    "impressions": 1931,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "09/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.31,
+    "starts": 0,
+    "q25": 1411,
+    "q50": 960,
+    "q75": 626,
+    "q100": 277,
+    "impressions": 1847,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 9.24,
+    "starts": 0,
+    "q25": 1592,
+    "q50": 1083,
+    "q75": 724,
+    "q100": 308,
+    "impressions": 2063,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.62,
+    "starts": 0,
+    "q25": 1306,
+    "q50": 889,
+    "q75": 579,
+    "q100": 254,
+    "impressions": 1721,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.94,
+    "starts": 0,
+    "q25": 1501,
+    "q50": 1023,
+    "q75": 682,
+    "q100": 298,
+    "impressions": 1954,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "10/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.49,
+    "starts": 0,
+    "q25": 1436,
+    "q50": 977,
+    "q75": 638,
+    "q100": 283,
+    "impressions": 1878,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 9.06,
+    "starts": 0,
+    "q25": 1534,
+    "q50": 1042,
+    "q75": 696,
+    "q100": 302,
+    "impressions": 1997,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 7.83,
+    "starts": 0,
+    "q25": 1339,
+    "q50": 912,
+    "q75": 594,
+    "q100": 261,
+    "impressions": 1758,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 8.67,
+    "starts": 0,
+    "q25": 1465,
+    "q50": 996,
+    "q75": 662,
+    "q100": 289,
+    "impressions": 1909,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "11/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 8.28,
+    "starts": 0,
+    "q25": 1403,
+    "q50": 954,
+    "q75": 621,
+    "q100": 276,
+    "impressions": 1834,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 15.33,
+    "starts": 0,
+    "q25": 540,
+    "q50": 525,
+    "q75": 516,
+    "q100": 511,
+    "impressions": 560,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 0.57,
+    "starts": 0,
+    "q25": 25,
+    "q50": 23,
+    "q75": 21,
+    "q100": 19,
+    "impressions": 28,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "12/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.66,
+    "starts": 0,
+    "q25": 29,
+    "q50": 26,
+    "q75": 25,
+    "q100": 22,
+    "impressions": 31,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 19.29,
+    "starts": 0,
+    "q25": 702,
+    "q50": 661,
+    "q75": 648,
+    "q100": 643,
+    "impressions": 808,
+    "clicks": 8,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 11.58,
+    "starts": 0,
+    "q25": 395,
+    "q50": 390,
+    "q75": 388,
+    "q100": 386,
+    "impressions": 412,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "13/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 6.87,
+    "starts": 0,
+    "q25": 250,
+    "q50": 239,
+    "q75": 232,
+    "q100": 229,
+    "impressions": 259,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 19.26,
+    "starts": 0,
+    "q25": 705,
+    "q50": 692,
+    "q75": 658,
+    "q100": 642,
+    "impressions": 721,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 11.1,
+    "starts": 0,
+    "q25": 390,
+    "q50": 382,
+    "q75": 373,
+    "q100": 370,
+    "impressions": 421,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "14/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.2,
+    "starts": 0,
+    "q25": 46,
+    "q50": 44,
+    "q75": 43,
+    "q100": 40,
+    "impressions": 49,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 32.1,
+    "starts": 0,
+    "q25": 1121,
+    "q50": 1096,
+    "q75": 1081,
+    "q100": 1070,
+    "impressions": 1159,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.04,
+    "starts": 0,
+    "q25": 286,
+    "q50": 277,
+    "q75": 269,
+    "q100": 268,
+    "impressions": 302,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "15/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 5.43,
+    "starts": 0,
+    "q25": 209,
+    "q50": 198,
+    "q75": 187,
+    "q100": 181,
+    "impressions": 213,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 30.03,
+    "starts": 0,
+    "q25": 1047,
+    "q50": 1025,
+    "q75": 1013,
+    "q100": 1001,
+    "impressions": 1104,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 4.29,
+    "starts": 0,
+    "q25": 150,
+    "q50": 148,
+    "q75": 144,
+    "q100": 143,
+    "impressions": 168,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "16/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 4.05,
+    "starts": 0,
+    "q25": 141,
+    "q50": 137,
+    "q75": 136,
+    "q100": 135,
+    "impressions": 153,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 25.98,
+    "starts": 0,
+    "q25": 897,
+    "q50": 885,
+    "q75": 872,
+    "q100": 866,
+    "impressions": 949,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 41.58,
+    "starts": 0,
+    "q25": 1513,
+    "q50": 1431,
+    "q75": 1411,
+    "q100": 1386,
+    "impressions": 1603,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "17/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.42,
+    "starts": 0,
+    "q25": 22,
+    "q50": 19,
+    "q75": 17,
+    "q100": 14,
+    "impressions": 27,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 28.83,
+    "starts": 0,
+    "q25": 1055,
+    "q50": 993,
+    "q75": 967,
+    "q100": 961,
+    "impressions": 1101,
+    "clicks": 11,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 24.78,
+    "starts": 0,
+    "q25": 923,
+    "q50": 863,
+    "q75": 836,
+    "q100": 826,
+    "impressions": 984,
+    "clicks": 14,
+    "visits": 0
+  },
+  {
+    "date": "18/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.74,
+    "starts": 0,
+    "q25": 68,
+    "q50": 63,
+    "q75": 60,
+    "q100": 58,
+    "impressions": 72,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 26.46,
+    "starts": 0,
+    "q25": 915,
+    "q50": 899,
+    "q75": 887,
+    "q100": 882,
+    "impressions": 940,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 29.88,
+    "starts": 0,
+    "q25": 1060,
+    "q50": 1017,
+    "q75": 1003,
+    "q100": 996,
+    "impressions": 1096,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "19/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.84,
+    "starts": 0,
+    "q25": 40,
+    "q50": 36,
+    "q75": 34,
+    "q100": 28,
+    "impressions": 43,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 25.14,
+    "starts": 0,
+    "q25": 888,
+    "q50": 861,
+    "q75": 845,
+    "q100": 838,
+    "impressions": 935,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 9.99,
+    "starts": 0,
+    "q25": 364,
+    "q50": 344,
+    "q75": 338,
+    "q100": 333,
+    "impressions": 406,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.89,
+    "starts": 0,
+    "q25": 71,
+    "q50": 65,
+    "q75": 64,
+    "q100": 63,
+    "impressions": 75,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 5.19,
+    "starts": 0,
+    "q25": 207,
+    "q50": 195,
+    "q75": 182,
+    "q100": 173,
+    "impressions": 221,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.7,
+    "starts": 0,
+    "q25": 329,
+    "q50": 316,
+    "q75": 301,
+    "q100": 290,
+    "impressions": 346,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "21/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 10.38,
+    "starts": 0,
+    "q25": 399,
+    "q50": 376,
+    "q75": 351,
+    "q100": 346,
+    "impressions": 419,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 30.36,
+    "starts": 0,
+    "q25": 1072,
+    "q50": 1051,
+    "q75": 1037,
+    "q100": 1012,
+    "impressions": 1094,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 20.31,
+    "starts": 0,
+    "q25": 721,
+    "q50": 709,
+    "q75": 699,
+    "q100": 677,
+    "impressions": 741,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "22/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 4.74,
+    "starts": 0,
+    "q25": 226,
+    "q50": 193,
+    "q75": 171,
+    "q100": 158,
+    "impressions": 270,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 29.79,
+    "starts": 0,
+    "q25": 1051,
+    "q50": 1021,
+    "q75": 1001,
+    "q100": 993,
+    "impressions": 1119,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 6.24,
+    "starts": 0,
+    "q25": 221,
+    "q50": 216,
+    "q75": 212,
+    "q100": 208,
+    "impressions": 238,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.17,
+    "starts": 0,
+    "q25": 54,
+    "q50": 49,
+    "q75": 43,
+    "q100": 39,
+    "impressions": 60,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "23/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 0.54,
+    "starts": 0,
+    "q25": 26,
+    "q50": 24,
+    "q75": 21,
+    "q100": 18,
+    "impressions": 29,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 42.18,
+    "starts": 0,
+    "q25": 1478,
+    "q50": 1433,
+    "q75": 1416,
+    "q100": 1406,
+    "impressions": 1558,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 3.27,
+    "starts": 0,
+    "q25": 116,
+    "q50": 114,
+    "q75": 111,
+    "q100": 109,
+    "impressions": 127,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 7.44,
+    "starts": 0,
+    "q25": 270,
+    "q50": 258,
+    "q75": 254,
+    "q100": 248,
+    "impressions": 293,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 30s",
+    "spend": 2.49,
+    "starts": 0,
+    "q25": 99,
+    "q50": 94,
+    "q75": 88,
+    "q100": 83,
+    "impressions": 111,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 60.09,
+    "starts": 0,
+    "q25": 2052,
+    "q50": 2022,
+    "q75": 2012,
+    "q100": 2003,
+    "impressions": 2156,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 10.62,
+    "starts": 0,
+    "q25": 366,
+    "q50": 359,
+    "q75": 356,
+    "q100": 354,
+    "impressions": 384,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "25/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 2.52,
+    "starts": 0,
+    "q25": 89,
+    "q50": 86,
+    "q75": 85,
+    "q100": 84,
+    "impressions": 92,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 62.19,
+    "starts": 0,
+    "q25": 2118,
+    "q50": 2090,
+    "q75": 2079,
+    "q100": 2073,
+    "impressions": 2182,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 8.67,
+    "starts": 0,
+    "q25": 298,
+    "q50": 292,
+    "q75": 291,
+    "q100": 289,
+    "impressions": 317,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "26/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.02,
+    "starts": 0,
+    "q25": 39,
+    "q50": 37,
+    "q75": 36,
+    "q100": 34,
+    "impressions": 41,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 96.84,
+    "starts": 0,
+    "q25": 3270,
+    "q50": 3247,
+    "q75": 3236,
+    "q100": 3228,
+    "impressions": 3339,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 9.18,
+    "starts": 0,
+    "q25": 318,
+    "q50": 312,
+    "q75": 307,
+    "q100": 306,
+    "impressions": 330,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "27/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 4.8,
+    "starts": 0,
+    "q25": 164,
+    "q50": 163,
+    "q75": 161,
+    "q100": 160,
+    "impressions": 167,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 89.01,
+    "starts": 0,
+    "q25": 3003,
+    "q50": 2983,
+    "q75": 2973,
+    "q100": 2967,
+    "impressions": 3074,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 32.43,
+    "starts": 0,
+    "q25": 1130,
+    "q50": 1129,
+    "q75": 1093,
+    "q100": 1081,
+    "impressions": 1171,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "28/02/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 2.37,
+    "starts": 0,
+    "q25": 89,
+    "q50": 87,
+    "q75": 84,
+    "q100": 79,
+    "impressions": 99,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 68.61,
+    "starts": 0,
+    "q25": 2342,
+    "q50": 2314,
+    "q75": 2295,
+    "q100": 2287,
+    "impressions": 2407,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 27.06,
+    "starts": 0,
+    "q25": 946,
+    "q50": 942,
+    "q75": 932,
+    "q100": 902,
+    "impressions": 961,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "01/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.18,
+    "starts": 0,
+    "q25": 15,
+    "q50": 12,
+    "q75": 10,
+    "q100": 6,
+    "impressions": 16,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 72.24,
+    "starts": 0,
+    "q25": 2437,
+    "q50": 2421,
+    "q75": 2410,
+    "q100": 2408,
+    "impressions": 2547,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 29.13,
+    "starts": 0,
+    "q25": 1031,
+    "q50": 1022,
+    "q75": 1001,
+    "q100": 971,
+    "impressions": 1054,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "02/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.09,
+    "starts": 0,
+    "q25": 11,
+    "q50": 9,
+    "q75": 7,
+    "q100": 3,
+    "impressions": 14,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 47.28,
+    "starts": 0,
+    "q25": 1612,
+    "q50": 1595,
+    "q75": 1580,
+    "q100": 1576,
+    "impressions": 1651,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 27.06,
+    "starts": 0,
+    "q25": 953,
+    "q50": 938,
+    "q75": 916,
+    "q100": 902,
+    "impressions": 962,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "03/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 1.29,
+    "starts": 0,
+    "q25": 49,
+    "q50": 46,
+    "q75": 45,
+    "q100": 43,
+    "impressions": 51,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 79.56,
+    "starts": 0,
+    "q25": 2699,
+    "q50": 2672,
+    "q75": 2659,
+    "q100": 2652,
+    "impressions": 2747,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 21.03,
+    "starts": 0,
+    "q25": 735,
+    "q50": 732,
+    "q75": 713,
+    "q100": 701,
+    "impressions": 737,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "04/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.45,
+    "starts": 0,
+    "q25": 33,
+    "q50": 24,
+    "q75": 19,
+    "q100": 15,
+    "impressions": 41,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 140.67,
+    "starts": 0,
+    "q25": 4733,
+    "q50": 4713,
+    "q75": 4700,
+    "q100": 4689,
+    "impressions": 4827,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 13.83,
+    "starts": 0,
+    "q25": 490,
+    "q50": 475,
+    "q75": 464,
+    "q100": 461,
+    "impressions": 503,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "05/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.27,
+    "starts": 0,
+    "q25": 12,
+    "q50": 11,
+    "q75": 10,
+    "q100": 9,
+    "impressions": 15,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 32.67,
+    "starts": 0,
+    "q25": 1120,
+    "q50": 1101,
+    "q75": 1094,
+    "q100": 1089,
+    "impressions": 1190,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 37.17,
+    "starts": 0,
+    "q25": 1321,
+    "q50": 1280,
+    "q75": 1250,
+    "q100": 1239,
+    "impressions": 1340,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "06/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Shorts 15s",
+    "spend": 0.96,
+    "starts": 0,
+    "q25": 52,
+    "q50": 47,
+    "q75": 45,
+    "q100": 32,
+    "impressions": 71,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 7.56,
+    "starts": 0,
+    "q25": 290,
+    "q50": 268,
+    "q75": 256,
+    "q100": 252,
+    "impressions": 444,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "07/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 14.01,
+    "starts": 0,
+    "q25": 529,
+    "q50": 491,
+    "q75": 476,
+    "q100": 467,
+    "impressions": 566,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 13.68,
+    "starts": 0,
+    "q25": 478,
+    "q50": 469,
+    "q75": 459,
+    "q100": 456,
+    "impressions": 500,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "08/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 12.45,
+    "starts": 0,
+    "q25": 505,
+    "q50": 452,
+    "q75": 418,
+    "q100": 415,
+    "impressions": 528,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 17.61,
+    "starts": 0,
+    "q25": 628,
+    "q50": 604,
+    "q75": 592,
+    "q100": 587,
+    "impressions": 708,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "09/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 5.28,
+    "starts": 0,
+    "q25": 263,
+    "q50": 233,
+    "q75": 199,
+    "q100": 176,
+    "impressions": 286,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 3.75,
+    "starts": 0,
+    "q25": 144,
+    "q50": 134,
+    "q75": 128,
+    "q100": 125,
+    "impressions": 161,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "10/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 12.6,
+    "starts": 0,
+    "q25": 506,
+    "q50": 448,
+    "q75": 430,
+    "q100": 420,
+    "impressions": 519,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 6.48,
+    "starts": 0,
+    "q25": 233,
+    "q50": 229,
+    "q75": 219,
+    "q100": 216,
+    "impressions": 258,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "11/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 18.78,
+    "starts": 0,
+    "q25": 649,
+    "q50": 643,
+    "q75": 637,
+    "q100": 626,
+    "impressions": 658,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 56.13,
+    "starts": 0,
+    "q25": 1912,
+    "q50": 1891,
+    "q75": 1881,
+    "q100": 1871,
+    "impressions": 2006,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "12/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 5.61,
+    "starts": 0,
+    "q25": 194,
+    "q50": 192,
+    "q75": 190,
+    "q100": 187,
+    "impressions": 197,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 5.31,
+    "starts": 0,
+    "q25": 238,
+    "q50": 219,
+    "q75": 198,
+    "q100": 177,
+    "impressions": 248,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "13/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 4.56,
+    "starts": 0,
+    "q25": 206,
+    "q50": 189,
+    "q75": 171,
+    "q100": 152,
+    "impressions": 214,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 4.17,
+    "starts": 0,
+    "q25": 189,
+    "q50": 173,
+    "q75": 156,
+    "q100": 139,
+    "impressions": 196,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "14/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 4.92,
+    "starts": 0,
+    "q25": 222,
+    "q50": 204,
+    "q75": 184,
+    "q100": 164,
+    "impressions": 231,
+    "clicks": 2,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 3.87,
+    "starts": 0,
+    "q25": 176,
+    "q50": 161,
+    "q75": 145,
+    "q100": 129,
+    "impressions": 183,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "15/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 3.75,
+    "starts": 0,
+    "q25": 169,
+    "q50": 155,
+    "q75": 140,
+    "q100": 125,
+    "impressions": 176,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "16/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 12.96,
+    "starts": 0,
+    "q25": 457,
+    "q50": 450,
+    "q75": 435,
+    "q100": 432,
+    "impressions": 460,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "16/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 4.92,
+    "starts": 0,
+    "q25": 195,
+    "q50": 183,
+    "q75": 173,
+    "q100": 164,
+    "impressions": 250,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 15.81,
+    "starts": 0,
+    "q25": 590,
+    "q50": 589,
+    "q75": 546,
+    "q100": 527,
+    "impressions": 651,
+    "clicks": 11,
+    "visits": 0
+  },
+  {
+    "date": "17/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 1.74,
+    "starts": 0,
+    "q25": 78,
+    "q50": 67,
+    "q75": 61,
+    "q100": 58,
+    "impressions": 145,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 30.57,
+    "starts": 0,
+    "q25": 1123,
+    "q50": 1056,
+    "q75": 1027,
+    "q100": 1019,
+    "impressions": 1172,
+    "clicks": 11,
+    "visits": 0
+  },
+  {
+    "date": "18/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 24.78,
+    "starts": 0,
+    "q25": 923,
+    "q50": 863,
+    "q75": 836,
+    "q100": 826,
+    "impressions": 984,
+    "clicks": 14,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 19.38,
+    "starts": 0,
+    "q25": 657,
+    "q50": 650,
+    "q75": 648,
+    "q100": 646,
+    "impressions": 659,
+    "clicks": 7,
+    "visits": 0
+  },
+  {
+    "date": "19/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 25.74,
+    "starts": 0,
+    "q25": 911,
+    "q50": 889,
+    "q75": 868,
+    "q100": 858,
+    "impressions": 998,
+    "clicks": 4,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 29.4,
+    "starts": 0,
+    "q25": 1038,
+    "q50": 1008,
+    "q75": 993,
+    "q100": 980,
+    "impressions": 1113,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "20/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 4.26,
+    "starts": 0,
+    "q25": 153,
+    "q50": 147,
+    "q75": 145,
+    "q100": 142,
+    "impressions": 179,
+    "clicks": 5,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 3.6,
+    "starts": 0,
+    "q25": 164,
+    "q50": 154,
+    "q75": 132,
+    "q100": 120,
+    "impressions": 195,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "21/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 9.24,
+    "starts": 0,
+    "q25": 321,
+    "q50": 313,
+    "q75": 312,
+    "q100": 308,
+    "impressions": 405,
+    "clicks": 3,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 28.68,
+    "starts": 0,
+    "q25": 979,
+    "q50": 960,
+    "q75": 958,
+    "q100": 956,
+    "impressions": 985,
+    "clicks": 6,
+    "visits": 0
+  },
+  {
+    "date": "22/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 18.36,
+    "starts": 0,
+    "q25": 637,
+    "q50": 624,
+    "q75": 613,
+    "q100": 612,
+    "impressions": 694,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 23.79,
+    "starts": 0,
+    "q25": 807,
+    "q50": 802,
+    "q75": 797,
+    "q100": 793,
+    "impressions": 845,
+    "clicks": 1,
+    "visits": 0
+  },
+  {
+    "date": "23/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 14.46,
+    "starts": 0,
+    "q25": 539,
+    "q50": 517,
+    "q75": 501,
+    "q100": 482,
+    "impressions": 585,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 12.81,
+    "starts": 0,
+    "q25": 478,
+    "q50": 447,
+    "q75": 438,
+    "q100": 427,
+    "impressions": 554,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "24/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 10.29,
+    "starts": 0,
+    "q25": 396,
+    "q50": 372,
+    "q75": 358,
+    "q100": 343,
+    "impressions": 423,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "25/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 15s",
+    "spend": 12.54,
+    "starts": 0,
+    "q25": 446,
+    "q50": 431,
+    "q75": 425,
+    "q100": 418,
+    "impressions": 462,
+    "clicks": 0,
+    "visits": 0
+  },
+  {
+    "date": "25/03/2026",
+    "channel": "Youtube",
+    "creative": "Sabão em pó - Sonho | Horizontal 30s",
+    "spend": 13.53,
+    "starts": 0,
+    "q25": 480,
+    "q50": 463,
+    "q75": 457,
+    "q100": 451,
+    "impressions": 498,
+    "clicks": 0,
+    "visits": 0
+  }
+];
+
+// Footfall por fonte (HHS / OHS) — use os botões na aba Footfall para alternar
+const FOOTFALL_POINTS_HHS = [
+  {
+    "lat": -9.538876524339958,
+    "lon": -35.7921053178723,
+    "name": "SUPERMERCADO BOM PRECO LJ2",
+    "users": 6,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.219764473634629,
+    "lon": -35.879927531512,
+    "name": "REDE COMPRAS FEIRA DE FLORES",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.015031811428011,
+    "lon": -34.8722749026643,
+    "name": "ESTRELAS DE OURO",
+    "users": 371,
+    "rate": 0.0
+  },
+  {
+    "lat": -32.019122767275,
+    "lon": -42.24904173614611,
+    "name": "CARVALHO BARRAS LJ 6",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.19067199755589,
+    "lon": -35.23670905246048,
+    "name": "NORDESTAO LJ37 SF NATAL",
+    "users": 120,
+    "rate": 0.0
+  }
+];
+const FOOTFALL_POINTS_OHS = [
+  {
+    "lat": -8.031797632094191,
+    "lon": -34.9038049463074,
+    "name": "Estrada do Arraial, 2262 ( Rosa e Silva )",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.045264852533291,
+    "lon": -34.8967693047294,
+    "name": "Av. Conselheiro Rosa e Silva, 670 - Galeria Córdoba",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.047472077197629,
+    "lon": -34.900129961015196,
+    "name": "Av. Rui Barbosa, 551",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.065103998582742,
+    "lon": -34.89854306286601,
+    "name": "Av. Gov. Agamenon Magalhães, 4775 - Ilha do Leite",
+    "users": 25,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.057968062899192,
+    "lon": -34.898352060548895,
+    "name": "Av. Gov. Agamenon Magalhães, 4264 - Derby",
+    "users": 34,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03052967227198,
+    "lon": -34.867334577746,
+    "name": "Av. Agamenon Magalhães, 100, Salgadinho",
+    "users": 66,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03694934013482,
+    "lon": -34.9149235065821,
+    "name": "Av. Dezessete de Agosto, 656, Casa Forte",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03459395679532,
+    "lon": -34.91147016240169,
+    "name": "Av. Dezessete de agosto, 209",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.12367196258753,
+    "lon": -34.90004178938399,
+    "name": "Av. Domingos Ferreira, 4070",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.087123449171525,
+    "lon": -34.88442090287639,
+    "name": "Av Antônio de Goes, 470",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.12438334765977,
+    "lon": -34.899810089383905,
+    "name": "R. Ernesto de Paula Santos, 280",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08663501536012,
+    "lon": -34.888488148909104,
+    "name": "Rua Manoel de Brito, 310 ( Via Mangue)",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.175951757670758,
+    "lon": -34.918413689382994,
+    "name": "Avenida Ayrton Senna da Silva, 260 ( Shopping Guararapes)",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06025161780759,
+    "lon": -34.904443374040696,
+    "name": "R. Prof. Benedito Monteiro, 224 - Abdias",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.127700607374349,
+    "lon": -34.9152817777444,
+    "name": "Av. Mal. Mascarenhas de Morais, 4861",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.10947271785021,
+    "lon": -34.9125722912367,
+    "name": "Av. Mal. Mascarenhas de Morais, 2100",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04904429115176,
+    "lon": -34.906602260549306,
+    "name": "Rua José Bonifácio, 205",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.040467561187821,
+    "lon": -34.906602260549306,
+    "name": "Av. José Bonifácio, 1210",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.037098393293059,
+    "lon": -34.894213089385495,
+    "name": "Av. Norte Miguel Arraes, 2665",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.041385695197594,
+    "lon": -34.898225950762196,
+    "name": "Av. Conselheiro Rosa e Silva",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.11086217564023,
+    "lon": -34.8927894200727,
+    "name": "Av. Domingos Ferreira (Próximo a McDonalds e o Assaí)",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03093685740512,
+    "lon": -34.90554893403309,
+    "name": "Estrada do Arraial, 2501",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.033352085823347,
+    "lon": -34.9074344893855,
+    "name": "Av. Antônio de Goes,742",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.062305036139758,
+    "lon": -34.91010547774549,
+    "name": "Av Eng Abdias de Carvalho 1079,",
+    "users": 8,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.124887526801823,
+    "lon": -34.91469000472831,
+    "name": "Av. Mal. Mascarenhas de Morais, 4651",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.027086071944769,
+    "lon": -34.863571312565895,
+    "name": "Av. Olinda Dom Hélder Câmara,s/n Santa Tereza - Olinda",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04929510861427,
+    "lon": -34.896198630326495,
+    "name": "Av. Conselheiro Rosa e Silva, 212",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.037852693628093,
+    "lon": -34.91617622007381,
+    "name": "Av. 17 de Agosto, 823",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.12483068464216,
+    "lon": -34.900465997527306,
+    "name": "Rua Ernesto de Paula Santos esquina com a Av. Engenheiro Domingos Ferreira, 4140",
+    "users": 6,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04160122126697,
+    "lon": -34.8981116456715,
+    "name": "Av. Conselheiro Rosa e Silva,1095",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.186838396869259,
+    "lon": -34.919164291235404,
+    "name": "AV. Bernado Vieira de Melo 1243, Piedade",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.998160804781608,
+    "lon": -34.8394788047302,
+    "name": "AV. Pres. Getúlio Vargas 1506, Bairro Novo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.029602266319719,
+    "lon": -34.86646111822139,
+    "name": "AV. Gov. Agamenon Magalhães 2830, Salgadinho",
+    "users": 7,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.032472023429861,
+    "lon": -34.90982947450831,
+    "name": "AV. Dr. Lula Cabral de Melo 68, Parnamirimm",
+    "users": 24,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.07346767696897,
+    "lon": -34.90794071822079,
+    "name": "Estrada dos Remédios 721, Afogados",
+    "users": 12,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05023567568142,
+    "lon": -34.8730110182213,
+    "name": "Av. Militar / Ponte do Limoeiro",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08615812650346,
+    "lon": -34.886162445204306,
+    "name": "Rua do Araçá",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.052412661446848,
+    "lon": -34.9210199317129,
+    "name": "Rua Honório Correia",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.123833547354709,
+    "lon": -34.896727489383906,
+    "name": "Avenida Boa Viagem",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.054824125371294,
+    "lon": -34.8799141624014,
+    "name": "Avenida Mário Melo",
+    "users": 168,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06768990690471,
+    "lon": -34.8805886777455,
+    "name": "Avenida Dantas Barreto",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05465963100983,
+    "lon": -34.9004703047294,
+    "name": "Rua Amaro Bezerra",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.14013051860737,
+    "lon": -34.90501416240001,
+    "name": "Avenida Visconde de Jequitinhonha",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05344896962695,
+    "lon": -34.90929093541791,
+    "name": "Rua José Osório",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.045031336274942,
+    "lon": -34.875155289385404,
+    "name": "Avenida Cruz Cabugá",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03957634365123,
+    "lon": -34.878854377745895,
+    "name": "Av. Dr. Jayme da Fonte/ Av. Agamenon Magalhães",
+    "users": 33,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.01787630453234,
+    "lon": -34.9407201893855,
+    "name": "Largo de Dois Irmãos",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.043518265991521,
+    "lon": -34.933512804729595,
+    "name": "Avenida Caxangá",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.11367939885761,
+    "lon": -34.9127754182203,
+    "name": "Av. Mascarenhas de Moraes",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.047219935505208,
+    "lon": -34.891544260549196,
+    "name": "Avenida Governador Agamenon Magalhães",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08123219004897,
+    "lon": -34.906216047056795,
+    "name": "Rua Motocolombó",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.123918516718211,
+    "lon": -34.896748947056,
+    "name": "Avenida Boa Viagem",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.02817857880849,
+    "lon": -34.90263563541819,
+    "name": "Av. Norte Miguel Arraes de Alencar",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.031181185087041,
+    "lon": -34.901987389385404,
+    "name": "Rua Cônego Barata",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.079362712112072,
+    "lon": -34.8921423200732,
+    "name": "Praça Governador Paulo Pessoa Guerra",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.12155298241303,
+    "lon": -34.91784028938399,
+    "name": "Av. Pres. Dutra",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03770352955272,
+    "lon": -34.8931891810269,
+    "name": "Av. João de Barros x Rua Quarenta e Oito",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04364882378717,
+    "lon": -34.902196304729294,
+    "name": "Avenida José Gonçalves de Medeiros",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06156721822084,
+    "lon": -34.8967601470571,
+    "name": "Avenida Rui Barbosa",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.123104046950091,
+    "lon": -34.901458045203604,
+    "name": "Rua do Paissandú",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.113668777417372,
+    "lon": -34.9128183335645,
+    "name": "Avenida Fernando Simões Barbosa",
+    "users": 3,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06228791030322,
+    "lon": -34.91145391683361,
+    "name": "Avenida Marechal Mascarenhas de Morais",
+    "users": 2,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.113636913094998,
+    "lon": -34.912764689384204,
+    "name": "Avenida Marechal Mascarenhas de Morais",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.092629176155977,
+    "lon": -34.9419271200729,
+    "name": "099 - Av. Abdias de Carvalho x João Ivo da Silva",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.058569919755021,
+    "lon": -34.8725010335653,
+    "name": "Avenida Marechal Mascarenhas de Morais",
+    "users": 13,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03917510063599,
+    "lon": -34.9124492624018,
+    "name": "Avenida Doutor José Rufino",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.039036996410593,
+    "lon": -34.912341974041205,
+    "name": "Cais do Apolo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.979215026492833,
+    "lon": -34.8375183386235,
+    "name": "R. Leonardo Bezerra Cavalcante x R. Afonso de Albuquerque Melo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.02379271118685,
+    "lon": -34.9304302605495,
+    "name": "Avenida Professor Artur Lima Cavalcante",
+    "users": 7,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.092157897809063,
+    "lon": -34.912660704728694,
+    "name": "Rua de Apipucos",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.01180688563699,
+    "lon": -34.8894340893856,
+    "name": "Rua Engenheiro José Brandão Cavalcante",
+    "users": 69,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.8768691884651005,
+    "lon": -34.905671577748706,
+    "name": "Praça Rádio Jornal do Comércio",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.052330625448478,
+    "lon": -34.9459296340311,
+    "name": "Avenida Beberibe",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.071082208417279,
+    "lon": -34.894106602876505,
+    "name": "Rodovia BR-101 Norte",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.045595497068678,
+    "lon": -34.88147007404099,
+    "name": "Rua Bacatuba",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05853805107885,
+    "lon": -34.872458118221104,
+    "name": "Avenida Advogado José Paulo Cavalcanti",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.100637521622271,
+    "lon": -34.885764462400594,
+    "name": "Rua Frei Cassimiro",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.045648613224918,
+    "lon": -34.88162027774581,
+    "name": "Cais do Apolo",
+    "users": 9,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06103618983247,
+    "lon": -34.9222905758931,
+    "name": "Rua Silva Lobato",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.028167955120429,
+    "lon": -34.90263563541819,
+    "name": "Rua Frei Cassimiro",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05324355441759,
+    "lon": -34.8918567028769,
+    "name": "Avenida Engenheiro Abdias de Carvalho",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.108409211403071,
+    "lon": -34.893226350761196,
+    "name": "Avenida Norte Miguel Arraes de Alencar",
+    "users": 1,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.10730496054585,
+    "lon": -34.88844091868199,
+    "name": "Rua João Fernandes Vieira",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.02471779270642,
+    "lon": -34.89738297404129,
+    "name": "Rua José Maria de Miranda",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.0549091092819,
+    "lon": -34.8800429084342,
+    "name": "Rua Padre Bernardino Pessoa",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.0280085997662,
+    "lon": -34.9025498047297,
+    "name": "Estrada Velha de Água Fria",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.091962329709407,
+    "lon": -34.91104724890901,
+    "name": "Avenida Mário Melo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04725180507206,
+    "lon": -34.89159790472951,
+    "name": "Avenida Norte Miguel Arraes de Alencar",
+    "users": 20,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.077980423382291,
+    "lon": -34.9055336893847,
+    "name": "Avenida Dom João VI",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.077018711065751,
+    "lon": -34.91353698938481,
+    "name": "Rua Arquiteto Luiz Nunes",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.07813175630869,
+    "lon": -34.92085796240111,
+    "name": "Avenida Governador Agamenon Magalhães",
+    "users": 2,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.082835902421673,
+    "lon": -34.929623948909104,
+    "name": "Rua Nicolau Pereira",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.07780733539969,
+    "lon": -34.9329769745044,
+    "name": "Rua Bezerra da Palma",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.091307795422992,
+    "lon": -34.9634987777452,
+    "name": "Rua Italiana",
+    "users": 3,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.110252068980678,
+    "lon": -34.9063646065808,
+    "name": "Rua Antônio Figueiredo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.115518706902629,
+    "lon": -34.9118555624005,
+    "name": "Rua Guimarães",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.062749650257949,
+    "lon": -34.894652104729204,
+    "name": "Rua Quinze de Novembro",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.10758578154159,
+    "lon": -34.8891847507611,
+    "name": "Avenida General Mac Arthur",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.056581256078298,
+    "lon": -34.899574020073594,
+    "name": "Rua Jatici",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.0301270011493,
+    "lon": -34.894443489385495,
+    "name": "Rua General Joaquim Inácio",
+    "users": 17,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.002618602363821,
+    "lon": -34.896089231713695,
+    "name": "Rua Zeferino Galvão",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.067228138721608,
+    "lon": -34.890335506581394,
+    "name": "Praça do Derby",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.078064535500308,
+    "lon": -34.923709018684605,
+    "name": "Rua José Alexandre Caçador",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.06853310728058,
+    "lon": -34.9863204200732,
+    "name": "Rua Compositor Vinícius de Morais",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.120685015609263,
+    "lon": -34.9120005758922,
+    "name": "Rua dos Coelhos",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08938639321001,
+    "lon": -34.957776474040195,
+    "name": "Rua da Esperança",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.056787833248112,
+    "lon": -34.9039704893851,
+    "name": "Avenida Prefeito Antônio Pereira",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.11105336285632,
+    "lon": -34.89274650472849,
+    "name": "Rua Nosso Chão",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04765081992239,
+    "lon": -34.9405540010245,
+    "name": "Rua do Sancho",
+    "users": 1,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.13161676128454,
+    "lon": -34.9006329335641,
+    "name": "Rua Arlindo Gouveia",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04735634287666,
+    "lon": -34.914388904729506,
+    "name": "Avenida Engenheiro Domingos Ferreira",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08055931264627,
+    "lon": -34.906367404728904,
+    "name": "Rua Manoel Estevão da Costa",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03324469158201,
+    "lon": -34.9088275740413,
+    "name": "Rua Doutor Nylo Dornelas Câmara",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.04981970648342,
+    "lon": -34.89753876425411,
+    "name": "Praça Professor Barreto Campelo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.100164547081802,
+    "lon": -34.8887660912368,
+    "name": "Praça da Paz",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.13214245196627,
+    "lon": -34.908328964252696,
+    "name": "Rua André Cavalcante",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08545910393883,
+    "lon": -34.9313706047288,
+    "name": "Praça do Entroncamento",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.07741019405702,
+    "lon": -34.8749420025545,
+    "name": "Rua Alexandrino Martins Rodrigues",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.0577669192289,
+    "lon": -34.9511773605489,
+    "name": "Rua Barão de Souza Leão",
+    "users": 1,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.044751003698071,
+    "lon": -34.899288304729296,
+    "name": "Avenida Estância",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.058754102923421,
+    "lon": -34.8876938200735,
+    "name": "Avenida Brasília Formosa",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.07940285343995,
+    "lon": -34.9385231460732,
+    "name": "Avenida Professor Luiz Freire",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.05908758019876,
+    "lon": -34.943354789385,
+    "name": "Rua Amélia",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.040442511593172,
+    "lon": -34.87477004890981,
+    "name": "Avenida Conde da Boa Vista",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03513050441757,
+    "lon": -34.900607506582006,
+    "name": "Praça Jardim São Paulo",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.032515879142059,
+    "lon": -34.8842623047297,
+    "name": "Rua Valdemar Falcão",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.056581256078298,
+    "lon": -34.8995311047293,
+    "name": "Rua dos Casados",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03813362980077,
+    "lon": -34.88911295076219,
+    "name": "Rua Neto Mendonça",
+    "users": 3,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.055692278597942,
+    "lon": -34.930069647056996,
+    "name": "Estrada de Belém",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.109756853403601,
+    "lon": -34.9184081335644,
+    "name": "Praça do Derby",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.08970183742574,
+    "lon": -34.9296831758927,
+    "name": "Rua Castro Alves",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.061046812659209,
+    "lon": -34.9222154740407,
+    "name": "Rua Professora Laura Ferreira da Costa",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03425106260303,
+    "lon": -34.921218004729596,
+    "name": "Rua Jean Emile Favre",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.043613649629929,
+    "lon": -34.9078493200737,
+    "name": "Avenida Recife",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.034219192014609,
+    "lon": -34.9211321740412,
+    "name": "Avenida Engenheiro Abdias de Carvalho",
+    "users": 1,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.047188065935849,
+    "lon": -34.89159790472951,
+    "name": "Avenida Dezessete de Agosto",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.03667933387663,
+    "lon": -34.904725148909904,
+    "name": "Parque Jaqueira",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.041596501965458,
+    "lon": -34.916843404729605,
+    "name": "Parque Santana",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -8.141068656925619,
+    "lon": -34.9040492317115,
+    "name": "Parque Dona Lindú",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.10852423647386,
+    "lon": -34.827653921940296,
+    "name": "Av. Gen. Edson Ramalho, 301",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.097896886919242,
+    "lon": -34.844020635432294,
+    "name": "Av. Gov. Flávio Ribeiro Coutinho, 1151",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -7.119228685560207,
+    "lon": -34.8422272489238,
+    "name": "Avenida Senador Ruy Carneiro, 98",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.648489503194442,
+    "lon": -35.7177866758661,
+    "name": "Av. ComendadorGustavoPaiva, 2789",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.653350311989119,
+    "lon": -35.7047973031898,
+    "name": "Av. JúlioMarquesLuz,655",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.65429679893991,
+    "lon": -35.70525476052171,
+    "name": "R. ManoelRibeirodaRocha,655",
+    "users": 6,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.646273053477449,
+    "lon": -35.734404033538205,
+    "name": "Av. FernandesLima,471",
+    "users": 6,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.66119448703115,
+    "lon": -35.70405826422639,
+    "name": "R. DurvalGuimarães, 532",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.746813319301278,
+    "lon": -36.64588910470022,
+    "name": "- Av. DEPUTADA CECI CUNHA",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.631823771392021,
+    "lon": -35.7003450181942,
+    "name": "Av. Com. Gustavo Paiva - Mangabeiras",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.63169684023768,
+    "lon": -35.7003235605221,
+    "name": "Av. Com. Gustavo Paiva – Cruz das Almas",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.64348186870421,
+    "lon": -35.716276877718414,
+    "name": "Av. Gov Afrânio Lages, 450",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.64700915414661,
+    "lon": -35.71238789121021,
+    "name": "Av. Dona Constança de Góes Monteiro, 1164",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -9.63358509260629,
+    "lon": -35.7017243047025,
+    "name": "Av. Comendador Gustavo Paiva, 5115",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.0873072042953,
+    "lon": -35.20846074584221,
+    "name": "Av. Prudente de Morais, 3015",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.525233880885104,
+    "lon": -35.2030480029084,
+    "name": "Av. Eng. Roberto Freire, 678",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.8643936134333,
+    "lon": -35.233233788165,
+    "name": "- BR 101;",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.64293876490749,
+    "lon": -35.1878046201051,
+    "name": "- Av. Roberto Freire;",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -57.704572771829206,
+    "lon": -35.2676963624339,
+    "name": "- Av. Tomaz Landim",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.19313570363099,
+    "lon": -35.225423233597404,
+    "name": "- Lima e Silva;",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.53245954855778,
+    "lon": -35.2110343740723,
+    "name": "- Salgado Filho",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.407382851406496,
+    "lon": -35.20923636243321,
+    "name": "Av. Senador Salgado Filho, 1775 - PETZ",
+    "users": 2,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.20566929684112,
+    "lon": -35.2074496452368,
+    "name": "Av. Senador Salgado Filho, 1552 - MIDWAY",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.105389523231906,
+    "lon": -35.2046583053666,
+    "name": "Av. Engenheiro Roberto Freire, 1460 - FAVORITO",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.561605385298705,
+    "lon": -35.198533233596905,
+    "name": "Av. Engenheiro Roberto Freire, 730 - CCAB",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -58.497993873213396,
+    "lon": -35.20367241772059,
+    "name": "Av. Principal do Dirceu",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -51.0547826949981,
+    "lon": -42.7640642642945,
+    "name": "Av. Homero de Castelo Branco",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.66492208942221,
+    "lon": -42.78386588942631,
+    "name": "Av. João XXIII",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.780991674802515,
+    "lon": -42.74999760477031,
+    "name": "Av. Frei Serafim",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.85790630004,
+    "lon": -42.801758845245686,
+    "name": "Av. Raul Lopes",
+    "users": 507,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.7465806674246,
+    "lon": -42.7981937452459,
+    "name": "Av. Dom Severino",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.699535708804504,
+    "lon": -42.780282231754,
+    "name": "Av. Dr. Aquiles Wall Ferraz",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.699580708819795,
+    "lon": -42.75504210477049,
+    "name": "Av. Presidente Kennedy",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.4476594907998,
+    "lon": -42.7680357323976,
+    "name": "Av. Raul Lopes",
+    "users": 0,
+    "rate": 0.0
+  },
+  {
+    "lat": -50.74615319613508,
+    "lon": -42.7981937452459,
+    "name": "R. Emílio Ommati",
+    "users": 0,
+    "rate": 0.0
+  }
+];
+let CURRENT_FOOTFALL_POINTS = (FOOTFALL_POINTS_HHS && FOOTFALL_POINTS_HHS.length) ? FOOTFALL_POINTS_HHS : FOOTFALL_POINTS_OHS;
+
+// Helpers
+const fmtBR = (v, dec=2) => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{minimumFractionDigits:dec, maximumFractionDigits:dec}).format(Number(v));
+const fmtInt = v => isNaN(v)||v===null||v==="" ? "—" :
+  new Intl.NumberFormat('pt-BR',{maximumFractionDigits:0}).format(Number(v));
+const pct = v => (isNaN(v)||v===null||v==="") ? "—" : `${(Number(v)*100).toFixed(2)}%`;
+
+// Tabs
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const id = t.dataset.tab;
+  ['overview','channels','insights','planning','footfall'].forEach(key=>{
+    document.getElementById('tab-'+key).classList.toggle('hidden', key!==id);
+  });
+  
+  // Inicializar Footfall quando a aba for clicada
+  if (id === 'footfall') {
+    initializeFootfallContent();
+  }
+}));
+
+// OVERVIEW
+const topMetrics = [
+  ["💰 Orçamento Contratado", `R$ ${fmtBR(CONS["Budget Contratado (R$)"])}`],
+  ["💸 Orçamento Utilizado", `R$ ${fmtBR(CONS["Budget Utilizado (R$)"])}`],
+  ["🖨️ Impressões", fmtInt(CONS["Impressões"])],
+  ["📈 CTR", pct(CONS["CTR (%)"])],
+];
+document.getElementById('metrics-overview-top').innerHTML = topMetrics.map(
+  m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+
+// Multicanal: canais com CPM (HHS/OHS), CPV (vídeo) e CPE (Spotify)
+const dashboardKpi = 'MULTICANAL';
+
+// Overview table
+const tbody = document.getElementById('tbodyChannels');
+const thCpm = document.getElementById('th-cpm');
+if (thCpm) {
+  thCpm.style.display = (dashboardKpi === 'CPM' || dashboardKpi === 'MULTICANAL') ? '' : 'none';
+}
+
+PER.forEach(r=>{
+  const cpmCell = (dashboardKpi === 'CPM' || dashboardKpi === 'MULTICANAL') ? `<td>R$ ${fmtBR(r["CPM (R$)"])}</td>` : '';
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${r["Canal"]||"—"}</td>
+      <td>R$ ${fmtBR(r["Budget Contratado (R$)"])}</td>
+      <td>R$ ${fmtBR(r["Budget Utilizado (R$)"])}</td>
+      <td>${pct(r["Pacing (%)"])}</td>
+      <td>${fmtInt(r["Impressões"])}</td>
+      <td>${fmtInt(r["Cliques"])}</td>
+      <td>${pct(r["CTR (%)"])}</td>
+      <td>${fmtInt(r["VC (100%)"])}</td>
+      <td>${pct(r["VTR (100%)"])}</td>
+      <td>R$ ${fmtBR(r["CPV (R$)"])}</td>
+      ${cpmCell}
+    </tr>`)
+});
+
+// Overview charts
+const ctx1 = document.getElementById('chartSpendShare');
+const ctx2 = document.getElementById('chartResults');
+const spendData = PER.map(r=>Number(r["Budget Utilizado (R$)"]||0));
+const labels = PER.map(r=>r["Canal"]);
+new Chart(ctx1, {
+  type:'doughnut',
+  data:{labels, datasets:[{data:spendData}]},
+  options:{plugins:{legend:{position:'bottom'}}}
+});
+const impressions = PER.map(r=>Number(r["Impressões"]||0));
+const ctr = PER.map(r=>(Number(r["CTR (%)"]||0))*100);
+new Chart(ctx2, {
+  type:'bar',
+  data:{labels, datasets:[
+    {label:'Impressões', data:impressions, yAxisID:'y'},
+    {label:'CTR (%)', data:ctr, yAxisID:'y1'}
+  ]},
+  options:{
+    responsive:true,
+    plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{title:{display:true,text:'Impressões'}, ticks:{callback:v=>fmtInt(v)}},
+      y1:{position:'right', title:{display:true,text:'CTR (%)'}, grid:{drawOnChartArea:false}}
+    }
+  }
+});
+
+// CHANNELS — selector
+const sel = document.getElementById('channelSelect');
+PER.forEach(r=>{ const opt=document.createElement('option'); opt.value=r["Canal"]; opt.textContent=r["Canal"]; sel.appendChild(opt); });
+const metricsChannel = document.getElementById('metrics-channel');
+const channelNameSpan = document.getElementById('channelNameSpan');
+
+// Verificar se os elementos existem
+if (!metricsChannel) {
+  console.error('Elemento metrics-channel não encontrado');
+}
+if (!channelNameSpan) {
+  console.error('Elemento channelNameSpan não encontrado');
+}
+
+function renderChannelDailyTable(name){
+  const tbody = document.getElementById('channelDailyBody');
+  if (!tbody) {
+    console.error('channelDailyBody não encontrado');
+    return;
+  }
+  tbody.innerHTML = "";
+  
+  if (!DAILY || DAILY.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Aguardando dados da planilha (entrega diária).</td></tr>';
+    return;
+  }
+  
+  const channelName = (name||'').toLowerCase().trim();
+  const rows = DAILY.filter(r=> {
+    const rChannel = (r.channel||'').toLowerCase().trim();
+    return rChannel === channelName;
+  }).sort((a,b)=>{ // date desc
+    const pa = a.date.split('/').reverse().join('-');
+    const pb = b.date.split('/').reverse().join('-');
+    return pa<pb ? 1 : pa>pb ? -1 : 0;
+  });
+  
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;">Nenhum dado disponível para este canal</td></tr>';
+    return;
+  }
+  
+  rows.forEach(r=>{
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.date||'—'}</td>
+        <td>${r.creative||'—'}</td>
+        <td>R$ ${fmtBR(r.spend)}</td>
+        <td>${fmtInt(r.impressions)}</td>
+        <td>${fmtInt(r.clicks)}</td>
+      </tr>`);
+  });
+}
+
+
+function renderChannel(name){
+  const r = PER.find(x=> (x["Canal"]||'').toLowerCase()=== (name||'').toLowerCase()) || PER[0];
+  const nm = r ? r['Canal'] : name;
+
+  if (channelNameSpan) {
+    channelNameSpan.textContent = nm || '—';
+  }
+  
+  // Definir métricas baseadas no tipo de canal
+  const isVideoChannel = ['CTV', 'Disney', 'Netflix', 'Youtube'].includes(nm);
+  const isDisplayChannel = ['HHS', 'OHS'].includes(nm);
+  const isSpotifyChannel = nm === 'Spotify';
+  const isMixedChannel = false;
+  
+  const items = [
+    ['📊 Orçamento Contratado','R$ '+fmtBR(r['Budget Contratado (R$)'])],
+    ['💸 Orçamento Utilizado','R$ '+fmtBR(r['Budget Utilizado (R$)'])],
+    ['🎯 Pacing', pct(r['Pacing (%)'])],
+  ];
+  
+  // Adicionar métricas específicas por tipo de canal
+  if (isVideoChannel) {
+    // Canais de vídeo: VTR e CPV
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])]
+    );
+  } else if (isDisplayChannel) {
+    items.push(
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])]
+    );
+    if (dashboardKpi === 'CPM' || dashboardKpi === 'MULTICANAL') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
+  } else if (isSpotifyChannel) {
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])]
+    );
+  } else if (isMixedChannel) {
+    // Canal misto (TikTok): VTR, CPV e CPM (apenas se KPI for CPM)
+    items.push(
+      ['🎬 VC (100%)', fmtInt(r['VC (100%)'])],
+      ['📉 VTR100', pct(r['VTR (100%)'])],
+      ['💰 CPV','R$ '+fmtBR(r['CPV (R$)'])],
+      ['🖨️ Impressões', fmtInt(r['Impressões'])],
+      ['👆 Cliques', fmtInt(r['Cliques'])],
+      ['📈 CTR', pct(r['CTR (%)'])]
+    );
+    if (dashboardKpi === 'CPM') {
+      items.push(['💰 CPM','R$ '+fmtBR(r['CPM (R$)'])]);
+    }
+  }
+  
+  // Calcular CPM médio a partir dos dados diários apenas se o KPI for CPM
+  if ((dashboardKpi === 'CPM' || dashboardKpi === 'MULTICANAL') && DAILY && DAILY.length > 0) {
+    const channelDaily = DAILY.filter(d => {
+      const dChannel = (d.channel||'').toLowerCase().trim();
+      return dChannel === (nm||'').toLowerCase().trim();
+    });
+    
+    if (channelDaily.length > 0) {
+      const cpmValues = channelDaily
+        .filter(d => d.impressions > 0 && d.spend > 0)
+        .map(d => (d.spend / d.impressions) * 1000);
+      
+      if (cpmValues.length > 0) {
+        const cpmMedio = cpmValues.reduce((sum, val) => sum + val, 0) / cpmValues.length;
+        items.push(['📊 CPM MÉDIO', `R$ ${fmtBR(cpmMedio)}`]);
+      }
+    }
+  }
+  
+  if (metricsChannel) {
+    metricsChannel.innerHTML = items.map(m=>`<div class='metric'><div class='label'>${m[0]}</div><div class='value'>${m[1]}</div></div>`).join('');
+  } else {
+    console.error('metricsChannel não encontrado, não é possível renderizar métricas');
+  }
+  
+  renderChannelDailyTable(nm);
+  
+  // Mostrar seções específicas por canal
+  const showFF = ['hhs','ohs'].includes((nm||'').toLowerCase());
+  const showCTV = (nm||'').toLowerCase()==='ctv';
+  
+  const footfallWrap = document.getElementById('footfallExtras');
+  const ctvWrap = document.getElementById('ctvPublishers');
+  
+  if(footfallWrap) footfallWrap.classList.toggle('hidden', !showFF);
+  if(ctvWrap) ctvWrap.classList.toggle('hidden', !showCTV);
+}
+
+sel.addEventListener('change', e=>renderChannel(e.target.value));
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (PER && PER.length > 0 && PER[0]['Canal']) {
+      renderChannel(PER[0]['Canal']);
+    }
+  });
+} else {
+  // DOM já está pronto
+  if (PER && PER.length > 0 && PER[0]['Canal']) {
+    renderChannel(PER[0]['Canal']);
+  }
+}
+
+// ====== PLANNING POPULATION ======
+(function(){
+  const period = '09/03/2026 a 31/03/2026';
+  const metaImp = 150000;
+  const cpmContratado = 25.0;
+  const budgetTotal = Number(CONS["Budget Contratado (R$)"]||0);
+  const budgetUsed = Number(CONS["Budget Utilizado (R$)"]||0);
+  const pacingBudget = budgetTotal>0 ? budgetUsed/budgetTotal : 0;
+  const impEnt = Number(CONS["Impressões"]||0);
+  const pacingImp = metaImp>0 ? impEnt/metaImp : 0;
+
+  const setTxt = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent = txt; };
+  setTxt('plan-periodo', period);
+  setTxt('plan-budget-total', fmtBR(budgetTotal));
+  setTxt('plan-budget-used', fmtBR(budgetUsed));
+  setTxt('plan-pacing', `${(pacingBudget*100).toFixed(2)}%`);
+  setTxt('plan-imp-meta', fmtInt(metaImp));
+  setTxt('plan-imp-entregues', fmtInt(impEnt));
+  setTxt('plan-imp-pacing', `${(pacingImp*100).toFixed(2)}%`);
+  setTxt('plan-cpm', fmtBR(cpmContratado));
+})();
+
+// ==== INSIGHTS LOGIC ====
+(function(){
+  // Pacing: Utilizado vs Contratado
+  try {
+    const ctx = document.getElementById('insPacing');
+    if (ctx) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Pacing'],
+          datasets: [
+            { label: 'Contratado', data: [contratado] },
+            { label: 'Utilizado', data: [utilizado] }
+          ]
+        },
+        options: { plugins:{legend:{position:'bottom'}}, scales:{x:{stacked:true}, y:{stacked:true}} }
+      });
+    }
+  } catch(e){}
+
+  // Insights text
+  try {
+    const list = document.getElementById('insightsList');
+    if (list) {
+      const contratado = Number(CONS["Budget Contratado (R$)"]||0);
+      const utilizado = Number(CONS["Budget Utilizado (R$)"]||0);
+      const pacing = contratado>0 ? (utilizado/contratado) : 0;
+      const totalImp = Number(CONS["Impressões"]||0);
+      const totalClicks = Number(CONS["Cliques"]||0);
+      const ctrTotal = totalImp>0 ? (totalClicks/totalImp)*100 : 0;
+      const metaImp = 150000;
+      const entregaPct = metaImp>0 ? (totalImp/metaImp)*100 : 0;
+
+      const dailyDisplay = DAILY.filter(r => ['hhs','ohs'].includes((r.channel||'').toLowerCase()));
+      const grouped = dailyDisplay.reduce((acc,r)=>{
+        const d = r.date;
+        if(!acc[d]) acc[d]={impressions:0, clicks:0};
+        acc[d].impressions += Number(r.impressions||0);
+        acc[d].clicks += Number(r.clicks||0);
+        return acc;
+      },{});
+      const bestCtr = Object.entries(grouped).reduce((acc,[date,val])=>{
+        const ctr = val.impressions>0 ? (val.clicks/val.impressions)*100 : 0;
+        return ctr > (acc.ctr||-1) ? {date, ctr} : acc;
+      }, {});
+
+      const items = [];
+      items.push(`⏱️ Pacing orçamentário: <b>${(pacing*100).toFixed(1)}%</b> do budget utilizado.`);
+      items.push(`📈 Entrega de impressões: <b>${fmtInt(totalImp)}</b> (${entregaPct.toFixed(1)}% de 150.000 contratadas).`);
+      items.push(`🎯 CTR médio: <b>${ctrTotal.toFixed(2)}%</b>.`);
+      if (bestCtr.date) items.push(`⭐ Melhor CTR diário: <b>${bestCtr.ctr.toFixed(2)}%</b> em ${bestCtr.date}.`);
+
+      list.innerHTML = items.map(t=>`<li>${t}</li>`).join("");
+    }
+  } catch(e){}
+})();
+
+// FOOTFALL FUNCTIONS
+let footfallInitialized = false;
+
+function initializeFootfall() {
+  if (footfallInitialized) return;
+  setTimeout(() => {
+    updateFootfallMetrics();
+    initializeFootfallMap();
+    initializeFootfallChart();
+    updateFootfallTopStores();
+    footfallInitialized = true;
+  }, 100);
+}
+
+
+
+function updateFootfallTopStores() {
+  const topStoresContainer = document.getElementById('footfall-topStores');
+  if (!topStoresContainer) {
+    console.error('Elemento footfall-topStores não encontrado');
+    return;
+  }
+  
+  // Limpar conteúdo existente
+  topStoresContainer.innerHTML = '';
+  
+  if (typeof CURRENT_FOOTFALL_POINTS !== 'undefined' && CURRENT_FOOTFALL_POINTS.length > 0) {
+    // Ordenar por usuários (descendente) e pegar top 5
+    const sortedPoints = CURRENT_FOOTFALL_POINTS
+      .filter(point => point.users > 0)
+      .sort((a, b) => b.users - a.users)
+      .slice(0, 5);
+    
+    sortedPoints.forEach((point, index) => {
+      const storeItem = document.createElement('div');
+      storeItem.className = 'store-item';
+      storeItem.style.cssText = `
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        border-left: 3px solid #ff6b35;
+      `;
+      
+      storeItem.innerHTML = `
+        <div>
+          <div style="font-weight: 600; color: white; font-size: 0.9rem;">
+            ${index + 1}. ${point.name.length > 30 ? point.name.substring(0, 30) + '...' : point.name}
+          </div>
+          <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">
+            Taxa: ${point.rate}%
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-weight: 600; color: #ff6b35; font-size: 1.1rem;">
+            ${point.users.toLocaleString('pt-BR')}
+          </div>
+          <div style="font-size: 0.8rem; color: rgba(255, 255, 255, 0.7);">
+            usuários
+          </div>
+        </div>
+      `;
+      
+      topStoresContainer.appendChild(storeItem);
+    });
+    
+  } else {
+    topStoresContainer.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Nenhum dado disponível</div>';
+  }
+}
+
+
+
+function initializeFootfallContent() {
+    // Aguardar um pouco para garantir que os elementos estejam prontos
+    setTimeout(() => {
+        updateFootfallMetrics();
+        initializeFootfallMap();
+        initializeFootfallChart();
+        updateFootfallTopStores();
+    }, 500);
+}
+
+
+function updateFootfallMetrics() {
+    const metricsContainer = document.getElementById('footfall-metrics');
+    if (!metricsContainer || typeof CURRENT_FOOTFALL_POINTS === 'undefined') {
+        return;
+    }
+    
+    const footfallData = CURRENT_FOOTFALL_POINTS.filter(point => point.users > 0);
+    
+    if (footfallData.length === 0) {
+        metricsContainer.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem;">Carregando métricas...</div>';
+        return;
+    }
+    
+    // Calcular métricas
+    const totalLojas = footfallData.length;
+    const totalUsuarios = footfallData.reduce((sum, item) => sum + item.users, 0);
+    const taxaMedia = footfallData.reduce((sum, item) => sum + item.rate, 0) / totalLojas;
+    const melhorLoja = footfallData.reduce((max, item) => item.rate > max.rate ? item : max);
+    
+    const metricsHTML = `
+        <div class="metric-card" style="background: rgba(255, 107, 53, 0.1); border: 1px solid rgba(255, 107, 53, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #ff6b35;">🏪 Total de Lojas</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${totalLojas}</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Região metropolitana</div>
+        </div>
+        <div class="metric-card" style="background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #8b5cf6;">👥 Total de Usuários</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${totalUsuarios.toLocaleString('pt-BR')}</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Footfall detectado</div>
+        </div>
+        <div class="metric-card" style="background: rgba(236, 72, 153, 0.1); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #ec4899;">📈 Taxa Média</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${taxaMedia.toFixed(1)}%</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">Conversão média</div>
+        </div>
+        <div class="metric-card" style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; padding: 1.5rem; text-align: center; backdrop-filter: blur(10px);">
+            <div class="metric-header" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="metric-title" style="font-weight: 600; color: #06b6d4;">🏆 Melhor Performance</span>
+            </div>
+            <div class="metric-value" style="font-size: 2.5rem; font-weight: 700; color: white; margin-bottom: 0.5rem;">${melhorLoja.rate}%</div>
+            <div class="metric-subtitle" style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem;">${melhorLoja.name.split(' - ')[1] || melhorLoja.name.split(' ')[1] || 'Melhor loja'}</div>
+        </div>
+    `;
+    
+    metricsContainer.innerHTML = metricsHTML;
+}
+
+
+function initializeFootfallMap() {
+    const mapElement = document.getElementById('footfall-map');
+    if (!mapElement) {
+        console.error('Elemento footfall-map não encontrado');
+        return;
+    }
+    
+    // Destruir mapa existente se houver
+    if (window.footfallMap) {
+        window.footfallMap.remove();
+    }
+    
+    const map = L.map('footfall-map').setView([-19.9078, -43.9593], 13);
+    window.footfallMap = map;
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    if (typeof CURRENT_FOOTFALL_POINTS !== 'undefined' && CURRENT_FOOTFALL_POINTS.length > 0) {
+        const footfallData = CURRENT_FOOTFALL_POINTS.filter(point => point.users > 0);
+        
+        // Criar cluster de markers
+        const markers = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50,
+            iconCreateFunction: function(cluster) {
+                const childCount = cluster.getChildCount();
+                let c = ' marker-cluster-';
+                if (childCount < 10) {
+                    c += 'small';
+                } else if (childCount < 100) {
+                    c += 'medium';
+                } else {
+                    c += 'large';
+                }
+                return new L.DivIcon({
+                    html: '<div><span>' + childCount + '</span></div>',
+                    className: 'marker-cluster' + c,
+                    iconSize: new L.Point(40, 40)
+                });
+            }
+        });
+        
+        // Adicionar markers
+        footfallData.forEach(point => {
+            const marker = L.marker([point.lat, point.lon]);
+            marker.bindPopup(`
+                <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #ff6b35; font-size: 1.1rem;">${point.name}</h4>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Usuários:</strong> ${point.users.toLocaleString('pt-BR')}</p>
+                    <p style="margin: 0.25rem 0; font-size: 0.9rem;"><strong>Taxa:</strong> ${point.rate}%</p>
+                </div>
+            `);
+            markers.addLayer(marker);
+        });
+        
+        // Dados para heatmap
+        const heatmapData = [];
+        footfallData.forEach(store => {
+            // Intensidade baseada na taxa de conversão
+            const baseIntensity = Math.max(0.1, store.rate / 20); // Normalizar para 0-1
+            
+            // Adicionar pontos espalhados para simular densidade
+            const spreadRadius = 0.005; // Raio de espalhamento
+            const numPoints = Math.max(3, Math.floor(store.users / 1000)); // Mais pontos para mais usuários
+            
+            for (let i = 0; i < numPoints; i++) {
+                const offsetLat = (Math.random() - 0.5) * spreadRadius;
+                const offsetLng = (Math.random() - 0.5) * spreadRadius;
+                const pointIntensity = baseIntensity * (0.7 + Math.random() * 0.6);
+                
+                heatmapData.push([
+                    store.lat + offsetLat, 
+                    store.lon + offsetLng, 
+                    pointIntensity
+                ]);
+            }
+            
+            // Ponto central com intensidade máxima
+            heatmapData.push([store.lat, store.lon, baseIntensity * 1.5]);
+        });
+        
+        // Adicionar layers ao mapa
+        map.addLayer(markers);
+        
+        // Heatmap layer
+        const heatmapLayer = L.heatLayer(heatmapData, {
+            radius: 50,
+            blur: 20,
+            maxZoom: 18,
+            minOpacity: 0.3,
+            gradient: {
+                0.0: 'rgba(0, 255, 136, 0.1)',
+                0.2: 'rgba(6, 182, 212, 0.4)',
+                0.4: 'rgba(139, 92, 246, 0.6)',
+                0.6: 'rgba(236, 72, 153, 0.8)',
+                0.8: 'rgba(255, 107, 53, 0.9)',
+                1.0: 'rgba(255, 107, 53, 1.0)'
+            }
+        }).addTo(map);
+        
+        // Controle de layers
+        const overlayMaps = {
+            "🔥 Mapa de Calor": heatmapLayer,
+            "📍 Marcadores": markers
+        };
+        
+        L.control.layers(null, overlayMaps, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+        
+    }
+    
+    // Invalidar tamanho do mapa
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+    
+    return map;
+}
+
+function initializeFootfallChart() {
+  const ctxEl = document.getElementById('footfall-performanceChart');
+  if (!ctxEl) return;
+  const ctx = ctxEl.getContext('2d');
+  const source = (typeof CURRENT_FOOTFALL_POINTS !== 'undefined' && CURRENT_FOOTFALL_POINTS.length) ? CURRENT_FOOTFALL_POINTS : [];
+  const chartData = source
+    .filter(store => store.users > 0)
+    .sort((a, b) => b.users - a.users)
+    .slice(0, 8);
+
+  if (chartData.length === 0) {
+    ctxEl.parentElement.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.7);padding:2rem;">Nenhum dado de footfall disponível.</p>';
+    return;
+  }
+
+  new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Lojas',
+        data: chartData.map(store => ({
+          x: store.users,
+          y: store.rate,
+          label: store.name.split(' - ')[1] || store.name
+        })),
+        backgroundColor: 'rgba(255, 107, 53, 0.6)',
+        borderColor: '#ff6b35',
+        pointRadius: function(context) {
+          return Math.max(5, Math.min(15, context.parsed.x / 500));
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          titleColor: '#ff6b35',
+          bodyColor: '#ffffff',
+          callbacks: {
+            label: function(context) {
+              return `${context.raw.label}: ${context.parsed.x.toLocaleString()} usuários, ${context.parsed.y}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Usuários Footfall',
+            color: '#ffffff'
+          },
+          ticks: {
+            color: '#ffffff'
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Taxa de Conversão (%)',
+            color: '#ffffff'
+          },
+          ticks: {
+            color: '#ffffff'
+          },
+          grid: {
+            color: 'rgba(255, 255, 255, 0.1)'
+          }
+        }
+      }
+    }
+  });
+}
+
+function initializeFootfallTopStores() {
+  const source = (typeof CURRENT_FOOTFALL_POINTS !== 'undefined' && CURRENT_FOOTFALL_POINTS.length) ? CURRENT_FOOTFALL_POINTS : [];
+  const topStores = source
+    .filter(store => store.users > 0)
+    .sort((a, b) => b.users - a.users)
+    .slice(0, 5);
+
+  const topStoresHTML = topStores.map(store => `
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: all 0.3s;">
+      <div style="font-weight: 500; flex: 1; color: #ffffff;">${store.name.split(' - ')[1] || store.name}</div>
+      <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+        <div style="color: #06b6d4; font-weight: 500;">${store.users.toLocaleString()} usuários</div>
+        <div style="color: #ff6b35; font-weight: 500;">${store.rate}%</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('footfall-topStores').innerHTML = topStoresHTML;
+}
+
+(function setupFootfallSourceToggle(){
+  const h = document.getElementById('footfall-source-hhs');
+  const o = document.getElementById('footfall-source-ohs');
+  if (!h || !o) return;
+  function styleActive(which){
+    const active = 'rgba(255,107,53,.25)';
+    const idle = 'rgba(255,255,255,.06)';
+    h.style.borderColor = which==='hhs' ? '#ff6b35' : 'rgba(148,163,184,.25)';
+    h.style.background = which==='hhs' ? active : idle;
+    o.style.borderColor = which==='ohs' ? '#ff6b35' : 'rgba(148,163,184,.25)';
+    o.style.background = which==='ohs' ? active : idle;
+  }
+  h.addEventListener('click', ()=>{
+    if (typeof FOOTFALL_POINTS_HHS === 'undefined') return;
+    CURRENT_FOOTFALL_POINTS = FOOTFALL_POINTS_HHS;
+    footfallInitialized = false;
+    styleActive('hhs');
+    initializeFootfallContent();
+  });
+  o.addEventListener('click', ()=>{
+    if (typeof FOOTFALL_POINTS_OHS === 'undefined') return;
+    CURRENT_FOOTFALL_POINTS = FOOTFALL_POINTS_OHS;
+    footfallInitialized = false;
+    styleActive('ohs');
+    initializeFootfallContent();
+  });
+  styleActive('hhs');
+})();
+
+</script>
+</body>
+</html>
