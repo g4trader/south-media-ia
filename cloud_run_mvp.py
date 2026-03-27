@@ -1980,9 +1980,18 @@ def get_dashboard_html(campaign_key):
                         if isinstance(multicanal_channels, list) and multicanal_channels:
                             wants_footfall = any(bool((ch or {}).get("use_footfall", False)) for ch in multicanal_channels)
 
-                        # Também regenerar quando a campanha foi marcada com Footfall, mas o HTML publicado não tem dados de footfall embutidos.
-                        # Isso evita ficar "travado" em um HTML novo porém sem abas Footfall, após correções no extractor.
-                        missing_footfall_in_html = wants_footfall and ("footfall_sources" not in html_content)
+                        # Também regenerar quando a campanha foi marcada com Footfall, mas o HTML publicado não tem dados de footfall embutidos
+                        # (ou está embutindo uma lista vazia). Isso evita ficar "travado" em um HTML novo porém sem abas Footfall,
+                        # após correções no extractor.
+                        if wants_footfall:
+                            compact = html_content.replace(" ", "")
+                            missing_footfall_in_html = (
+                                ("footfall_sources" not in html_content) or
+                                ("\"footfall_sources\":[]" in compact) or
+                                ("\"footfall_points\":[]" in compact)
+                            )
+                        else:
+                            missing_footfall_in_html = False
 
                         if (looks_legacy or missing_footfall_in_html) and isinstance(multicanal_channels, list) and multicanal_channels:
                             logger.info(f"🔄 Detectado HTML legado para {campaign_key}. Regenerando multicanal via multicanal_channels...")
