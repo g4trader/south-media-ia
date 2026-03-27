@@ -1984,7 +1984,8 @@ def get_dashboard_html(campaign_key):
                         # (ou está embutindo uma lista vazia). Isso evita ficar "travado" em um HTML novo porém sem abas Footfall,
                         # após correções no extractor.
                         if wants_footfall:
-                            compact = html_content.replace(" ", "")
+                            import re as _re
+                            compact = _re.sub(r"\\s+", "", html_content)
                             missing_footfall_in_html = (
                                 ("footfall_sources" not in html_content) or
                                 ("\"footfall_sources\":[]" in compact) or
