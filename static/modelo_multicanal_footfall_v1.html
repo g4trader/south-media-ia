@@ -1,6 +1,6 @@
 <!--
   Protótipo multicanal Footfall v1 (base: dash_portal_auto_shopping_mar2026_santander_footfall.html)
-  Cliente: Sonho · Campanha: Sonho Sabão em pó
+  Cliente: {{CLIENT_NAME}} · Campanha: {{CAMPAIGN_NAME}}
   Planilhas: HHS, OHS, CTV, Disney, Netflix, Spotify, Youtube (ver build_modelo_multicanal_footfall_v1.py)
   Atualizar dados embutidos:
     python3 build_modelo_multicanal_footfall_v1.py
@@ -10,7 +10,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Sonho — Sonho Sabão em pó — Multicanal (Footfall v1)</title>
+<title>{{CLIENT_NAME}} — {{CAMPAIGN_NAME}} — Multicanal (Footfall v1)</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -284,12 +284,12 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="logo">
       <div class="logo-icon">SM</div>
       <div>
-        <div style="font-weight:800;font-size:1.1rem">Sonho</div>
-        <div class="muted">Multicanal — Sonho Sabão em pó (protótipo layout v1)</div>
+        <div style="font-weight:800;font-size:1.1rem">{{CLIENT_NAME}}</div>
+        <div class="muted">Multicanal — {{CAMPAIGN_NAME}}</div>
       </div>
     </div>
     <div>
-      <div style="font-weight:700;font-size:1rem;text-align:right">Campanha: Sonho Sabão em pó</div>
+      <div style="font-weight:700;font-size:1rem;text-align:right">Campanha: {{CAMPAIGN_NAME}}</div>
       <div class="muted" style="text-align:right">Status: <span class="badge">EM ANDAMENTO</span></div>
     </div>
   </div>
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div class="card" style="margin-bottom:16px">
     <h3 style="margin-bottom:10px">Planejamento da Campanha</h3>
     <p style="margin:0; line-height:1.5; color:rgba(148,163,184,0.9)">
-      Cliente: Sonho · Campanha: Sonho Sabão em pó · Multicanal (HHS, OHS, CTV, Disney, Netflix, Spotify, Youtube)
+      Cliente: {{CLIENT_NAME}} · Campanha: {{CAMPAIGN_NAME}} · Multicanal (HHS, OHS, CTV, Disney, Netflix, Spotify, Youtube)
     </p>
   </div>
 
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div id="tab-footfall" class="hidden">
     <!-- Hero Section -->
     <section class="hero" style="text-align: center; margin-bottom: 2rem; padding: 2rem 0;">
-      <span style="color: #ff6b35; text-transform: uppercase; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: block;">Sonho · Sonho Sabão em pó</span>
+      <span style="color: #ff6b35; text-transform: uppercase; font-size: 1rem; font-weight: 600; margin-bottom: 1rem; display: block;">{{CLIENT_NAME}} · {{CAMPAIGN_NAME}}</span>
       <h1 style="font-size: 2.5rem; font-weight: bold; color: #ffffff; margin-bottom: 1rem; letter-spacing: 1px;">ANÁLISE DE FOOTFALL (HHS / OHS)</h1>
       <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Pontos carregados das abas Footfall das planilhas HHS e OHS. Use os botões abaixo para alternar a fonte.</p>
     </section>
@@ -565,6 +565,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py (planilhas reais Sonho multicanal) ---
+// --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
 // --- Dados gerados por build_modelo_multicanal_footfall_v1.py ---
@@ -6081,8 +6082,8 @@ const DAILY = [
 // Footfall por fonte (HHS / OHS) — use os botões na aba Footfall para alternar
 const FOOTFALL_POINTS_HHS = [
   {
-    "lat": -9.538876524339958,
-    "lon": -35.7921053178723,
+    "lat": -9.557795712034906,
+    "lon": 35.777614536890596,
     "name": "SUPERMERCADO BOM PRECO LJ2",
     "users": 6,
     "rate": 0.0
@@ -6102,8 +6103,8 @@ const FOOTFALL_POINTS_HHS = [
     "rate": 0.0
   },
   {
-    "lat": -3.2019122767275,
-    "lon": -42.24904173614611,
+    "lat": -4.241113108803501,
+    "lon": -42.29251422012379,
     "name": "CARVALHO BARRAS LJ 6",
     "users": 0,
     "rate": 0.0
@@ -7476,20 +7477,25 @@ function renderChannelDailyTable(name){
   }
   
   rows.forEach(r=>{
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
+    const baseCells = `
         <td>${r.date||'—'}</td>
         <td>${r.creative||'—'}</td>
         <td>R$ ${fmtBR(r.spend)}</td>
         <td>${fmtInt(r.impressions)}</td>
         <td>${fmtInt(r.clicks)}</td>
+    `;
+    const quartileCells = `
         <td class="qcol">${fmtInt(r.starts)}</td>
         <td class="qcol">${fmtInt(r.q25)}</td>
         <td class="qcol">${fmtInt(r.q50)}</td>
         <td class="qcol">${fmtInt(r.q75)}</td>
         <td class="qcol">${fmtInt(r.q100)}</td>
-      </tr>`);
+    `;
+    tbody.insertAdjacentHTML('beforeend', `<tr>${baseCells}${isDisplay ? '' : quartileCells}</tr>`);
   });
+
+  // Garantir que headers também colapsem corretamente
+  setQuartileColumnsVisible(!isDisplay);
 }
 
 function setQuartileColumnsVisible(show){

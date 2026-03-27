@@ -31,8 +31,13 @@ class SmokeConfig:
     password: str
     client: str
     campaign_name: str
-    sheet_id_1: str
-    sheet_id_2: str
+    sheet_hhs: str
+    sheet_ohs: str
+    sheet_ctv: str
+    sheet_disney: str
+    sheet_netflix: str
+    sheet_spotify: str
+    sheet_youtube: str
     timeout_sec: int = 40
 
 
@@ -63,15 +68,50 @@ def generate_multicanal(sess: requests.Session, cfg: SmokeConfig) -> Dict[str, A
                 "channel_name": "HHS",
                 "action_description": "Smoke HHS",
                 "kpi": "CPM",
-                "sheet_id": cfg.sheet_id_1,
+                "sheet_id": cfg.sheet_hhs,
                 "use_footfall": 1,
             },
             {
                 "channel_name": "OHS",
                 "action_description": "Smoke OHS",
                 "kpi": "CPM",
-                "sheet_id": cfg.sheet_id_2,
+                "sheet_id": cfg.sheet_ohs,
                 "use_footfall": 1,
+            },
+            {
+                "channel_name": "CTV",
+                "action_description": "Smoke CTV",
+                "kpi": "CPV",
+                "sheet_id": cfg.sheet_ctv,
+                "use_footfall": 0,
+            },
+            {
+                "channel_name": "Disney",
+                "action_description": "Smoke Disney",
+                "kpi": "CPV",
+                "sheet_id": cfg.sheet_disney,
+                "use_footfall": 0,
+            },
+            {
+                "channel_name": "Netflix",
+                "action_description": "Smoke Netflix",
+                "kpi": "CPV",
+                "sheet_id": cfg.sheet_netflix,
+                "use_footfall": 0,
+            },
+            {
+                "channel_name": "Spotify",
+                "action_description": "Smoke Spotify",
+                "kpi": "CPE",
+                "sheet_id": cfg.sheet_spotify,
+                "use_footfall": 0,
+            },
+            {
+                "channel_name": "Youtube",
+                "action_description": "Smoke Youtube",
+                "kpi": "CPV",
+                "sheet_id": cfg.sheet_youtube,
+                "use_footfall": 0,
             },
         ],
     }
@@ -141,8 +181,13 @@ def main() -> int:
         password=_must_env("SMOKE_PASSWORD"),
         client=_opt_env("SMOKE_CLIENT", "SMOKE"),
         campaign_name=_opt_env("SMOKE_CAMPAIGN_NAME", f"smoke_multicanal_{int(time.time())}"),
-        sheet_id_1=_must_env("SMOKE_SHEET_ID_1"),
-        sheet_id_2=_must_env("SMOKE_SHEET_ID_2"),
+        sheet_hhs=_must_env("SMOKE_SHEET_HHS"),
+        sheet_ohs=_must_env("SMOKE_SHEET_OHS"),
+        sheet_ctv=_must_env("SMOKE_SHEET_CTV"),
+        sheet_disney=_must_env("SMOKE_SHEET_DISNEY"),
+        sheet_netflix=_must_env("SMOKE_SHEET_NETFLIX"),
+        sheet_spotify=_must_env("SMOKE_SHEET_SPOTIFY"),
+        sheet_youtube=_must_env("SMOKE_SHEET_YOUTUBE"),
         timeout_sec=int(_opt_env("SMOKE_TIMEOUT_SEC", "40") or "40"),
     )
 

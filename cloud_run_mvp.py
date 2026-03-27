@@ -5093,15 +5093,183 @@ def generate_dashboard_multicanal_from_existing():
 def generate_dashboard_multicanal_html(campaign_key: str, client: str, campaign_name: str, consolidated_data: Dict[str, Any], kpi: str) -> Dict[str, Any]:
     """Gerar HTML do dashboard multicanal"""
     try:
-        # Multicanal deve SEMPRE usar o template multicanal (aba "Por Canal" e estrutura de tabs).
-        # As abas de Footfall são adicionadas dinamicamente somente quando existir `footfall_sources`.
-        template_path = 'static/dash_multicanal_footfall_tabs_template.html'
+        def _date_to_br(iso: str) -> str:
+            if not iso:
+                return ""
+            s = str(iso).strip()[:10]
+            try:
+                d = datetime.strptime(s, "%Y-%m-%d")
+                return d.strftime("%d/%m/%Y")
+            except Exception:
+                return s
+
+        def _js_obj(name: str, obj: Any) -> str:
+            return f"const {name} = {json.dumps(obj, ensure_ascii=False, indent=2, default=str)};"
+
+        def _per_row(ch_name: str, ch_kpi: str, data: Dict[str, Any]) -> Dict[str, Any]:
+            s = data.get("campaign_summary") or {}
+            c = data.get("contract") or {}
+            inv = float(c.get("investment") or 0)
+            sp = float(s.get("total_spend") or 0)
+            imp = int(s.get("total_impressions") or 0)
+            clicks = int(s.get("total_clicks") or 0)
+            vc = int(s.get("total_video_completions") or 0)
+            vs = int(s.get("total_video_starts") or 0)
+            ctr_frac = (clicks / imp) if imp else 0.0
+            vtr_frac = (vc / vs) if vs else 0.0
+            cpv = float(s.get("cpv") or 0)
+            # Para CPM, exibir o CPM contratado (não CPM médio/realizado).
+            cpm_contracted = float(c.get("cpv_contracted") or 0) if str(ch_kpi).upper() == "CPM" else 0.0
+            pacing = (sp / inv) if inv else 0.0
+            return {
+                "Canal": ch_name,
+                "Budget Contratado (R$)": inv,
+                "Budget Utilizado (R$)": sp,
+                "Impressões": imp,
+                "Cliques": clicks,
+                "CTR (%)": ctr_frac,
+                "VC (100%)": vc,
+                "VTR (100%)": vtr_frac,
+                "CPV (R$)": cpv,
+                "CPM (R$)": cpm_contracted,
+                "Pacing (%)": pacing,
+                "Criativos Únicos": 0,
+            }
+
+        def _daily_rows(ch_name: str, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+            out: List[Dict[str, Any]] = []
+            for r in data.get("daily_data") or []:
+                out.append(
+                    {
+                        "date": _date_to_br(str(r.get("date") or "")),
+                        "channel": ch_name,
+                        "creative": str(r.get("creative") or r.get("line_item") or ""),
+                        "spend": float(r.get("spend") or 0),
+                        "starts": int(r.get("video_starts") or 0),
+                        "q25": int(r.get("video_25") or 0),
+                        "q50": int(r.get("video_50") or 0),
+                        "q75": int(r.get("video_75") or 0),
+                        "q100": int(r.get("video_completions") or 0),
+                        "impressions": int(r.get("impressions") or 0),
+                        "clicks": int(r.get("clicks") or 0),
+                        "visits": 0,
+                    }
+                )
+            return out
+
+        def _consolidate_cons(per_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+            inv = sum(float(r["Budget Contratado (R$)"]) for r in per_rows)
+            sp = sum(float(r["Budget Utilizado (R$)"]) for r in per_rows)
+            imp = sum(int(r["Impressões"]) for r in per_rows)
+            clk = sum(int(r["Cliques"]) for r in per_rows)
+            ctr = (clk / imp) if imp else 0.0
+            pacing = (sp / inv) if inv else 0.0
+            vc = sum(int(r["VC (100%)"]) for r in per_rows)
+            return {
+                "Budget Contratado (R$)": inv,
+                "Budget Utilizado (R$)": sp,
+                "Impressões": imp,
+                "Cliques": clk,
+                "CTR (%)": ctr,
+                "CPM (R$)": 0.0,
+                "Pacing (%)": pacing,
+                "VC (100%)": vc,
+                "VTR (100%)": 0.0,
+                "CPV (R$)": 0.0,
+            }
+
+        def _inject_multicanal_v1_data(html: str, data: Dict[str, Any]) -> str:
+            channels = data.get("channels") or []
+            per_rows: List[Dict[str, Any]] = []
+            daily_rows: List[Dict[str, Any]] = []
+            foot_hhs: List[Dict[str, Any]] = []
+            foot_ohs: List[Dict[str, Any]] = []
+
+            for ch in channels:
+                ch_name = str(ch.get("channel_name") or ch.get("channel_display_name") or "").strip() or "Canal"
+                # Padronizar HHS/OHS
+                if ch_name.upper() in ("HHS", "OHS"):
+                    ch_name = ch_name.upper()
+                ch_kpi = str(ch.get("kpi") or "").strip() or "CPV"
+                ch_data = ch.get("data") if isinstance(ch, dict) else None
+                if not isinstance(ch_data, dict):
+                    continue
+
+                per_rows.append(_per_row(ch_name, ch_kpi, ch_data))
+                daily_rows.extend(_daily_rows(ch_name, ch_data))
+
+                pts = ch_data.get("footfall_points") or []
+                if ch_name == "HHS" and isinstance(pts, list):
+                    foot_hhs = [
+                        {
+                            "lat": float(p["lat"]),
+                            "lon": float(p["lon"]),
+                            "name": str(p.get("name") or ""),
+                            "users": int(p.get("users") or 0),
+                            "rate": float(p.get("rate") or 0),
+                        }
+                        for p in pts
+                        if isinstance(p, dict) and "lat" in p and "lon" in p
+                    ]
+                if ch_name == "OHS" and isinstance(pts, list):
+                    foot_ohs = [
+                        {
+                            "lat": float(p["lat"]),
+                            "lon": float(p["lon"]),
+                            "name": str(p.get("name") or ""),
+                            "users": int(p.get("users") or 0),
+                            "rate": float(p.get("rate") or 0),
+                        }
+                        for p in pts
+                        if isinstance(p, dict) and "lat" in p and "lon" in p
+                    ]
+
+            cons = _consolidate_cons(per_rows) if per_rows else {
+                "Budget Contratado (R$)": 0.0,
+                "Budget Utilizado (R$)": 0.0,
+                "Impressões": 0,
+                "Cliques": 0,
+                "CTR (%)": 0.0,
+                "CPM (R$)": 0.0,
+                "Pacing (%)": 0.0,
+                "VC (100%)": 0,
+                "VTR (100%)": 0.0,
+                "CPV (R$)": 0.0,
+            }
+
+            block = "\n".join(
+                [
+                    "// --- Dados gerados automaticamente pelo gerador multicanal ---",
+                    _js_obj("CONS", cons),
+                    "",
+                    _js_obj("PER", per_rows),
+                    "",
+                    _js_obj("DAILY", daily_rows),
+                    "",
+                    "// Footfall por fonte (HHS / OHS) — use os botões na aba Footfall para alternar",
+                    _js_obj("FOOTFALL_POINTS_HHS", foot_hhs),
+                    _js_obj("FOOTFALL_POINTS_OHS", foot_ohs),
+                    "let CURRENT_FOOTFALL_POINTS = (FOOTFALL_POINTS_HHS && FOOTFALL_POINTS_HHS.length) ? FOOTFALL_POINTS_HHS : FOOTFALL_POINTS_OHS;",
+                    "",
+                    "// Helpers",
+                ]
+            )
+
+            if "const CONS" not in html or "// Helpers" not in html:
+                return html
+            return re.sub(r"const\s+CONS\s*=\s*\{[\s\S]*?//\s*Helpers", block, html, count=1)
+
+        # Novo template multicanal (modelo v1) — substitui o template antigo.
+        template_path = 'static/modelo_multicanal_footfall_v1.html'
         
         if not os.path.exists(template_path):
             raise Exception(f"Template não encontrado: {template_path}")
         
         with open(template_path, 'r', encoding='utf-8') as f:
             dashboard_content = f.read()
+
+        # Injetar dados no formato esperado pelo modelo v1 (CONS/PER/DAILY/FOOTFALL)
+        dashboard_content = _inject_multicanal_v1_data(dashboard_content, consolidated_data or {})
         
         # Converter dados para JSON e inserir no HTML
         data_json = json.dumps(consolidated_data, ensure_ascii=False, default=str)
