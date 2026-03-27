@@ -88,7 +88,8 @@ def _per_row(ch: ChannelSpec, data: Dict[str, Any]) -> Dict[str, Any]:
     ctr_frac = (clicks / imp) if imp else 0.0
     vtr_frac = (vc / vs) if vs else 0.0
     cpv = float(s.get("cpv") or 0)
-    cpm = float(s.get("cpm") or 0)
+    # Para CPM, queremos exibir o CPM contratado (não CPM médio/realizado).
+    cpm_contracted = float(c.get("cpv_contracted") or 0) if ch.kpi.upper() == "CPM" else 0.0
     pacing = (sp / inv) if inv else 0.0
     return {
         "Canal": ch.name,
@@ -100,7 +101,7 @@ def _per_row(ch: ChannelSpec, data: Dict[str, Any]) -> Dict[str, Any]:
         "VC (100%)": vc,
         "VTR (100%)": vtr_frac,
         "CPV (R$)": cpv,
-        "CPM (R$)": cpm,
+        "CPM (R$)": cpm_contracted,
         "Pacing (%)": pacing,
         "Criativos Únicos": 0,
     }
@@ -136,10 +137,8 @@ def _consolidate_cons(per_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     ctr = (clk / imp) if imp else 0.0
     pacing = (sp / inv) if inv else 0.0
     vc = sum(int(r["VC (100%)"]) for r in per_rows)
-    # CPM médio ponderado por impressões
+    # No multicanal, CPM é relevante apenas para HHS/OHS; no consolidado deixamos 0 (ou poderia ser N/A no UI)
     cpm_w = 0.0
-    if imp > 0:
-        cpm_w = sum(float(r["CPM (R$)"]) * int(r["Impressões"]) for r in per_rows) / imp
     return {
         "Budget Contratado (R$)": inv,
         "Budget Utilizado (R$)": sp,

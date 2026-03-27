@@ -342,7 +342,8 @@ class RealGoogleSheetsExtractor:
             spreadsheet_info = self.service.spreadsheets().get(spreadsheetId=self.config.sheet_id).execute()
             sheets = spreadsheet_info.get('sheets', [])
             
-            # Procurar por abas que contenham "Informações" (ignorando espaços)
+            # Procurar por abas de contrato.
+            # Modelos antigos usam "Informações de contrato"; outros (HHS/OHS) usam apenas "Contrato".
             contract_sheet = None
             for sheet in sheets:
                 sheet_name = sheet['properties']['title']
@@ -352,15 +353,34 @@ class RealGoogleSheetsExtractor:
                     contract_sheet = sheet_name  # Usar o nome original da planilha
                     logger.info(f"📋 Encontrada aba de contrato: '{sheet_name}' (limpo: '{clean_name}')")
                     break
+
+            if not contract_sheet:
+                for sheet in sheets:
+                    sheet_name = sheet['properties']['title']
+                    clean_name = sheet_name.strip().lower()
+                    # Aceitar "Contrato", "CONTRATO", "contrato (x)" etc.
+                    if 'contrato' in clean_name:
+                        contract_sheet = sheet_name
+                        logger.info(f"📋 Encontrada aba de contrato (fallback): '{sheet_name}'")
+                        break
             
             if not contract_sheet:
                 # Listar todas as abas para debug
                 available_sheets = [sheet['properties']['title'] for sheet in sheets]
                 logger.warning(f"⚠️ Aba 'Informações de contrato' não encontrada. Abas disponíveis: {available_sheets}")
-                logger.info("📋 Usando dados padrão para contrato CPE/CPD")
-                
-                # Para campanhas CPE/CPD sem aba de contrato, usar dados padrão baseados nos dados da planilha
-                return self._generate_default_contract_data()
+                logger.info("📋 Usando dados padrão mínimos para contrato")
+                return {
+                    "client": self.config.client,
+                    "campaign": getattr(self.config, 'campaign', getattr(self.config, 'campaign_name', 'N/A')),
+                    "investment": 0.0,
+                    "complete_views_contracted": 0,
+                    "impressions_contracted": 0,
+                    "cpv_contracted": 0.0,
+                    "canal": self.config.channel or "Programática",
+                    "tipo_criativo": "N/A",
+                    "period_start": None,
+                    "period_end": None
+                }
             
             # Nome da aba com aspas se tiver espaço (ex.: 'Informações de contrato'!A:D)
             range_name = f"'{contract_sheet}'!A:D" if ' ' in contract_sheet else f"{contract_sheet}!A:D"
@@ -750,6 +770,7 @@ class RealGoogleSheetsExtractor:
                     if not s or s.lower() == "nan":
                         return None
                     negative_hint = s[:1] in ("-", "−", "–", "—")
+                    dot_hint = s.count(".")
                     # Normalizar: aceitar números com separadores de milhar (ex.: -8.031.797.632.094.190)
                     # e também formatos usuais com ponto decimal (ex.: -8.0317).
                     s = s.replace(" ", "")
@@ -783,6 +804,13 @@ class RealGoogleSheetsExtractor:
                             return None
                     # Heurística adicional para latitudes: alguns exports vêm "1 casa a mais" (ex.: -80.317... deveria ser -8.031...).
                     if max_abs == 90.0 and abs(num) > 60:
+                        num /= 10.0
+                    # Heurística adicional (Brasil): alguns exports ficam 10x maiores (ex.: -58.19 deveria ser -5.819; -32.01 deveria ser -3.201).
+                    # Isso acontece quando o valor original era um inteiro com separadores e o parser mantém uma casa a mais.
+                    if max_abs == 90.0 and abs(num) > 35:
+                        num /= 10.0
+                    # Se a string tinha muitos separadores (milhares), é comum precisar de mais uma casa (ex.: -32 -> -3.2).
+                    if max_abs == 90.0 and dot_hint >= 3 and abs(num) > 15:
                         num /= 10.0
                     # Blindagem: se a string original tinha sinal negativo, preservar o sinal
                     if negative_hint and num > 0:
